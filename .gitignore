@@ -30,3 +30,8 @@ build/
 *.so
 .coverage
 .pytest_cache/
+
+# Workspaces
+# Exclude generated artifacts but keep project manifests and directory structure
+workspaces/*/artifacts/*/*
+!workspaces/*/artifacts/*/.gitkeep
