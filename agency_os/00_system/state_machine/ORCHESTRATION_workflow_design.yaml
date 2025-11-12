@@ -48,6 +48,10 @@ states:
    input_artifact: "bug_report.json"
    output_artifact: "code_gen_spec.json" # (Für den Fix)
 
+ - name: "EXTERNAL_EVENT"
+   description: "Ein Pseudo-Zustand, der einen externen, ereignisgesteuerten Startpunkt für einen Workflow darstellt, z.B. einen eingehenden Bug-Report."
+   responsible_framework: "Orchestrator (Event Listener)"
+
 # 2. Definition der Workflow-Übergänge (Transitions)
 transitions:
  - name: "T1_StartCoding"

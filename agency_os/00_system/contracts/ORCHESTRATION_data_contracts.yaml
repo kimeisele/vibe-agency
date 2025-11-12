@@ -43,6 +43,9 @@ schemas:
    $id: "https://api.example.com/schemas/project_manifest.v1.0.0.json"
    description: "Der zentrale Vertrag, der den Zustand des Workflows und die Links zu Artefakten enthält."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "project_id"
        type: "string(uuid)"
        required: true
@@ -64,6 +67,9 @@ schemas:
    $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
    description: "Input für den CODING-Zustand. Definiert den L1-L4-Kontext für die KI."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "structured_specification" # L1
        type: "object"
        required: true
@@ -92,6 +98,9 @@ schemas:
    $id: "https://api.example.com/schemas/test_plan.v1.0.0.json"
    description: "Input für den TESTING-Zustand. Definiert den Test-Scope."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "test_pyramid_config"
        type: "object"
        required: true
@@ -114,10 +123,13 @@ schemas:
    $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
    description: "Output des TESTING-Zustands. Dient als "Exit-Gate" für die HITL-Genehmigung."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "status"
        type: "enum"
        required: true
-       values:
+       values: ["PASSED", "FAILED", "PARTIAL"]
      - name: "critical_path_pass_rate"
        type: "number"
        required: true
@@ -142,21 +154,24 @@ schemas:
    $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
    description: "Output des DEPLOYMENT-Zustands. Dient als "Beweis" des Deployments."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "status"
        type: "enum"
        required: true
-       values:
+       values: ["SUCCESS", "ROLLED_BACK", "IN_PROGRESS"]
      - name: "artifact_version_deployed"
        type: "string"
        required: true
      - name: "db_migration_status"
        type: "enum"
        required: true
-       values:
+       values: ["APPLIED", "SKIPPED", "FAILED"]
      - name: "health_check_status"
        type: "enum"
        required: true
-       values:
+       values: ["OK", "DEGRADED", "FAILED"]
      - name: "golden_signal_values" # Gemessen während "Soak Time" 
        type: "object"
        required: true
@@ -169,6 +184,9 @@ schemas:
    $id: "https://api.example.com/schemas/bug_report.v1.0.0.json"
    description: "Input für den MAINTENANCE-Zustand. Löst den Triage-Workflow aus."
    fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
      - name: "severity"
        type: "enum"
        required: true
@@ -176,7 +194,7 @@ schemas:
      - name: "category"
        type: "enum"
        required: true
-       values:
+       values: ["Security", "Performance", "Functional", "UI", "Data"]
      - name: "context"
        type: "object"
        required: true
