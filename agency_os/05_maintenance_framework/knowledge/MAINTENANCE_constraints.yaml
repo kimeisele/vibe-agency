@@ -1,0 +1,109 @@
+# =================================================================
+# MAINTENANCE_constraints.yaml
+# Definiert die Grenzen des Systems, Schweregrade und die Regeln
+# für menschliches Eingreifen (HITL).
+# =================================================================
+
+# ---
+# Sektion 1: Taxonomie der Bug-Schweregrade
+# Definiert die gemeinsame Sprache zur Klassifizierung des
+# technischen Schweregrads eines Fehlers.
+# Basiert auf Teil 2.2 des Berichts.
+# ---
+bug_severity_levels:
+ - level: P1_Critical
+   definition: "Vollständiger Systemausfall, Datenverlust oder kritische Sicherheitsverletzung."
+   technical_impact: "Die Kernfunktionalität ist vollständig blockiert. Das System ist nicht nutzbar."
+   examples:
+     - "Anwendung stürzt beim Login ab "
+     - "Aktiver Datenverlust oder Datenbeschädigung"
+     - "CVSS-Score 9.0-10.0 "
+
+ - level: P2_High
+   definition: "Hauptfunktionalität ist defekt; kein angemessener Workaround verfügbar."
+   technical_impact: "Eine Kernfunktion (z.B. Bezahlung, Haupt-Workflow) schlägt fehl."
+   examples:
+     - "Bezahlvorgang in einer E-Commerce-App schlägt fehl "
+     - "Benutzer können keine neuen Kern-Entitäten erstellen"
+
+ - level: P3_Medium
+   definition: "Nicht-Kernfunktionalität ist defekt; ein Workaround existiert."
+   technical_impact: "Funktionale Beeinträchtigung, die den Haupt-Workflow nicht blockiert."
+   examples:
+     - "Sortierfunktion auf einem Dashboard funktioniert nicht "
+     - "E-Mail-Benachrichtigungen haben erhebliche Verzögerung"
+
+ - level: P4_Low
+   definition: "Geringfügiges UI-Problem oder Verhaltensfehler mit minimalen Auswirkungen."
+   technical_impact: "Keine funktionale Blockade, geringfügige Beeinträchtigung der Benutzererfahrung."
+   examples:
+     - "Tippfehler in einem Einstellungsmenü"
+     - "Element ist um wenige Pixel verschoben "
+
+ - level: P5_Cosmetic
+   definition: "Triviales visuelles Problem ohne funktionale Auswirkung."
+   technical_impact: "Keine funktionale Auswirkung."
+   examples:
+     - "Falscher Farbton eines Logos "
+
+# ---
+# Sektion 2: Nicht automatisierbare Bug-Klassen
+# Kodifiziert die Aufgaben, die von einer KI-Reparatur-Automatisierung
+# ausgeschlossen werden MÜSSEN.
+# Basiert auf Teil 2.4 des Berichts.
+# ---
+non_automatable_bug_classes:
+ - class: ArchitectureChange
+   description: "Fehler, deren wahre Behebung eine Änderung am Systemdesign oder den Service-Grenzen erfordert."
+   rationale: "KI fehlt das holistische Verständnis für systemweite architektonische Trade-offs."
+ - class: DatabaseMigration
+   description: "Fehler, deren Behebung eine Änderung des Datenbankschemas oder eine Datenmigration erfordert."
+   rationale: "Inakzeptabel hohes Risiko eines katastrophalen, irreversiblen Datenverlusts. Migrationsskripte erfordern 100% menschliche Validierung.[22, 23, 24]"
+ 
+ - class: ComplexBusinessLogic
+   description: "Fehler in hochgradig nuancierter, domänenspezifischer oder regulierter Geschäftslogik."
+   rationale: "KI kann die geschäftliche oder regulatorische *Absicht* hinter der Logik nicht verstehen.[19, 20]"
+
+# ---
+# Sektion 3: Obligatorische "Human-in-the-Loop" (HITL)-Trigger
+# Regeln, die das Automatisierungssystem anweisen, innezuhalten
+# und einen Menschen zu eskalieren.
+# Basiert auf Teil 2.6 des Berichts.
+# ---
+hitl_mandatory_triggers:
+ - name: HITL_Trigger_Security
+   description: "Eskaliert jeden Bug, der als Sicherheitsproblem markiert ist."
+   condition: "bug.category == 'Security'"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Hohes Risiko, Nuancen erforderlich."
+ - name: HITL_Trigger_DataLoss
+   description: "Eskaliert jeden Bug, der Datenverlust oder -beschädigung involviert."
+   condition: "bug.category IN"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Risiko eines irreversiblen Schadens."
+ - name: HITL_Trigger_PII
+   description: "Eskaliert Bugs, die Systeme mit PII-Daten berühren."
+   condition: "bug.context.PII_impact == true"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Datenschutz- und Compliance-Risiken.[31]"
+
+ - name: HITL_Trigger_NotReproducible
+   description: "Eskaliert Bugs, die nicht automatisch reproduziert werden können."
+   condition: "bug.reproducible == false"
+   action: "ESCALATE_HUMAN_ANALYSIS"
+   rationale: "Automatisierung ist ohne Reproduktion blockiert."
+ - name: HITL_Trigger_AI_Confidence
+   description: "Eskaliert, wenn der KI-Fix-Vorschlag unter einem Konfidenzschwellenwert liegt."
+   condition: "ai_fix.confidence_score < 0.9"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "KI ist unsicher über ihren eigenen Fix."
+ - name: HITL_Trigger_AI_DB_Schema
+   description: "Stoppt und eskaliert, wenn ein KI-Fix versucht, ein Datenbankschema zu ändern."
+   condition: "ai_fix.changes_db_schema == true"
+   action: "HALT_AND_ESCALATE_SENIOR"
+   rationale: "Nicht automatisierbare Hochrisikoaufgabe."
+ - name: HITL_Trigger_AI_BlastRadius
+   description: "Eskaliert, wenn der KI-Fix eine große Anzahl von Dateien ändert."
+   condition: "ai_fix.blast_radius.files_changed > 5"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Hohe Wahrscheinlichkeit unbeabsichtigter Nebenwirkungen."

@@ -1,0 +1,61 @@
+# CODE_GEN_constraints.yaml
+# Definiert die "sicheren Betriebsgrenzen" (FAE-ähnlich).
+# Beschreibt, was die KI NICHT generieren darf und welche Muster zu Fehlern führen.
+version: 1.0
+
+# 1. Globale Verbotszonen (Nicht erreichbare Aufgaben)
+# Systeme oder Domänen, die von der autonomen Generierung vollständig ausgeschlossen sind.
+global_exclusions:
+ - id: EXCLUDE_LEGACY_STACK
+   reason: "KI-Leistung für komplexe Legacy-Systeme (COBOL, MUMPS, ALC) ist ungeprüft und das Risiko ist zu hoch."
+   match_tags:
+     - "stack:cobol"
+     - "stack:mumps"
+     - "stack:alc"
+     - "tag:legacy_mainframe"
+   action: "DISABLE_GENERATION"
+   # Anmerkung: Für diese Tags kann die KI-Rolle auf 'analyze_and_document' umgestellt werden.
+ - id: EXCLUDE_HIGH_RISK_DOMAINS
+   reason: "KI-Modelle (sogar mit hohem Reasoning) neigen dazu, subtile, schwerwiegende Fehler in Hochrisikodomänen einzuführen."
+   match_tags:
+     - "domain:security"
+     - "domain:cryptography"
+     - "domain:concurrency"
+     - "domain:real-time"
+   action: "FLAG_FOR_MANDATORY_EXPERT_REVIEW" # Autonome Generierung wird gestoppt und menschliche Freigabe erzwungen.
+
+# 2. Halluzinations-Trigger und Fehlermuster
+# Bekannte Eingabemuster oder Kontexte, die bekanntermaßen zu minderwertigem Code oder Halluzinationen führen.
+hallucination_triggers:
+ - id: TRIGGER_FAULTY_PREMISE_DETECTED
+   reason: "Fehlerhafte oder unvollständige Prämissen sind der Hauptauslöser für Halluzinationen."
+   # Die Validierung des Inputs (Teil 2) muss diese Trigger erkennen.
+   detect:
+     - "MISSING_CRITICAL_CONTEXT" # z.B. task_context.yaml fehlt 
+     - "AMBIGUOUS_REQUIREMENTS"
+     - "INPUT_SCHEMA_VIOLATION" # z.B. architecture.json entspricht nicht dem Schema
+   action: "REJECT_GENERATION_REQUEST" # Fordert eine Klärung des Inputs an.
+ - id: TRIGGER_PHANTOM_DEPENDENCY
+   reason: "KI neigt dazu, nicht existierende 'Phantom'-Abhängigkeiten zu halluzinieren, was ein Supply-Chain-Risiko darstellt."
+   detect:
+     - "NEW_DEPENDENCY_NOT_IN_MANIFEST"
+   action: "FLAG_FOR_SUPPLY_CHAIN_REVIEW" # Leitet zur automatisierten Lizenz- und Schwachstellenprüfung (siehe quality_rules).
+
+# 3. Bekannte KI-Fehlermuster (Taxonomie)
+# Diese Muster werden von der Quality-Rules-Engine (Teil 3) zur Überprüfung verwendet.
+known_error_patterns:
+ - id: PATTERN_OMISSION_CORNER_CASE
+   description: "Der generierte Code behandelt nur den 'Happy Path', es fehlt eine explizite Fehler- oder Ausnahmebehandlung."
+   quality_gate_check: "static_analysis:check_exception_handling_coverage"
+
+ - id: PATTERN_API_MISUSE
+   description: "Der Code ruft eine bekannte API oder Methode mit falschen Parametern, Typen oder falscher Annahme des Rückgabewerts auf."
+   quality_gate_check: "static_analysis:check_api_signatures"
+
+ - id: PATTERN_HIGH_COGNITIVE_COMPLEXITY
+   description: "Der Code ist funktional, aber unnötig komplex und für Menschen schwer verständlich. Oft ein Ergebnis der lokalen Token-Optimierung."
+   quality_gate_check: "static_analysis:measure_cognitive_complexity"
+
+ - id: PATTERN_LATENT_CONCURRENCY_BUG
+   description: "Der Code führt subtile Race Conditions oder Threading-Probleme ein, die von Standard-Unit-Tests nicht erfasst werden."
+   quality_gate_check: "static_analysis:run_concurrency_analyzer"

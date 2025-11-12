@@ -1,0 +1,695 @@
+﻿Ein systematisches Framework für die architekturgetriebene Code-Generierung
+
+
+
+
+Executive Analysis: Vom Architektur-Blueprint zu einem „Trust and Verify“-Generierungssystem
+
+
+Die Branche bewegt sich auf eine Zukunft zu, in der künstliche Intelligenz die mühsamen Aspekte der Softwareentwicklung übernimmt.1 Narrative wie „Vibe Coding“ 2 oder „autonomes Coding“ 3 – bei denen eine übergeordnete Anforderung scheinbar magisch in eine fertige Anwendung umgewandelt wird – zeichnen jedoch ein verlockendes, aber gefährlich unvollständiges Bild. Die vorliegende Forschung zeigt eindeutig, dass aktuelle Große Sprachmodelle (LLMs) zwar leistungsstarke Werkzeuge zur Codegenerierung sind, aber ohne echtes Systemverständnis operieren. Dies führt zu signifikanten, oft latenten Risiken, wie z. B. der Einführung von Sicherheitslücken oder nicht wartbarem Code, selbst wenn die generierten Artefakte oberflächlich funktional erscheinen.5
+Die Philosophie dieses Frameworks ist daher nicht die einer „Fire-and-Forget“-Automatisierung. Es ist die Implementierung eines rigorosen „Trust and Verify“-Systems.7 In diesem Modell ist die generative KI ein Vorschlagender von Code (ein Proposer), nicht der endgültige Ersteller (ein Committer). Der primäre Wert des Frameworks liegt in der automatisierten Verifizierungs-Pipeline, die jeden Vorschlag der KI steuert und validiert.
+Der Kernkonflikt, der dieses Framework antreibt, ist eine kritische Erkenntnis aus jüngsten Analysen: Funktionale Korrektheit ist nicht gleichbedeutend mit Code-Qualität.
+Die vielleicht wichtigste Erkenntnis aus der gesamten Forschungsbasis ist die vollständige Abwesenheit einer Korrelation zwischen der Fähigkeit eines Modells, Unit-Tests zu bestehen (funktionale Korrektheit, oft als Pass@1 gemessen), und seiner Einhaltung von produktionsreifen Qualitäts- und Sicherheitsstandards.6
+Modelle wie GPT-5 und Claude 3.7 Sonnet, insbesondere in Modi mit höherer „Reasoning“-Fähigkeit, erzeugen zwar funktional korrekten Code, erkaufen dies aber oft mit einer massiven Zunahme an Komplexität (hohe kognitive Komplexität) und subtilen, schwerwiegenden Fehlern (z. B. Concurrency-Probleme, unsachgemäße Fehlerbehandlung).5 Sich auf das Bestehen von Unit-Tests als einziges Qualitätsmerkmal zu verlassen, ist daher grob fahrlässig. Das hier definierte Framework muss so konzipiert sein, dass es genau diesen „funktional korrekten, aber qualitativ wertlosen“ Code, den LLMs nachweislich produzieren, erkennt und abfängt.
+Dieser Bericht liefert die analytische Begründung für die drei vom Benutzer angeforderten YAML-Artefakte. Das Framework stützt sich auf drei Säulen, die den vom Benutzer definierten, unternehmensinternen Framework-Analoga (FAE, FDG, APCE) entsprechen:
+1. Säule 1: Constraints (FAE-ähnlich): Definition der „sicheren Betriebsgrenzen“. Dies identifiziert explizit, was die KI nicht kann (z. B. komplexe Legacy-Migration) und was ihre häufigsten Fehlermodi auslöst (z. B. fehlerhafte Prämissen).
+2. Säule 2: Dependencies (FDG-ähnlich): Definition des „perfekten Kontexts“. Dies erweitert eine einfache architecture.json zu einem mehrschichtigen Kontextmodell, das Datenbankschemata, aufgabenspezifische Randbedingungen und einen abfragbaren Wissensgraphen der bestehenden Codebasis umfasst.
+3. Säule 3: Quality Rules (APCE-ähnlich): Definition des „automatisierten Pull-Request-Reviewers“. Dies ist die CI/CD-native Governance-Schicht, die den von der KI vorgeschlagenen Code automatisch misst, validiert und freigibt (gating), bevor ein Mensch ihn überhaupt zu Gesicht bekommt.
+________________
+
+
+Teil 1: Das Constraints-Framework (FAE-ähnlich): Definition der Grenzen autonomer Generierung
+
+
+Dieser Abschnitt definiert die harten Grenzen und bekannten Fehlermodi der KI-Generierung. Diese Regeln bilden die Grundlage für die CODE_GEN_constraints.yaml.
+
+
+1.1. Nicht erreichbare Aufgaben: Die Grenze bei Legacy- und opaken Systemen
+
+
+Die Benutzeranfrage identifiziert „Legacy-Integration“ korrekt als eine kritische Grenze. Die Forschung bestätigt dies nachdrücklich. Echte Softwareentwicklung besteht nicht nur aus „studentischen Programmieraufgaben“ oder der Lösung von LeetCode-Problemen; sie umfasst „tiefgreifende Migrationen, die Millionen von Codezeilen von COBOL nach Java verschieben“.1
+
+
+Die COBOL/MUMPS/ALC-Herausforderung
+
+
+Obwohl einige Tools behaupten, bei der Modernisierung zu helfen 11, zeigen Untersuchungen zu komplexen, realen Systemen (z. B. im Regierungs- oder Gesundheitswesen), dass die Leistung von LLMs für diese Aufgaben „ungeprüft“ (unproven) bleibt.13 Die Gründe für dieses Versagen sind zweifach:
+1. Mangelnde Trainingsdaten: Diese Systeme weisen eine „Komplexität und einen Umfang auf... die in den Trainingsmaterialien konkurrenzlos sind“.13
+2. Kritikalität: Die Toleranz für Fehler in diesen Systemen (z. B. Elektronische Patientenakten (EHR) in MUMPS oder Mainframe-Systeme in ALC) ist gleich null.13
+Die erfolgreiche Anwendung von KI im Legacy-Bereich ist daher nicht die Code-Generierung, sondern die Wissensextraktion. Die Forschung zeigt, dass der wertvollste Anwendungsfall die Generierung von Dokumentation ist.14 Die Erzeugung von Kommentaren und Erklärungen für den Legacy-Code ist eine „entscheidende Anwendung... um die Genauigkeit der Code-Konvertierung sicherzustellen“ 15 – als Unterstützung für einen von Menschen geleiteten Migrationsprozess.
+Constraint-Regel: Die KI-gesteuerte Generierung muss für Systeme, die als legacy (z. B. COBOL, MUMPS, ALC) gekennzeichnet sind, programmatisch deaktiviert werden. Die Rolle der KI muss für diese Systeme auf task: analyze_and_document beschränkt werden.
+
+
+1.2. Dekonstruktion von Halluzinationen: Eine Taxonomie von Fehlermustern
+
+
+Halluzinationen sind der am häufigsten genannte Fehlermodus. Sie sind jedoch nicht zufällig. Die Forschung liefert zwei primäre Ursachen: (1) die Trainingsziele des Modells und (2) die Qualität der Eingabedaten.
+
+
+Ursache 1: Die statistische „Belohnung für das Raten“
+
+
+LLMs sind darauf trainiert, „gute Testkandidaten“ zu sein.18 Die Evaluierungssysteme, die für ihr Training verwendet werden, „belohnen das Raten mehr als das Eingeständnis von Unsicherheit“.18 Das Modell sagt nie „Ich weiß es nicht“; stattdessen „rät es – basierend auf Mustern, die es aus anderem Code gelernt hat“.19
+
+
+Ursache 2: Der „Fehlerhafte Prämissen“-Auslöser
+
+
+Dies ist die am besten handhabbare Erkenntnis. Die Studie „Faulty Premises Bench (FPBench)“ 20 ist hierfür ein entscheidender Beleg. Sie beweist, dass, wenn ein LLM einen Prompt mit „fehlerhaften Prämissen“ erhält (z. B. irreführende Informationen, fehlende entscheidende Informationen), die „Wahrscheinlichkeit von Halluzinationen bei der Codegenerierung signifikant steigt“.20
+Der entscheidende Punkt ist die PRER/PAER-Lücke:
+* Proactive Error Recognition Rate (PRER): Die Fähigkeit des Modells, die fehlerhafte Prämisse autonom zu erkennen. Diese wurde als „schlecht“ (poor) befunden.20
+* Passive Error Recognition Rate (PAER): Die Fähigkeit des Modells, den Fehler zu erkennen, wenn es explizit aufgefordert wird, nach Fehlern zu suchen. Diese war deutlich höher.20
+Constraint-Regel: Das Framework muss davon ausgehen, dass die KI eine PRER von nahezu Null hat. Man kann ihr nicht zutrauen, sich „selbst zu überprüfen“.20 Daher müssen die Eingaben für das Framework (definiert in Teil 2) rigoros validiert werden, bevor sie an das Modell übergeben werden.
+
+
+Taxonomie der Halluzinations-Fehlermuster
+
+
+Die „Code-Muster“, nach denen der Benutzer gefragt hat, sind Symptome dieser fehlerhaften Prämissen. Das Framework muss diese Muster proaktiv erkennen.
+Tabelle 1: Taxonomie der KI-Fehlermuster und ihrer Auslöser
+
+
+Fehlermuster
+	Beschreibung
+	Beleg
+	Primärer Auslöser (im Kontext-Input)
+	Auslassung von Corner Cases
+	Der Code implementiert den „Happy Path“, aber es fehlen try/catch-Blöcke, Null-Prüfungen oder die Behandlung von Grenzfällen.
+	25
+	Unvollständige Spezifikation; fehlerhafte Prämisse (fehlende Information).
+	API- & Methoden-Missbrauch
+	Die KI „halluziniert“ falsche Eingaben für eine bekannte Funktion (z. B. „Wrong Method Input“) oder interpretiert einen API-Rückgabewert falsch.
+	25
+	Veralteter oder fehlender API-Kontext; fehlerhafte Prämisse (irreführende Information).
+	Subtile Logik- & Datenfehler
+	Der Code kompiliert, enthält aber logische Fehler, z. B. „Incorrect Math Knowledge“ oder die Wahl einer „Inappropriate Data Structure“.
+	28
+	Mangelnde domänenspezifische Constraints im Input.
+	Latente Concurrency-Fehler
+	Das Modell versucht, komplexe Probleme (z. B. Multi-Threading) zu lösen, und führt dabei subtile, schwer zu findende Concurrency-Fehler ein.
+	10
+	Auslöser ist eine Aufgabe mit hoher Komplexität (z. B. domain:concurrency).
+	Inkonsistente Logik
+	Die KI generiert Code, der in sich widersprüchlich ist oder von der ursprünglichen Absicht abweicht („Intent deviation“).
+	29
+	Mehrdeutige oder widersprüchliche Anforderungen im Input.
+	
+
+1.3. Hochrisikodomänen: Problematische Architekturkombinationen
+
+
+Der Benutzer fragt, welche „Sprach-/Framework-Kombinationen“ problematisch sind. Die Forschung 10 legt nahe, dass dies weniger eine Frage des Stacks als vielmehr eine Frage der konzeptionellen Komplexität ist.
+Die Problemdomäne ist der beste Prädiktor für subtile, schwerwiegende Fehler. Die SonarSource-Analyse von GPT-5 10 ist hier der Schlüsselbeleg: Wenn das Modell mit komplexen Problemen konfrontiert wurde, veränderte das „höhere Reasoning“ das Fehlerprofil. Es eliminierte häufige, offensichtliche Fehler (z. B. Path Traversal), erhöhte aber drastisch die Anzahl latenter Fehler (z. B. „concurrency / threading“ bugs, „certificate-validation omissions“).
+Constraint-Regel: Das Framework muss Generierungsaufgaben nach Problemdomäne kategorisieren. Aufgaben, die mit domain:security, domain:concurrency, domain:cryptography oder domain:real-time gekennzeichnet sind, müssen von der autonomen Generierung ausgeschlossen und für eine obligatorische, menschliche Expertenüberprüfung gekennzeichnet werden, unabhängig von den Ergebnissen der Qualitäts-Gates.
+________________
+
+
+Teil 2: Das Abhängigkeits-Framework (FDG-ähnlich): Kontext, Artefakte und System-Mapping
+
+
+Dieser Abschnitt definiert das vollständige Input/Output-Manifest und bildet die Grundlage für CODE_GEN_dependencies.yaml. Dieses Framework ist die primäre Verteidigungslinie gegen die in Teil 1 identifizierten Constraints.
+
+
+2.1. Generation-Ready Kontext: Ein mehrschichtiges Input-Modell
+
+
+Die Kernfrage des Benutzers lautet: architecture.json + was noch?. Die Forschung liefert ein klares, vierstufiges Modell für den Kontext. Eine „fehlerhafte Prämisse“ (Teil 1.2) ist im Grunde ein Versagen in diesem Kontextmodell.
+
+
+Schicht 1: Strukturierte Spezifikation (Das „Was“)
+
+
+Dies ist die architecture.json selbst. Ihre Anweisungen müssen „Klar. Präzise. Kein Raum für Fehler“ sein.31 Dies beinhaltet die Verwendung von striktem JSON 31 oder Interface Definition Languages (IDLs) 33 als primäre Eingabe. Dies strukturiert auch die Ausgabe des Modells und stellt sicher, dass sie programmatisch konsumierbar ist.32
+
+
+Schicht 2: Datenbank-als-Kontext (Die „Geschäftslogik“)
+
+
+Ein Datenbankschema ist nicht nur eine Datenstruktur; es ist ein „Schutzmechanismus“, der „Logik erzwingt“.34 Es ist Geschäftslogik. Das Framework muss ein vollständiges Datenbankschema (DDL, ERD) als kritischen Input voraussetzen. Bemerkenswerterweise können KI-Frameworks selbst zur Erstellung dieser Eingabe verwendet werden. SchemaAgent 35 ist ein „Multi-Agenten-Framework“, das natürliche Sprachanforderungen in ein „relationales logisches Datenbankschema“ umwandeln kann und als vorgeschaltetes System dienen kann.
+
+
+Schicht 3: Codebase-als-Kontext (Das „Wo“)
+
+
+Dies ist der Bereich des „Context Engineering“.38 Es geht darum, der KI den „vollen Kontext Ihrer Codebasis“ zu geben.40
+Dies umfasst:
+1. Statischer Kontext: Bereitstellung des relevanten bestehenden Codes über Retrieval Augmented Generation (RAG).41
+2. Dynamischer Aufgabenkontext: Verwendung von „Task Context Files“ (z. B. task_context.yaml).40 Diese Dateien sind entscheidend und müssen Folgendes definieren: Intent (das Geschäftsziel), Scope (welche Dateien dürfen geändert werden, welche nicht), Constraints (technische Grenzen, Performance-Ziele) und Acceptance Criteria (messbare Akzeptanzkriterien).40
+
+
+Schicht 4: System-als-Kontext (Das „Warum“ und „Wie“)
+
+
+Hier liegt das Kernproblem: LLMs „generieren Code oft isoliert, ohne Verständnis für projektspezifische Architekturmuster und interne Abhängigkeiten“.42
+Die Lösung ist ein Knowledge Graph (KG). Dies ist die Königsdisziplin des Context Engineering. Das Framework „Knowledge Graph Based Repository-Level Code Generation“ 42 beschreibt eine Methode, die:
+1. Das gesamte Repository mithilfe von Abstract Syntax Trees (ASTs) parst.
+2. Alle Code-Elemente (Klassen, Methoden, Funktionen) und ihre Beziehungen (z. B. defines class, used in) extrahiert.
+3. Diese in eine Graphdatenbank (z. B. Neo4j) lädt.42
+Dieser KG ermöglicht es der KI, ein „Hybrid Code Retrieval“ 42 durchzuführen. Es kombiniert Vektorsuche (semantische Ähnlichkeit: „Was ist ähnlich?“) mit Graph-basierter Entitätssuche (strukturelle Abhängigkeit: „Was hängt hiervon ab?“).47 Dies löst das Problem der internen Abhängigkeiten.
+Tabelle 2: Mehrschichtiges kontextuelles Input-Framework
+
+
+Kontext-Schicht
+	Artefakt (Beispiel)
+	Zweck
+	Schlüsselnachweis
+	L1: Strukturierte Spezifikation
+	architecture.json, api.idl
+	Definiert die High-Level-Komponentenabsicht und Schnittstellen.
+	31
+	L2: Datenbank-als-Kontext
+	db_schema.sql, schema_agent.json
+	Definiert Geschäftslogik und Datenintegritäts-Constraints.
+	34
+	L3: Codebase-als-Kontext
+	task_context.yaml, RAG-Snippets
+	Definiert den aufgabenspezifischen Scope und die Akzeptanzkriterien.
+	40
+	L4: System-als-Kontext
+	repository_knowledge_graph (Neo4j)
+	Bildet alle internen Abhängigkeiten und Architekturmuster ab.
+	42
+	
+
+2.2. Das vollständige Artefakt-Spektrum: Jenseits des Quellcodes
+
+
+Die Benutzeranfrage identifiziert korrekt, dass das Framework mehr als nur Quellcode produzieren muss. Die generierten Artefakte sind die Eingaben für die Qualitätsregeln (Teil 3).
+Erforderliche Artefakte:
+1. Quellcode: Die primäre Ausgabe.
+2. Unit-Tests: Das Framework muss die KI-gestützte Generierung von Unit-Tests erzwingen.50 Tools wie der JetBrains AI Assistant 51 oder Diffblue 50 tun dies bereits, indem sie den Code-Kontext analysieren, um Tests zu empfehlen.
+3. Dokumentation: Die KI muss Docstrings und Code-Erklärungen generieren.12
+Ein Generierungsauftrag darf nicht als „abgeschlossen“ betrachtet werden, wenn er nicht ein „vollständiges Artefakt-Bundle“ liefert: (source_code, unit_tests, documentation).
+Die Logik ist unumstößlich: Teil 3 des Frameworks (Qualitätsregeln) erfordert Metriken wie „Test Coverage“ 53 und „Code Quality“ (die Wartbarkeit einschließt).54 Es ist unmöglich, die Testabdeckung zu messen, wenn keine Tests generiert werden. Es ist schwierig, die Wartbarkeit zu messen, wenn keine Dokumentation generiert wird. Daher muss das Abhängigkeits-Framework Tests und Dokumentation als zwingende Ausgaben definieren, um die Anforderungen des Qualitäts-Frameworks zu erfüllen. Die drei Teile des Frameworks sind ein einziges, voneinander abhängiges System.
+
+
+2.3. Management des „Dependency Boom“: Supply Chain und Komponenten-Mapping
+
+
+Die Benutzeranfrage zu „Abhängigkeiten“ deckt ein kritisches, latentes Risiko auf: das Management externer Abhängigkeiten (Open-Source-Bibliotheken).
+
+
+Das Risiko: KI als Supply-Chain-Angriffsvektor
+
+
+KI-Tools verursachen einen „Dependency Boom“ 55, indem sie eine große Anzahl von Open-Source-Bibliotheken in Projekte einziehen. Dies führt zu vier verschiedenen Risiken:
+1. „Phantom“-Abhängigkeiten: Die KI „halluziniert“ ein Paket, das nicht existiert. Dies schafft eine „Slopsquatting“-Möglichkeit für Angreifer, ein bösartiges Paket unter diesem Namen zu veröffentlichen.55
+2. Unsicherer Code: Die KI verwendet veraltete Funktionen oder unsichere Standardeinstellungen aus Bibliotheken.55
+3. Lizenz-Compliance: Die KI ist blind für Lizenzen und zieht GPL-lizenzierten Code in ein proprietäres Produkt.55
+4. Verwaister Code (Orphaned Code): Die KI fügt eine Abhängigkeit hinzu, und „Sie werden für deren Patch-Lebenszyklus verantwortlich“, selbst wenn die Bibliothek verlassen (abandoned) ist.55
+
+
+Die Lösung: KI-gesteuerte Abhängigkeitsauflösung vor der Generierung
+
+
+Das Framework muss den „Abhängigkeitsgraphen“ 56 sowohl als Input (aus dem KG, 2.1) als auch als Prozess behandeln. Das „Feature-Factory“-Framework 58 bietet hierfür ein Modell. Sein Workflow umfasst explizit die Schritte „Parse Project Structure“, „Build Vector Database“ und „Resolve Dependencies“, bevor die Generierungsaufgaben ausgeführt werden.
+Abhängigkeits-Regel: Das Generierungs-Framework muss ein Manifest der genehmigten Abhängigkeiten (eine Allow-List) führen. Jeder KI-generierte Code, der eine neue externe Abhängigkeit einführt, muss gekennzeichnet und durch ein automatisiertes Validierungs-Gate (Lizenzprüfung, Schwachstellenscan) geleitet werden, bevor er in die CODE_GEN_dependencies.yaml aufgenommen wird.
+________________
+
+
+Teil 3: Das Qualitäts-Framework (APCE-ähnlich): Automatisierte Governance und Priorisierung
+
+
+Dieser Abschnitt definiert die automatisierte Governance-Schicht, die die Grundlage für CODE_GEN_quality_rules.yaml bildet.
+
+
+3.1. Quantitative Qualität: Automatisierte Metriken für KI-generierten Code
+
+
+Die Benutzeranfrage „Wie misst man Code-Qualität automatisch?“ zielt auf den zentralen Kontrollmechanismus des Frameworks ab.
+
+
+Die Grundprämisse: Funktionale Korrektheit ist eine Falle
+
+
+Wie bereits dargelegt, hat eine hohe Test-Bestehensrate (Pass@1) keine Korrelation mit der Qualität oder Sicherheit des Codes.6 Dies ist die wichtigste Erkenntnis. Sie bedeutet, dass das Qualitäts-Framework auf statischer Analyse basieren muss.
+
+
+Die „Coding Personalities“ von LLMs
+
+
+Untersuchungen zeigen, dass LLMs quantifizierbare „Programmierpersönlichkeiten“ haben.7
+* Wortkargheit (Verbosity): Claude Sonnet 4 ist extrem ausführlich (370k LOC); OpenCoder-8B ist prägnant (120k LOC) – für dieselben Aufgaben.9
+* Komplexität: LLMs zeigen eine „Tendenz... zur Optimierung der lokalen Token-Generierung, möglicherweise ohne Berücksichtigung globaler Komplexitätsmetriken“.5 Dies führt zu Code mit gefährlich hoher kognitiver Komplexität.5
+
+
+Die wesentlichen Metriken (für CODE_GEN_quality_rules.yaml)
+
+
+1. Kognitive Komplexität (Cognitive Complexity): Wichtiger als die zyklomatische Komplexität. Sie misst, wie schwierig Code für einen Menschen zu verstehen ist. KI-generierter Code, der für Token optimiert ist, schneidet bei dieser Metrik sehr schlecht ab.5 Ein hoher Wert (z. B. > 15) muss ein automatisches Scheitern (FAIL) bedeuten.
+2. Zyklomatische Komplexität: Misst die Anzahl der unabhängigen Pfade; ein Indikator für die Testbarkeit.54
+3. Duplizierungsrate (Duplication Rate): Misst Copy-Paste-Code. Ein zentraler „Code Smell“.54
+4. Sicherheitsschwachstellen: Anzahl der kritischen/hohen Schwachstellen.64
+5. Fehlerdichte (Bug Density): Anzahl der „Code Smells“ oder „Bugs“.64
+
+
+Das Toolset: Nicht verhandelbare statische Analyse
+
+
+Statische Analysewerkzeuge wie SonarQube 5 und Codacy 54 sind die einzige Möglichkeit, diese Metriken zuverlässig zu messen. Das Framework sollte die Funktion „AI Code Assurance“ von Sonar nutzen.66 Diese Funktion kennzeichnet KI-generierten Code und unterzieht ihn einer tieferen, umfassenderen Analyse.66 Dies ist exakt die Governance-Schicht, die erforderlich ist.
+Tabelle 3: Essentielle automatisierte Qualitätsmetriken für KI-generierten Code
+
+
+Metrik
+	Definition
+	Warum kritisch für KI-Code
+	v1.0 Gate (Beispiel)
+	Kognitive Komplexität
+	Ein Maß dafür, wie schwierig Code für einen Menschen zu verstehen ist.
+	LLMs optimieren für lokale Token, nicht für globales menschliches Verständnis, was zu hochkomplexem Code führt, der Tests besteht, aber nicht wartbar ist.5
+	FAIL if > 25 (Lockerer Start)
+	Testabdeckung (Code Coverage)
+	Prozentsatz des Codes, der durch die (KI-generierten) Unit-Tests abgedeckt wird.
+	Stellt sicher, dass das „Artefakt-Bundle“ (2.2) vollständig ist und die KI nicht nur den Code, sondern auch dessen Validierung generiert hat.53
+	FAIL if < 70%
+	Sicherheitsschwachstellen
+	Anzahl der von SAST-Tools (z. B. SonarQube) gefundenen Schwachstellen.
+	KI-Code kann bestehende unsichere Muster replizieren oder neue, subtile Fehler (z. B. bei der Fehlerbehandlung) einführen.10
+	FAIL if Critical > 0 (Nicht verhandelbar)
+	Duplizierungsrate
+	Prozentsatz des Codes, der kopiert und eingefügt wurde.
+	Eine hohe Duplizierung ist ein starker Indikator für schlechtes Design und erhöht die Wartungslast.54
+	FAIL if > 10%
+	
+
+3.2. Definition des „Ready for QA“ Quality Gate
+
+
+Der Benutzer fragt: „Wann ist Code ‚ready for QA‘?“. Die Forschung zeigt, dass die manuelle „Ready for QA“-Spalte ein Flaschenhals ist, der sich mit Arbeit von geringer Qualität füllt.69
+Die Schlussfolgerung ist, dass „Ready for QA“ ein automatisierter Status ist, keine menschliche Aktion.
+Ein „Quality Gate“ ist ein automatisierter, erzwungener Prüfpunkt in der CI/CD-Pipeline.70 „Ready for QA“ ist das letzte Gate in der Entwicklungs-Pipeline, bevor die manuelle Qualitätssicherung beginnt.
+
+
+Der automatisierte Workflow
+
+
+1. Die KI generiert das „Artefakt-Bundle“ (Code, Tests, Docs) (aus 2.2).
+2. Die Pipeline führt automatisch die Tests aus. Gate 1: Alle Tests bestanden.73
+3. Die Pipeline misst die Testabdeckung. Gate 2: Code Coverage > 80%.53 (Eine 100%ige Abdeckung ist zwar möglich, aber nicht immer aussagekräftig 74).
+4. Die Pipeline führt SonarQube/Codacy (oder ein ähnliches Tool) aus. Gate 3: Statische Analyse-Gates bestanden (z. B. Kognitive Komplexität < 15, Schwachstellen = 0).5
+5. Nur wenn alle Gates bestanden wurden, markiert das System das entsprechende Jira/Linear-Ticket automatisch als „Ready for QA“.75 Dies wiederum kann einen automatisierten UAT-Test (User Acceptance Testing) auslösen.75
+
+
+3.3. Eine „Core First“-Priorisierungsstrategie
+
+
+Der Benutzer gibt diese Priorisierung vor. Das Framework muss sie technisch umsetzen.
+
+
+Technische Definition von „Core“
+
+
+„Core“ ist kein subjektiver Geschäftsbegriff. In diesem Framework ist es eine technische Definition, die aus dem Abhängigkeitsgraphen (aus dem L4-Wissensgraphen) abgeleitet wird.56
+„Core“-Komponenten sind die „Knoten mit hohem Einfluss“ (high-impact nodes).56 Dies sind die Knoten (Module, Klassen, Bibliotheken) mit einem hohen „Fan-In“ – das heißt, viele andere Komponenten sind von ihnen abhängig.56
+
+
+Die „Core First“-Generierungsstrategie
+
+
+1. Phase 1: Graph-Analyse. Der L4-Wissensgraph (aus 2.1) wird analysiert. Eine Graph-Analyse identifiziert alle Knoten und deren „Fan-In“.56
+2. Phase 2: Core generieren. Es wird nur Code für die Knoten mit hohem Fan-In generiert (z. B. auth_service, db_models, shared_utils).
+3. Phase 3: Core stabilisieren. Das gesamte Qualitäts-Framework (3.1, 3.2) wird auf die Core-Komponenten angewendet. Der Prozess wird nicht fortgesetzt, bis der Core stabil, sicher und vollständig validiert ist.
+4. Phase 4: Extensions generieren. Sobald der Core stabil ist, werden die „Extensions“ generiert (z. B. user_profile_api_endpoint, report_generation_task), die vom Core abhängen. Dies sind die Knoten mit niedrigem Fan-In.4
+Diese Strategie ist nicht nur ein Priorisierungsschema; sie ist ein rekursiver Mechanismus zur Verbesserung der Kontextqualität. Durch die Generierung und Stabilisierung des Cores wird der L4-Wissensgraph aktualisiert. Wenn das Framework dann die „Extensions“ generiert, verfügt die KI über einen weitaus höherwertigen, validierten und stabilen Kontext des Cores, auf den sie zurückgreifen kann. Dies reduziert das Risiko von Halluzinationen 20 und Abhängigkeitsfehlern 42 drastisch.
+
+
+3.4. Regeln für „Good Enough for v1.0“
+
+
+Dies ist eine Richtliniendefinition. „Good enough for v1.0“ bedeutet, die anfänglichen akzeptablen Schwellenwerte für die Quality Gates zu definieren.
+v1.0 Qualitätsprofil:
+* Funktionale Korrektheit: Testabdeckung > 70%. (Ein realistischer Startpunkt 53).
+* Wartbarkeit: Kognitive Komplexität < 25 (Lockere als das Endziel von < 15). Duplizierung < 10%.5
+* Sicherheit: Kritische Schwachstellen = 0. Dies ist vom ersten Tag an nicht verhandelbar.65
+Reifungsstrategie (v1.0 -> v2.0):
+Das Framework muss so konzipiert sein, dass es diese Gates im Laufe der Zeit automatisch verschärft.
+* v1.1: Testabdeckung > 80%, Kognitive Komplexität < 20.
+* v2.0: Testabdeckung > 90%, Kognitive Komplexität < 15, Duplizierung < 5%.
+________________
+
+
+Schlussfolgerung: Strategische Empfehlungen für die Implementierung
+
+
+1. Implementierung in umgekehrter Reihenfolge: Beginnen Sie nicht mit der Generierung. Beginnen Sie mit dem Aufbau des Qualitäts-Frameworks (Teil 3). Wenden Sie diese statische Analyse und die „Ready for QA“-Gates zuerst auf Ihren von Menschen geschriebenen Code an. Ihr Team muss eine „Trust and Verify“-Kultur 7 entwickeln, bevor es eine KI verwalten kann.
+2. Aufbau der Context Engine: Bauen Sie als Zweites das Abhängigkeits-Framework (Teil 2) auf. Konzentrieren Sie sich obsessiv auf den Kontext. Beginnen Sie mit L1 (Strukturierte Prompts) und L3 (Task Context Files). Investieren Sie dann stark in den Aufbau des L4-Wissensgraphen.45 Die Qualität Ihrer Generierung wird durch die Qualität dieses Graphen begrenzt.
+3. Generierung mit Constraints: Erst nachdem die Qualitäts-Gates und die Context Engine vorhanden sind, sollte das Constraints-Framework (Teil 1) aktiviert werden, um die autonome Generierung zu starten.
+   * Beginnen Sie mit risikoarmen „Extension“-Komponenten.77
+   * Verwenden Sie die „Core First“-Strategie 56 für alle neuen Projekte.
+   * Sperren Sie die Generierung explizit für Hochrisikodomänen (Sicherheit, Concurrency) 10 und Legacy-Systeme.13
+Dieses dreiteilige Framework, das auf einer „Trust and Verify“-Philosophie aufbaut und auf einem tiefen, graphbasierten Verständnis der Codebasis beruht, bietet die systematische, automatisierte Governance, die erforderlich ist, um architecture.json in produktionsreifen Code umzuwandeln.
+________________
+
+
+Anhang: Framework YAML-Definitionen
+
+
+Die folgenden YAML-Dateien stellen die programmatische Umsetzung der in diesem Bericht analysierten Regeln dar.
+
+
+CODE_GEN_constraints.yaml
+
+
+
+
+YAML
+
+
+
+
+# CODE_GEN_constraints.yaml
+# Definiert die "sicheren Betriebsgrenzen" (FAE-ähnlich).
+# Beschreibt, was die KI NICHT generieren darf und welche Muster zu Fehlern führen.
+
+version: 1.0
+
+# 1. Globale Verbotszonen (Nicht erreichbare Aufgaben)
+# Systeme oder Domänen, die von der autonomen Generierung vollständig ausgeschlossen sind.
+global_exclusions:
+ - id: EXCLUDE_LEGACY_STACK
+   reason: "KI-Leistung für komplexe Legacy-Systeme (COBOL, MUMPS, ALC) ist ungeprüft und das Risiko ist zu hoch.[13, 14]"
+   match_tags:
+     - "stack:cobol"
+     - "stack:mumps"
+     - "stack:alc"
+     - "tag:legacy_mainframe"
+   action: "DISABLE_GENERATION"
+   # Anmerkung: Für diese Tags kann die KI-Rolle auf 'analyze_and_document' umgestellt werden.
+
+ - id: EXCLUDE_HIGH_RISK_DOMAINS
+   reason: "KI-Modelle (sogar mit hohem Reasoning) neigen dazu, subtile, schwerwiegende Fehler in Hochrisikodomänen einzuführen."
+   match_tags:
+     - "domain:security"
+     - "domain:cryptography"
+     - "domain:concurrency"
+     - "domain:real-time"
+   action: "FLAG_FOR_MANDATORY_EXPERT_REVIEW" # Autonome Generierung wird gestoppt und menschliche Freigabe erzwungen.
+
+# 2. Halluzinations-Trigger und Fehlermuster
+# Bekannte Eingabemuster oder Kontexte, die bekanntermaßen zu minderwertigem Code oder Halluzinationen führen.
+hallucination_triggers:
+ - id: TRIGGER_FAULTY_PREMISE_DETECTED
+   reason: "Fehlerhafte oder unvollständige Prämissen sind der Hauptauslöser für Halluzinationen.[20, 21, 23]"
+   # Die Validierung des Inputs (Teil 2) muss diese Trigger erkennen.
+   detect:
+     - "MISSING_CRITICAL_CONTEXT" # z.B. task_context.yaml fehlt 
+     - "AMBIGUOUS_REQUIREMENTS"
+     - "INPUT_SCHEMA_VIOLATION" # z.B. architecture.json entspricht nicht dem Schema
+   action: "REJECT_GENERATION_REQUEST" # Fordert eine Klärung des Inputs an.
+
+ - id: TRIGGER_PHANTOM_DEPENDENCY
+   reason: "KI neigt dazu, nicht existierende 'Phantom'-Abhängigkeiten zu halluzinieren, was ein Supply-Chain-Risiko darstellt."
+   detect:
+     - "NEW_DEPENDENCY_NOT_IN_MANIFEST"
+   action: "FLAG_FOR_SUPPLY_CHAIN_REVIEW" # Leitet zur automatisierten Lizenz- und Schwachstellenprüfung (siehe quality_rules).
+
+# 3. Bekannte KI-Fehlermuster (Taxonomie)
+# Diese Muster werden von der Quality-Rules-Engine (Teil 3) zur Überprüfung verwendet.
+known_error_patterns:
+ - id: PATTERN_OMISSION_CORNER_CASE
+   description: "Der generierte Code behandelt nur den 'Happy Path', es fehlt eine explizite Fehler- oder Ausnahmebehandlung."
+   quality_gate_check: "static_analysis:check_exception_handling_coverage"
+
+ - id: PATTERN_API_MISUSE
+   description: "Der Code ruft eine bekannte API oder Methode mit falschen Parametern, Typen oder falscher Annahme des Rückgabewerts auf."
+   quality_gate_check: "static_analysis:check_api_signatures"
+
+ - id: PATTERN_HIGH_COGNITIVE_COMPLEXITY
+   description: "Der Code ist funktional, aber unnötig komplex und für Menschen schwer verständlich. Oft ein Ergebnis der lokalen Token-Optimierung."
+   quality_gate_check: "static_analysis:measure_cognitive_complexity"
+
+ - id: PATTERN_LATENT_CONCURRENCY_BUG
+   description: "Der Code führt subtile Race Conditions oder Threading-Probleme ein, die von Standard-Unit-Tests nicht erfasst werden."
+   quality_gate_check: "static_analysis:run_concurrency_analyzer"
+
+
+
+CODE_GEN_dependencies.yaml
+
+
+
+
+YAML
+
+
+
+
+# CODE_GEN_dependencies.yaml
+# Definiert das vollständige Input/Output-Manifest (FDG-ähnlich).
+# Beschreibt, WELCHEN Kontext die KI benötigt und WELCHE Artefakte sie produzieren muss.
+
+version: 1.0
+
+# 1. Erforderliche Eingabe-Artefakte (Kontext-Schichten)
+# Jede Generierungsanforderung MUSS diese Artefakte liefern.
+# Das Fehlen führt zu einer 'TRIGGER_FAULTY_PREMISE_DETECTED'-Verletzung (siehe constraints.yaml).
+required_inputs:
+ # Schicht 1: Strukturierte Spezifikation (Das "Was")
+ - id: L1_ARCHITECTURE_SPEC
+   format: "json"
+   schema: "http://example.com/schemas/architecture.v1.json"
+   description: "Definiert High-Level-Komponenten, ihre Verantwortung und Schnittstellen."
+   source: "architecture.json"
+
+ # Schicht 2: Datenbank-als-Kontext (Die "Geschäftslogik")
+ - id: L2_DATABASE_SCHEMA
+   format: "sql"
+   description: "Vollständiges DDL-Schema oder logisches Schema. Definiert Geschäftslogik und Daten-Constraints."
+   source: "db_schema.sql"
+   optional: false # Kritisch für datenintensive Anwendungen.
+
+ # Schicht 3: Codebase-als-Kontext (Das "Wo")
+ - id: L3_TASK_CONTEXT
+   format: "yaml"
+   description: "Definiert Intent, Scope (zu ändernde/ignorierende Dateien), Constraints und Akzeptanzkriterien für die spezifische Aufgabe."
+   source: "task_context.yaml"
+   
+ - id: L3_RAG_CONTEXT
+   format: "snippets"
+   description: "Automatisch abgerufene relevante Code-Snippets aus der bestehenden Codebasis (via RAG)."
+   source: "SYSTEM_INTERNAL (RAG_Engine)"
+
+ # Schicht 4: System-als-Kontext (Das "Wie")
+ - id: L4_KNOWLEDGE_GRAPH
+   format: "graph_db_query"
+   description: "Zugriff auf den Repository-Wissensgraphen (z.B. Neo4j), der alle internen Abhängigkeiten, Klassen und Methoden abbildet."
+   source: "SYSTEM_INTERNAL (Knowledge_Graph_API)"
+
+# 2. Manifest der genehmigten externen Abhängigkeiten
+# Definiert, welche Open-Source-Bibliotheken verwendet werden dürfen.
+approved_external_dependencies:
+ - id: "approved_list"
+   source: "dependency_manifest.json" # Externe Datei, die Lizenzen, Versionen und Schwachstellen-Status verwaltet.
+   on_new_dependency_request: "FLAG_FOR_SUPPLY_CHAIN_REVIEW" # Siehe constraints.yaml 
+
+# 3. Erforderliche Ausgabe-Artefakte ("Artefakt-Bundle")
+# Eine Generierung gilt nur dann als erfolgreich, wenn ALLE diese Artefakte erstellt und
+# an das Qualitäts-Framework (Teil 3) übergeben werden.
+required_outputs:
+ - id: "SOURCE_CODE"
+   description: "Der generierte Quellcode in der Zielsprache."
+   target_dir: "/src"
+
+ - id: "UNIT_TESTS"
+   description: "Generierte Unit-Tests, die den Quellcode validieren. Erforderlich für die 'Test Coverage'-Metrik."
+   target_dir: "/tests"
+   min_coverage_target_input: "80%" # Input für das Quality Gate
+
+ - id: "DOCUMENTATION"
+   description: "Generierte Inline-Dokumentation (z.B. Docstrings, Javadoc) und Code-Erklärungen.[52]"
+   target_dir: "/src (inline)"
+
+
+
+CODE_GEN_quality_rules.yaml
+
+
+
+
+YAML
+
+
+
+
+# CODE_GEN_quality_rules.yaml
+# Definiert die automatisierte Governance-Schicht (APCE-ähnlich).
+# Beschreibt, wie Qualität gemessen wird und was die "Definition of Done" ist.
+
+version: 1.0
+
+# 1. Priorisierungsstrategie
+# Definiert die Reihenfolge der Generierung für komplexe Systeme.
+generation_strategy:
+ - id: "STRATEGY_CORE_FIRST"
+   description: "Generiert und stabilisiert zuerst 'Core'-Komponenten (hoher Fan-In), bevor 'Extensions' (niedriger Fan-In) generiert werden."
+   core_definition:
+     type: "DEPENDENCY_GRAPH_ANALYSIS"
+     metric: "FAN_IN_COUNT"
+     threshold: "> 5" # Beispiel: Ein Modul, von dem >5 andere Module abhängen, ist 'Core'.
+
+# 2. Quality Gates (Automatisiertes "Ready for QA")
+# Definiert die automatisierten Prüfpunkte in der CI-Pipeline.
+# Ein Commit ist 'Ready for QA', wenn er ALLE Gates im 'v1.0_gate_profile' passiert.
+quality_gates:
+ - id: "GATE_FUNCTIONAL_CORRECTNESS"
+   description: "Alle generierten Unit-Tests (aus dem Artefakt-Bundle) müssen erfolgreich durchlaufen."
+   tool: "JEST / PyTest / JUnit"
+   check: "run_tests"
+   rule: "FAIL if (errors > 0)"
+
+ - id: "GATE_TEST_COVERAGE"
+   description: "Die generierten Tests müssen eine Mindestabdeckung des generierten Codes erreichen.[53, 79]"
+   tool: "JaCoCo / Cobertura"
+   check: "measure_line_coverage"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+   description: "Prüft auf Code Smells, Duplizierung und Komplexität. Kritisch zur Vermeidung von unwartbarem KI-Code."
+   tool: "SonarQube / Codacy"
+   check: "static_analysis:maintainability"
+   profile: "v1.0_gate_profile"
+   # Anmerkung: Nutzt idealerweise Sonar 'AI Code Assurance' für eine tiefere Analyse.
+
+ - id: "GATE_STATIC_ANALYSIS_SECURITY"
+   description: "Prüft auf bekannte Schwachstellen (SAST). Nicht verhandelbares Gate."
+   tool: "SonarQube / Snyk"
+   check: "static_analysis:security"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_SUPPLY_CHAIN_VULNERABILITY"
+   description: "Prüft (neue) externe Abhängigkeiten auf bekannte Schwachstellen."
+   tool: "Dependabot / Snyk"
+   check: "scan_dependencies"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_SUPPLY_CHAIN_LICENSE"
+   description: "Prüft (neue) externe Abhängigkeiten auf Lizenzkonformität."
+   tool: "FOSSA / WhiteSource"
+   check: "scan_licenses"
+   rule: "FAIL if (license_not_in:)" # Beispiel-Policy
+
+# 3. Qualitätsprofile (Definition von "Good Enough")
+# Definiert die spezifischen Schwellenwerte für die Quality Gates.
+quality_profiles:
+ - name: "v1.0_gate_profile"
+   description: "Mindeststandards für 'Good Enough for v1.0'. Wird als 'Ready for QA' betrachtet.[69, 70]"
+   rules:
+     - gate_id: "GATE_TEST_COVERAGE"
+       metric: "LINE_COVERAGE"
+       rule: "FAIL if (value < 70)" # %
+     
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "COGNITIVE_COMPLEXITY_MAX"
+       rule: "FAIL if (value > 25)" # 
+       
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "DUPLICATION_RATE"
+       rule: "FAIL if (value > 10)" # % 
+
+     - gate_id: "GATE_STATIC_ANALYSIS_SECURITY"
+       metric: "CRITICAL_VULNERABILITIES"
+       rule: "FAIL if (value > 0)" # Nicht verhandelbar [65]
+
+     - gate_id: "GATE_STATIC_ANALYSIS_SECURITY"
+       metric: "HIGH_VULNERABILITIES"
+       rule: "FAIL if (value > 0)"
+
+     - gate_id: "GATE_SUPPLY_CHAIN_VULNERABILITY"
+       metric: "CRITICAL_VULNERABILITIES"
+       rule: "FAIL if (value > 0)"
+
+ - name: "v2.0_production_profile"
+   description: "Verschärfte Regeln für reife, produktionsgehärtete Systeme."
+   inherits: "v1.0_gate_profile"
+   rules:
+     - gate_id: "GATE_TEST_COVERAGE"
+       metric: "LINE_COVERAGE"
+       rule: "FAIL if (value < 90)" # %
+     
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "COGNITIVE_COMPLEXITY_MAX"
+       rule: "FAIL if (value > 15)" # Strenger
+       
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "DUPLICATION_RATE"
+       rule: "FAIL if (value > 5)" # %
+
+Referenzen
+1. Can AI really code? Study maps the roadblocks to autonomous ..., Zugriff am November 12, 2025, https://news.mit.edu/2025/can-ai-really-code-study-maps-roadblocks-to-autonomous-software-engineering-0716
+2. The rise of vibe coding: Why architecture still matters in the age of AI agents - vFunction, Zugriff am November 12, 2025, https://vfunction.com/blog/vibe-coding-architecture-ai-agents/
+3. A Survey on Code Generation with LLM-based Agents - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2508.00083v1
+4. GitHub Copilot in VS Code, Zugriff am November 12, 2025, https://code.visualstudio.com/docs/copilot/overview
+5. Assessing the Quality and Security of AI-Generated Code: A Quantitative Analysis - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2508.14727v1
+6. Assessing the Quality and Security of AI-Generated Code: A Quantitative Analysis - arXiv, Zugriff am November 12, 2025, https://arxiv.org/pdf/2508.14727
+7. Study finds shared strengths and common challenges across popular LLMs - Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/company/press-releases/the-coding-personalities-of-leading-llms/
+8. Assessing the Quality and Security of AI-Generated Code: A Quantitative Analysis - arXiv, Zugriff am November 12, 2025, https://arxiv.org/abs/2508.14727
+9. [Literature Review] Assessing the Quality and Security of AI-Generated Code: A Quantitative Analysis - Moonlight, Zugriff am November 12, 2025, https://www.themoonlight.io/en/review/assessing-the-quality-and-security-of-ai-generated-code-a-quantitative-analysis
+10. How reasoning impacts LLM coding models | Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/blog/how-reasoning-impacts-llm-coding-models/
+11. Generative AI: A Transformative Force in Legacy App Modernization - NTT Data, Zugriff am November 12, 2025, https://www.nttdata.com/global/en/-/media/nttdataglobal/1_files/insights/generative-ai/ntt-data-pov-generative-ai_a-transformative-force-in-legacy-modernization_-24-september98.pdf?rev=94933398b1dc477abfa237d8a2838835
+12. Leveraging AI to Modernize Legacy Code in Federal Civilian Agencies - ACT-IAC, Zugriff am November 12, 2025, https://www.actiac.org/system/files/2025-01/Final%20Deliverable_ACT%20IAC%20ET%20MAI_Legacy%20Code%20Modernization.pdf
+13. LEGACY IT MODERNIZATION WITH AI, Zugriff am November 12, 2025, https://www.mitre.org/sites/default/files/2025-06/PR-25-0278-5-Legacy-IT-Modernization-with-AI.pdf
+14. Leveraging LLMs for Legacy Code Modernization: Challenges and Opportunities for LLM-Generated Documentation - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2411.14971v1
+15. Leveraging LLMs for Legacy Code Modernization: Evaluation of LLM-Generated Documentation - ResearchGate, Zugriff am November 12, 2025, https://www.researchgate.net/publication/392637373_Leveraging_LLMs_for_Legacy_Code_Modernization_Evaluation_of_LLM-Generated_Documentation
+16. [2411.14971] Leveraging LLMs for Legacy Code Modernization: Challenges and Opportunities for LLM-Generated Documentation - arXiv, Zugriff am November 12, 2025, https://arxiv.org/abs/2411.14971
+17. Leveraging LLMs for Legacy Code Modernization: Evaluation of LLM-Generated Documentation (Virtual Talk) (LLM4Code 2025) - conf.researchr.org, Zugriff am November 12, 2025, https://conf.researchr.org/details/icse-2025/llm4code-2025-papers/27/Leveraging-LLMs-for-Legacy-Code-Modernization-Evaluation-of-LLM-Generated-Documentat
+18. why-language-models-hallucinate | OpenAI, Zugriff am November 12, 2025, https://cdn.openai.com/pdf/d04913be-3f6f-4d2b-b283-ff432ef4aaa5/why-language-models-hallucinate.pdf
+19. Why AI still hallucinates your code — even with massive token limits - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/aipromptprogramming/comments/1ky6ls9/why_ai_still_hallucinates_your_code_even_with/
+20. Refining Critical Thinking in LLM Code Generation: A Faulty premises-based Evaluation Framework - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2508.03622v1
+21. Refining Critical Thinking in LLM Code Generation: A Faulty premises-based Evaluation Framework - YouTube, Zugriff am November 12, 2025, https://www.youtube.com/watch?v=2JDS1MDT6VM
+22. [2508.03622] Refining Critical Thinking in LLM Code Generation: A Faulty Premise-based Evaluation Framework - arXiv, Zugriff am November 12, 2025, https://arxiv.org/abs/2508.03622
+23. Refining Critical Thinking in LLM Code Generation: A Faulty Premise-based Evaluation Framework - arXiv, Zugriff am November 12, 2025, https://arxiv.org/pdf/2508.03622?
+24. Refining Critical Thinking in LLM Code Generation: A Faulty Premise-based Evaluation Framework | Request PDF - ResearchGate, Zugriff am November 12, 2025, https://www.researchgate.net/publication/394321999_Refining_Critical_Thinking_in_LLM_Code_Generation_A_Faulty_Premise-based_Evaluation_Framework
+25. Unveiling Inefficiencies in LLM-Generated Code: Toward a Comprehensive Taxonomy, Zugriff am November 12, 2025, https://arxiv.org/html/2503.06327v2
+26. What's Wrong with Your Code Generated by Large Language Models? An Extensive Study, Zugriff am November 12, 2025, https://arxiv.org/html/2407.06153v1
+27. CODEJUDGE : Evaluating Code Generation with Large Language Models - ACL Anthology, Zugriff am November 12, 2025, https://aclanthology.org/2024.emnlp-main.1118.pdf
+28. A Deep Dive Into Large Language Model Code Generation Mistakes: What and Why?, Zugriff am November 12, 2025, https://arxiv.org/html/2411.01414v2
+29. Hallucinations in Code Change to Natural Language Generation: Prevalence and Evaluation of Detection Metrics - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2508.08661v1
+30. Evaluating Code Generation by Large Language Models - DiVA portal, Zugriff am November 12, 2025, http://www.diva-portal.org/smash/get/diva2:1985844/FULLTEXT01.pdf
+31. JSON Prompt: The Ultimate Guide to Perfect AI Outputs - MPG ONE, Zugriff am November 12, 2025, https://mpgone.com/json-prompt-guide/
+32. Structured data response with Amazon Bedrock: Prompt ..., Zugriff am November 12, 2025, https://aws.amazon.com/blogs/machine-learning/structured-data-response-with-amazon-bedrock-prompt-engineering-and-tool-use/
+33. Complex code generation in LLMs : r/ChatGPTCoding - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ChatGPTCoding/comments/1d8b1hw/complex_code_generation_in_llms/
+34. What Is an AI Database Schema Generator - Devart, Zugriff am November 12, 2025, https://www.devart.com/dbforge/ai-assistant/ai-database-schema-generator.html
+35. SchemaAgent: A Multi-Agents Framework for Generating Relational Database Schema | Request PDF - ResearchGate, Zugriff am November 12, 2025, https://www.researchgate.net/publication/390354249_SchemaAgent_A_Multi-Agents_Framework_for_Generating_Relational_Database_Schema
+36. SchemaAgent: A Multi-Agents Framework for Generating Relational Database Schema - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2503.23886v1
+37. [2503.23886] Text2Schema: Filling the Gap in Designing Database Table Structures based on Natural Language - arXiv, Zugriff am November 12, 2025, https://arxiv.org/abs/2503.23886
+38. Set up a context engineering flow in VS Code, Zugriff am November 12, 2025, https://code.visualstudio.com/docs/copilot/guides/context-engineering-guide
+39. Context Engineering: A Guide With Examples - DataCamp, Zugriff am November 12, 2025, https://www.datacamp.com/blog/context-engineering
+40. How to Give AI Full Context of Your Codebase - CodeRide, Zugriff am November 12, 2025, https://coderide.ai/blog/how-to-give-ai-full-context-of-your-codebase/
+41. Context-aware code generation: RAG and Vertex AI Codey APIs | Google Cloud Blog, Zugriff am November 12, 2025, https://cloud.google.com/blog/products/ai-machine-learning/context-aware-code-generation-rag-and-vertex-ai-codey-apis
+42. Knowledge Graph Based Repository-Level Code Generation - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2505.14394v1
+43. [PDF] Knowledge Graph Based Repository-Level Code Generation | Semantic Scholar, Zugriff am November 12, 2025, https://www.semanticscholar.org/paper/Knowledge-Graph-Based-Repository-Level-Code-Athale-Vaddina/3597d20e64d2fa00402a3b87eab9a7b77a4722fc
+44. Knowledge Graph Based Repository-Level Code Generation - Powerdrill AI, Zugriff am November 12, 2025, https://powerdrill.ai/discover/summary-knowledge-graph-based-repository-level-code-cmayfi50wd2zw07svvvu0gumu
+45. [Literature Review] Knowledge Graph Based Repository-Level Code ..., Zugriff am November 12, 2025, https://www.themoonlight.io/en/review/knowledge-graph-based-repository-level-code-generation
+46. Build Real-Time Knowledge Graph For Documents with LLM - CocoIndex, Zugriff am November 12, 2025, https://cocoindex.io/blogs/knowledge-graph-for-docs
+47. How to Improve Multi-Hop Reasoning With Knowledge Graphs and LLMs - Neo4j, Zugriff am November 12, 2025, https://neo4j.com/blog/genai/knowledge-graph-llm-multi-hop-reasoning/
+48. Building Knowledge Graph over a Codebase for LLM | by Zimin Chen | Medium, Zugriff am November 12, 2025, https://medium.com/@ziche94/building-knowledge-graph-over-a-codebase-for-llm-245686917f96
+49. Insights, Techniques, and Evaluation for LLM-Driven Knowledge Graphs, Zugriff am November 12, 2025, https://developer.nvidia.com/blog/insights-techniques-and-evaluation-for-llm-driven-knowledge-graphs/
+50. Generate Test Cases with AI: Empower Enterprise QA Teams with CoTester - TestGrid, Zugriff am November 12, 2025, https://testgrid.io/blog/ai-test-case-generation/
+51. Generate tests | AI Assistant Documentation - JetBrains, Zugriff am November 12, 2025, https://www.jetbrains.com/help/ai-assistant/generate-tests-with-ai.html
+52. How to Generate Documentation & Unit Tests with Claude Code Plugin - Skywork.ai, Zugriff am November 12, 2025, https://skywork.ai/blog/how-to-generate-documentation-unit-tests-claude-code-plugin/
+53. Review and configure code coverage results in Azure Pipelines - Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/azure/devops/pipelines/test/review-code-coverage-results?view=azure-devops
+54. 7 Metrics for Measuring Code Quality - Codacy | Blog, Zugriff am November 12, 2025, https://blog.codacy.com/code-quality-metrics
+55. The Dependency Boom: How AI Is Inflating Open ... - HeroDevs Blog, Zugriff am November 12, 2025, https://www.herodevs.com/blog-posts/the-dependency-boom-how-ai-is-inflating-open-source-use
+56. How to Use a Dependency Graph to Analyze Dependencies | Jit, Zugriff am November 12, 2025, https://www.jit.io/resources/app-security/how-to-use-a-dependency-graph-to-analyze-dependencies
+57. About the dependency graph - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/code-security/supply-chain-security/understanding-your-software-supply-chain/about-the-dependency-graph
+58. Feature-Factory: Automating Software Feature Integration Using Generative AI - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2411.18226v1
+59. [Literature Review] Feature-Factory: Automating Software Feature Integration Using Generative AI - Moonlight | AI Colleague for Research Papers, Zugriff am November 12, 2025, https://www.themoonlight.io/en/review/feature-factory-automating-software-feature-integration-using-generative-ai
+60. Feature-Factory: Automating Software Feature Integration Using Generative AI, Zugriff am November 12, 2025, https://powerdrill.ai/discover/discover-Feature-Factory-Automating-Software-cm41sup7x4i2h07r1db4j0zzn
+61. (PDF) Feature-Factory: Automating Software Feature Integration Using Generative AI, Zugriff am November 12, 2025, https://www.researchgate.net/publication/386210272_Feature-Factory_Automating_Software_Feature_Integration_Using_Generative_AI
+62. Diving into the 3 traits that define your LLM's coding personality | Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/blog/llm-coding-personality-traits/
+63. Evaluating Code Quality of AI-generated Mobile Applications - DiVA portal, Zugriff am November 12, 2025, http://www.diva-portal.org/smash/get/diva2:1972441/FULLTEXT01.pdf
+64. Measuring the Performance of AI Code Generation: A Practical Guide - Walturn, Zugriff am November 12, 2025, https://www.walturn.com/insights/measuring-the-performance-of-ai-code-generation-a-practical-guide
+65. 10 Key Metrics for Assessing AI Code Quality - Runloop, Zugriff am November 12, 2025, https://www.runloop.ai/blog/assessing-ai-code-quality-10-critical-dimensions-for-evaluation
+66. AI Code Assurance: Quality & Security in Generated Code | Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/solutions/ai/ai-code-assurance/
+67. Code Quality & Security Software | Static Analysis Tool | Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/products/sonarqube/
+68. SonarQube Cloud Online Code Review as a Service Tool | Sonar, Zugriff am November 12, 2025, https://www.sonarsource.com/products/sonarcloud/
+69. On Constraints, Bottlenecks and AI - Thoughts on Tech by Daniel Becker, Zugriff am November 12, 2025, https://daniel.becker.ie/on-constraints-and-bottlenecks/
+70. What are Quality Gates in Software Development | Definition Guide, Benefits & Types, Zugriff am November 12, 2025, https://www.sonarsource.com/resources/library/quality-gate/
+71. The Importance of Pipeline Quality Gates and How to Implement Them - InfoQ, Zugriff am November 12, 2025, https://www.infoq.com/articles/pipeline-quality-gates/
+72. What are quality gates? - Dynatrace, Zugriff am November 12, 2025, https://www.dynatrace.com/news/blog/what-are-quality-gates-how-to-use-quality-gates-with-dynatrace/
+73. Review AI-generated code - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/en/copilot/tutorials/review-ai-generated-code
+74. Harnessing AI to Revolutionize Test Coverage Analysis - Qodo, Zugriff am November 12, 2025, https://www.qodo.ai/blog/harnessing-ai-to-revolutionize-test-coverage-analysis/
+75. 10 Unique Features of Quell that Solve Your Biggest Challenges - AI ..., Zugriff am November 12, 2025, https://www.quellit.ai/blog/bofu-10-unique-features-of-quell-that-solve-your-biggest-challenges
+76. How AI Simplifies Dependency Visualization - AI Testing Tools, Zugriff am November 12, 2025, https://www.testingtools.ai/blog/how-ai-simplifies-dependency-visualization/
+77. AI-assistance for developers in Visual Studio - Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/visualstudio/ide/ai-assisted-development-visual-studio?view=vs-2022
+78. 10 Generative AI Coding Extensions in VS Code You Must Explore - Analytics Vidhya, Zugriff am November 12, 2025, https://www.analyticsvidhya.com/blog/2024/09/generative-ai-coding-extensions-in-vs-code/

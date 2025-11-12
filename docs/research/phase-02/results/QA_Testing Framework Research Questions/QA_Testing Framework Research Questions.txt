@@ -1,0 +1,428 @@
+﻿Systemisches QA-Framework: Von Code zu validiertem Produkt v1.0
+
+
+
+
+Teil 1: Das QA_constraints.yaml Framework: Definition von Grenzen und pragmatischem Scope
+
+
+Dieser erste Teil des Frameworks legt die fundamentalen, unveränderlichen Grenzen der Qualitätssicherung fest. Er definiert, welche Aspekte der Softwarevalidierung prinzipiell nicht automatisiert werden können, welche Testtypen für eine v1.0-Version als unrealistisch eingestuft und strategisch zurückgestellt werden müssen und welche spezifischen Einschränkungen gängige Automatisierungs-Tools mit sich bringen. Diese Analyse dient als direkte Grundlage für die Erstellung der QA_constraints.yaml-Datei, die die "Nicht-Ziele" und Einschränkungen des v1.0-Validierungsprozesses formalisiert.
+
+
+1.1 Analyse der inhärenten Automatisierungsgrenzen
+
+
+Die effektivste Testautomatisierung konzentriert sich auf objektiv verifizierbare, deterministische Ergebnisse: "Hat sich der Wert von X in Y geändert?", "Wurde der API-Aufruf mit Status 200 beantwortet?". Die Forschung validiert eine klare, harte Grenze: Automatisierung kann nicht die subjektive, menschliche Erfahrung der Softwarenutzung validieren.1
+Nicht automatisierbare Testbereiche:
+* Subjektive User Experience (UX) und Usability: Automatisierung kann nicht messen, ob sich eine Anwendung "umständlich" (awkward) anfühlt, ob ein Workflow für einen Endbenutzer "zu komplex" ist oder ob ein Farbschema "Verwirrung stiftet".1 Diese Aspekte sind "inhärent subjektiv" 1 und erfordern menschliche Wahrnehmung und kontextuelles Verständnis.1
+* Ästhetik und emotionaler Eindruck: Die Messung von "emotionalen Reaktionen" 1 oder "visuellem Reiz" 1 liegt außerhalb der Fähigkeiten von Automatisierungstools. Ein Test kann validieren, ob ein Logo-Bild vorhanden ist, aber nicht, ob es "professionell aussieht".
+* Kontextabhängige Geschäftslogik und Fachwissen: In Szenarien, die tiefes "Fachwissen" (Subject Matter Expertise) erfordern, stoßen Automatisierungsskripte an ihre Grenzen.5 Ein Mensch kann beurteilen, ob ein generierter Finanzbericht "sinnvoll" ist, während ein Skript nur die Korrektheit einzelner Zahlen prüft.
+Die entscheidende Grenze verläuft daher nicht zwischen "UI" und "Backend", sondern zwischen objektiv/deterministisch und subjektiv/heuristisch. Ein UI-Test, der prüft, "Existiert button#submit?", ist leicht zu automatisieren. Ein UI-Test, der prüft, "Ist button#submit intuitiv platziert?", ist unmöglich zu automatisieren.1 Diese Unterscheidung ist fundamental.
+Eine weitere Einschränkung betrifft die Stabilität. Die Automatisierung von Tests für eine sich schnell ändernde, "noch nicht stabile" GUI 7 oder "neue Funktionalitäten" 6 ist zwar technisch möglich, aber aufgrund des extrem hohen Wartungsaufwands (brittle tests) ökonomisch unklug.
+
+
+1.2 Human-in-the-Loop (HITL) Mandat
+
+
+Die in Abschnitt 1.1 definierten Grenzen erzwingen prozessuale Konsequenzen. Wo die Automatisierung endet, muss ein Mensch die Validierungsschleife (Human-in-the-Loop, HITL) übernehmen. Das HITL-Mandat ist keine Option, sondern eine Notwendigkeit für ein "valides Produkt".
+Szenarien mit obligatorischem HITL-Einsatz:
+* Exploratory Testing: Dieser manuelle Prozess ist per Definition "flexibel und ungeskriptet".8 Der menschliche Tester agiert als "Entdecker", der "denkt wie ein Endbenutzer" 8 und spontan "neue und komplexe Bereiche" 9 sowie "Edge Cases" 10 untersucht. Ziel ist es, Mängel zu finden, die "automatisierte Tests übersehen".8
+* Validierung von "High-Impact Decisions": In Systemen, in denen algorithmische Entscheidungen erhebliche Auswirkungen haben (z.B. Finanz-, Medizin- oder Rechtssysteme), ist HITL gesetzlich oder ethisch vorgeschrieben. Die KI darf nur als "Empfehlung" oder "Entscheidungshilfe" dienen; die "endgültige Entscheidung muss von einem Menschen getroffen werden".11 Der Mensch agiert hier als "Auditor" oder "Supervisor".
+* Usability- und Akzeptanztests: Wie in 1.1 dargelegt, erfordern alle subjektiven Bewertungen (UX, "Look and Feel", Barrierefreiheit) menschliche Tester.1 Der Mensch agiert hier als "Bewerter".
+* Validierung von AI/ML-Modellen und generiertem Code: Dies ist eine kritische Einschränkung, die sich direkt aus der Art des "Code-Gen-Frameworks" ergibt. KI- und ML-Modelle erfordern HITL, um "trainiert, optimiert und getestet" zu werden.12 Menschen "labeln" Daten, um dem Modell das "Ziel" beizubringen, und überwachen "unerwartete Ergebnisse".12 Aktuelle "coding agents" (Codegeneratoren) sind nicht fortschrittlich genug, um den Menschen aus der Schleife zu werfen 13, insbesondere aufgrund von "nicht existierendem Testen".13
+Für das vorliegende Projekt bedeutet dies: Wenn das "Code-Gen-Framework" KI/LLMs zur Codegenerierung verwendet, unterliegt der Output dieses Generators (der generierte Code) selbst einer zwingenden HITL-Validierungspflicht. Ein menschlicher Entwickler oder QA-Ingenieur muss als "Auditor" 11 den generierten Code (oder dessen direktes Ergebnis) prüfen und formal abnehmen. Diese Einschränkung ist im QA_constraints.yaml prominent zu verankern.
+
+
+1.3 Pragmatisches Scoping für v1.0: Deferring Non-Core Testing
+
+
+Die Benutzeranfrage stellt Load-, Security- und Penetration-Tests für v1.0 als "unrealistisch" in Frage. Diese Einschätzung ist korrekt und wird durch eine Analyse der Voraussetzungen (Entry Criteria) dieser Testtypen gestützt. Die Zurückstellung ist nicht nur eine Frage der Kosten, sondern primär eine Frage der Gültigkeit.
+Load Testing (v1.0 = UNREALISTISCH)
+* Komplexität: Sinnvolle Lasttests erfordern die Simulation "realer Nutzung".14 Die meisten Tools unterstützen jedoch nur "simplistic workloads".14 Die Erstellung und Wartung realistischer Szenarien ist extrem aufwändig.15
+* Gültigkeit: Die Durchführung von Lasttests auf einer instabilen, nicht optimierten v1.0-Umgebung liefert keine validen Daten. Es ist bekannt, dass Engpässe bestehen. Falsch konfigurierte Tests (z.B. unrealistische Ramp-Up-Zeiten 16) erzeugen "unrealistische Ergebnisse" 16 und "Panik ohne Grund".16
+* Voraussetzung: Echte Performance-Tests erfordern eine stabile, produktionsnahe Umgebung, um aussagekräftige Baselines zu messen.
+Penetration Testing (v1.0 = UNREALISTISCH)
+* Voraussetzung (Stabilität): Penetrationstests erfordern eine "sichere, genaue Testumgebung", die die "Produktionssysteme genau repräsentiert".17 Eine v1.0-Entwicklungs- oder Staging-Umgebung erfüllt diese Anforderung per Definition nicht.19
+* Gültigkeit (False Positives/Negatives): Das Testen einer nicht-produktionsgleichen Umgebung (z.B. Staging) ist problematisch. Staging-Umgebungen haben oft "weniger restriktive Sicherheitseinschränkungen" (z.B. offene Debug-Ports, Test-Accounts), was zu "gemeldeten Schwachstellen führt, die nur für Staging gelten" (False Positives).19 Umgekehrt können Konfigurationsunterschiede "verpasste Schwachstellen" (False Negatives) verursachen, die nur in der Produktion existieren.19
+* Risiko: Aggressive Pen-Tests können die "Umgebungsstabilität" 17 gefährden oder den "Geschäftsbetrieb beeinträchtigen" 20, wenn sie zu früh durchgeführt werden.
+Differenzierung: SAST vs. DAST (Security Testing)
+Es ist jedoch entscheidend, zwischen dynamischen Tests (DAST/Penetration) und statischen Tests (SAST) zu unterscheiden. Während DAST (Pen-Testing) für v1.0 zurückgestellt wird, sind statische Sicherheitstests für v1.0 obligatorisch.
+* Static Application Security Testing (SAST): "Static Code Analysis" 21 zur Identifizierung von "hartcodierten Instanzen" von Geheimnissen oder unsicheren Mustern.22
+* Software Composition Analysis (SCA): "Dependency Checks" 21 zur Identifizierung bekannter Schwachstellen in Bibliotheken von Drittanbietern.
+Diese statischen Tests sind schnell, automatisiert und müssen als obligatorisches "Quality Gate" innerhalb der CI/CD-Pipeline (siehe Teil 2) für v1.0 implementiert werden. Das QA_constraints.yaml wird daher nur Dynamic Application Security Testing (DAST) und Penetration Testing als "deferred for v1.0" auflisten.
+
+
+1.4 Analyse der Tool-Framework-Limitationen
+
+
+Die Wahl des E2E-Automatisierungs-Frameworks (z.B. Selenium, Cypress, Playwright) ist eine architektonische Entscheidung, die dem Projekt harte, technische Einschränkungen auferlegt.
+* Selenium: Als ältestes Framework bietet es die breiteste Unterstützung für Sprachen und Browser.23 Dieser Vorteil wird jedoch durch erhebliche Nachteile erkauft: eine "komplexe Einrichtung" 24, "geringere Geschwindigkeit" 24 und vor allem das Fehlen einer "eingebauten automatischen Wartefunktion".24 Dieses Fehlen von Auto-Waits ist eine Hauptursache für "flaky tests" und erfordert einen hohen manuellen Aufwand zur Implementierung robuster Warte-Strategien.24
+* Cypress: Bietet einen "developer-friendly" 25 Ansatz mit hoher Geschwindigkeit und "eingebauter automatischer Wartefunktion".24 Die Einschränkungen sind jedoch gravierend: Cypress "unterstützt keine Multi-Tabs" 26, hat Probleme mit iframes und Pop-up-Fenstern 24 und ist auf JavaScript/TypeScript beschränkt.23 Workflows, die neue Fenster öffnen (z.B. OAuth-Logins, "AGB anzeigen"), können nicht oder nur sehr umständlich getestet werden.
+* Playwright: Als modernstes Framework von Microsoft 23 konzipiert, vereint es die Vorteile der anderen: Es ist "sehr schnell" 23, unterstützt alle modernen Browser 23, beherrscht Multi-Tabs und iframes und ermöglicht die "Emulation mobiler Geräte".23 Als neueres Tool ist die Wissensbasis der Community (im Vergleich zu Selenium) für Nischenprobleme potenziell kleiner.
+Die Wahl des Tools ist ein Trade-off, der in QA_constraints.yaml abgebildet werden muss. Wählt das Team Cypress, akzeptiert es die Einschränkung (constraint), Multi-Tab-Workflows nicht validieren zu können.
+Tabelle 1: Vergleichende Analyse der E2E-Framework-Limitationen (v1.0-Kontext)
+
+
+Framework
+	Architektonische Einschränkungen
+	v1.0-Auswirkungen / Implikationen
+	Selenium
+	Komplexe Einrichtung; Keine automatische Wartefunktion (Auto-Wait) 24; Geringere Geschwindigkeit.24
+	Höheres Risiko für "flaky tests" (siehe Teil 3.4); Erhöhter initialer Setup-Aufwand. Erfordert manuelle Implementierung robuster, expliziter Warte-Strategien im Testcode.
+	Cypress
+	Keine Unterstützung für Multi-Tabs oder Pop-ups 24; Keine iframes-Unterstützung (nativ) 24; Nur JavaScript/TypeScript.23
+	Kann keine Workflows testen, die neue Fenster öffnen (z.B. OAuth, "Hilfe in neuem Tab öffnen"). Kann keine 3rd-Party-Logins in Pop-ups validieren. Bindet das QA-Team an die JS-Sprachfamilie.
+	Playwright
+	Neueres Framework 23; Setzt stark auf asynchrone Programmier-Paradigmen.
+	Geringfügig kleinere Community-Wissensbasis im Vergleich zu Selenium. Erfordert, dass das Testteam moderne async/await-Testmuster beherrscht.
+	
+
+Teil 2: Das QA_dependencies.yaml Framework: Strukturierung der Validierungs-Pipeline
+
+
+Dieser Teil definiert die Architektur des Testprozesses selbst. Er bildet die Abhängigkeiten (Dependencies) ab, die für eine erfolgreiche Validierung erforderlich sind. Er beginnt mit der Definition der Inputs für jede Stufe der Testpyramide, spezifiziert die kritische "Testbarkeits"-Schnittstelle (den "Vertrag") zwischen der QA und dem "Code-Gen-Framework" und legt abschließend die optimale, "fail-fast"-Ausführungsreihenfolge innerhalb der CI/CD-Pipeline fest. Diese Analyse dient als direkte Grundlage für die QA_dependencies.yaml-Datei.
+
+
+2.1 Die Test-Pyramide: Input- und Umgebungs-Dependencies
+
+
+Die Testautomatisierungspyramide 27 ist das Standardmodell zur Strukturierung von Tests. Sie beschreibt ein Verhältnis von vielen schnellen, isolierten Tests an der Basis zu wenigen langsamen, integrierten Tests an der Spitze.29 Jede Ebene hat spezifische und eskalierende Anforderungen an Inputs und Umgebung.
+Unit Tests (Basis der Pyramide)
+* Zweck: Testen "einzelne Komponenten... in Isolation".29
+* Inputs (Code): Eine einzelne Funktion, Klasse oder ein Modul.
+* Inputs (Daten & Abhängigkeiten): Der entscheidende Input sind Test-Doubles (Mocks, Stubs, Fakes).30
+   * Stubs: Werden verwendet, um Zustand/Daten bereitzustellen und Antworten zu simulieren. Beispiel: "Wenn database.getUser(1) aufgerufen wird, gib ein vordefiniertes User-Objekt zurück".31
+   * Mocks: Werden verwendet, um Verhalten (Interaktionen) zu verifizieren. Beispiel: "Verifiziere, dass database.save() exakt einmal mit dem korrekten User-Objekt aufgerufen wurde".31
+* Umgebung (Environment): Lokal auf der Entwicklermaschine oder im CI-Runner. Erfordern kein Deployment, keine Datenbank und kein Netzwerk.33 Sie sind "schnell und leicht".29
+Integration Tests (Mitte der Pyramide)
+* Zweck: Testen "wie Komponenten zusammenarbeiten".29 Sie validieren die "Interaktionen zwischen verschiedenen Modulen, Datenbanken und externen Diensten".29
+* Inputs (Code): Ein oder mehrere bereitgestellte (deployed) Module/Services.
+* Inputs (Daten & Abhängigkeiten):
+   * Test-Datenbank: Sie erfordern eine echte (aber isolierte) Test-Datenbank.35
+   * Seed-Daten: Die Test-Datenbank muss vor der Testausführung mit einem bekannten "Seed-Datensatz" initialisiert werden, um deterministische Tests zu ermöglichen.35
+   * Mocked Services: Externe Drittanbieter-APIs (z.B. Stripe, SendGrid) sollten nicht direkt aufgerufen werden. Stattdessen werden sie durch "Mock-Server" (z.B. mittels WireMock) 37 oder "Test Doubles" 38 simuliert. Echte Integrationstests gegen externe Dienste sind oft "flaky" (unzuverlässig) und langsam.37
+* Umgebung (Environment): Erfordern eine "Pre-Production- oder Staging-Umgebung" 29 oder eine dedizierte "Testumgebung, die die Produktion so gut wie möglich widerspiegelt".39
+End-to-End (E2E) Tests (Spitze der Pyramide)
+* Zweck: Validieren eines vollständigen "User Scenario" 40 (z.B. Registrierung -> Login -> Kauf) in einem "vollständigen Anwendungsumfeld".41
+* Inputs (Code): Die gesamte, vollständig bereitgestellte Anwendung (Frontend, Backend, Datenbanken).
+* Inputs (Daten & Abhängigkeiten):
+   * Stabile Testdaten-Sets: E2E-Tests erfordern "vordefinierte Inputs und einen bekannten Systemzustand".42 Diese Daten müssen vor jedem Testlauf konsistent sein oder zurückgesetzt werden.
+   * User-Simulations-Layer: Tools wie Playwright oder Selenium simulieren Benutzeraktionen (Klicks, Eingaben).42
+* Umgebung (Environment): Muss die Produktion "so genau wie möglich widerspiegeln".42 Dies umfasst "Datenbankschemata, Servicekonfigurationen, API-Schlüssel und Sicherheitsregeln".42 Diese Tests laufen typischerweise in einer "Staging"-Umgebung.43
+Die Pyramide ist somit eine Kette von Umgebungs- und Datenabhängigkeiten: Unit-Tests sind Code- und Mock-abhängig 33; Integrationstests ersetzen Mocks durch echte, bereitgestellte Module und eine Testdatenbank 29; E2E-Tests ersetzen isolierte Module durch die vollständig integrierte Anwendung.42
+Tabelle 2: Input- und Umgebungs-Abhängigkeitsmatrix der Testpyramide
+
+
+Test-Typ
+	Zweck (Why?)
+	Code-Input (What?)
+	Daten-Input (With what?)
+	Umgebung (Where?)
+	Abhängigkeiten (On what?)
+	Unit Tests
+	Isolierte Logik verifizieren 29
+	Einzelne Funktion / Klasse
+	Mocks & Stubs 31
+	Lokal / CI-Runner (Kein Deploy)
+	Keine (Isolation)
+	Integration Tests
+	Modul-Interaktionen verifizieren 29
+	Bereitgestellter Service / Modul
+	Gesäete Test-Datenbank 35; Gemockte externe APIs 37
+	Dev/Test-Umgebung 39
+	Service-Deployment; DB-Zugang; Netzwerk
+	E2E Tests
+	User-Workflows verifizieren 40
+	Vollständig bereitgestellte Anwendung 43
+	Stabile, bekannte Testdaten-Sets 42
+	Staging / Pre-Prod 42
+	Vollständiger, produktionsnaher Stack (Auth, DB, APIs, Frontend) 42
+	
+
+2.2 Anforderungen an das Code-Gen-Framework: Gewährleistung der Testbarkeit (Testability)
+
+
+Dies ist die kritischste Schnittstelle des gesamten Frameworks: der "Vertrag" zwischen der QA und dem "Code-Gen-Framework". Damit das QA-Framework effektiv arbeiten kann, muss der generierte Code "testbar" (testable) sein. "Testability" ist keine nachträgliche Eigenschaft, sondern ein Design-Merkmal, das von Anfang an eingebaut werden muss.44
+Das Code-Gen-Framework muss die folgenden Artefakte als "First-Class-Features" generieren:
+1. Architektonische Testbarkeit (Isolation):
+* Der generierte Code muss "entkoppelt, modular und stabil" 45 sein.
+* Er muss Design-Patterns (wie Dependency Inversion) folgen, um die Injektion von Mocks und Stubs für Unit-Tests zu ermöglichen.45 Wenn das Framework Code generiert, der harte Abhängigkeiten (z.B. new DatabaseConnection()) erstellt, ist dieser Code nicht isoliert testbar.
+2. UI-Testbarkeit (Stabile Selektoren):
+* E2E-Tests scheitern am häufigsten an "brittle selectors" (instabilen Selektoren). Die Verwendung von Implementierungsdetails wie CSS-Klassen oder DOM-Strukturen (XPath) ist extrem fehleranfällig, da diese sich bei Design-Änderungen ständig ändern.46
+* Die Best Practice ist, Tests gegen "benutzersichtbares Verhalten" 46 und "explizite Verträge" 46 zu schreiben.
+* Anforderung: Das Code-Gen-Framework MUSS für jedes interaktive UI-Element (Button, Link, Input) automatisch ein stabiles, permanentes und einzigartiges Testattribut generieren. Dies wird typischerweise als data-testid (oder test-id) implementiert.48
+* Beispiel 46:
+   * SCHLECHT (Brittle): page.locator('button.buttonIcon.episode-actions-later')
+   * GUT (Resilient): page.getByRole('button', { name: 'submit' }) oder page.getByTestId('sidebar-submit-button')
+* Indem das Code-Gen-Framework data-testid="sidebar-submit-button" generiert, schafft es den "expliziten Vertrag" 46, den das QA-Framework benötigt.
+3. API-Testbarkeit (Explizite Verträge):
+* In modernen (Microservice-)Architekturen ist die Validierung der API-Kommunikation entscheidend.49 Vollständige E2E-Tests sind "teuer" und "langsam", um dies zu erreichen.50
+* Eine weitaus effizientere Methode ist das "API Contract Testing".50 Hierbei wird nicht die gesamte Logik getestet, sondern nur der "Vertrag" (die Schnittstellenspezifikation) zwischen einem "Consumer" (z.B. Frontend) und einem "Provider" (z.B. Backend).
+* Anforderung: Das Code-Gen-Framework MUSS für jeden generierten API-Endpunkt eine maschinenlesbare Spezifikation (einen "Vertrag"), idealerweise im "OpenAPI"-Format, generieren und bereitstellen.51
+* Dies ermöglicht es dem QA-Framework, schnelle Contract-Tests durchzuführen, die ohne ein vollständiges Deployment beider Systeme validieren, ob Consumer und Provider noch kompatibel sind.50
+
+
+2.3 Optimale Test-Ausführungsreihenfolge in der CI/CD-Pipeline
+
+
+Die CI/CD-Pipeline (Continuous Integration / Continuous Delivery) ist der Mechanismus, der die Testpyramide automatisiert.21 Ihre Struktur muss dem "Fail-Fast"-Prinzip folgen: Die schnellsten und billigsten Tests laufen zuerst, um "den Entwickler schnell über relevantes Feedback zu benachrichtigen".52 Teure, langsame Tests (wie E2E) laufen nur, wenn die billigeren Tests (wie Unit-Tests) bestanden wurden.28
+Eine optimale Pipeline für v1.0 ist ein mehrstufiges "Gated"-Modell:
+Stufe 0: Pre-Commit / Pull Request (Lokales & PR-Gate)
+* Auslöser: git push auf einen Feature-Branch.53
+* Aktionen:
+   1. Statische Code-Analyse (Linting, SAST, SCA).21
+   2. Ausführung aller Unit Tests.53
+* Zweck: Sofortiges Feedback an den Entwickler (innerhalb von Minuten).52
+* Gate: Ein Fehlschlag blockiert das Mergen des Pull Requests.
+Stufe 1: Post-Merge / Continuous Integration (Dev-Umgebung)
+* Auslöser: merge in den main oder develop Branch.53
+* Aktionen:
+   1. Erstellung des "Build Artefact" (z.B. Docker-Image).21
+   2. Automatisches Deployment des Artefakts in die Dev-Umgebung.55
+   3. Ausführung aller Integration Tests (gegen die Dev-Umgebung und die Test-DB).53
+   4. (Optional) Ausführung von "Smoke Tests" (eine minimale Teilmenge von E2E-Tests).
+* Zweck: Validierung der Modul-Integration und des Deployments.
+* Gate: Ein Fehlschlag "bricht den Build" 53 und alarmiert das Team. Verhindert die Promotion in höhere Umgebungen.
+Stufe 2: Promotion / Continuous Delivery (Staging-Umgebung)
+* Auslöser: Manuelle Promotion (z.B. "Ready for QA") oder nächtlicher Trigger.53
+* Aktionen:
+   1. Promotion des exakt gleichen Build-Artefakts (aus Stufe 1) in die Staging-Umgebung (produktionsnah 43).
+   2. Ausführung der vollständigen E2E-Test-Suite.53
+   3. (Optional) Ausführung der manuellen HITL-Usability-Tests (siehe 1.2).
+* Zweck: Vollständige Validierung des Release-Kandidaten in einer produktionsnahen Umgebung.
+* Gate: Ein Fehlschlag blockiert das Release in die Produktion.
+Diese gestaffelte Abfolge stellt sicher, dass teure E2E-Tests 54 nur auf Code laufen, der bereits auf Unit- und Integrationsebene als stabil validiert wurde, wodurch Zeit und Ressourcen gespart werden.
+
+
+Teil 3: Das QA_quality_rules.yaml Framework: Definition von Governance und Release-Kriterien
+
+
+Dieser letzte Teil des Frameworks definiert die "Geschäftsregeln" (Business Rules) der Qualität. Er macht "Qualität" messbar, indem er "ausreichend", "priorisiert" und "genehmigt" quantifiziert. Er legt spezifische, messbare Ziele für die Testabdeckung (Test Coverage) fest, implementiert ein risikobasiertes Modell zur Priorisierung von Testfällen und definiert die formale "Definition of Done" (DoD), die erfüllt sein muss, um den Status "QA Approved" zu erreichen. Abschließend wird ein robuster Prozess für den Umgang mit "Flaky Tests" etabliert, der für die Aufrechterhaltung des Vertrauens in die Automatisierung unerlässlich ist. Diese Analyse dient als direkte Grundlage für die QA_quality_rules.yaml-Datei.
+
+
+3.1 v1.0 Test-Coverage: Ein risikobasierter Ansatz für "Ausreichend"
+
+
+Die Frage nach der "ausreichenden" Testabdeckung ist zentral, aber eine einzelne Zahl (z.B. 80%) ist eine gefährliche und irreführende Metrik.56
+Die "80%-Lüge" und die BMI-Analogie
+Code Coverage als alleinige Metrik zu verwenden, ist "schrecklich".57 Es ist wie der Body Mass Index (BMI): Ein niedriger Wert (z.B. 10% Coverage) ist ein eindeutiges Signal für ein Problem (nicht getesteter Code). Ein hoher Wert (z.B. 90% Coverage) beweist jedoch nicht, dass die Tests gut sind 56, genauso wie ein "guter" BMI nicht beweist, dass ein Profisportler (z.B. Saquon Barkley 57) gesund ist oder dass ein untrainierter Mensch mit denselben Maßen fit ist.57 Eine hohe Abdeckung kann einfach nur "triviale" Tests bedeuten.
+Code Coverage vs. Functional Coverage
+Das Framework muss zwei Arten von Abdeckung messen 58:
+1. Functional Coverage: "Wie viele Anforderungen oder User Stories sind durch mindestens einen Test abgedeckt?".58 Dies ist die wichtigste Metrik für den Product Owner.
+2. Code Coverage: "Wie viele Zeilen/Branches des Codes wurden durch Tests ausgeführt?".56 Dies ist eine technische Metrik, die als Sicherheitsnetz dient, um "blinde Flecken" (völlig ungetestete Codepfade) zu finden.
+Ein risikobasiertes Modell für v1.0
+Für v1.0 ist ein pauschales Ziel (z.B. 80%) unrealistisch und ineffizient. Stattdessen wird ein risikobasiertes Modell basierend auf der Kritikalität der Komponente etabliert.60
+Tabelle 3: v1.0 Risk-Based Code Coverage Targets (Policy)
+
+
+Modul-Typ / Risiko-Profil
+	v1.0 Ziel-Coverage (Branch/Line)
+	Begründung / Risiko
+	Überwacht durch
+	Core Business Logic (z.B. Auth, Bezahl-Logik, Kern-Algorithmen)
+	90%+ 60
+	Hoch-Risiko, Hohe Komplexität. Fehler sind katastrophal.
+	Unit Tests
+	API Layer / Data Access (z.B. Controller, Repositories)
+	80%+ 60
+	Mittel-Risiko. Kritischer Datenpfad.
+	Unit / Integration Tests
+	UI Components (z.B. React/Vue-Komponenten)
+	60-70% 60
+	Niedrig-Risiko (oft logikfrei). Hohe Volatilität (häufige Design-Änderungen).
+	Unit Tests (z.B. Storybook)
+	Generierter Code / Boilerplate
+	0-10% (vom Report ausschließen)
+	Kein Risiko. Keine benutzerdefinierte Logik.
+	N/A
+	Die v1.0-Coverage-Strategie
+Die pragmatischste Strategie für v1.0 ist, nicht die (anfänglich niedrige) Gesamt-Coverage zu verfolgen, sondern eine strikte Regel für neuen Code zu erzwingen.61 Die "Quality Rule" in der CI-Pipeline (Stufe 0) lautet: "Jeder neue Pull Request muss eine Code-Coverage von 90% auf dem geänderten oder neu hinzugefügten Code aufweisen." Dies verhindert, dass neue technische Schulden entstehen, während die Abdeckung des Altsystems schrittweise erhöht wird.
+
+
+3.2 Test-Priorisierungsstrategie: Critical Path und Risiko-Quadranten
+
+
+In einem v1.0-Projekt mit begrenzten Ressourcen ist es unmöglich, alles zu testen. Daher ist eine formale Priorisierungsstrategie erforderlich.62 Die Benutzeranfrage nennt den "Critical Path" 63 als Priorität.
+Definition: Der "Critical Path" im Testing
+Im Projektmanagement ist der "Critical Path" die "längste" Kette von Aufgaben, die das Enddatum bestimmt.63 Im Software-Testing wird dieser Begriff übersetzt: Der "Critical Path" ist nicht der längste, sondern der wertvollste oder risikoreichste User-Flow (z.B. "Registrierung -> Artikel kaufen -> Bezahlen"). Ein Fehlschlag auf diesem Pfad bedeutet totalen Wertverlust für den Benutzer oder das Unternehmen.
+Operationalisierung: Das Risk-Based-Testing (RBT) Quadranten-Modell
+Der "Critical Path" definiert den "Impact" (Auswirkung) eines Fehlers. Kombiniert mit der "Probability" (Wahrscheinlichkeit) eines Fehlers (z.B. in neuem oder komplexem Code) ergibt sich ein robustes Priorisierungsmodell, das oft als Vier-Quadranten-Ansatz visualisiert wird.65
+* P0 = Quadrant 4 (High Impact, High Probability): Test First.65
+   * Definition: Tests für neue oder kürzlich geänderte "Critical Path"-Funktionen (z.B. der neue Checkout-Flow).
+   * Aktion: Müssen als Smoke-Tests bei jedem Build laufen.
+* P1 = Quadrant 3 (High Impact, Low Probability): Test Second.65
+   * Definition: Regressions-Tests für stabile, bestehende "Critical Path"-Funktionen (z.B. der stabile Login-Flow).
+   * Aktion: Müssen als vollständige Suite vor jedem Release laufen (z.B. Stufe 2 Pipeline).
+* P2 = Quadrant 2 (High Probability, Low Impact): Test Third.65
+   * Definition: Tests für neue oder geänderte Nicht-Kern-Funktionen (z.B. der neue "Profilbild-Upload").
+   * Aktion: Sollten automatisiert werden, laufen aber seltener (z.B. nächtlich).
+* P3 = Quadrant 1 (Low Impact, Low Probability): Test Last / Defer.65
+   * Definition: Regressions-Tests für stabile, unwichtige Funktionen (z.B. der "AGB"-Seiten-Link im Footer).
+   * Aktion: Niedrigste Priorität. Oft auf manuelle Stichproben oder "Exploratory Testing" beschränkt.
+Tabelle 4: v1.0 Risk-Based Test Prioritization Quadrant
+
+
+
+
+	High Probability (Neuer / Geänderter / Komplexer Code)
+	Low Probability (Stabiler / Legacy Code)
+	High Impact (Critical Path: z.B. Login, Kauf)
+	P0 (Test Priority 1) 65 (Test First: Smoke-Tests bei jedem Build)
+	P1 (Test Priority 2) 65 (Test Second: Full-Regression vor Release)
+	Low Impact (Non-Critical: z.B. Profil-Änderung)
+	P2 (Test Priority 3) 65 (Test Third: Automatisierte Tests, nächtlich)
+	P3 (Test Priority 4) 65 (Test Last: Defer / Manuelles Spot-Testing)
+	
+
+3.3 Release-Kriterien: Die "QA Approved" Definition of Done (DoD)
+
+
+Der Status "QA Approved" 66 ist kein subjektives Urteil, sondern das Erfüllen einer formalen, binären Checkliste: der "Definition of Done" (DoD) oder der "Exit Criteria" (Ausstiegskriterien).68
+Es muss klar zwischen "Acceptance Criteria" (AC) und "Definition of Done" (DoD) unterschieden werden.71
+* Acceptance Criteria (AC): Sind spezifisch für eine einzelne User Story (z.B. "Der Benutzer kann mit E-Mail und Passwort einloggen").72
+* Definition of Done (DoD): Ist die globale Checkliste, die für jede Story (und das gesamte Inkrement) gelten muss, um als "potenziell auslieferbar" (shippable) 73 zu gelten.
+Das Konzept "Dev Complete" ist ein Trugschluss; ein Feature ist erst "Done", wenn es die DoD erfüllt, was die QA-Validierung einschließt.74
+Formale Exit-Kriterien-Checkliste für v1.0 ("QA Approved")
+Basierend auf den Exit-Kriterien-Definitionen 69 und realen Branchenstandards 76 werden die Pass-Kriterien für das v1.0-Release wie folgt definiert:
+1. Testdurchführung:
+   * critical_path_pass_rate (P0 & P1 Tests): 100%.77
+   * overall_pass_rate (Alle P2-Tests): $\geq$ 95%.77
+   * Alle geplanten Tests (P0, P1, P2) wurden nachweislich ausgeführt.70
+2. Fehlerstatus (Bug Triage):
+   * blocker_bugs_open: 0.70
+   * critical_bugs_open: 0.70
+   * high_impact_bugs_triaged: true (Alle bekannten "High"-Bugs sind entweder "Fixed", "Deferred" oder "Accepted Risk" durch den Product Owner).70
+3. Coverage-Ziele:
+   * coverage_on_new_code_met: true (Das in 3.1 definierte Ziel, z.B. 90% auf neuen PRs, wurde für alle Features des Release erreicht).61
+   * functional_coverage_met: true (Alle P0/P1-Features sind durch E2E-Tests abgedeckt).58
+4. Manuelle Abnahme (HITL):
+   * manual_ux_review_completed: true (Die obligatorische manuelle UX/Usability-Prüfung aus 1.1 wurde durchgeführt).1
+   * code_gen_audit_completed: true (Falls zutreffend: Der obligatorische HITL-Review des generierten Codes aus 1.2 wurde durchgeführt).12
+5. Formale Freigabe:
+   * test_summary_report_signed_off: true (Der Test-Zusammenfassungsbericht wurde erstellt, an alle Stakeholder verteilt und vom Product Owner "abgezeichnet").70
+Ein Release-Kandidat, der diese Checkliste erfüllt, erhält den Status "QA Approved".
+
+
+3.4 Policy für Flaky-Test-Management
+
+
+"Flaky Tests" (Tests, die "manchmal bestehen, manchmal fehlschlagen" 78, ohne Codeänderungen) sind die "Geißel" 78 von CI/CD-Pipelines. Sie untergraben das "Vertrauen" 80 in die Automatisierung, da Entwickler beginnen, rote Builds zu ignorieren ("Das ist nur der flaky Test..."). Ein robustes Management ist daher nicht optional.
+Häufigste Ursachen (Root Causes):
+1. Asynchrone Wartezeiten (Async Waits): Der Test wird ausgeführt, bevor ein API-Aufruf oder eine UI-Animation abgeschlossen ist.82
+2. Externe Abhängigkeiten: Netzwerk-Latenz, ein langsamer 3rd-Party-Service oder Datenbank-Timeouts.82
+3. Test-Reihenfolgen-Abhängigkeit (Test Order Dependency): Test B schlägt fehl, weil Test A die Daten in einen unerwarteten Zustand versetzt hat.82 Tests sind nicht unabhängig.84
+4. Concurrency / Race Conditions: Tests, die parallel laufen, greifen auf dieselben Ressourcen zu (z.B. denselben Test-User).82
+Die 4-Phasen-Lifecycle-Policy für Flaky Tests:
+Eine Ad-hoc-Behandlung ("einfach nochmal laufen lassen") ist unzureichend. Das Framework etabliert einen formalen, automatisierten Lebenszyklus:
+1. DETECT (Erkennen):
+* Ein Test schlägt in der CI-Pipeline fehl.
+* Die Pipeline führt automatisch nur diesen fehlgeschlagenen Test erneut aus (z.B. "retry: 2").84
+* Wenn der Test beim 2. oder 3. Mal besteht, wird der Build als "bestanden" markiert. Gleichzeitig wird der Test in einer "Flaky-Test-Datenbank" (z.B. einem Dashboard) als flaky_count + 1 markiert.86
+2. QUARANTINE (Isolieren):
+* Wenn flaky_count > 3 (oder ein ähnlicher Schwellenwert) innerhalb eines Zeitfensters (z.B. 7 Tage) erreicht wird, wird der Test als "chronisch flaky" eingestuft.
+* Er wird automatisch "gemuted" 87 oder "unter Quarantäne gestellt" (quarantined).78
+* Aktion: Der Test wird aus der blockierenden Haupt-CI-Pipeline (Stufe 0/1) entfernt und in eine separate, nicht-blockierende "Quarantine-Pipeline" verschoben, die nur zur Information läuft.78
+* Vorteil: Die Haupt-Pipeline wird wieder stabil und "grün", was das Vertrauen wiederherstellt und das Deployment nicht blockiert.78 Gleichzeitig wird die Testabdeckung nicht stillschweigend verloren.88
+* Ein "Tech Debt"-Ticket zur Behebung wird automatisch für den Test-Owner (Team) erstellt.
+3. ANALYZE (Analysieren):
+* Der Test-Owner führt eine Root-Cause-Analyse (RCA) durch.90
+* Die Analyse prüft die häufigsten Ursachen:
+   * Wird ein sleep() statt einer expliziten Wartebedingung (z.B. "wait for element to be visible") verwendet? 85
+   * Ist der Test von einem externen Dienst abhängig? (Lösung: Mocken 82).
+   * Ist der Test von einem anderen Test abhängig? (Lösung: Unabhängig machen; Umgebung vor jedem Test zurücksetzen 84).
+4. RESOLVE (Beheben):
+* Der Test wird architektonisch korrigiert (z.B. durch Hinzufügen eines Mocks).
+* Der korrigierte Test wird "Stress-getestet" (z.B. 100 Mal parallel in einer Schleife ausgeführt, um sicherzustellen, dass er stabil ist).85
+* Wenn er 100/100 Mal besteht, wird er manuell wieder in die Haupt-CI-Pipeline aufgenommen und sein flaky_count im Dashboard zurückgesetzt.
+Diese vier Phasen bilden einen geschlossenen Regelkreis, der das Problem der "Flakiness" systematisch verwaltet, anstatt es zu ignorieren, und so die langfristige Gesundheit der automatisierten Validierungs-Pipeline sicherstellt.
+Referenzen
+1. What Are the Limitations of Automated Testing? - QASource, Zugriff am November 12, 2025, https://blog.qasource.com/resources/what-are-the-limitations-of-automation-testing
+2. The State of the Art in Automating Usability Evaluation of User Interfaces - WebTango, Zugriff am November 12, 2025, https://webtango.berkeley.edu/papers/ue-survey/ue-survey.pdf
+3. What test cases should be automated (and which shouldn't) - Testlio, Zugriff am November 12, 2025, https://testlio.com/blog/what-test-cases-should-be-automated/
+4. Usability Testing of Mobile Applications: A Methodological Framework - MDPI, Zugriff am November 12, 2025, https://www.mdpi.com/2076-3417/14/5/1792
+5. Which Test Cases Should You Not Automate, Zugriff am November 12, 2025, https://avoautomation.com/blog/test-cases-to-not-automate
+6. 8 Types of Test Cases Not To Be Automated - Software Testing Material, Zugriff am November 12, 2025, https://www.softwaretestingmaterial.com/test-cases-not-to-be-automated/
+7. What shouldn't you automate? - qestit, Zugriff am November 12, 2025, https://qestit.com/en/blog/what-shouldnt-you-automate
+8. Exploratory vs Automated Testing: Finding the Perfect Balance for Success - Devōt, Zugriff am November 12, 2025, https://devot.team/blog/exploratory-vs-automated-testing
+9. Exploratory Testing vs. Automated Testing: Finding the Right Balance - Copado, Zugriff am November 12, 2025, https://www.copado.com/resources/blog/exploratory-testing-vs-automated-testing-finding-the-right-balance
+10. In what scenarios would exploratory testing be more effective than structured test automation, and how do you balance the two approaches? : r/Everything_QA - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/Everything_QA/comments/1gxb0qt/in_what_scenarios_would_exploratory_testing_be/
+11. Regulating for “humans-in-the-loop” | ECGI, Zugriff am November 12, 2025, https://www.ecgi.global/publications/blog/regulating-for-humans-in-the-loop
+12. What is a Human-in-the-Loop? - Aya Data, Zugriff am November 12, 2025, https://www.ayadata.ai/what-is-a-human-in-the-loop/
+13. Is Human-in-the-Loop Still Needed for LLM Coding if Full Context is Provided? - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ClaudeCode/comments/1nnb256/is_humanintheloop_still_needed_for_llm_coding_if/
+14. Load testing is hard, and the tools are... not great. But why? | nicole@web - Ntietz, Zugriff am November 12, 2025, https://ntietz.com/blog/load-testing-is-hard-but-why/
+15. 5 Reasons Load Testing Does Not Work (My Free Advice) - YouTube, Zugriff am November 12, 2025, https://www.youtube.com/watch?v=uqwfE9w-uVU
+16. 9 Load Testing Best Practices (Don't Make These Mistakes) - Test Guild, Zugriff am November 12, 2025, https://testguild.com/best-load-testing/
+17. Penetration Testing Checklist: Actions to Take at Every Stage - GRSee Consulting, Zugriff am November 12, 2025, https://grsee.com/resources/pentesting/penetration-testing-checklist/
+18. How to Ensure a Stable Test Environment: Best Practices - TestDevLab, Zugriff am November 12, 2025, https://www.testdevlab.com/blog/how-to-ensure-a-stable-test-environment
+19. 15 Risks & Rewards of Pentesting in a Production Environment - Software Secured, Zugriff am November 12, 2025, https://www.softwaresecured.com/post/pentesting-in-a-production-environment
+20. Penetration Testing Guidance - PCI Security Standards Council, Zugriff am November 12, 2025, https://www.pcisecuritystandards.org/documents/Penetration-Testing-Guidance-v1_1.pdf
+21. CI/CD Process: Flow, Stages, and Critical Best Practices - Codefresh, Zugriff am November 12, 2025, https://codefresh.io/learn/ci-cd-pipelines/ci-cd-process-flow-stages-and-critical-best-practices/
+22. Solving the TLS 1.0 Problem, 2nd Edition - Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/security/engineering/solving-tls1-problem
+23. Comparison of Automation Frameworks: Selenium, Playwright and Cypress, Zugriff am November 12, 2025, https://dev.to/mteheran/comparison-of-automation-frameworks-selenium-playwright-and-cypress-3h8i
+24. Playwright vs Selenium vs Cypress: a Detailed Comparison, Zugriff am November 12, 2025, https://testomat.io/blog/playwright-vs-selenium-vs-cypress-a-detailed-comparison/
+25. Selenium vs. Cypress vs. Playwright - Software Testing Magazine, Zugriff am November 12, 2025, https://www.softwaretestingmagazine.com/knowledge/selenium-vs-cypress-vs-playwright/
+26. Playwright VS Cypress – Limitations OR Why Not Use? - Discussions - The Club, Zugriff am November 12, 2025, https://club.ministryoftesting.com/t/playwright-vs-cypress-limitations-or-why-not-use/85581
+27. Testing Pyramid: Breaking Down the Layers - Testlio, Zugriff am November 12, 2025, https://testlio.com/blog/breaking-down-the-test-automation-pyramid/
+28. Testing stages in continuous integration and continuous delivery - AWS Documentation, Zugriff am November 12, 2025, https://docs.aws.amazon.com/whitepapers/latest/practicing-continuous-integration-continuous-delivery/testing-stages-in-continuous-integration-and-continuous-delivery.html
+29. Getting Started with the Test Automation Pyramid – An Ultimate Guide - BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/testing-pyramid-for-test-automation
+30. Mocks, Spies, and Stubs: How to Use? - testRigor AI-Based Automated Testing Tool, Zugriff am November 12, 2025, https://testrigor.com/blog/mocks-spies-and-stubs/
+31. Mocking and Stubbing for Effective Unit Test Generation - Zencoder, Zugriff am November 12, 2025, https://zencoder.ai/blog/effective-unit-tests-mocking-stubbing
+32. What's the difference between a mock & stub? - Stack Overflow, Zugriff am November 12, 2025, https://stackoverflow.com/questions/3459287/whats-the-difference-between-a-mock-stub
+33. The testing pyramid: Strategic software testing for Agile teams - CircleCI, Zugriff am November 12, 2025, https://circleci.com/blog/testing-pyramid/
+34. Integration Testing: A Detailed Guide - BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/integration-testing
+35. Integration tests in ASP.NET Core | Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-9.0
+36. Database integration tests in local environment | TUI MM Engineering Center - Medium, Zugriff am November 12, 2025, https://medium.com/tuimm/database-integration-tests-in-local-environment-b5b886de0a8c
+37. Mocking in integration tests. : r/dotnet - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/dotnet/comments/16pthnq/mocking_in_integration_tests/
+38. Integration Testing: Testing Service to Service - Software Engineering Stack Exchange, Zugriff am November 12, 2025, https://softwareengineering.stackexchange.com/questions/357533/integration-testing-testing-service-to-service
+39. Software Engineering - Integration Testing - GeeksforGeeks, Zugriff am November 12, 2025, https://www.geeksforgeeks.org/software-testing/software-engineering-integration-testing/
+40. What is End-to-End (E2E) Testing - Example & Tools - HeadSpin, Zugriff am November 12, 2025, https://www.headspin.io/blog/what-is-end-to-end-testing
+41. The different types of software testing - Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/continuous-delivery/software-testing/types-of-software-testing
+42. A Complete Guide to End to End Testing - Autify, Zugriff am November 12, 2025, https://autify.com/blog/a-complete-guide-to-end-to-end-testing
+43. What is E2E? A guide to end-to-end testing | CircleCI, Zugriff am November 12, 2025, https://circleci.com/blog/what-is-end-to-end-testing/
+44. 10 Tips for Enhancing Software Testability in Your Development Process - Qodo, Zugriff am November 12, 2025, https://www.qodo.ai/blog/10-tips-for-enhancing-software-testability-in-your-development-process/
+45. Testability in Software Testing - QA Touch, Zugriff am November 12, 2025, https://www.qatouch.com/blog/testability-in-software-testing/
+46. Best Practices | Playwright, Zugriff am November 12, 2025, https://playwright.dev/docs/best-practices
+47. Test Automation Best Practices - SmartBear, Zugriff am November 12, 2025, https://smartbear.com/learn/automated-testing/best-practices-for-automation/
+48. Automation Testing Best Practices : r/softwaretesting - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/softwaretesting/comments/1bhpiaj/automation_testing_best_practices/
+49. Unlocking the Power of API Contract Testing for Developers - ACCELQ, Zugriff am November 12, 2025, https://www.accelq.com/blog/api-contract-testing/
+50. A Guide to Contract Testing for API Reliability | Zuplo Learning Center, Zugriff am November 12, 2025, https://zuplo.com/learning-center/guide-to-contract-testing-for-api-reliability
+51. A Complete Guide to API Contract Testing - Testsigma, Zugriff am November 12, 2025, https://testsigma.com/blog/api-contract-testing/
+52. What's the proper order of stages in a CI build? - Software Engineering Stack Exchange, Zugriff am November 12, 2025, https://softwareengineering.stackexchange.com/questions/403545/whats-the-proper-order-of-stages-in-a-ci-build
+53. Where does testing fit into your CI/CD pipeline? - Discussions - The Club, Zugriff am November 12, 2025, https://club.ministryoftesting.com/t/where-does-testing-fit-into-your-ci-cd-pipeline/67895
+54. Mastering CI/CD: A Comprehensive Guide to Implementing the Testing Pyramid in Your Pipeline Strategy - Bits and Pieces, Zugriff am November 12, 2025, https://blog.bitsrc.io/mastering-ci-cd-a-comprehensive-guide-to-implementing-the-testing-pyramid-in-your-pipeline-68ed248dcc08
+55. CI/CD, Release process and e2e testing, how does it look like at your place? - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ExperiencedDevs/comments/1i9nt0i/cicd_release_process_and_e2e_testing_how_does_it/
+56. Code coverage vs Functional Coverage | SERP WIZARD, Zugriff am November 12, 2025, https://www.serpwizard.com/code-coverage-vs-functional-coverage/
+57. Making your code base better will make your code coverage worse - Stack Overflow, Zugriff am November 12, 2025, https://stackoverflow.blog/2025/09/29/making-your-code-base-better-will-make-your-code-coverage-worse/
+58. Code Coverage vs Test Coverage | BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/code-coverage-vs-test-coverage
+59. Is 70%, 80%, 90%, or 100% Code Coverage Good Enough? - Qt, Zugriff am November 12, 2025, https://www.qt.io/quality-assurance/blog/is-70-80-90-or-100-code-coverage-good-enough
+60. How much code coverage is enough? Best practices for coverage, Zugriff am November 12, 2025, https://graphite.dev/guides/code-coverage-best-practices
+61. Strategies for Higher Test Coverage - Qt, Zugriff am November 12, 2025, https://www.qt.io/quality-assurance/blog/strategies-for-higher-test-coverage
+62. Risk Based Testing Guide: Best Practices & Tips - aqua cloud, Zugriff am November 12, 2025, https://aqua-cloud.io/risk-based-testing/
+63. Show the critical path of your project in Project - Microsoft Support, Zugriff am November 12, 2025, https://support.microsoft.com/en-us/office/show-the-critical-path-of-your-project-in-project-ad6e3b08-7748-4231-afc4-a2046207fd86
+64. The Critical Path, Zugriff am November 12, 2025, https://www.imse.iastate.edu/files/2015/08/Critical-Path.pdf
+65. Risk-Based Testing: Expert Guide - Test Guild, Zugriff am November 12, 2025, https://testguild.com/risk-based-testing/
+66. Complete guide to quality assurance in software development - Qt, Zugriff am November 12, 2025, https://www.qt.io/quality-assurance/complete-guide-to-software-quality-assurance
+67. What Is QA (Quality Assurance)? - Forage, Zugriff am November 12, 2025, https://www.theforage.com/blog/skills/quality-assurance
+68. Full Guide to Software Testing Life Cycle (STLC) - TestFort, Zugriff am November 12, 2025, https://testfort.com/blog/software-testing-life-cycle-guide
+69. What are the entry and exit criteria? - Software Testing 101, Zugriff am November 12, 2025, https://www.testing101.net/post/what-are-the-entry-and-exit-criteria
+70. Entry and Exit Criteria in Software Testing | BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/entry-and-exit-criteria-in-software-testing
+71. Understanding the Definition of Done: What it Means and Why it Matters - ICAgile, Zugriff am November 12, 2025, https://www.icagile.com/resources/understanding-the-definition-of-done-what-it-means-and-why-it-matters
+72. Definition of Done: Software Development Process - QA Touch, Zugriff am November 12, 2025, https://www.qatouch.com/blog/definition-of-done/
+73. Zugriff am November 12, 2025, https://www.productplan.com/learn/agile-definition-of-done/#:~:text=%E2%80%9CThe%20definition%20of%20done%20(DoD,of%20done%20to%20ensure%20quality.
+74. Is QA part of your "definition of done"? : r/ExperiencedDevs - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ExperiencedDevs/comments/11xp0g2/is_qa_part_of_your_definition_of_done/
+75. Entry and Exit Criteria in Software Testing, Explained - Enov8, Zugriff am November 12, 2025, https://www.enov8.com/blog/release-entry-exit-criteria-explained/
+76. QA:Release validation test plan - Fedora Project Wiki, Zugriff am November 12, 2025, https://fedoraproject.org/wiki/QA:Release_validation_test_plan
+77. Criteria for passing/failing the tests : r/QualityAssurance - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/QualityAssurance/comments/1aka67g/criteria_for_passingfailing_the_tests/
+78. Pros and Cons of Quarantined Tests - Mark Lapierre, Zugriff am November 12, 2025, https://marklapierre.net/pros-cons-quarantined-tests/
+79. What is a Flaky Test? Causes, Identification & Remediation - Datadog, Zugriff am November 12, 2025, https://www.datadoghq.com/knowledge-center/flaky-tests/
+80. Flaky Tests in Automation: Strategies for Reliable Automated Testing - Ranorex, Zugriff am November 12, 2025, https://www.ranorex.com/blog/flaky-tests/
+81. Flaky tests - pytest documentation, Zugriff am November 12, 2025, https://docs.pytest.org/en/stable/explanation/flaky.html
+82. How to reduce flaky test failures | CircleCI, Zugriff am November 12, 2025, https://circleci.com/blog/reducing-flaky-test-failures/
+83. What is a Flaky Test: Causes, Detect & Fix | BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/test-reporting-and-analytics/features/test-reporting/what-is-flaky-test
+84. A practical guide to reducing the burden of flaky tests - Rainforest QA Blog, Zugriff am November 12, 2025, https://www.rainforestqa.com/blog/flaky-tests
+85. How do you Address and Prevent Flaky Tests? : r/softwaretesting - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/softwaretesting/comments/1chvg6s/how_do_you_address_and_prevent_flaky_tests/
+86. From Fragile to Agile: Automating the fight against Flaky Tests - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/RedditEng/comments/1ap4axo/from_fragile_to_agile_automating_the_fight/
+87. What are Flaky Tests? | TeamCity CI/CD Guide - JetBrains, Zugriff am November 12, 2025, https://www.jetbrains.com/teamcity/ci-cd-guide/concepts/flaky-tests/
+88. How to Fix Flaky Test and Boost CI Reliability - Undo.io, Zugriff am November 12, 2025, https://undo.io/solutions-old/developer-productivity/fix-flaky-tests-problem/
+89. Flaky tests: their hidden costs and how to address flaky behavior - Datadog, Zugriff am November 12, 2025, https://www.datadoghq.com/blog/datadog-flaky-tests/
+90. Managing Flaky Tests with AI: Root Cause Analysis at Scale - ACCELQ, Zugriff am November 12, 2025, https://www.accelq.com/blog/flaky-tests/

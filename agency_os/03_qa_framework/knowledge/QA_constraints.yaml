@@ -1,0 +1,64 @@
+# QA_constraints.yaml
+#
+# Definiert die fundamentalen Grenzen, "Nicht-Ziele" und
+# Einschränkungen des v1.0 QA-Frameworks.
+# Basiert auf Teil 1 des Forschungsberichts.
+
+v: 1.0
+kind: QAConstraints
+metadata:
+  name: "v1.0-qa-constraints"
+  description: "Definiert, was nicht (oder noch nicht) getestet wird und welche Tool-Einschränkungen akzeptiert werden."
+spec:
+  # 1.1 Inhärente Automatisierungsgrenzen
+  # Bereiche, die objektiv nicht durch Automatisierung validiert werden können.
+  non_automatable_areas:
+    - area: "Subjektive User Experience (UX) & Usability"
+      reason: "Automatisierung kann nicht messen, ob sich eine App 'umständlich' anfühlt oder 'Verwirrung stiftet'."
+      validation_method: "Manuelles HITL Usability Testing"
+    - area: "Ästhetik & Emotionaler Eindruck"
+      reason: "Tests können nicht validieren, ob ein Design 'professionell aussieht' oder eine 'emotionale Reaktion' hervorruft."
+      validation_method: "Manuelles HITL Review"
+    - area: "Kontextabhängige Geschäftslogik"
+      reason: "Erfordert tiefes Fachwissen (Subject Matter Expertise), um zu beurteilen, ob ein Ergebnis (z.B. ein Finanzbericht) 'sinnvoll' ist, selbst wenn die Zahlen korrekt sind."
+      validation_method: "Manuelles HITL SME Review"
+
+  # 1.2 Human-in-the-Loop (HITL) Mandat
+  # Szenarien, in denen menschliches Eingreifen obligatorisch ist.
+  hitl_mandatory_scenarios:
+    - scenario: "Exploratory Testing"
+      rationale: "Erfordert menschliche Neugier und Denken 'wie ein Endbenutzer', um ungeskriptete Edge Cases und Mängel zu finden, die Automatisierung übersieht."
+    - scenario: "Usability & Acceptance Tests"
+      rationale: "Alle subjektiven Bewertungen (UX, 'Look and Feel', Barrierefreiheit) erfordern menschliche Wahrnehmung."
+    - scenario: "Audit von KI/LLM-generiertem Code"
+      rationale: "Aktuelle 'Coding Agents' erfordern menschliche Aufsicht. Der generierte Code muss von einem Menschen (Entwickler oder QA) als 'Auditor' geprüft und abgenommen werden."
+    - scenario: "Validierung von High-Impact-Entscheidungen"
+      rationale: "In Finanz-, Medizin- oder Rechtssystemen muss die 'endgültige Entscheidung' von einem Menschen getroffen werden, der die KI als 'Empfehlung' nutzt."
+
+  # 1.3 Pragmatisches v1.0 Scoping (Zurückgestellte Tests)
+  # Testtypen, die für v1.0 als unrealistisch eingestuft und zurückgestellt werden.
+  deferred_v1_test_types:
+    - type: "Load Testing"
+      reason: "Unrealistisch für v1.0. Erfordert eine stabile, produktionsnahe Umgebung, um valide Baselines zu messen. Tests auf instabilem v1.0-Code liefern 'unrealistische Ergebnisse'."
+    - type: "Penetration Testing (DAST)"
+      reason: "Unrealistisch für v1.0. Erfordert eine exakte Kopie der Produktion. Tests auf Staging führen zu 'False Positives' (Staging-spezifische Lücken) und 'False Negatives' (Produktions-spezifische Lücken werden übersehen)."
+  
+  # explizit *nicht* zurückgestellte Sicherheitstests
+  mandatory_v1_security_tests:
+    - type: "Static Application Security Testing (SAST)"
+      rationale: "Muss als obligatorisches 'Quality Gate' in der CI/CD-Pipeline implementiert werden, um Code-Muster zu prüfen."
+    - type: "Software Composition Analysis (SCA)"
+      rationale: "Muss als obligatorisches 'Quality Gate' implementiert werden, um Abhängigkeiten (Libraries) auf bekannte Schwachstellen zu prüfen."
+
+  # 1.4 E2E-Framework-Tool-Limitationen
+  # Technische Einschränkungen, die durch die Wahl des E2E-Tools entstehen.
+  e2e_framework_tradeoffs:
+    - framework: "Selenium"
+      constraint: "Keine eingebaute 'Auto-Wait'-Funktion."
+      implication: "Höheres Risiko für 'flaky tests'. Erfordert manuellen Aufwand zur Implementierung robuster Warte-Strategien."
+    - framework: "Cypress"
+      constraint: "Keine native Unterstützung für Multi-Tabs, Pop-ups oder iframes."
+      implication: "Workflows, die neue Fenster öffnen (z.B. OAuth-Logins, 3rd-Party-Zahlungen, AGB-Links), können nicht oder nur sehr umständlich getestet werden."
+    - framework: "Playwright"
+      constraint: "Neueres Framework, potenziell kleinere Community-Wissensbasis für Nischenprobleme."
+      implication: "Setzt stark auf moderne async/await-Muster, die das Team beherrschen muss."

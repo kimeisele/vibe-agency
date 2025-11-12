@@ -1,0 +1,76 @@
+# DEPLOY_quality_rules.yaml
+#
+# Definiert die messbaren Kriterien für Erfolg (DoD) und Misserfolg (Rollback Triggers)
+# eines Produktions-Deployments.
+# Basiert auf der Analyse in Teil 4 des Berichts.
+v: 1.0
+kind: DeploymentQualityRules
+metadata:
+ name: "v1.0-production-quality-rules"
+ description: "Qualitätsregeln, DoD und Rollback-Auslöser für v1.0."
+spec:
+ # 4.1 Definition of Done (DoD)
+ definition_of_done:
+   # "Done" bedeutet "stabil in Produktion", nicht nur "Code kopiert".
+   # Basiert auf Agile DoD [85, 89] und SRE-Praktiken.
+   - id: 1
+     name: "CI Checks Passed"
+     description: "Build, Unit-Tests, Linting, SAST sind grün."
+   - id: 2
+     name: "Artifact Versioned"
+     description: "Unveränderliches Artefakt ist in der Registry gespeichert."
+   - id: 3
+     name: "QA/Compliance Approved"
+     description: "Manuelles Produktions-Gate wurde genehmigt."
+   - id: 4
+     name: "DB Migration Complete"
+     description: "Datenbankmigrationen (falls vorhanden) erfolgreich."
+   - id: 5
+     name: "Platform Rollout Complete"
+     description: "Plattform (K8s/CaaS) meldet 100% Abschluss des Rolling Update."
+   - id: 6
+     name: "Health Checks Passing"
+     description: "Alle neuen Instanzen bestehen Liveness- und Readiness-Probes."
+   - id: 7
+     name: "Golden Signals Stable (Soak Time)"
+     description: "Golden Signals bleiben für 5 Minuten *nach* Schritt 6 unter den Alarm-Schwellenwerten."
+ # 4.2 Health-Checks (Zustandsprüfungen)
+ health_checks:
+   # Diese müssen von der Anwendung implementiert werden.
+   - name: "Liveness Probe"
+     description: "Prüft, ob der Container neu gestartet werden muss."
+     endpoint: "GET /livez"
+     http_status: 200
+     required_logic: "Minimalistisch. NUR internen Zustand prüfen. KEINE externen Abhängigkeiten (DB, APIs), um Kaskadenfehler zu vermeiden."
+   - name: "Readiness Probe"
+     description: "Prüft, ob der Container Traffic empfangen soll."
+     endpoint: "GET /readyz"
+     http_status: "2xx oder 3xx "
+     required_logic: "Umfassend. MUSS alle kritischen Abhängigkeiten prüfen (z.B. DB-Verbindung, Key-Value-Store)."
+   - name: "Startup Probe"
+     description: "Optional, bei langsamen Starts (>30s), um Liveness-Prüfung zu verzögern."
+     endpoint: "Nutzt /livez oder /readyz"
+
+ # 4.3 Priorisierung von Deployments
+ prioritization:
+   - type: "Hotfix / Emergency"
+     mechanism: "Das CI/CD-Tool MUSS eine 'Move to Top'-Funktion  in der Deployment-Warteschlange unterstützen."
+     description: "Ermöglicht das Vorziehen eines dringenden Hotfixes vor geplante, nicht-dringende Releases."
+ # 4.4 Automatisierte Rollback-Auslöser
+ rollback_triggers:
+   # Dies sind die Bedingungen, die einen automatischen Rollback 
+   # auf das 'latest_stable_artifact' auslösen.
+   - trigger: 1
+     name: "Synchronous: Health Check Failure"
+     description: "Das Deployment wird nicht 'Ready' (Fast Fail)."
+     source: "Bereitstellungsplattform (K8s / CaaS-API)"
+     condition: "Rolling Update erreicht nicht '100% Ready' Status innerhalb von 10 Minuten (Timeout)."
+     action: "AUTO_ROLLBACK(latest_stable_artifact)"
+   - trigger: 2
+     name: "Asynchronous: Golden Signal Breach"
+     description: "Das Deployment ist 'Ready', aber 'Unhealthy' (Slow Fail).[101, 103]"
+     source: "Beobachtbarkeitsplattform (via API)"
+     condition: "(golden_signal.errors_5xx.rate > 10%) ODER (golden_signal.latency.p95_ms > 2000)"
+     monitoring_period: "Wird während der 5-minütigen 'Soak Time'  geprüft."
+     threshold_logic: "Bedingung muss für 2 aufeinanderfolgende Minuten bestehen, um 'Flapping' zu vermeiden."
+     action: "AUTO_ROLLBACK(latest_stable_artifact)"

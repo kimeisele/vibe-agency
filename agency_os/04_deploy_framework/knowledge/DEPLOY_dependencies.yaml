@@ -1,0 +1,73 @@
+# DEPLOY_dependencies.yaml
+#
+# Definiert die Eingaben, Sequenzen und Voraussetzungen, 
+# die für den Start und die Durchführung eines Deployments erforderlich sind.
+# Basiert auf der Analyse in Teil 3 des Berichts.
+v: 1.0
+kind: DeploymentDependencies
+metadata:
+ name: "v1.0-production-dependencies"
+ description: "Abhängigkeiten und Sequenzierung für den v1.0 Deployment-Prozess."
+spec:
+ # 3.1 QA-zu-Deploy-Übergabe
+ qa_handoff:
+   - name: "Automated Quality Gate Report"
+     type: "Input (data)"
+     description: "Aggregierter Bericht (Testergebnisse, SAST, DAST) von einem Qualitätstor."
+     status: "Muss dem Genehmiger vorgelegt werden."
+   - name: "Manual Production Approval"
+     type: "Input (action)"
+     description: "Ein menschlicher Genehmiger (z.B. QA Lead, Tech Lead) muss das Deployment im CI/CD-Tool explizit freigeben."
+     status: "Blockierende Abhängigkeit für die 'production'-Stufe."
+     implementation: "MUSS über native CI/CD-Funktionen erfolgen (z.B. GitLab Protected Environment , GitHub Reviewer , Jenkins Input [49])."
+ # 3.2 Kritische Pfad-Sequenzierung
+ deployment_sequence:
+   # Die Reihenfolge ist kritisch, um Ausfallzeiten zu vermeiden.
+   - step: 1
+     name: "Pre-Flight: Manual Approval"
+     description: "Pipeline pausiert und wartet auf manuelle Genehmigung (siehe qa_handoff)."
+   - step: 2
+     name: "Database Backup"
+     description: "Erstellt einen Snapshot der Produktionsdatenbank (nur für Desaster Recovery)."
+   - step: 3
+     name: "Database Migration"
+     description: "Führt Datenbankmigrationen aus (z. B. via Flyway/Liquibase)."
+     constraints: "Siehe 'database_migration' Sektion unten."
+     on_failure: "HALT_PIPELINE. Nicht mit Step 4 fortfahren."
+   - step: 4
+     name: "Application Rollout"
+     description: "Startet das 'RollingUpdate'  des neuen Anwendungs-Artefakts."
+   - step: 5
+     name: "Post-Deploy: Soak & Monitor"
+     description: "Aktiviert Post-Deployment Quality Rules (siehe DEPLOY_quality_rules.yaml) für eine 'Soak Time' von 5 Minuten."
+ # 3.3 Rollback-Abhängigkeiten
+ rollback_prerequisites:
+   application:
+     - name: "Immutable Artifact Registry"
+       description: "Muss ein versioniertes, unveränderliches Artefakt (z.B. Docker-Image) für jede erfolgreiche 'latest_stable' Bereitstellung speichern.[68, 76]"
+       type: "z.B. Docker Registry, AWS ECR, GCR"
+   database:
+     - name: "Rollback-Strategie"
+       # Wir vermeiden DB-Rollbacks (Downgrades), da sie riskant sind.[69, 74]
+       strategy: "Roll-Forward (Fix-Forward)"
+       description: "Fehler werden durch das Pushen eines neuen Fixes (z.B. v1.1.1) behoben, nicht durch Rückgängigmachung."
+     - name: "Migrations-Design"
+       # Dies ist die *eigentliche* Abhängigkeit für einen sicheren App-Rollback.
+       requirement: "Migrationen MÜSSEN additiv und abwärtskompatibel sein."
+       description: "Die v1.0-App muss mit dem v1.1-DB-Schema funktionieren können (indem sie neue Felder ignoriert).[65, 66]"
+
+ # 3.4 Monitoring-Abhängigkeiten
+ observability_prerequisites:
+   # Monitoring ist eine Voraussetzung *vor* dem Deployment.
+   - name: "Golden Signal Instrumentation"
+     description: "Die Anwendung MUSS Metriken für die 4 Golden Signals exportieren."
+     signals:
+       - "Latency (z.B. p95-Antwortzeit)"
+       - "Traffic (z.B. Anfragen/Sek)"
+       - "Errors (z.B. HTTP 5xx-Fehlerrate)"
+       - "Saturation (z.B. CPU-, RAM-Auslastung)"
+   - name: "Centralized Logging"
+     description: "Alle Anwendungs- und Systemprotokolle müssen an einen zentralen Ort (z.B. ELK, Splunk, CloudWatch Logs) gestreamt werden.[77]"
+   - name: "Pipeline API Access"
+     description: "Die CI/CD-Pipeline MUSS über einen API-Schlüssel für die Beobachtbarkeitsplattform verfügen."
+     reason: "Erforderlich, um die 'Golden Signals' während der 'Soak Time' (Trigger 2) automatisch abzufragen.[83, 84]"

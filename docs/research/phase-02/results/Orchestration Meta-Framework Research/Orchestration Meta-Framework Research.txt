@@ -1,0 +1,1057 @@
+﻿Orchestrierungs-Meta-Framework: Ein Architekturentwurf für den Unified Software Development Lifecycle
+
+
+
+
+Teil 1: Das SDLC-Meta-Workflow-Design (Blueprint für ORCHESTRATION_workflow_design.yaml)
+
+
+
+
+1.1. Architektonische Philosophie: Warum eine Zustandsmaschine?
+
+
+Die vier bereitgestellten Framework-Analysen – Code-Generierung 1, QA/Testing 1, Deployment 1 und Maintenance/Bug-Triage 1 – definieren hochgradig optimierte, domänenspezifische Regelsätze. Ohne ein übergreifendes Meta-Framework existieren diese jedoch als unkoordinierte "Inseln", die auf manuelle Übergaben, Ad-hoc-Skripte und implizites Stammeswissen angewiesen sind, um den Software-Entwicklungszyklus (SDLC) voranzutreiben.
+Die Kernherausforderung bei der Verbindung dieser Frameworks ist daher ein Problem des Zustandsmanagements (State Management) und der Dauerhaftigkeit (Durability).
+Die architektonische Lösung besteht darin, den gesamten SDLC nicht als eine Reihe von sequenziellen Skripten, sondern als eine einzige, deterministische Zustandsmaschine (State Machine) zu modellieren. In diesem Modell wird jedes der vier Frameworks zu einem definierten State. Die "Quality Gates" 1 und "Approval Reports" 1 werden zu den Auslösern für Transitions (Übergänge). Die definierten Artefakte (z. B. qa_report.json, deploy_receipt.json) sind die unveränderlichen Nachrichten, die zwischen diesen Zuständen übergeben werden.
+Diese Modellierung hat eine unmittelbare und tiefgreifende technische Konsequenz: Sie entlarvt die Unzulänglichkeit traditioneller, zustandsloser CI/CD-Systeme (wie GitHub Actions) für die Rolle des Meta-Orchestrators. Ein CI-System ist ereignisgesteuert und in seiner Ausführungszeit stark begrenzt (z. B. 6-Stunden-Limit bei GHA-gehosteten Runnern 2). Es kann einen Übergang auslösen, aber es kann den Zustand eines Workflows, der Tage oder Wochen auf eine manuelle QA-Freigabe wartet, nicht von sich aus "halten".
+Daher muss die in Teil 3 ausgewählte Orchestrierungs-Engine explizit für langlebiges, zustandsbehaftetes Management konzipiert sein. Der Prozess wird von einer Reihe flüchtiger Skripte zu einem einzigen, langlebigen und vollständig auditierbaren Workflow transformiert.
+
+
+1.2. Definition der Workflow-Zustände (States)
+
+
+Die Zustandsmaschine besteht aus fünf Kernzuständen, von denen vier sequenziell und einer parallel/ereignisgesteuert ist.
+* State 1: PLANNING (Implizierter Startzustand)
+   * Beschreibung: Der Startpunkt des Workflows, an dem Geschäftsanforderungen in eine technische Spezifikation umgewandelt werden.
+   * Input: Geschäftsanforderung (z. B. Jira-Ticket, User Story).
+   * Output-Artefakt: project_manifest.json (der "Master-Vertrag", der das Projekt durch seinen gesamten Lebenszyklus begleitet).
+* State 2: CODING
+   * Beschreibung: Dieser Zustand wird vollständig durch das CODE_GEN-Framework 1 gesteuert. Er nimmt eine detaillierte technische Spezifikation entgegen und erzeugt ein vollständiges, testbares Artefakt-Bundle.
+   * Input-Artefakt: code_gen_spec.json (eine detaillierte technische Spezifikation, die auf dem project_manifest basiert und den L1-L4-Kontext bereitstellt 1).
+   * Output-Artefakt: artifact_bundle (ein Paket, das source_code, unit_tests und documentation enthält 1).
+* State 3: TESTING
+   * Beschreibung: Gesteuert durch das QA_TESTING-Framework.1 Dieser Zustand führt die definierte Testpyramide (Unit, Integration, E2E) aus und erzwingt die "Definition of Done" (DoD) der Qualitätssicherung, einschließlich der obligatorischen manuellen HITL-Validierung.1
+   * Input-Artefakt: artifact_bundle (von CODING), test_plan.json (definiert, was zu testen ist 1).
+   * Output-Artefakt: qa_report.json (enthält den binären Status APPROVED oder REJECTED 1).
+* State 4: DEPLOYMENT
+   * Beschreibung: Gesteuert durch das DEPLOYMENT-Framework.1 Dieser Zustand verwaltet die sichere Veröffentlichung des validierten Artefakts in die Produktion, einschließlich eines separaten, Compliance-gesteuerten manuellen Genehmigungs-Gates.1
+   * Input-Artefakt: qa_report.json (mit Status APPROVED).
+   * Output-Artefakt: deploy_receipt.json (enthält den Status SUCCESS, FAILED oder ROLLED_BACK 1).
+* State 5: MAINTENANCE (Parallel-Zustand)
+   * Beschreibung: Dieser Zustand ist der entscheidende Verbindungspunkt für die Systemstabilität und wird durch das MAINTENANCE-Framework 1 gesteuert. Er wird nicht sequenziell durchlaufen, sondern ereignisgesteuert durch einen externen Stimulus (einen Produktionsfehler) ausgelöst.
+   * Input-Artefakt: bug_report.json (generiert von einem Observability-Tool oder einem Benutzer 1).
+   * Output-Artefakt: Eine neue code_gen_spec.json (die den Workflow zurück in den CODING-Zustand leitet).
+Die Analyse des MAINTENANCE-Frameworks 1 zeigt, dass es sich nicht um einen Endzustand handelt, sondern um einen parallelen, ereignisgesteuerten Workflow-Generator. Es definiert zwei unterschiedliche Pfade 1:
+1. Hotfix-Pfad: Ein als P1_Critical klassifizierter Bug 1 muss den PLANNING-Staat umgehen und sofort eine neue Instanz des CODING -> TESTING -> DEPLOYMENT-Workflows mit maximaler Priorität auslösen.
+2. Regular-Fix-Pfad: Ein P2-P5-Bug 1 muss einen Übergang zurück zum PLANNING-Zustand auslösen, um im Product Backlog gegen neue Features priorisiert zu werden, bevor er in den CODING-Zustand eintreten darf.1
+Dies beweist, dass das Meta-Framework in der Lage sein muss, mehrere Instanzen desselben Kern-Workflows (z. B. eine Feature-Entwicklung und eine Hotfix-Entwicklung) parallel und mit unterschiedlichen Priorisierungsregeln zu verwalten.
+
+
+1.3. Definition der Workflow-Übergänge (Transitions & Gates)
+
+
+Die Übergänge zwischen den Zuständen werden durch das Vorhandensein und den Inhalt der Artefaktverträge gesteuert.
+* T1: (PLANNING) -> (CODING)
+   * Trigger: Erstellung eines project_manifest.json mit current_state: "PLANNING" und einem gültigen Link zu einer code_gen_spec.json.
+   * Typ: Automatisiert.
+* T2: (CODING) -> (TESTING)
+   * Trigger: Das CODE_GEN-Framework 1 meldet die erfolgreiche Erstellung des artifact_bundle und die Erfüllung seiner internen Qualitäts-Gates (z. B. GATE_TEST_COVERAGE > 70% 1).
+   * Typ: Automatisiert.
+* T3: (TESTING) -> (DEPLOYMENT)
+   * Trigger: Das QA_TESTING-Framework 1 erzeugt ein qa_report.json mit status: "APPROVED".
+   * Typ: Human-in-the-Loop (HITL) - Obligatorisch.
+   * Begründung: Dieser Übergang stellt eine kritische, langlebige Wartezeit dar. Das QA_TESTING-Framework 1 schreibt eine manuelle HITL-Validierung für subjektive UX- und Akzeptanztests vor. Unabhängig davon schreibt das DEPLOYMENT-Framework 1 ein explizites "manuelles Genehmigungs-Gate" für Compliance und QA-Abzeichnung vor dem Deployment-Zustand vor. Der Workflow muss hier physisch anhalten, potenziell tagelang. Der Zustand AWAITING_QA_APPROVAL muss dauerhaft gespeichert werden, was eine Kernanforderung an die Orchestrierungs-Engine (siehe Teil 3) ist.
+* T4: (DEPLOYMENT) -> (PRODUCTION)
+   * Trigger: Das DEPLOYMENT-Framework 1 erzeugt ein deploy_receipt.json mit status: "SUCCESS".
+   * Typ: Automatisiert. Der Workflow für dieses Projekt ist nun abgeschlossen.
+* T5: (EXTERNAL_EVENT) -> (MAINTENANCE)
+   * Trigger: Ein externes System (z. B. Observability-Tool, Benutzer-Feedback-Formular) erstellt ein bug_report.json und sendet es als asynchrones Signal an den Orchestrator.
+   * Typ: Ereignisgesteuert (Asynchron).
+* T6: (MAINTENANCE) -> (CODING)
+   * Trigger: Das MAINTENANCE-Framework 1 klassifiziert einen Bug als P1_Critical ("Hotfix").
+   * Typ: Automatisiert (löst einen neuen, priorisierten Workflow aus).
+* T7: (MAINTENANCE) -> (PLANNING)
+   * Trigger: Das MAINTENANCE-Framework 1 klassifiziert einen Bug als "Regular Fix" (P2-P5), der im Backlog priorisiert werden muss.
+   * Typ: Automatisiert (erstellt ein Item im PLANNING-Backlog).
+
+
+1.4. Fehlerbehandlung und Schleifen (Error-Handling Loops)
+
+
+Die Zustandsmaschine ist nicht nur ein linearer Pfad; sie definiert die Rückkopplungsschleifen, die für einen robusten SDLC erforderlich sind.
+* Schleife 1: (TESTING) -> (CODING) (Test fehlgeschlagen)
+   * Trigger: Die Benutzeranfrage Test failed -> Back to Coding wird durch ein qa_report.json mit status: "REJECTED" 1 ausgelöst.
+   * Aktion: Der Orchestrator leitet den Workflow zurück in den CODING-Zustand. Entscheidend ist, dass er den qa_report (der die fehlgeschlagenen Tests und Fehlerdetails enthält) als zusätzliches Input-Artefakt an den CODING-Zustand übergibt. Das CODE_GEN-Framework 1 muss nun einen Fix für den bestehenden Code generieren, anstatt den Code neu zu generieren.
+* Schleife 2: (DEPLOYMENT) -> (MAINTENANCE) (Deployment fehlgeschlagen)
+   * Trigger: Die Benutzeranfrage Deploy failed -> Rollback wird durch ein deploy_receipt.json mit status: "ROLLED_BACK" ausgelöst.1
+   * Aktion: Ein automatisierter Rollback ist eine Wiederherstellungsmaßnahme, die innerhalb des DEPLOYMENT-Zustands 1 stattfindet, um die Produktionsstabilität zu gewährleisten. Er ist jedoch kein Fix.
+   * Architektonischer Kreislauf: Der Abschluss dieses fehlgeschlagenen DEPLOYMENT-Zustands muss eine automatische Transition zum MAINTENANCE-Zustand auslösen. Der Orchestrator muss das deploy_receipt (das die Fehlerursache enthält, z. B. Golden Signal Breach 1) verwenden, um automatisch einen neuen bug_report.json mit P1_Critical-Priorität zu erstellen. Dies löst sofort den MAINTENANCE-Workflow 1 aus und schließt den Kreislauf, indem er die Erstellung eines Hotfixes erzwingt.
+
+
+Tabelle 1: SDLC-Zustandsmaschine: Zustände, Übergänge und Artefakte
+
+
+
+
+Zustand (State)
+	Verantwortliches Framework
+	Input-Artefakt(e)
+	Output-Artefakt
+	Primärer Übergang (Trigger)
+	Übergangstyp
+	Fehler-Übergang (Schleife)
+	PLANNING
+	(Implizit)
+	Geschäftsanforderung
+	project_manifest.json
+	code_gen_spec ist verlinkt
+	Automatisiert
+	(MAINTENANCE) -> (PLANNING)
+	CODING
+	Code-Gen 1
+	code_gen_spec.json
+	artifact_bundle
+	artifact_bundle erstellt & intern validiert 1
+	Automatisiert
+	(TESTING) -> (CODING)
+	TESTING
+	QA/Testing 1
+	artifact_bundle, test_plan.json
+	qa_report.json
+	qa_report.status == "APPROVED" 1
+	Human-in-the-Loop (HITL)
+	qa_report.status == "REJECTED"
+	DEPLOYMENT
+	Deployment 1
+	qa_report.json (Approved)
+	deploy_receipt.json
+	deploy_receipt.status == "SUCCESS" 1
+	Automatisiert (nach HITL-Gate)
+	deploy_receipt.status == "ROLLED_BACK"
+	MAINTENANCE
+	Maintenance 1
+	bug_report.json
+	code_gen_spec.json (für Fix)
+	bug_report.severity == "P1_Critical" 1
+	Ereignisgesteuert
+	(DEPLOYMENT) -> (MAINTENANCE)
+	________________
+
+
+Teil 2: Vereinheitlichung der Datenverträge (Spezifikation für ORCHESTRATION_data_contracts.yaml)
+
+
+Um die in Teil 1 definierte Zustandsmaschine zu betreiben, müssen die Nachrichten, die zwischen den Zuständen übergeben werden, unveränderlich, versioniert und streng validiert sein. Diese Datenverträge, die als JSON-Schemas definiert werden, sind das Bindegewebe des Meta-Frameworks.
+
+
+2.1. Der project_manifest.json als zentraler Vertrag
+
+
+Dieses Artefakt ist nicht nur eine Datei, sondern das Workitem oder der Workflow-Payload selbst. Es ist das "Blut", das durch die Adern der Zustandsmaschine fließt. Die Orchestrierungs-Engine wird den Zustand dieses Manifests kontinuierlich lesen und aktualisieren, um den Fortschritt zu verfolgen.
+Um eine "Payload-Bloat" (Aufblähung der Nutzlast) zu vermeiden, bei der der Workflow-Verlauf mit großen Datenmengen verstopft wird, sollte das Manifest keine Daten enthalten. Stattdessen muss es als zentraler "Wegweiser" fungieren, der über URIs (HATEOAS-Stil) auf die unveränderlichen Artefakte verweist, die in einem Artefakt-Speicher (z. B. S3, Artifactory) gespeichert sind.
+Schema-Definition (Inferred): project_manifest.schema.json
+
+
+JSON
+
+
+
+
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "https://api.example.com/schemas/project_manifest.v1.0.0.json",
+ "title": "Project Manifest",
+ "description": "Der zentrale Vertrag und das Workitem, das ein Software-Projekt durch seinen gesamten Lebenszyklus begleitet.",
+ "type": "object",
+ "properties": {
+   "project_id": {
+     "description": "Der unveränderliche, einzigartige Bezeichner für dieses Projekt.",
+     "type": "string",
+     "format": "uuid"
+   },
+   "project_name": { "type": "string" },
+   "current_state": {
+     "description": "Der aktuelle Zustand des Projekts in der SDLC-Zustandsmaschine. Wird vom Orchestrator verwaltet.",
+     "type": "string",
+     "enum":
+   },
+   "version": {
+     "description": "Die Version des Manifests selbst, die SemVer folgt.",
+     "type": "string",
+     "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+   },
+   "links": {
+     "description": "HATEOAS-Links zu den unveränderlichen Artefakten, die in diesem Workflow erzeugt wurden.",
+     "type": "object",
+     "properties": {
+       "code_gen_spec": { "type": "string", "format": "uri" },
+       "test_plan": { "type": "string", "format": "uri" },
+       "qa_report": { "type": "string", "format": "uri" },
+       "deploy_receipt": { "type": "string", "format": "uri" },
+       "bug_reports": {
+         "type": "array",
+         "items": { "type": "string", "format": "uri" }
+       }
+     },
+     "required": ["code_gen_spec"]
+   }
+ },
+ "required": ["project_id", "project_name", "current_state", "version", "links"]
+}
+
+
+
+2.2. Analyse und Finalisierung der Artefakt-Schemas
+
+
+Die folgenden Schemas definieren die Kern-Artefakte, auf die das project_manifest verweist.
+* code_gen_spec.schema.json (Input für CODING)
+   * Zweck: Bereitstellung des vollständigen "Generation-Ready Context" zur Vermeidung von LLM-Halluzinationen, basierend auf der Analyse in 1 und.1
+   * Wichtige Felder:
+      * structured_specification (L1): Ref. zu architecture.json oder api.idl.1
+      * database_context (L2): Ref. zu db_schema.sql.1
+      * task_context (L3): Objekt mit intent, scope (allowed_files, restricted_files), constraints, acceptance_criteria.1
+      * system_context (L4): Objekt mit knowledge_graph_query (z. B. Cypher-Query, um Abhängigkeiten abzurufen).1
+* test_plan.schema.json (Input für TESTING)
+   * Zweck: Definition des Scopes und der Regeln für den TESTING-Zustand, basierend auf.1
+   * Wichtige Felder:
+      * test_pyramid_config: Objekt, das unit_tests (mit coverage_target), integration_tests (mit db_seed_script, mock_server_config) und e2e_tests (mit critical_paths) definiert.1
+      * deferred_tests_v1: Array, das die für v1.0 explizit zurückgestellten Tests (Load, Penetration) auflistet.1
+      * hitl_requirements: Objekt, das die manuellen Testanforderungen definiert, wie exploratory_testing_scope und usability_acceptance_criteria.1
+* qa_report.schema.json (Output von TESTING)
+   * Zweck: Das binäre "Exit-Gate"-Artefakt, das den HITL-Übergang T3 auslöst. Die Felder basieren auf den impliziten "Exit Criteria" von 1, wie in 1 analysiert.
+   * Wichtige Felder:
+      * status: (enum: APPROVED, REJECTED).
+      * critical_path_pass_rate: (number, 0-100).1
+      * blocker_bugs_open: (integer).1
+      * coverage_on_new_code: (number, 0-100).1
+      * manual_ux_review_completed: (boolean).1
+      * sast_check_passed: (boolean).1
+      * sca_check_passed: (boolean).1
+* deploy_receipt.schema.json (Output von DEPLOYMENT)
+   * Zweck: Der unveränderliche "Beweis" des Deployment-Versuchs, der den Erfolg validiert oder die Schleife 2 (Rollback -> Maintenance) auslöst. Die Felder basieren auf der "Definition of Done" von 1, wie in 1 analysiert.
+   * Wichtige Felder:
+      * status: (enum: SUCCESS, FAILED, ROLLED_BACK).
+      * artifact_version_deployed: (string).
+      * db_migration_status: (enum: SUCCESS, SKIPPED, FAILED).1
+      * health_check_status: (enum: PASS, FAIL).1
+      * golden_signal_values: Objekt (gemessen während der "Soak Time" 1) mit latency_p95_ms und error_rate_percent.
+* bug_report.schema.json (Input für MAINTENANCE)
+   * Zweck: Das ereignisgesteuerte Signal, das den MAINTENANCE-Workflow auslöst. Die Felder basieren auf den Triage- und HITL-Triggern von 1, wie in 1 analysiert.
+   * Wichtige Felder:
+      * severity: (enum: P1_Critical, P2_High, P3_Medium, P4_Low, P5_Cosmetic).1
+      * category: (enum: Security, DataLoss, Functional, UI, etc.).1
+      * context: Objekt mit PII_impact: (boolean).1
+      * reproducible: (boolean).1
+      * correlated_trace_id: (string) (Kritisch für die Observability-Korrelation 1).
+
+
+Tabelle 2: Zuordnung der Artefakt-Schemas zu Workflow-Übergängen
+
+
+
+
+Artefakt-Schema (Version 1.0.0)
+	Produzierender Zustand (State)
+	Konsumierender Zustand (State)
+	Zweck im Workflow
+	project_manifest.json
+	PLANNING
+	CODING, TESTING, DEPLOYMENT, MAINTENANCE
+	Der langlebige "Payload", der den globalen Zustand und die Links zu Artefakten enthält.
+	code_gen_spec.json
+	PLANNING / MAINTENANCE
+	CODING
+	Stellt den "Generation-Ready Context" 1 für die KI bereit.
+	test_plan.json
+	PLANNING
+	TESTING
+	Definiert den Scope, die Regeln und die HITL-Anforderungen für die QA.1
+	qa_report.json
+	TESTING
+	DEPLOYMENT / CODING (bei Fehler)
+	Das "Exit-Gate"-Artefakt. Löst den HITL-Übergang (T3) oder die Fehler-Schleife (Schleife 1) aus.
+	deploy_receipt.json
+	DEPLOYMENT
+	MAINTENANCE (bei Fehler)
+	Der "Beweis" des Deployments. Löst den Abschluss (T4) oder die Rollback-Schleife (Schleife 2) aus.
+	bug_report.json
+	(Externes System)
+	MAINTENANCE
+	Das asynchrone Signal, das den MAINTENANCE-Workflow (T5) auslöst.
+	
+
+2.3. Strategie zur Schema-Versionierung
+
+
+Die Versionierung von Datenverträgen ist in einem langlebigen Orchestrierungssystem von entscheidender Bedeutung. Eine Workflow-Instanz, die vor sechs Monaten mit v1.0.0 eines Schemas gestartet wurde, muss koexistieren und korrekt verarbeitet werden können, selbst wenn neue Workflows mit v2.0.0 gestartet werden.
+* Analyse der Optionen:
+   * Semantic Versioning (SemVer): Der Industriestandard MAJOR.MINOR.PATCH.4 MAJOR für inkompatible API-Änderungen, MINOR für abwärtskompatible Funktionserweiterungen und PATCH für abwärtskompatible Fehlerbehebungen.5
+   * Major-Version-Only: Ein pragmatischer Ansatz, der argumentiert, dass Consumer sich nur für "Breaking Changes" (MAJOR) interessieren, da abwärtskompatible Änderungen (MINOR) keine Aktion erfordern.7
+* Empfehlung und Implementierung:
+Für ein robustes, langlebiges System ist der "Major-Version-Only"-Ansatz 7 zu riskant. Ein Consumer (z. B. ein Monitoring-Dashboard, das qa_report.json liest) muss möglicherweise wissen, ob ein neues, optionales Feld (eine MINOR-Änderung) vorhanden ist.
+Die empfohlene Strategie ist die strikte Einhaltung von Semantic Versioning (SemVer 2.0.0).4 Die Governance für v1.0 sollte sich jedoch darauf konzentrieren, MAJOR-Versionssprünge zu minimieren.
+Die Version MUSS programmatisch durchsetzbar sein:
+   1. Im Schema-Identifier: Die Version muss Teil des $id (URI) des Schemas sein.8 Z.B.: https://api.example.com/schemas/qa_report.v1.0.0.json.
+   2. Im Datendokument: Jedes produzierte JSON-Dokument sollte ein $schema-Feld enthalten, das auf die exakte Schema-Version verweist, mit der es erstellt wurde.8
+
+
+2.4. Strategie zur Schema-Evolution
+
+
+Die "Schema-Evolution" definiert die Regeln für die Änderung dieser versionierten Verträge.
+   * Abwärtskompatible Änderungen (Sicher):
+   * Aktion: Hinzufügen eines neuen optionalen Feldes (das nicht required ist).10
+   * Aktion: Hinzufügen eines neuen Feldes mit einem default-Wert im Schema.10
+   * Regel: Dies ist eine MINOR-Versionserhöhung (z. B. v1.0.0 -> v1.1.0). Dies ist sicher und erfordert keine Koordination mit den Consumern.
+   * Inkompatible ("Breaking") Änderungen (Gefährlich):
+   * Aktion: Hinzufügen eines neuen Feldes zur required-Liste (ohne Standardwert).12
+   * Aktion: Entfernen eines Feldes.10
+   * Aktion: Umbenennen eines Feldes (gilt als Anti-Pattern 10).
+   * Aktion: Ändern des Datentyps eines vorhandenen Feldes (z. B. string zu integer).10
+Die Governance-Regeln für die Schema-Evolution müssen streng sein, um die Stabilität langlebiger Workflows zu gewährleisten.
+
+
+Tabelle 3: Governance-Regeln für die Schema-Evolution
+
+
+
+
+Art der Änderung
+	Zulässig?
+	Auswirkung
+	Erforderliche Versionsänderung
+	Governance-Regel
+	Neues optionales Feld hinzufügen
+	Ja
+	Abwärtskompatibel
+	MINOR
+	Sicher. Neuer Consumer kann lesen, alter Consumer ignoriert.
+	Neues Feld mit default-Wert hinzufügen
+	Ja
+	Abwärtskompatibel
+	MINOR
+	Sicher. Alter Consumer kann lesen, neuer Consumer sieht Standardwert.
+	Neues erforderliches Feld hinzufügen
+	Nein (Vermeiden)
+	Breaking Change
+	MAJOR
+	Verboten für v1.0. Bricht alte Consumer, die das Feld nicht schreiben.12
+	Feld entfernen
+	Nein (Vermeiden)
+	Breaking Change
+	MAJOR
+	Verboten für v1.0. Bricht alte Consumer, die das Feld erwarten.12
+	Feld umbenennen
+	Nein (Verboten)
+	Breaking Change
+	MAJOR
+	Stattdessen "Expand/Contract"-Pattern verwenden.10
+	Datentyp eines Feldes ändern
+	Nein (Verboten)
+	Breaking Change
+	MAJOR
+	Zerstört die Typsicherheit für alle Consumer.
+	________________
+
+
+Teil 3: Vergleichende Analyse der Orchestrierungs-Engine (Grundlage für ORCHESTRATION_technology_comparison.yaml)
+
+
+Die Auswahl der Engine zur Ausführung der in Teil 1 definierten Zustandsmaschine ist die kritischste technologische Entscheidung dieses Frameworks. Die Auswahl muss anhand der spezifischen, von der Zustandsmaschine abgeleiteten Anforderungen bewertet werden.
+
+
+3.1. Definition der kritischen v1.0-Anforderungen
+
+
+Die Analyse der vier Frameworks 1 und des Meta-Workflow-Designs (Teil 1) offenbart drei nicht verhandelbare Anforderungen an die Engine.
+   1. Durable Execution (Langlebige Ausführung):
+   * Definition: Die Fähigkeit eines Workflows, seine Ausführung "absturzsicher" fortzusetzen, selbst wenn Worker-Prozesse neu gestartet werden, das Netzwerk ausfällt oder der Workflow explizit Wochen oder Monate auf ein externes Ereignis wartet.13 Die Engine muss den vollständigen Anwendungszustand, einschließlich lokaler Variablen und Call Stacks, dauerhaft speichern und wiederherstellen können.14
+   * Architektonische Implikation: Dies ist die wichtigste Anforderung. Der in Teil 1 definierte Übergang T3: (TESTING) -> (DEPLOYMENT) erfordert ein potenziell tagelanges, zustandsbehaftetes Warten auf eine manuelle HITL-Genehmigung. Ein System ohne langlebige Ausführung kann diese Anforderung nicht erfüllen.
+   2. Human-in-the-Loop (HITL)-Unterstützung:
+   * Definition: Die native Fähigkeit der Engine, einen Workflow anzuhalten (pause), um auf eine externe, menschliche Genehmigung zu warten, ohne dabei Rechenressourcen zu verbrauchen (d. h. kein "busy-waiting" oder sleep()).15
+   * Architektonische Implikation: Erforderlich für den QA-Freigabe-Übergang T3 1 und das manuelle Deployment-Genehmigungs-Gate.1
+   3. Observability (Beobachtbarkeit):
+   * Definition: Die Fähigkeit, den Zustand des Gesamtsystems und einzelner Workflow-Instanzen in Echtzeit abzufragen. Die Plattform muss in der Lage sein, Fragen wie "Zeige mir alle Projekte im Status AWAITING_QA_APPROVAL" zu beantworten.17
+   * Architektonische Implikation: Erforderlich für das Management, die Priorisierung und das Debugging von Tausenden von parallelen SDLC-Workflows.
+
+
+3.2. Kandidaten-Tiefenanalyse: Temporal
+
+
+   * Architektur: Bietet "Durable Execution" als Kernkonzept.13 Workflows werden als Code geschrieben, der "so tut, als ob Fehler nicht existieren".20 Der zustandsbehaftete Temporal Service (Server) persistiert den Zustand nach jedem Code-Schritt, sodass zustandslose Worker (Clients) jederzeit abstürzen und die Ausführung nahtlos von einem anderen Worker wieder aufgenommen werden kann.14
+   * Durable Execution: Gold-Standard. Garantiert die Ausführung "genau einmal".19 Workflows können für Monate oder Jahre konzipiert werden.14
+   * HITL-Implementierung: Extrem robust, aber architektonisch anspruchsvoller. Ein Workflow "hält" nicht im herkömmlichen Sinne an. Stattdessen awaitet er auf ein Signal (eine asynchrone, "fire-and-forget" Nachricht, z. B. qa_approved_signal).23 Ein externes System (z. B. eine UI-Schaltfläche) ruft die Temporal-API auf, um das Signal an die wartende Workflow-Instanz zu senden.15 Der Zustand kann jederzeit über Queries (synchrone Leseanfragen) eingesehen werden.23
+   * Observability: Gut. Bietet eine Web-UI zur Visualisierung des detaillierten Workflow-Verlaufs ("Event History"), der Eingaben, Ausgaben und des aktuellen Zustands.17 Exportiert detaillierte Metriken (OpenMetrics) und unterstützt Tracing.25
+   * v1.0 Setup-Komplexität (Self-Hosted): Sehr hoch. Die v1.0-Version war berüchtigt für einen mühsamen, schrittweisen Upgrade-Pfad.28 Ein Produktions-Setup erfordert die Verwaltung einer Datenbank (Postgres/MySQL), optional Elasticsearch und das Management mehrerer Server-Rollen (Frontend, History, Matching, Worker).29 Dies stellt eine erhebliche Hürde für ein v1.0-Projekt dar.30
+   * v1.0 Setup-Komplexität (Cloud): Sehr niedrig. Temporal Cloud 20 abstrahiert die gesamte Server-Komplexität und die Datenbankverwaltung. Der Benutzer verwaltet nur seine Worker.20 Dies eliminiert die größte Hürde von Temporal.
+
+
+3.3. Kandidaten-Tiefenanalyse: Prefect
+
+
+   * Architektur: Python-nativer Ansatz, der Python-Funktionen durch Dekoratoren (@flow, @task) in orchestrierbare Workflows umwandelt.31 Ursprünglich für Daten-Pipelines (ETL) konzipiert 33, hat es sich zu einem allgemeinen Workflow-Orchestrator entwickelt.34
+   * Durable Execution: Wird unterstützt. Prefect verwaltet den Zustand (State & Recovery) und kann unterbrochene Läufe vom letzten erfolgreichen Punkt wieder aufnehmen.35 Es kann auch zur Orchestrierung von KI-Agenten mit dauerhafter Ausführung verwendet werden.36
+   * HITL-Implementierung: Sehr einfach und nativ. Dies ist ein Hauptvorteil für Genehmigungs-Workflows. Prefect bietet explizite Funktionen wie pause_flow_run oder suspend_flow_run.16 Ein Workflow-Aufruf dieser Funktion hält den Flow physisch an und wartet auf eine menschliche Eingabe über die UI oder API, um fortzufahren.16 Dies ist für v1.0-Genehmigungen konzeptionell einfacher als das Signal/Query-Modell von Temporal.
+   * Observability: Hervorragend. Die UI wird als Kernproduktmerkmal positioniert.40 Sie bietet reichhaltige, sofort einsatzbereite Dashboards zur Überwachung von Latenz, Erfolgsraten und Dauer.18
+   * v1.0 Setup-Komplexität (Self-Hosted): Extrem niedrig. Erfordert Python 3.10+.43 Die Installation erfolgt über pip install prefect 43, und der Server wird mit prefect server start gestartet.32 Dies ist ein massiver Vorteil für eine schnelle v1.0-Implementierung.
+
+
+3.4. Kandidaten-Tiefenanalyse: GitHub Actions (GHA)
+
+
+   * Architektur: Ein ereignisgesteuerter CI/CD-Job-Runner 44, kein Orchestrator für langlebige, zustandsbehaftete Workflows.
+   * Durable Execution: Nicht vorhanden. Jobs werden nach 6 Stunden auf GitHub-gehosteten Runnern 2 oder 5 Tagen auf selbst-gehosteten Runnern 2 beendet. Dies ist ein architektonischer Dealbreaker für jeden Workflow, der länger als 6 Stunden auf eine HITL-Genehmigung wartet (z. B. AWAITING_QA_APPROVAL).
+   * HITL-Implementierung: Begrenzt und nicht universell. GHA bietet "Required reviewers" für "Environments".45 Diese Funktion ist jedoch ein reines Deployment-Gate. Sie kann nicht für den TESTING -> DEPLOYMENT-Übergang 1 oder den MAINTENANCE-Workflow 1 verwendet werden. Sie löst nur einen kleinen Teil des Problems von.1
+   * Observability: Schwach. Bietet Job-Logs, aber keine zentrale, abfragbare Ansicht des Zustands von Tausenden von Workflow-Instanzen.3 Erfordert tiefgreifende Integrationen von Drittanbietern (z. B. Datadog, Dynatrace, OTel).47
+   * Korrekte Rolle: GitHub Actions ist nicht der Orchestrator. Es ist ein perfekter Task-Runner (eine "Activity" im Temporal-Jargon), der vom Orchestrator (Temporal/Prefect) aufgerufen wird. Ein langlebiger Workflow in Temporal kann einen GHA-Job auslösen und dann dauerhaft auf dessen Abschluss warten.50
+
+
+3.5. Kandidaten-Tiefenanalyse: Custom Build
+
+
+   * Architektur: "Build vs. Buy".52
+   * Durable Execution: Die Implementierung einer dauerhaften, zustandsbehafteten Ausführung (Persistenz, Wiederholungslogik, Zustandsmaschinen, Fehlerbehandlung) ist die Kernherausforderung.34 Dies ist gleichbedeutend mit der "Neuerfindung eines fehlerhaften, hauseigenen Orchestrators".58
+   * HITL-Implementierung: Hochkomplex. Erfordert den Aufbau einer benutzerdefinierten asynchronen Genehmigungs-Engine, einer Kommunikationsschicht (z. B. WebSockets) und einer Pausierungslogik, um Worker-Ressourcen freizugeben.59
+   * Fazit: Dies ist für v1.0 architektonisch nicht vertretbar. Der "Build"-Ansatz ist nur dann sinnvoll, wenn der Orchestrator das Kerngeschäftsprodukt ist. Hier ist er eine unterstützende Plattform. Der "Buy"-Ansatz (Nutzung von Open-Source-Tools wie Temporal/Prefect) ist eindeutig die richtige Wahl.53
+
+
+Tabelle 4: Fähigkeitsmatrix der Orchestrierungs-Engines (v1.0)
+
+
+
+
+Fähigkeit
+	Temporal
+	Prefect
+	GitHub Actions
+	Custom Build
+	Durable Execution (Tage/Wochen)
+	Hervorragend (Kernarchitektur) 13
+	Gut (State/Recovery-Modell) 35
+	Nicht vorhanden (6h-Limit) 2
+	Nicht vorhanden (Muss erstellt werden) 58
+	HITL-Support (Workflow-Pause)
+	Hervorragend (Signal/Query) 24
+	Hervorragend (Native pause_flow_run) 16
+	Begrenzt (Nur Deployment-Gates) 46
+	Nicht vorhanden (Muss erstellt werden) 59
+	Observability (State Querying)
+	Gut (UI, Metriken, Tracing) 17
+	Hervorragend (UI-zentriert) 40
+	Schwach (Nur Job-Logs) 3
+	Nicht vorhanden (Muss erstellt werden)
+	v1.0 Setup-Komplexität (Self-Hosted)
+	Sehr hoch 28
+	Extrem niedrig 43
+	Niedrig (In GHA enthalten)
+	Extrem hoch 53
+	Ökosystem/Sprachbindung
+	Polyglott (Go, Java, Python, TS,.NET) 22
+	Python-zentriert 31
+	Sprachunabhängig (YAML/Jobs)
+	(N/A)
+	
+
+Tabelle 5: Detailanalyse der Implementierung kritischer Funktionen
+
+
+
+
+Kritische Funktion
+	Temporal
+	Prefect
+	GitHub Actions
+	Durable Execution (Tage/Wochen)
+	Kernarchitektur. Der Zustand wird extern vom Temporal Service verwaltet. Worker sind zustandslos. Workflows können unbegrenzt "schlafen".14
+	State-Management-Modell. Der Zustand wird persistiert und kann bei einem Neustart wiederhergestellt werden.35 Konzipiert für Langlebigkeit.
+	Nicht unterstützt. Jobs, die länger als 6 Stunden dauern, werden beendet.2 Das Konzept des "Wartens" existiert nicht.
+	HITL (Workflow-Pause)
+	Signal/Await-Muster. Der Workflow awaitet auf ein externes Signal (z. B. qa_approved). Eine UI ruft die API auf, um das Signal zu senden.23 Sehr leistungsfähig, asynchron.
+	Native pause_flow_run-Funktion. Der Workflow ruft explizit pause_flow_run() auf und hält an.16 Die UI zeigt eine "Resume"-Schaltfläche. Sehr einfach, synchron.
+	Nur "Environments"-Gate. Kann nur einen deployment-Job blockieren.46 Kann nicht für QA- oder Triage-Schritte verwendet werden. Unzureichend.
+	Workflow-Abfrage (Query State)
+	Native Query-Funktion. Ermöglicht die synchrone Abfrage des internen Zustands (z. B. lokaler Variablen) eines laufenden Workflows.23
+	API / UI-zentriert. Der Zustand wird über die API und die Dashboard-UI abgefragt.40
+	Nicht unterstützt. Es gibt keinen "Workflow-Zustand" außerhalb von success/failure.
+	________________
+
+
+Teil 4: Finale Empfehlungen und Implementierungs-Roadmap
+
+
+
+
+4.1. Endgültige Entscheidung und Begründung
+
+
+Die Analyse in Teil 3 führt zu einer klaren Schlussfolgerung:
+   1. Ein Custom Build ist aufgrund der immensen Komplexität der Implementierung von Durable Execution 56 und HITL-Systemen 59 für ein v1.0-Plattform-Tooling architektonisch nicht vertretbar.53
+   2. GitHub Actions ist als Meta-Orchestrator ungeeignet. Sein 6-Stunden-Job-Limit 2 und das Fehlen universeller HITL-Primitive 45 machen es unmöglich, die in Teil 1 entworfene, langlebige Zustandsmaschine zu implementieren. Seine korrekte Rolle ist die eines Task-Runners (Activity), der von einem übergeordneten Orchestrator aufgerufen wird.51
+Der wahre Wettbewerb für v1.0 liegt zwischen Prefect (Self-Hosted) und Temporal (Cloud).
+   * Argument für Prefect (Self-Hosted): Der entscheidende Vorteil ist die extrem niedrige Setup-Komplexität.43 Ein pip install und prefect server start ist trivial und ermöglicht einen sofortigen Start. Die HITL-Primitive (pause_flow_run) sind intuitiv 16, und die Observability-UI ist hervorragend.40 Der Hauptnachteil ist die starke Bindung an das Python-Ökosystem.31
+   * Argument für Temporal (Cloud): Der entscheidende Vorteil ist die langfristige architektonische Robustheit. Temporal wurde von Grund auf als universeller, polyglotter (Go, Java, Python, TS,.NET 22) Orchestrator für "unzerstörbare" Workflows konzipiert.63 Seine Signal/Query-Architektur 23 ist zwar komplexer als die von Prefect, aber auch leistungsfähiger und skalierbarer für die Verwaltung von Tausenden von asynchronen, parallelen SDLC-Workflows.64
+Der v1.0-Konflikt lautet daher: "Einfachheit jetzt" (Prefect) vs. "Skalierbarkeit später" (Temporal).
+Die Existenz von Temporal Cloud 20 löst diesen Konflikt auf. Es eliminiert den einzigen großen Nachteil von Temporal – die hohe Setup-Komplexität.28 Durch die Nutzung der gemanagten Cloud-Version erhält das v1.0-Projekt die niedrigste Setup-Komplexität (vergleichbar mit Prefect Cloud) UND die höchste langfristige architektonische Skalierbarkeit.
+Empfehlung: Temporal Cloud.
+Diese Wahl umgeht den v1.0-Trade-off vollständig. Sie bietet die einfache Inbetriebnahme von Prefect und die überlegene architektonische Grundlage und Polyglott-Fähigkeit von Temporal, was sie zur strategisch solidesten Wahl für ein Meta-Framework macht.
+
+
+Tabelle 6: v1.0 Trade-off-Analyse und Empfehlung
+
+
+
+
+Kandidat
+	Setup-Kosten (v1.0)
+	Betriebs-/Infrastrukturkosten (v1.0)
+	Architektonische Skalierbarkeit (v2.0+)
+	Polyglott-Fähigkeit
+	Empfehlung für v1.0
+	Temporal (Cloud)
+	Sehr niedrig (SaaS-Anmeldung) 20
+	Mittel (Pay-as-you-go)
+	Sehr hoch
+	Hervorragend 22
+	Empfohlen
+	Temporal (Self-Hosted)
+	Sehr hoch 28
+	Hoch (DB, ES, Server-Cluster)
+	Sehr hoch
+	Hervorragend
+	Nicht empfohlen
+	Prefect (Self-Hosted)
+	Extrem niedrig 43
+	Niedrig (Einzelner Server + DB)
+	Hoch
+	Begrenzt (Python-zentriert) 31
+	Akzeptable Alternative
+	
+
+4.2. Implementierungs-Roadmap (mit Temporal Cloud)
+
+
+   1. Phase 1: Contracts & Setup (Woche 1-2)
+   * Finalisierung und Veröffentlichung von v1.0.0 aller in Teil 2 definierten JSON-Schemas in einer zentralen Schema-Registry (z. B. interner Git-Repo oder Artifactory).
+   * Provisionierung eines Temporal Cloud-Namespace und Erstellung von API-Schlüsseln.
+   2. Phase 2: Worker & CI-Integration (Woche 3-4)
+   * Aufbau eines "Worker-Service" (z. B. in Kubernetes), der die Workflow-Definitionen registriert und sich sicher mit Temporal Cloud verbindet.
+   * Integration von GHA als Task-Runner.51 Erstellung von Temporal "Activities" (z. B. run_qa_tests_activity), die GHA-Jobs auslösen und auf deren Abschluss warten.
+   3. Phase 3: Implementierung des "Happy Path" (Woche 5-6)
+   * Implementierung des PLANNING -> CODING -> TESTING -> DEPLOYMENT-Workflows als einzelne Temporal-Workflow-Definition.
+   * Implementierung des HITL-Gates T3 (Awaiting QA Approval) unter Verwendung des workflow.Signal-Musters 15 und einer workflow.Query-Methode zur Statusabfrage.
+   4. Phase 4: Implementierung der "Loops" (Woche 7-8)
+   * Implementierung der Fehlerbehandlungsschleife (TESTING) -> (CODING) (Schleife 1).
+   * Implementierung des ereignisgesteuerten MAINTENANCE-Workflows.1
+   * Implementierung der (DEPLOYMENT) -> (MAINTENANCE)-Schleife (Schleife 2), bei der ein fehlgeschlagenes Deployment automatisch ein Signal zum Start des MAINTENANCE-Workflows sendet.
+
+
+4.3. Bereitstellung der finalen YAML-Artefakte
+
+
+Die folgenden YAML-Dateien kodifizieren die Analyse dieses Berichts in eine formale Spezifikation für das Orchestrierungs-Meta-Framework.
+________________
+ORCHESTRATION_workflow_design.yaml
+
+
+YAML
+
+
+
+
+# =================================================================
+# ORCHESTRATION_workflow_design.yaml
+# Definiert die SDLC-Zustandsmaschine, ihre Zustände, Übergänge
+# und Fehlerbehandlungs-Schleifen.
+# Basiert auf der Analyse in Teil 1 dieses Berichts.
+# =================================================================
+version: 1.0.0
+kind: SDLCStateMachine
+
+# 1. Definition der Workflow-Zustände (States)
+# Jeder Zustand entspricht einem Kern-Framework.
+states:
+ - name: "PLANNING"
+   description: "Impliziter Startzustand. Anforderungen werden in ein project_manifest umgewandelt."
+   responsible_framework: "ProjectManagement"
+   output_artifact: "project_manifest.json"
+   
+ - name: "CODING"
+   description: "Gesteuert durch das Code-Gen-Framework. Nimmt code_gen_spec entgegen und erzeugt artifact_bundle."
+   responsible_framework: "CODE_GEN "
+   input_artifact: "code_gen_spec.json"
+   output_artifact: "artifact_bundle"
+
+ - name: "TESTING"
+   description: "Gesteuert durch das QA-Framework. Führt die Testpyramide aus und erzeugt einen QA-Bericht."
+   responsible_framework: "QA_TESTING "
+   input_artifact: ["artifact_bundle", "test_plan.json"]
+   output_artifact: "qa_report.json"
+
+ - name: "AWAITING_QA_APPROVAL"
+   description: "Ein langlebiger (durable) Wartezustand, der auf eine manuelle HITL-Genehmigung wartet."
+   responsible_framework: "Orchestrator (HITL)"
+   input_artifact: "qa_report.json"
+   
+ - name: "DEPLOYMENT"
+   description: "Gesteuert durch das Deployment-Framework. Führt das Deployment in die Produktion durch."
+   responsible_framework: "DEPLOYMENT "
+   input_artifact: "qa_report.json" # (Mit Status APPROVED)
+   output_artifact: "deploy_receipt.json"
+
+ - name: "PRODUCTION"
+   description: "Endzustand. Der Workflow ist erfolgreich abgeschlossen."
+   responsible_framework: "N/A (Terminal State)"
+
+ - name: "MAINTENANCE"
+   description: "Paralleler, ereignisgesteuerter Zustand, gesteuert durch. Löst Fix-Workflows aus."
+   responsible_framework: "MAINTENANCE "
+   input_artifact: "bug_report.json"
+   output_artifact: "code_gen_spec.json" # (Für den Fix)
+
+# 2. Definition der Workflow-Übergänge (Transitions)
+transitions:
+ - name: "T1_StartCoding"
+   from_state: "PLANNING"
+   to_state: "CODING"
+   trigger: "project_manifest.json erstellt mit gültigem code_gen_spec link."
+   type: "Automated"
+
+ - name: "T2_StartTesting"
+   from_state: "CODING"
+   to_state: "TESTING"
+   trigger: "artifact_bundle erstellt UND interne Code-Gen Quality Gates  bestanden."
+   type: "Automated"
+
+ - name: "T3_RequestQAApproval"
+   from_state: "TESTING"
+   to_state: "AWAITING_QA_APPROVAL"
+   trigger: "qa_report.json erstellt (unabhängig vom Status)."
+   type: "Automated"
+   
+ - name: "T4_StartDeployment"
+   from_state: "AWAITING_QA_APPROVAL"
+   to_state: "DEPLOYMENT"
+   trigger: "HITL-Ereignis: 'qa_approved_signal' empfangen UND qa_report.status == 'APPROVED'."
+   type: "Human-in-the-Loop (HITL)"
+
+ - name: "T5_DeploymentSuccess"
+   from_state: "DEPLOYMENT"
+   to_state: "PRODUCTION"
+   trigger: "deploy_receipt.json erstellt mit status == 'SUCCESS'."
+   type: "Automated"
+
+ - name: "T6_TriggerMaintenance"
+   from_state: "EXTERNAL_EVENT"
+   to_state: "MAINTENANCE"
+   trigger: "Asynchrones Signal 'bug_report_received' mit gültigem bug_report.json."
+   type: "Event-Driven"
+
+# 3. Definition der Fehler- und Rückkopplungsschleifen (Loops)
+loops:
+ - name: "L1_TestFailed"
+   description: "Test-Phase fehlgeschlagen, erfordert Code-Fix."
+   from_state: "AWAITING_QA_APPROVAL"
+   to_state: "CODING"
+   trigger: "HITL-Ereignis: 'qa_rejected_signal' empfangen ODER qa_report.status == 'REJECTED'."
+   action: "Übergebe qa_report.json als Feedback-Paket an den CODING-Zustand."
+
+ - name: "L2_DeployFailed"
+   description: "Deployment fehlgeschlagen und zurückgerollt, erfordert P1-Bugfix."
+   from_state: "DEPLOYMENT"
+   to_state: "MAINTENANCE"
+   trigger: "deploy_receipt.json erstellt mit status == 'ROLLED_BACK'."
+   action: "Automatische Erstellung eines P1_Critical bug_report.json aus dem deploy_receipt und Auslösung von T6."
+
+ - name: "L3_HotfixLoop"
+   description: "Ein P1-Bug umgeht das reguläre Planning."
+   from_state: "MAINTENANCE"
+   to_state: "CODING"
+   trigger: "Bug-Triage  klassifiziert als 'Hotfix'."
+   action: "Neue Workflow-Instanz mit hoher Priorität starten."
+
+ - name: "L4_RegularFixLoop"
+   description: "Ein P2-P5-Bug muss im Backlog priorisiert werden."
+   from_state: "MAINTENANCE"
+   to_state: "PLANNING"
+   trigger: "Bug-Triage  klassifiziert als 'Regular Fix'."
+   action: "Item zum PLANNING-Backlog hinzufügen."
+
+________________
+ORCHESTRATION_data_contracts.yaml
+
+
+YAML
+
+
+
+
+# =================================================================
+# ORCHESTRATION_data_contracts.yaml
+# Definiert die JSON-Schemas für alle Artefakte, die zwischen
+# den Workflow-Zuständen übergeben werden.
+# Basiert auf der Analyse in Teil 2 dieses Berichts.
+# =================================================================
+version: 1.0.0
+kind: SchemaCollection
+
+# 1. Governance-Regeln für die Schema-Evolution
+# Basierend auf [4, 10, 11, 12]
+schema_evolution_rules:
+ - type: "ADD_OPTIONAL_FIELD"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_FIELD_WITH_DEFAULT"
+   compatibility: "BACKWARD_COMPATIBLE"
+   version_bump: "MINOR"
+   allowed: true
+ - type: "ADD_REQUIRED_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Muss für v1.0 vermieden werden)
+ - type: "REMOVE_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Muss für v1.0 vermieden werden)
+ - type: "RENAME_FIELD"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false # (Verwende "Expand/Contract"-Pattern )
+ - type: "CHANGE_FIELD_TYPE"
+   compatibility: "BREAKING_CHANGE"
+   version_bump: "MAJOR"
+   allowed: false
+
+# 2. Schema-Definitionen (Auszüge der wichtigsten Felder)
+schemas:
+
+ - name: "project_manifest.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/project_manifest.v1.0.0.json"
+   description: "Der zentrale Vertrag, der den Zustand des Workflows und die Links zu Artefakten enthält."
+   fields:
+     - name: "project_id"
+       type: "string(uuid)"
+       required: true
+     - name: "current_state"
+       type: "enum"
+       required: true
+       values:
+     - name: "links"
+       type: "object"
+       required: true
+       properties:
+         - { name: "code_gen_spec", type: "string(uri)" }
+         - { name: "test_plan", type: "string(uri)" }
+         - { name: "qa_report", type: "string(uri)" }
+         - { name: "deploy_receipt", type: "string(uri)" }
+
+ - name: "code_gen_spec.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
+   description: "Input für den CODING-Zustand. Definiert den L1-L4-Kontext für die KI."
+   fields:
+     - name: "structured_specification" # L1
+       type: "object"
+       required: true
+       properties:
+         - { name: "architecture_ref", type: "string(uri)" }
+     - name: "database_context" # L2
+       type: "object"
+       required: true
+       properties:
+         - { name: "db_schema_ref", type: "string(uri)" }
+     - name: "task_context" # L3
+       type: "object"
+       required: true
+       properties:
+         - { name: "intent", type: "string" }
+         - { name: "scope", type: "object" }
+         - { name: "acceptance_criteria", type: "array" }
+     - name: "system_context" # L4
+       type: "object"
+       required: true
+       properties:
+         - { name: "knowledge_graph_query", type: "string" }
+
+ - name: "test_plan.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/test_plan.v1.0.0.json"
+   description: "Input für den TESTING-Zustand. Definiert den Test-Scope."
+   fields:
+     - name: "test_pyramid_config"
+       type: "object"
+       required: true
+       properties:
+         - { name: "unit_tests", type: "object" }
+         - { name: "integration_tests", type: "object" }
+         - { name: "e2e_tests", type: "object" }
+     - name: "deferred_tests_v1"
+       type: "array"
+       required: true
+       items: "string" # z.B. "Load", "Penetration" 
+     - name: "hitl_requirements"
+       type: "object"
+       required: true
+       properties:
+         - { name: "usability_acceptance_criteria", type: "string" }
+
+ - name: "qa_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
+   description: "Output des TESTING-Zustands. Dient als "Exit-Gate" für die HITL-Genehmigung."
+   fields:
+     - name: "status"
+       type: "enum"
+       required: true
+       values:
+     - name: "critical_path_pass_rate"
+       type: "number"
+       required: true
+     - name: "blocker_bugs_open"
+       type: "integer"
+       required: true
+     - name: "coverage_on_new_code"
+       type: "number"
+       required: true
+     - name: "manual_ux_review_completed"
+       type: "boolean"
+       required: true
+     - name: "sast_check_passed"
+       type: "boolean"
+       required: true
+     - name: "sca_check_passed"
+       type: "boolean"
+       required: true
+
+ - name: "deploy_receipt.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
+   description: "Output des DEPLOYMENT-Zustands. Dient als "Beweis" des Deployments."
+   fields:
+     - name: "status"
+       type: "enum"
+       required: true
+       values:
+     - name: "artifact_version_deployed"
+       type: "string"
+       required: true
+     - name: "db_migration_status"
+       type: "enum"
+       required: true
+       values:
+     - name: "health_check_status"
+       type: "enum"
+       required: true
+       values:
+     - name: "golden_signal_values" # Gemessen während "Soak Time" 
+       type: "object"
+       required: true
+       properties:
+         - { name: "latency_p95_ms", type: "integer" }
+         - { name: "error_rate_percent", type: "number" }
+
+ - name: "bug_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/bug_report.v1.0.0.json"
+   description: "Input für den MAINTENANCE-Zustand. Löst den Triage-Workflow aus."
+   fields:
+     - name: "severity"
+       type: "enum"
+       required: true
+       values: ["P1_Critical", "P2_High", "P3_Medium", "P4_Low", "P5_Cosmetic"]
+     - name: "category"
+       type: "enum"
+       required: true
+       values:
+     - name: "context"
+       type: "object"
+       required: true
+       properties:
+         - { name: "PII_impact", type: "boolean", default: false }
+     - name: "reproducible"
+       type: "boolean"
+       required: true
+     - name: "correlated_trace_id"
+       type: "string" # Kritisch für Observability 
+       required: false
+
+________________
+ORCHESTRATION_technology_comparison.yaml
+
+
+YAML
+
+
+
+
+# =================================================================
+# ORCHESTRATION_technology_comparison.yaml
+# Vergleicht die Orchestrierungs-Engines anhand der in Teil 3
+# analysierten kritischen v1.0-Anforderungen.
+# =================================================================
+version: 1.0.0
+kind: TechnologyComparison
+
+# 1. Definition der kritischen Anforderungen
+# Dies sind die nicht verhandelbaren Anforderungen, die aus dem
+# Workflow-Design in Teil 1 abgeleitet wurden.
+critical_requirements:
+ - id: "DURABLE_EXECUTION"
+   description: "Fähigkeit, den Workflow-Zustand über Abstürze, Neustarts und lange Wartezeiten (Tage/Wochen) hinweg beizubehalten."
+   rationale: "Erforderlich für HITL-Genehmigungs-Gates (T3) und langlebige SDLC-Prozesse."
+ - id: "HITL_SUPPORT"
+   description: "Native Fähigkeit, einen Workflow für eine menschliche Genehmigung anzuhalten, ohne Rechenressourcen zu verbrauchen."
+   rationale: "Erforderlich für QA-Freigabe  und Deployment-Genehmigung."
+ - id: "OBSERVABILITY"
+   description: "Fähigkeit, den Zustand einzelner Workflow-Instanzen abzufragen und zu visualisieren."
+   rationale: "Erforderlich für das Management und Debugging von Tausenden paralleler Workflows.[17, 40]"
+
+# 2. Fähigkeitsmatrix der Orchestrierungs-Engines (v1.0)
+capability_matrix:
+ - candidate: "Temporal"
+   durable_execution: "Hervorragend"
+   hitl_support: "Hervorragend"
+   observability: "Gut"
+   setup_complexity_self_hosted: "Sehr hoch"
+   ecosystem: "Polyglott"
+   
+ - candidate: "Prefect"
+   durable_execution: "Gut"
+   hitl_support: "Hervorragend"
+   observability: "Hervorragend"
+   setup_complexity_self_hosted: "Extrem niedrig"
+   ecosystem: "Python-zentriert"
+
+ - candidate: "GitHub Actions"
+   durable_execution: "Nicht vorhanden"
+   hitl_support: "Begrenzt"
+   observability: "Schwach"
+   setup_complexity_self_hosted: "Niedrig"
+   ecosystem: "Polyglott (YAML)"
+
+ - candidate: "Custom Build"
+   durable_execution: "Nicht vorhanden"
+   hitl_support: "Nicht vorhanden"
+   observability: "Nicht vorhanden"
+   setup_complexity_self_hosted: "Extrem hoch"
+   ecosystem: "N/A"
+
+# 3. Detailanalyse der Implementierung kritischer Funktionen
+feature_implementation_analysis:
+ - feature: "Durable Execution (Tage/Wochen)"
+   temporal: "Kernarchitektur. Zustand wird extern vom Service verwaltet. Worker sind zustandslos. Workflows können unbegrenzt 'schlafen'."
+   prefect: "State-Management-Modell. Zustand wird persistiert und kann bei einem Neustart wiederhergestellt werden."
+   github_actions: "Nicht unterstützt. Jobs werden nach 6 Stunden beendet. Architektonischer Dealbreaker."
+
+ - feature: "HITL (Workflow-Pause)"
+   temporal: "Signal/Await-Muster. Workflow `await`et auf ein externes Signal (z. B. `qa_approved`). Sehr leistungsfähig, asynchron."
+   prefect: "Native `pause_flow_run`-Funktion. Workflow hält explizit an und wartet auf UI-Input. Sehr einfach, synchron."
+   github_actions: "Nur 'Environments'-Gate. Kann nur `deployment`-Jobs blockieren. Unzureichend für QA- oder Triage-Schritte."
+
+ - feature: "Workflow-Abfrage (Query State)"
+   temporal: "Native `Query`-Funktion. Erlaubt synchrone Abfrage des internen Workflow-Zustands (lokale Variablen)."
+   prefect: "API / UI-zentriert. Zustand wird über die API und das Dashboard abgefragt."
+   github_actions: "Nicht unterstützt. Es gibt keinen abfragbaren, langlebigen Workflow-Zustand."
+
+# 4. v1.0 Trade-off-Analyse und Empfehlung
+tradeoff_analysis:
+ - candidate: "Temporal (Cloud)"
+   setup_cost_v1: "Sehr niedrig"
+   operating_cost_v1: "Mittel (Usage-based)"
+   scalability_v2: "Sehr hoch"
+   polyglot_support: "Hervorragend"
+   recommendation: "EMPFOHLEN"
+   rationale: "Bietet die beste langfristige Architektur  bei gleichzeitig niedrigsten Setup-Kosten , wodurch der v1.0-Trade-off umgangen wird."
+
+ - candidate: "Prefect (Self-Hosted)"
+   setup_cost_v1: "Extrem niedrig"
+   operating_cost_v1: "Niedrig (Infrastruktur)"
+   scalability_v2: "Hoch"
+   polyglot_support: "Begrenzt (Python)"
+   recommendation: "AKZEPTABLE ALTERNATIVE"
+   rationale: "Schnellste Time-to-Value, wenn das gesamte Ökosystem Python-basiert ist. Einfachere HITL-Primitive."
+   
+ - candidate: "Temporal (Self-Hosted)"
+   setup_cost_v1: "Sehr hoch"
+   operating_cost_v1: "Hoch (Infrastruktur + Wartung)"
+   scalability_v2: "Sehr hoch"
+   polyglot_support: "Hervorragend"
+   recommendation: "NICHT EMPFOHLEN (für v1.0)"
+   rationale: "Die Setup- und Wartungskomplexität  ist für ein v1.0-Projekt ein zu hohes Risiko."
+
+ - candidate: "GitHub Actions (als Orchestrator)"
+   setup_cost_v1: "Niedrig"
+   operating_cost_v1: "Mittel (Usage-based)"
+   scalability_v2: "Sehr niedrig"
+   polyglot_support: "Hervorragend"
+   recommendation: "ABGELEHNT"
+   rationale: "Architektonisch ungeeignet. Erfüllt nicht die Anforderung 'Durable Execution'. Korrekte Rolle ist 'Task-Runner'."
+
+Referenzen
+   1. Code-Generierungs-Framework-Forschung.txt
+   2. Actions limits - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/en/actions/reference/limits
+   3. Understanding and overcoming limitations of GitHub Actions - Medium, Zugriff am November 12, 2025, https://medium.com/@alex.ivenin/understanding-and-overcoming-limitations-of-github-actions-52956e9e2823
+   4. Semantic Versioning 2.0.0 | Semantic Versioning, Zugriff am November 12, 2025, https://semver.org/
+   5. Data Contract Version Management - Entropy Data Documentation, Zugriff am November 12, 2025, https://docs.datamesh-manager.com/howto/data-contract-versioning
+   6. Semantic Versioning for Data Products | by Miklós Koren | Data Architect - Medium, Zugriff am November 12, 2025, https://medium.com/data-architect/semantic-versioning-for-data-products-2b060962093
+   7. How to version data contracts - Andrew Jones, Zugriff am November 12, 2025, https://andrew-jones.com/daily/2024-03-28-how-to-version-data-contracts/
+   8. JSON Schema Semantic Versioning - Stack Overflow, Zugriff am November 12, 2025, https://stackoverflow.com/questions/70772942/json-schema-semantic-versioning
+   9. Introducing versioning in JSON schema validation | KrakenD API Gateway, Zugriff am November 12, 2025, https://www.krakend.io/blog/changes-in-json-schema/
+   10. Best Practices for Evolving Schemas in Schema Registry, Zugriff am November 12, 2025, https://docs.solace.com/Schema-Registry/schema-registry-best-practices.htm
+   11. Schema Evolution and Compatibility for Schema Registry on Confluent Platform, Zugriff am November 12, 2025, https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html
+   12. Evolving JSON Schemas - Part I - Creek Service, Zugriff am November 12, 2025, https://www.creekservice.org/articles/2024/01/08/json-schema-evolution-part-1.html
+   13. The definitive guide to Durable Execution - Temporal, Zugriff am November 12, 2025, https://temporal.io/blog/what-is-durable-execution
+   14. Mastering Durable Execution in Distributed Systems - Temporal, Zugriff am November 12, 2025, https://temporal.io/blog/durable-execution-in-distributed-systems-increasing-observability
+   15. Human-in-the-Loop (HITL) for AI Agents: Patterns and Best Practices - YouTube, Zugriff am November 12, 2025, https://www.youtube.com/watch?v=YCFGjLjNOyw
+   16. How to write interactive workflows - Prefect, Zugriff am November 12, 2025, https://docs.prefect.io/v3/advanced/interactive
+   17. Observability - Temporal feature | Temporal Platform Documentation, Zugriff am November 12, 2025, https://docs.temporal.io/evaluate/development-production-features/observability
+   18. Observability Metrics: Put Your Log Data to Use - Prefect, Zugriff am November 12, 2025, https://www.prefect.io/blog/observability-metrics-put-your-log-data-to-use
+   19. Mastering Distributed Processes: Understanding the Power of Temporal Workflows, Zugriff am November 12, 2025, https://medium.com/the-web-club/mastering-distributed-processes-understanding-the-power-of-temporal-workflows-527627f08349
+   20. Temporal: Durable Execution Solutions, Zugriff am November 12, 2025, https://temporal.io/
+   21. How the Temporal Platform Works, Zugriff am November 12, 2025, https://temporal.io/how-it-works
+   22. Durable Execution Platform - Temporal, Zugriff am November 12, 2025, https://temporal.io/product
+   23. Orchestrating ambient agents with Temporal | Temporal, Zugriff am November 12, 2025, https://temporal.io/blog/orchestrating-ambient-agents-with-temporal
+   24. Temporal for AI | Temporal, Zugriff am November 12, 2025, https://temporal.io/solutions/ai
+   25. Observability - .NET SDK | Temporal Platform Documentation, Zugriff am November 12, 2025, https://docs.temporal.io/develop/dotnet/observability
+   26. Observability - TypeScript SDK | Temporal Platform Documentation, Zugriff am November 12, 2025, https://docs.temporal.io/develop/typescript/observability
+   27. Temporal Cloud Observability and Metrics, Zugriff am November 12, 2025, https://docs.temporal.io/cloud/metrics
+   28. Upgrade path from v1.0.0 - Community Support - Temporal, Zugriff am November 12, 2025, https://community.temporal.io/t/upgrade-path-from-v1-0-0/2224
+   29. Temporal Server: Self-hosting a Production-Ready Instance - cache cascade, Zugriff am November 12, 2025, https://blog.taigrr.com/blog/setting-up-a-production-ready-temporal-server/
+   30. Temporal V1 Announcement, Zugriff am November 12, 2025, https://temporal.io/blog/temporal-v1-announcement
+   31. Open Source Orchestration - Prefect, Zugriff am November 12, 2025, https://www.prefect.io/opensource
+   32. Prefect is a workflow orchestration framework for building resilient data pipelines in Python. - GitHub, Zugriff am November 12, 2025, https://github.com/PrefectHQ/prefect
+   33. Prefect for Data Orchestration: Key Concepts, Capabilities, Setup - Atlan, Zugriff am November 12, 2025, https://atlan.com/prefect-data-orchestration/
+   34. What I Talk About When I Talk About Orchestration - Prefect, Zugriff am November 12, 2025, https://www.prefect.io/blog/what-i-talk-about-when-i-talk-about-orchestration
+   35. Introduction - Prefect, Zugriff am November 12, 2025, https://docs.prefect.io/
+   36. Prefect - Pydantic AI, Zugriff am November 12, 2025, https://ai.pydantic.dev/durable_execution/prefect/
+   37. Durable Execution for Pydantic AI Agents with Prefect, Zugriff am November 12, 2025, https://www.prefect.io/blog/prefect-pydantic-integration
+   38. What are Human In The Loop workflows, Zugriff am November 12, 2025, https://www.workflows.guru/workflow-types/human-in-the-loop-workflows
+   39. PrefectHQ/interactive_workflow_examples: Examples of ... - GitHub, Zugriff am November 12, 2025, https://github.com/PrefectHQ/interactive_workflow_examples
+   40. Prefect: Pythonic, Modern Workflow Orchestration For Resilient Data Platforms, Zugriff am November 12, 2025, https://www.prefect.io/
+   41. Data Pipeline Monitoring: Best Practices for Full Observability - Prefect, Zugriff am November 12, 2025, https://www.prefect.io/blog/data-pipeline-monitoring-best-practices
+   42. Why You Need an Observability Platform - Prefect, Zugriff am November 12, 2025, https://www.prefect.io/blog/why-you-need-an-observability-platform
+   43. prefect · PyPI, Zugriff am November 12, 2025, https://pypi.org/project/prefect/
+   44. GitHub Actions: Concepts, Features, and a Quick Tutorial - Codefresh, Zugriff am November 12, 2025, https://codefresh.io/learn/github-actions/
+   45. Reviewing deployments - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/actions/managing-workflow-runs/reviewing-deployments
+   46. Deployments and environments - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
+   47. CI/CD Observability with OpenTelemetry - A Step by Step Guide | SigNoz, Zugriff am November 12, 2025, https://signoz.io/blog/cicd-observability-with-opentelemetry/
+   48. Leverage Dynatrace AIOps in GitHub CI pipelines to prevent critical incidents, Zugriff am November 12, 2025, https://www.dynatrace.com/news/blog/leverage-dynatrace-aiops-in-github-ci-pipelines-to-prevent-critical-incidents/
+   49. Monitor your GitHub Actions workflows with Datadog CI Visibility, Zugriff am November 12, 2025, https://www.datadoghq.com/blog/datadog-github-actions-ci-visibility/
+   50. The Simplest Way to Make GitHub Actions Temporal Work Like It Should - hoop.dev, Zugriff am November 12, 2025, https://hoop.dev/blog/the-simplest-way-to-make-github-actions-temporal-work-like-it-should/
+   51. Running GitHub Actions through Temporal: A complete guide ..., Zugriff am November 12, 2025, https://temporal.io/blog/running-github-actions-temporal-guide
+   52. How to Create Automated Workflows: Build vs. Buy | by Alex Glushenkov | Medium, Zugriff am November 12, 2025, https://medium.com/@alexglushenkov/how-to-create-automated-workflows-build-vs-buy-ea261a9026b4
+   53. Build vs. Buy: choosing the right payment orchestration strategy - Corefy, Zugriff am November 12, 2025, https://corefy.com/blog/build-vs-buy-payment-orchestration-a-handy-guide-and-decision-framework
+   54. Let's talk Platform Orchestrators: Buy or build? - Humanitec, Zugriff am November 12, 2025, https://humanitec.com/blog/lets-talk-platform-orchestrators-buy-or-build
+   55. Why Durable Execution Should Be Lightweight - DBOS, Zugriff am November 12, 2025, https://www.dbos.dev/blog/what-is-lightweight-durable-execution
+   56. Durable Execution Explained — How Conductor Delivers Resilient Systems Out Of The Box, Zugriff am November 12, 2025, https://orkes.io/blog/durable-execution-explained-how-conductor-delivers-resilient-systems/
+   57. The Principles of Durable Execution Explained - Inngest Blog, Zugriff am November 12, 2025, https://www.inngest.com/blog/principles-of-durable-execution
+   58. Why [do we really need] workflow orchestrators? : r/dataengineering - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/dataengineering/comments/1gob928/why_do_we_really_need_workflow_orchestrators/
+   59. Don't Let Your AI Agents Run Wild: Building a Human-in-the-Loop System with LangGraph, Zugriff am November 12, 2025, https://medium.com/@shubhamvora/dont-let-your-ai-agents-run-wild-building-a-human-in-the-loop-system-with-langgraph-0189bf0c8e20
+   60. Best practices for building agents - UiPath Documentation, Zugriff am November 12, 2025, https://docs.uipath.com/agents/automation-cloud/latest/user-guide/best-practices-for-building-agents
+   61. Implement human-in-the-loop confirmation with Amazon Bedrock Agents, Zugriff am November 12, 2025, https://aws.amazon.com/blogs/machine-learning/implement-human-in-the-loop-confirmation-with-amazon-bedrock-agents/
+   62. Human-in-the-Loop for AI Agents: Best Practices, Frameworks, Use Cases, and Demo, Zugriff am November 12, 2025, https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo
+   63. Workflow Orchestration Platforms: Kestra vs Temporal vs Prefect (2025 Guide) - Procycons, Zugriff am November 12, 2025, https://procycons.com/en/blogs/workflow-orchestration-platforms-comparison-2025/
+   64. Temporal meets Git meets Orchestration | by Suraj Subramanian - Medium, Zugriff am November 12, 2025, https://medium.com/@surajsub_68985/temporal-meets-git-meets-orchestration-9afc8e2b8db7

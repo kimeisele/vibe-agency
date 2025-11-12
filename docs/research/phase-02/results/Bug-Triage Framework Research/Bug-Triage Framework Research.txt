@@ -1,0 +1,855 @@
+﻿Ein Framework für systematisches Maintenance und Bug-Triage
+
+
+
+
+1. Grundlagen eines modernen Maintenance-Frameworks
+
+
+Die Entwicklung eines robusten Frameworks für die Wartung von Produktionssystemen und die Triage von Fehlern ist eine entscheidende architektonische Aufgabe. Sie definiert die Schnittstelle zwischen dem unvermeidlichen Chaos der Produktion und dem strukturierten Engineering-Prozess. Dieses Dokument legt ein solches Framework dar, das als Grundlage für ein systematisches, messbares und teilweise automatisiertes System zur Behebung von Produktionsproblemen dient.
+
+
+1.1. Definition der Philosophie: SRE als Motor, ITIL als Leitplanken
+
+
+Zwei dominante Methoden prägen die moderne IT-Steuerung: die Information Technology Infrastructure Library (ITIL) und das Site Reliability Engineering (SRE). ITIL ist ein umfassendes Framework für das IT Service Management (ITSM), das darauf abzielt, IT-Services an der Geschäftsstrategie auszurichten.1 Es bietet einen strukturierten Satz von Best Practices für Prozesse wie Service Design, Incident Management und Problem Management.3
+SRE hingegen ist eine spezifische Methodik, die Software-Engineering-Prinzipien auf Betrieb und Infrastruktur anwendet.1 SRE behandelt den Betrieb als Softwareproblem und konzentriert sich auf Zuverlässigkeit, Automatisierung und die technische Lösung von Betriebsproblemen.3 Historisch gesehen wird ITIL oft als prozesslastig und manuell wahrgenommen, während SRE als post-produktionsorientiert und engineering-fokussiert gilt.3
+Dieses Framework postuliert ein Hybridmodell. Es übernimmt SRE als operative Philosophie – die Auffassung, dass Wartung und Fehlerbehebung primär Engineering-Probleme sind, die durch Software gelöst werden müssen.4 Gleichzeitig nutzt es die etablierten Governancestrukturen von ITIL 4 (insbesondere Incident- und Problem-Management) 3, um diese SRE-Praktiken zu dokumentieren, zu steuern und zu skalieren. Diese Koexistenz ist in der Industrie üblich; viele leistungsstarke Teams nutzen ITIL, SRE und DevOps-Praktiken parallel.6 Dieses Framework kodifiziert, wie sie interoperieren.
+
+
+1.2. Ein Framework für Zuverlässigkeit, nicht nur für Fixes
+
+
+Der fundamentale Zweck dieses Frameworks ist nicht einfach die Behebung von Fehlern, sondern die aktive Verteidigung und Steuerung der Systemzuverlässigkeit. Die Kernprinzipien von SRE umfassen die Verwaltung von Verfügbarkeit, Latenz, Leistung, Effizienz, Änderungsmanagement, Überwachung, Notfallreaktion und Kapazitätsplanung.5
+Ein "Bug" ist per Definition eine Erosion einer oder mehrerer dieser Zuverlässigkeitsmetriken – sei es Leistung, Verfügbarkeit oder die Korrektheit von Daten. Während ITIL den Prozess zur Verwaltung von "Incidents" (der Fehler tritt auf) und "Problems" (die zugrundeliegende Ursache) bereitstellt 3, liefert SRE die technische Disziplin, um diese Probleme zu lösen.
+Daher ist dieses Framework kein einfacher Bug-Tracking-Workflow. Es ist ein Zuverlässigkeits-Engineering-System, das "Incidents" (Fehler) in "Engineering-Arbeit" (Fixes) übersetzt und gleichzeitig die Auswirkungen auf die Zuverlässigkeit (Service Level Objectives, SLOs) misst. Es verbindet den SRE-Fokus auf nicht-funktionale Anforderungen 6 mit dem ITIL-Prozess für das Incident Management. Diese Perspektive rechtfertigt die Notwendigkeit und Strenge der in Teil 4 definierten Service Level Agreements (SLAs), der "Definition of Done" (DoD) und der Priorisierungsregeln.
+
+
+2. Die Constraint-Matrix: Definition der Automatisierungsgrenzen (MAINTENANCE_constraints.yaml)
+
+
+Dieser Abschnitt definiert die harten Grenzen des Systems. Er kodifiziert, was menschliches Urteilsvermögen erfordert, etabliert die Grenzen der künstlichen Intelligenz bei der Code-Reparatur und schafft eine gemeinsame Sprache zur Klassifizierung von Problemen. Diese Definitionen bilden den Kern der Datei MAINTENANCE_constraints.yaml.
+
+
+2.1. Eine Taxonomie der Bug-Schweregrade
+
+
+Die Schaffung einer standardisierten, eindeutigen Taxonomie für Schweregrade ist der Grundpfeiler des gesamten Triage-Prozesses. Ohne eine gemeinsame Sprache ist eine effektive Priorisierung unmöglich. Das folgende Fünf-Stufen-Modell synthetisiert gängige Industriestandards.7
+* Kritisch (Critical): Definiert als ein Fehler, der einen vollständigen Systemausfall, Datenverlust oder eine erhebliche Sicherheitsverletzung verursacht. Die gesamte Anwendung oder ein Kernsystem ist nicht nutzbar.7 Ein Beispiel ist ein Absturz der Anwendung beim Login, der die Nutzung vollständig verhindert, oder ein Fehler, der Benutzerdaten löscht.9
+* Hoch (High): Definiert als ein Fehler, der eine wichtige Hauptfunktionalität bricht, für die es keinen angemessenen Workaround gibt.9 Das System ist zwar noch nutzbar, aber stark eingeschränkt. Ein Beispiel ist ein Fehler im Bezahlvorgang einer E-Commerce-Anwendung.9
+* Mittel (Medium): Definiert als ein Fehler, bei dem nicht-kritische Funktionen fehlerhaft sind, aber ein Workaround existiert.9 Der Benutzerfluss ist beeinträchtigt, aber nicht blockiert. Ein Beispiel ist eine nicht funktionierende Sortierfunktion auf einem Dashboard.11
+* Niedrig (Low): Definiert als ein geringfügiges Problem, oft kosmetischer Natur oder ein UI-Fehler, der die Kernfunktionalität nicht oder nur unwesentlich beeinträchtigt.8 Ein Beispiel ist ein falsch geschriebenes Label oder eine Fehlausrichtung von UI-Elementen.
+* Kosmetisch (Cosmetic): Definiert als ein triviales Problem, das oft subjektiv ist und keinerlei Auswirkungen auf die Funktionalität hat.8
+Bei sicherheitsrelevanten Fehlern muss dieser interne Schweregrad auf den branchenüblichen CVSS-Score (Common Vulnerability Scoring System) abgebildet werden. Ein "Kritischer" Bug entspricht typischerweise einem CVSS-Score von 9.0-10.0.12
+
+
+2.2. Tabelle: Definition der Bug-Schweregrade
+
+
+Eine formale Matrix ist unerlässlich, um Ambiguität im Triage-Prozess zu eliminieren.13 Sie dient als zentrales Referenzdokument für QA, Entwicklung und Produktmanagement.
+
+
+Schweregrad
+	Technische Auswirkung (Definition)
+	Benutzer-/Geschäftsauswirkung
+	Beispiele
+	Kritisch (P1)
+	Vollständiger Systemausfall, Datenverlust, kritische Sicherheitslücke. Blockiert jegliche Nutzung.
+	Alle Benutzer betroffen. Führt zu sofortigem Umsatzverlust, rechtlichen Risiken oder Reputationsschaden.
+	Anwendung stürzt beim Login ab 9; aktiver Datenverlust; unautorisierter Root-Zugriff.
+	Hoch (P2)
+	Hauptfunktionalität ist defekt oder nicht verfügbar. Kein angemessener Workaround.
+	Eine große Teilmenge von Benutzern kann eine Kernaufgabe nicht ausführen.
+	Der Bezahlvorgang schlägt fehl 9; ein zentraler Bericht kann nicht generiert werden.
+	Mittel (P3)
+	Nicht-Kernfunktionalität ist defekt. Ein Workaround existiert oder die Auswirkungen sind begrenzt.
+	Benutzer erleben Unannehmlichkeiten; der Workflow ist beeinträchtigt, aber nicht blockiert.
+	Sortierfunktion auf einer Tabelle funktioniert nicht 9; E-Mail-Benachrichtigungen haben Verzögerung.
+	Niedrig (P4)
+	Geringfügiges UI-Problem oder Verhaltensfehler mit minimalen Auswirkungen auf die Funktionalität.
+	Geringfügige Beeinträchtigung der Benutzererfahrung, keine funktionale Blockade.
+	Tippfehler in einem Einstellungsmenü; ein Element ist um wenige Pixel verschoben.
+	Kosmetisch (P5)
+	Triviales visuelles Problem ohne funktionale Auswirkung.
+	Nahezu keine Auswirkung auf den Benutzer, oft subjektiv.
+	Falscher Farbton eines Logos; Schriftart weicht in einem seltenen Dialog ab.
+	
+
+2.3. Inhärente Beschränkungen der KI-gesteuerten Code-Reparatur
+
+
+Eine Kernfrage des Frameworks ist, was automatisiert werden kann. KI-gesteuerte Werkzeuge zur Code-Generierung und -Reparatur entwickeln sich rasant, unterliegen jedoch fundamentalen Beschränkungen. Diese müssen verstanden werden, um die Grenzen der Automatisierung festzulegen.
+Beschränkung 1: Mangel an Kontext und holistischem Verständnis.
+KI-Modelle (LLMs) brillieren bei diskreten, "lokalen" Aufgaben mit begrenztem Kontext, wie dem Schreiben von Boilerplate-Code oder einfachen Funktionen.14 Ihnen fehlt jedoch ein "holistisches Verständnis" 16 oder ein stabiles "mentales Modell" 15 der gesamten Systemarchitektur. Sie können komplexe Systeminteraktionen, Skalierbarkeitsanforderungen, Performance-Trade-offs oder Sicherheitsimplikationen nicht tiefgreifend abwägen.17 Dies führt zu Code, der zwar "funktioniert, aber Performance-Überlegungen nicht berücksichtigt".17 Mit zunehmender Komplexität eines Projekts geht der Kontext des KI-Modells verloren, und kleine Fehler können sich schnell zu größeren Problemen summieren.15
+Beschränkung 2: Unfähigkeit, Geschäftslogik und Absicht zu verstehen.
+KI-Modelle können "individuelle Business-Intelligenz, Geschäftsregeln und Geschäftsziele" nicht erfassen.19 Ihnen fehlt "das tiefgehende kontextuelle Geschäftswissen, das erforderlich ist, um durch komplizierte Regeln... zu navigieren".20 Eine KI kann keinen Fehler in einer komplexen Finanzberechnung beheben, wenn sie nicht die regulatorische Absicht hinter der Formel versteht. Dies macht KI-Fixes für hochregulierte Branchen (z.B. Finanzen, Medizin) zu einem Risiko.20
+Beschränkung 3: Sicherheitslücken und das Dilemma der Trainingsdaten.
+KI-Modelle werden auf "riesigen Repositorien öffentlichen Codes" trainiert – einschließlich Code, der bekannte Schwachstellen enthält.17 Es besteht das erhebliche Risiko, dass die KI "unbewusst bekannte Schwachstellen reproduziert" 17 oder veraltete Bibliotheken und unsichere Praktiken vorschlägt.19 Ein automatisch generierter Fix kann daher neue, subtile Sicherheitsrisiken einführen.
+Beschränkung 4: Intransparente Logik und Wartungsaufwand.
+KI-generierte Fixes können "nicht-optimal" 17 sein oder "Inkonsistenzen im Codierungsstil" erzeugen.19 Eine übermäßige Abhängigkeit von diesen Werkzeugen "erodiert das tiefe Systemverständnis der Entwickler" 17 und schafft eine langfristige Wartungsschuld. Ein Experiment, bei dem eine KI gezwungen wurde, ihren eigenen Code zu erstellen und zu reparieren, zeigte, dass dies zwar "möglich ist, aber mit erheblichen Einschränkungen verbunden ist" und "kleinere Probleme... zu großen Frustrationen" werden ließ.21
+
+
+2.4. Die "nicht automatisierbaren" Bug-Klassen
+
+
+Basierend auf den oben genannten Beschränkungen müssen bestimmte Bug-Klassen explizit von jeder automatisierten Reparatur (über einfache Vorschläge hinaus) ausgeschlossen werden.
+Architektur- und Systemdesign-Änderungen:
+Wie dargelegt 16, kann KI nicht über systemweite architektonische Trade-offs urteilen. Jeder Fehler, dessen wahre Behebung eine Änderung der Architektur erfordert (z.B. die Verschiebung einer Service-Grenze, die Einführung eines neuen Caching-Layers, die Umstellung von synchroner auf asynchrone Kommunikation), ist nicht automatisierbar. Die KI würde wahrscheinlich einen lokalen "Patch" vorschlagen, der das zugrundeliegende architektonische Problem ignoriert oder verschlimmert.
+Datenbankmigrationen:
+Dies ist die ultimative "nicht automatisierbare" Aufgabe. Die Risiken sind nicht nur technischer, sondern fundamentaler Natur.
+1. Datenbankmigrationen sind bekanntermaßen "arbeitsintensiv, zeitaufwändig und kostspielig" und haben sich "in den letzten 40 Jahren erfolgreich der Automatisierung widersetzt".22 Es sind risikoreiche "Karriere-definierende Momente".23
+2. Die Herausforderungen umfassen fragmentierte Werkzeuge, intransparente Regeln und Skripte, die in kleinen Testumgebungen funktionieren, aber "in der Produktion zusammenbrechen".24
+3. KI-Modelle sind probabilistisch 15, und ihre automatisierten Mappings sind "selten erklärbar".24
+4. Der schlimmste Fall bei einer Migration ist ein katastrophaler, irreversibler Datenverlust.23
+Die Verwendung eines probabilistischen, nicht erklärbaren Werkzeugs (KI) für eine risikoreiche, irreversible "Alles-oder-Nichts"-Aufgabe (DB-Migration) 22 stellt ein inakzeptables Geschäftsrisiko dar. Dieses Framework muss jeden Bug-Fix, der Schemaänderungen oder Migrationsskripte enthält, für eine 100%ige menschliche Überprüfung und Ausführung kennzeichnen.
+
+
+2.5. Obligatorische "Human-in-the-Loop" (HITL)-Trigger
+
+
+Das Framework ist nicht als vollautomatisch, sondern als kollaborativ konzipiert.25 Es muss so entworfen sein, dass es "in kritischen Momenten innehält und um Hilfe bittet".26 Diese "Pausen" sind keine Fehler, sondern ein wesentliches Designmerkmal zur Risikominderung. Menschliche Intelligenz wird dort eingesetzt, wo Urteilsvermögen, Kontextverständnis und die Handhabung von Ambiguität erforderlich sind.25
+Trigger 1: Bug-Kategorie (Hochrisikodomänen)
+Bestimmte Fehlerkategorien erfordern aufgrund ihrer Natur menschliches Eingreifen.
+* Sicherheitslücken: Jeder Bug, der als Sicherheitsproblem klassifiziert ist.28 Die Nuancen einer Schwachstelle und die Validierung des Fixes (um sicherzustellen, dass er keine neue Lücke öffnet) erfordern menschliche Expertise.
+* Datenverlust oder -beschädigung: Jeder Bug, der Datenverlust verursacht hat oder dessen Fix potenziell Daten verändern oder löschen könnte.9
+* PII/Datenschutzrelevanz: Jeder Bug, der Systeme mit personenbezogenen Daten (PII) oder sensiblen Informationen berührt.31
+Trigger 2: Bug-Charakteristiken (Ambiguität)
+* Unklar oder nicht reproduzierbar: Wenn der Bug-Report unklar ist, kritische Informationen fehlen 33 oder der Fehler vom automatisierten Test-Harness nicht zuverlässig reproduziert werden kann.
+* Edge Cases und Nuancen: HITL ist entscheidend für "komplexe Szenarien" 27 und "Nuancen" 26, die KI nicht bewältigen kann.
+Trigger 3: Automatisierungsvertrauen (Selbstwahrnehmung)
+Dies ist der intelligenteste Trigger: Das KI-System muss seine eigenen Grenzen erkennen und proaktiv eskalieren.26
+* Niedriger Konfidenzwert: Das KI-Modell selbst meldet einen niedrigen Konfidenzwert (z.B. < 90%) für seinen vorgeschlagenen Fix.
+* Hochrisiko-Fix: Der KI-generierte Fix wird durch statische Analyse als riskant eingestuft (z.B. er berührt ein Kern-Finanzmodul, ändert eine Auth-Bibliothek oder ein Datenbankschema).
+* Großer "Blast Radius": Der vorgeschlagene Fix ändert eine große Anzahl von Dateien (z.B. > 5) oder einen "Kernanwendungsfluss".34
+
+
+2.6. Tabelle: Obligatorische HITL-Eskalationstrigger
+
+
+Diese Tabelle kodifiziert die "Pausenregeln" für das Automatisierungssystem. Sie wandelt die erkannten KI-Beschränkungen in konkrete operative Sicherheitsüberprüfungen um.
+
+
+Trigger-Typ
+	Trigger-Bedingung (Regel)
+	HITL-Anforderung
+	Begründung / Rationale
+	Bug-Kategorie
+	bug.category == "Security"
+	100% Menschliche Überprüfung & Genehmigung
+	Hohes Risiko, Nuancen erforderlich.28
+	Bug-Kategorie
+	bug.category == "DataLoss" OR bug.category == "DataCorruption"
+	100% Menschliche Überprüfung & Genehmigung
+	Risiko eines irreversiblen Schadens.9
+	Bug-Kategorie
+	bug.context.PII_impact == true
+	100% Menschliche Überprüfung & Genehmigung
+	Datenschutz- und Compliance-Risiken.31
+	Bug-Charakteristik
+	bug.reproducible == false
+	Eskalation an Mensch zur Analyse
+	Automatisierung kann nicht ohne Reproduktion arbeiten.33
+	Autom. Vertrauen
+	ai_fix.confidence_score < 0.9
+	Eskalation an Mensch zur Überprüfung
+	KI ist unsicher über ihren eigenen Fix.26
+	Autom. Vertrauen
+	ai_fix.changes_db_schema == true
+	HALT. Eskalation an Senior-Mensch.
+	Nicht automatisierbare Aufgabe.22
+	Autom. Vertrauen
+	ai_fix.blast_radius.files_changed > 5
+	Eskalation an Mensch zur Überprüfung
+	Hohe Wahrscheinlichkeit unbeabsichtigter Nebenwirkungen.34
+	
+
+3. Der Abhängigkeitsgraph: Inputs und Workflows für die Triage (MAINTENANCE_dependencies.yaml)
+
+
+Dieser Abschnitt beschreibt die erforderlichen Inputs (Daten) und Prozesse (Workflows), von denen das Triage-System abhängt, um effektiv zu funktionieren. Er beantwortet die zweite Forschungsfrage des Benutzers und wird in MAINTENANCE_dependencies.yaml kodifiziert.
+
+
+3.1. Datengesteuerte Triage: Das Observability-Fundament
+
+
+Die Effektivität jeder Triage hängt direkt von der Qualität und der Korrelation der Eingabedaten ab. Das System benötigt eine einheitliche, korrelierte Sicht auf den Systemzustand zum Zeitpunkt des Fehlers.
+Input 1: Benutzerberichte (User Reports)
+Dies ist oft das erste Signal, typischerweise erfasst über Tools wie Slack-Kanäle 35 oder Issue-Tracker.28 Diese Berichte sind von unschätzbarem Wert, da sie den wahrgenommenen Aufprall widerspiegeln, aber sie sind oft "unklar" 33, subjektiv und können Symptome mit Ursachen verwechseln oder "Bugs" melden, die eigentlich beabsichtigte Funktionen sind.36 Sie sind ein kritischer, aber unvollständiger Datenpunkt.
+Input 2: Monitoring (Alerts)
+Dies ist das proaktive Signal. Monitoring-Tools, die auf Anomalien (z.B. "Spikes in Fehlern") achten, können einen "reaktiven Triage"-Workflow auslösen, oft bevor ein Benutzer den Fehler überhaupt bemerkt.34 Dies ist eine Abhängigkeit für ein System, das Probleme abfängt, bevor sie eskalieren.
+Input 3: Logs
+Dies sind die diagnostischen Daten. Während Alerts das "Was" (Latenz ist hoch) und Benutzerberichte das "So what" (Checkout ist langsam) liefern, liefern Logs das "Warum" (DB-Abfrage-Timeout).37
+Kritische Abhängigkeit: Korrelation
+Die einzelnen Datenströme (Logs, Metriken, Berichte) haben für sich genommen nur einen geringen Triage-Wert. Die primäre Abhängigkeit des Frameworks ist nicht das Vorhandensein dieser Daten, sondern die Fähigkeit, sie automatisch zu korrelieren.
+Ein Beispiel:
+1. Ein Benutzer meldet: "Der Checkout ist langsam" (Benutzerbericht).35
+2. Ein Monitoring-Tool alarmiert: "P90 Latenz für /api/payment > 2s" (Monitoring).34
+3. Ein Log-Ereignis zeigt: "WARN: DB Query Timeout on table 'orders'" (Logs).37
+Ohne Korrelation sind dies drei separate, nicht-aktionable Informationsströme, die drei verschiedene Teams alarmieren könnten. Mit Korrelation (z.B. über eine trace_id) wird dies zu einem einzigen, kontextreichen Incident. Systeme, die "automatische Kontextpropagierung" implementieren, um einen Request-Trace mit seinen Logs zu verknüpfen 38, sind die technische Grundlage. Dieser Prozess der "Normalisierung" und Korrelation von Ereignissen aus mehreren Überwachungssystemen 39 ist unerlässlich.
+Daher muss die MAINTENANCE_dependencies.yaml-Datei festlegen, dass ein Bug-Report idealerweise mit einer correlated_trace_id und/oder monitoring_alert_id angereichert werden muss, bevor er automatisch triagiert oder priorisiert werden kann.
+
+
+3.2. Zwei-Spur-Wartung: Hotfix- vs. geplante Workflows
+
+
+Dieses Framework definiert zwei unterschiedliche Prozessabhängigkeiten für die Behebung eines Fehlers. Die Wahl des Workflows ist eine direkte abhängige Variable der Priorität des Fehlers (definiert in Teil 4).
+Workflow 1: Der Hotfix (Dringlicher Pfad)
+* Zweck: Schnelle Behebung eines kritischen Produktionsproblems.40
+* Trigger: Ein "Kritischer" (P1) Bug.
+* Quell-Branch (Source Branch): Basiert direkt auf main (oder master), dem stabilen Produktions-Branch.41 Dies ist der einzige Branch, der jemals direkt von main abzweigen sollte.41
+* Prozess: Wird sofort auf ein Live-System angewendet.40 Aufgrund der Dringlichkeit umgeht er oft den vollständigen, standardisierten Testzyklus, was ein inhärentes Risiko darstellt.43
+* Merge-Abhängigkeit: Nach Abschluss muss der Hotfix zurück in sowohl main (zur Behebung der Produktion) als auch develop (zur Verhinderung von Regressionen im nächsten Release) gemerged werden.41 Dieser main -> develop Merge ist eine kritische Abhängigkeit, um die Synchronität der Repositories zu wahren und zu verhindern, dass der Fix im nächsten Release "verloren geht".
+Workflow 2: Der reguläre Fix (Geplanter Pfad)
+* Zweck: Für alle nicht-dringenden Fehler (Hoch, Mittel, Niedrig).
+* Trigger: Ein "nicht-kritischer" Bug, der im Backlog priorisiert wurde.
+* Quell-Branch (Source Branch): Basiert auf develop, dem Haupt-Entwicklungs-Branch.41
+* Prozess: Folgt dem standardmäßigen Entwicklungs- und Testlebenszyklus (DoD, wie in Teil 4.2 definiert).
+* Merge-Abhängigkeit: Wird nur zurück in develop gemerged.41 Der Fix wird dann über den normalen Release-Branch-Prozess (von develop zu release zu main) in die Produktion befördert.41
+
+
+3.3. Tabelle: Vergleich der Hotfix- und Regular-Fix-Workflows
+
+
+Diese Tabelle kodifiziert die "Verkehrsregeln" für Entwickler. Sie macht die Branching-, Test- und Merge-Abhängigkeiten explizit und verhindert den häufigen Fehlerfall, dass ein Hotfix durch das nächste geplante Release überschrieben wird.
+
+
+Workflow-Typ
+	Trigger (Priorität)
+	Quell-Branch (Basiert auf)
+	Testprotokoll
+	Merge-Ziel(e)
+	Deployment
+	Hotfix
+	P1 (Kritisch)
+	main 41
+	Beschleunigt. Minimaler Regressionstest. 43
+	1. main
+
+
+2. develop 41
+	Sofort. Außerhalb des Zyklus. 40
+	Regular Fix
+	P2, P3, P4, P5
+	develop 41
+	Vollständig. Inkl. neuer Regressionstests (DoD).
+	1. develop 41
+	Geplant. Teil des nächsten Release-Zyklus.
+	
+
+3.4. Den Kreislauf schließen: Integration der Triage in die Agile-Planung
+
+
+Dieser Abschnitt definiert die Prozessabhängigkeit, die das "Triage-System" mit dem "Planungssystem" verbindet und die Frage des Benutzers nach dem "Bug -> Feature Request -> Planning Loop" beantwortet.
+Schritt 1: Die Triage-Entscheidung.
+Ein Fehler wird gemeldet.35 Der erste Triage-Schritt 45 (oft durch Tier-II-Support oder einen Product Owner) muss feststellen: Ist dies ein Bug oder ein Feature? 36 unterstreicht diese Ambiguität: Ist es ein "unbeabsichtigter Softwarefehler" oder eine "beabsichtigte Funktionalität", die der Benutzer missversteht oder nicht mag?
+Schritt 2: Konvertierung von Bug zu Feature Request.
+Wenn der "Bug" als "bewusste Designentscheidung" oder "Mehrdeutigkeit in der Benutzererwartung" eingestuft wird 36, wird er konvertiert. Das Ticket ändert seinen Typ von einem "unvorhergesehenen" Bug zu einer "geplanten" Feature Request.45 Dies ist eine kritische Weichenstellung.
+Schritt 3: Die Backlog-Abhängigkeit.
+Alle nicht-Hotfix-Bugs (d.h. P2-P5) 45 und alle Feature Requests werden dem einzigen Product Backlog hinzugefügt.28 Dies ist ein Grundpfeiler von Agile: Alle Arbeiten müssen an einem Ort sichtbar und priorisiert werden.28
+Schritt 4: Der Grooming/Refinement-Loop.
+Das Product Backlog wird regelmäßig (z.B. wöchentlich) in einem "Backlog Grooming" oder "Refinement"-Meeting vor dem Sprint Planning überprüft.46 In diesem Meeting werden Bugs (P2-P5) direkt gegen neue Features priorisiert.28
+Schritt 5: Der Planungs-Loop.
+Während des Sprint Planning Meetings zieht das Entwicklungsteam die Arbeit (eine Mischung aus Bugs und Features) vom oberen Ende des gepflegten Backlogs in den aktuellen Sprint.28
+Das Versäumnis, diesen Kreislauf ordnungsgemäß auszuführen, ist eine häufige Ursache für das Scheitern von Sprints, wie in 51 beschrieben, wo unvorhergesehene Regressions-Bugs den nächsten Sprint "ruinieren".
+Die zentrale Abhängigkeit dieses Frameworks lautet daher: "Ein nicht-kritischer Bug (P2-P5) kann nicht behoben werden, bevor er nicht im Product Backlog priorisiert wurde." Diese Regel verhindert "Schattenarbeit" (Shadow Work) 51 und erzwingt einen expliziten Business-Trade-off: Die Behebung dieses P3-Bugs ist wichtiger (oder unwichtiger) als die Entwicklung dieses neuen Features. Dies ist die praktische Umsetzung des SRE/ITIL/Agile-Hybrids: Die Engineering-Arbeit (SRE) wird durch den geschäftsorientierten Planungsprozess (Agile/ITIL) gesteuert.
+
+
+4. Das Triage-Regelwerk: Kodifizierung von Qualität und Reaktion (MAINTENANCE_triage_rules.yaml)
+
+
+Dieser Abschnitt definiert die expliziten operativen Regeln des Frameworks. Er beantwortet die dritte Forschungsfrage des Benutzers und kodifiziert die "How-to"-Anleitungen für Priorisierung, Fertigstellung und Eskalation. Diese Regeln bilden die Grundlage für MAINTENANCE_triage_rules.yaml.
+
+
+4.1. Dual-Modell-Priorisierung: Echtzeit-Triage vs. Backlog-Grooming
+
+
+Die Anfrage des Benutzers ("Severity × Impact") ist ein entscheidender, aber unvollständiger Teil der Priorisierung. Eine tiefere Analyse zeigt, dass unterschiedliche Kontexte unterschiedliche Priorisierungsmodelle erfordern.11 Ein On-Call-SRE, der um 3 Uhr morgens eine Entscheidung treffen muss, benötigt eine schnelle Heuristik. Ein Product Manager, der den nächsten Zwei-Wochen-Sprint plant, benötigt ein quantitatives Vergleichsmodell. Dieses Framework kodifiziert beide.
+Modell 1: Incident-Priorisierungsmatrix (für Echtzeit-Triage)
+* Zweck: Schnelle, heuristische Entscheidungsfindung für On-Call-Personal und die erste Triage-Stufe.
+* Formel: Priorität = f(Schweregrad × Auswirkung)
+* Schweregrad (Severity): Die technische Auswirkung des Fehlers.7 (Definiert in Teil 2.1).
+* Auswirkung (Impact): Die geschäftliche oder benutzerbezogene Auswirkung.10 Diese wird oft durch Faktoren wie "Anzahl der betroffenen Kunden" 54, "Auswirkung auf den Umsatz" oder "Reputation" 10 bestimmt.
+* Dieses Modell löst die klassischen Priorisierungsparadoxien auf:
+   * Hoher Schweregrad, niedrige Priorität: Ein kritischer Fehler (z.B. Absturz), der nur den CEO in einem veralteten Browser betrifft.55
+   * Niedriger Schweregrad, hohe Priorität: Ein kosmetischer Fehler (z.B. Tippfehler) auf der Homepage oder im Firmenlogo.9
+Tabelle: Triage-Priorisierungsmatrix (Modell 1)
+* Begründung: Dies ist das Kernwerkzeug für die Echtzeit-Reaktion. Es übersetzt die zweidimensionale Eingabe (Technik vs. Business) in eine eindimensionale, aktionable Prioritätsstufe (P1-P5).
+* Achsen: Schweregrad (Technisch) (Kritisch bis Kosmetisch) vs. Auswirkung (Business/Benutzer) (Weit verbreitet bis Einzelner Benutzer).
+* Zellen: Endgültige Priorität (P1-P5).
+
+
+	Auswirkung: Weit verbreitet (Alle Benutzer)
+	Auswirkung: Hoch (Viele Benutzer / Kernsegment)
+	Auswirkung: Mittel (Wenige Benutzer / Nicht-Kernsegment)
+	Auswirkung: Niedrig (Einzelner Benutzer)
+	Schweregrad: Kritisch
+	P1
+	P1
+	P2
+	P2
+	Schweregrad: Hoch
+	P1
+	P2
+	P3
+	P3
+	Schweregrad: Mittel
+	P2
+	P3
+	P3
+	P4
+	Schweregrad: Niedrig
+	P3
+	P4
+	P4
+	P5
+	Schweregrad: Kosmetisch
+	P4
+	P5
+	P5
+	P5
+	Modell 2: RICE-Scoring (für Backlog-Grooming)
+* Zweck: Langsame, quantitative Priorisierung, um Bugs gegeneinander und gegen neue Features im Backlog objektiv zu vergleichen.
+* Formel: Dieses Framework adaptiert das RICE-Modell (Reach, Impact, Confidence, Effort) 56 speziell für Bugs, wie in 11 detailliert.
+* R - Reach (Reichweite): Wie viele Benutzer sind von dem Problem betroffen? (Score 1-5).11
+* I - Impact (Auswirkung): Wie schwerwiegend ist das Problem für die Benutzererfahrung? (Score 1-5).11
+* C - Confidence (Vertrauen): Wie zuversichtlich sind wir in die Schätzungen für R, I und E? (Score 1-5).11
+* E - Ease (Einfachheit): Wie einfach ist es, das Problem zu beheben? (Score 1-5). Dies ist eine Invertierung des Standard-RICE-"Effort"-Wertes.11 Ein schneller Fix erhält einen hohen "Ease"-Score.
+* Berechnung: Score = R × I × C × E.11
+* Dieser Score wird verwendet, um das gesamte Bug-Backlog (P2-P5) in eine Rangfolge zu bringen.52 Ein Bug mit einem RICE-Score von 500 wird im nächsten Sprint-Planning vor einem Bug mit einem Score von 75 behandelt.11
+
+
+4.2. Die "Definition of Done" (DoD) für Bug-Fixes
+
+
+Die Beantwortung der Frage "Wann ist ein Bug 'fixed'?" ist nicht trivial. Ein Bug ist nicht behoben, wenn der Code geschrieben ist. Er ist behoben, wenn er eine strenge, vereinbarte "Definition of Done" (DoD) erfüllt.59 Dies dient als offizielles "Gate", das einen Task von "in Arbeit" zu "erledigt" bewegt.59
+Basierend auf einer Synthese von 59 muss die DoD-Checkliste für einen Bug-Fix im Rahmen dieses Frameworks die folgenden Kriterien zwingend enthalten:
+1. Der Code für die erforderliche Funktionalität wurde produziert.62
+2. Der Code wurde einem Peer Code Review unterzogen und von mindestens einer anderen Person als dem Autor genehmigt.59
+3. Der Code wurde in den korrekten Branch eingecheckt (z.B. develop oder hotfix).59
+4. Das Projekt lässt sich fehlerfrei bauen.62
+5. Es wurde(n) ein oder mehrere neue Regressionstest(s) geschrieben und hinzugefügt, die den ursprünglichen Fehler nachweisen und dessen erneutes Auftreten verhindern.62
+6. Alle bestehenden Unit- und Integrationstests (einschließlich der neuen Regressionstests) werden erfolgreich ausgeführt.62
+7. Die Dokumentation (Code-Kommentare, Entwicklerdokumentation, bei Bedarf auch Benutzerdokumentation) wurde aktualisiert.59
+8. Der Fix wurde in einer Testumgebung bereitgestellt und (falls zutreffend) von der Qualitätssicherung oder dem Product Owner abgenommen.59
+9. Der Fix wurde erfolgreich in der Produktion bereitgestellt (der letzte Schritt, der das Ticket schließt).
+Das kritischste Kriterium in dieser Liste ist Punkt 5: der obligatorische Regressionstest. Dies ist die primäre SRE-Praxis, die Zuverlässigkeit technisch durchsetzt. Ein Bug, der ohne einen ihn abdeckenden Test "behoben" wird, gilt nicht als "Done", da das System nichts gelernt hat und der Fehler jederzeit zurückkehren kann.
+
+
+4.3. Service Level Agreements (SLAs) für die Bug-Reaktion
+
+
+SLAs kodifizieren die zeitbasierten Regeln des Frameworks. Sie setzen messbare Ziele für die Reaktions- und Lösungszeiten des Teams und machen die Priorisierungsstufen konkret. Die im Research gefundenen SLA-Strukturen 63 unterscheiden kritisch zwischen:
+1. Response Time (Reaktionszeit): Die Zeit, bis die Meldung bestätigt und die Arbeit am Problem begonnen wird.
+2. Resolution Time (Lösungszeit): Die Zeit, bis der Fehler gemäß der Definition of Done (DoD) behoben ist.
+Die vom Benutzer vorgeschlagenen Ziele (z.B. "Kritisch: 1h") werden als Reaktionszeit-SLAs (Response Time) interpretiert, was branchenüblichen Standards entspricht.66 Für die Lösungszeiten werden die detaillierten, auf Geschäftsstunden basierenden Ziele aus 63 und 64 als robustere Grundlage herangezogen.
+
+
+4.4. Tabelle: SLA-Zielmatrix (Reaktion & Lösung)
+
+
+* Begründung: Diese Tabelle macht das Operations-Team rechenschaftspflichtig. Sie schafft klare, messbare Erwartungen für das Business und die Benutzer und liefert die Auslöser für die Eskalationsrichtlinie.67 Die Zeiten basieren auf "Operational Time" oder Geschäftsstunden (z.B. 9 Stunden pro Geschäftstag).63
+* Prioritätsstufen: Basierend auf der Triage-Priorisierungsmatrix (Tabelle 4.1.1).
+
+
+Prioritätsstufe
+	Schweregrad (Typisch)
+	Reaktionszeit-SLA (Acknowledge & Start Work)
+	Lösungszeit-SLA (Resolve & Deploy)
+	Eskalationstrigger (Bei SLA-Bruch)
+	P1 (Kritisch)
+	Kritisch (Systemausfall)
+	30 Minuten 63 (24/7)
+	9 Geschäftsstunden 63
+	Sofortige Eskalation an Sekundär-On-Call bei Verpassen der Reaktion.
+	P2 (Hoch)
+	Hoch / Kritisch
+	9 Geschäftsstunden (1 Geschäftstag) 63
+	36 Geschäftsstunden (4 Geschäftstage) 63
+	Eskalation an Team Lead bei Verpassen der Lösung.
+	P3 (Mittel)
+	Mittel / Hoch
+	18 Geschäftsstunden (2 Geschäftstage) 63
+	63 Geschäftsstunden (7 Geschäftstage) 63
+	Eskalation an Product Owner & Team Lead zur Neupriorisierung.
+	P4 (Niedrig)
+	Niedrig
+	27 Geschäftsstunden (3 Geschäftstage) 63
+	90 Geschäftsstunden (10 Geschäftstage) 63
+	Wird im nächsten Grooming neu bewertet.
+	P5 (Kosmetisch)
+	Kosmetisch
+	Best Effort
+	Best Effort (Backlog)
+	Keine Eskalation.
+	
+
+4.5. Eskalationspfade: Vom automatisierten Alert zur menschlichen Intervention
+
+
+Die Eskalationsrichtlinie ist der Durchsetzungsmechanismus für die SLAs.68 Sie beantwortet die Frage: "Wer wird wann benachrichtigt?" Die Regeln basieren auf Zeit, Schweregrad und der Fähigkeit zur Behebung.69
+Regel 1: Schweregradbasierte Eskalation (Sofort)
+Ein als P1 (Kritisch) eingestufter Bug löst sofort eine Eskalation (z.B. einen Pager-Alert) an den primären On-Call SRE/Entwickler aus.69 Dies ist die "reaktive Triage", die in 34 beschrieben wird.
+Regel 2: Zeitbasierte Eskalation (SLA-Bruch)
+* Wenn auf einen P1-Alarm nicht innerhalb der 30-minütigen Reaktions-SLA reagiert (d.h. bestätigt) wird, wird er automatisch an den sekundären On-Call oder den Team Lead eskaliert.69
+* Wenn ein P3-Bug nicht innerhalb seiner 7-tägigen Lösungs-SLA behoben ist, wird er an den Product Manager und den Engineering Manager eskaliert, um eine explizite Entscheidung über die Neupriorisierung zu erzwingen.
+Regel 3: Funktionale Eskalation (Unfähigkeit zur Behebung)
+Dieser Pfad implementiert ein gängiges SRE-Modell.70 Der On-Call-SRE (Schwelle 1) untersucht das Problem. Wenn der SRE "zu dem Schluss kommt, dass er den Dienst nicht ohne Hilfe in den SLO-Bereich zurückbringen kann", eskaliert er funktional an das Entwicklerteam, das die betreffende Komponente besitzt (Schwelle 2).70 Dies ist eine fähigkeitsbasierte und keine hierarchische Eskalation.69
+Regel 4: Systemische Eskalation (Error Budget erschöpft)
+Dies ist die ultimative Eskalation, die das Bug-Fix-Framework direkt an die Geschäftsprioritäten koppelt. Wenn die Fehler und SLO-Verletzungen eines Dienstes so persistent sind, dass das "30-Tage-Error-Budget erschöpft ist", eskaliert das SRE-Team an das Management, um alle neuen Feature-Releases für diesen Dienst zu pausieren und sich stattdessen "auf die Zuverlässigkeit zu konzentrieren".70 Diese Regel macht die Zuverlässigkeit zu einer nicht verhandelbaren Anforderung und ist der stärkste Hebel des SRE-Frameworks.
+
+
+5. Finale Framework-Definitionen (YAML)
+
+
+Die folgende Sektion kodifiziert die in diesem Bericht analysierten und begründeten Prinzipien, Regeln und Definitionen in das vom Benutzer angeforderte YAML-Format. Diese Dateien dienen als maschinenlesbare und dokumentarische Grundlage für das Maintenance- und Triage-Framework.
+
+
+5.1. MAINTENANCE_constraints.yaml
+
+
+
+
+YAML
+
+
+
+
+# =================================================================
+# MAINTENANCE_constraints.yaml
+# Definiert die Grenzen des Systems, Schweregrade und die Regeln
+# für menschliches Eingreifen (HITL).
+# =================================================================
+
+# ---
+# Sektion 1: Taxonomie der Bug-Schweregrade
+# Definiert die gemeinsame Sprache zur Klassifizierung des
+# technischen Schweregrads eines Fehlers. Basiert auf Teil 2.2 des Berichts.
+# ---
+bug_severity_levels:
+ - level: P1_Critical
+   definition: "Vollständiger Systemausfall, Datenverlust oder kritische Sicherheitsverletzung."
+   technical_impact: "Die Kernfunktionalität ist vollständig blockiert. Das System ist nicht nutzbar."
+   examples:
+     - "Anwendung stürzt beim Login ab "
+     - "Aktiver Datenverlust oder Datenbeschädigung"
+     - "CVSS-Score 9.0-10.0 "
+
+ - level: P2_High
+   definition: "Hauptfunktionalität ist defekt; kein angemessener Workaround verfügbar."
+   technical_impact: "Eine Kernfunktion (z.B. Bezahlung, Haupt-Workflow) schlägt fehl."
+   examples:
+     - "Bezahlvorgang in einer E-Commerce-App schlägt fehl "
+     - "Benutzer können keine neuen Kern-Entitäten erstellen"
+
+ - level: P3_Medium
+   definition: "Nicht-Kernfunktionalität ist defekt; ein Workaround existiert."
+   technical_impact: "Funktionale Beeinträchtigung, die den Haupt-Workflow nicht blockiert."
+   examples:
+     - "Sortierfunktion auf einem Dashboard funktioniert nicht "
+     - "E-Mail-Benachrichtigungen haben erhebliche Verzögerung"
+
+ - level: P4_Low
+   definition: "Geringfügiges UI-Problem oder Verhaltensfehler mit minimalen Auswirkungen."
+   technical_impact: "Keine funktionale Blockade, geringfügige Beeinträchtigung der Benutzererfahrung."
+   examples:
+     - "Tippfehler in einem Einstellungsmenü"
+     - "Element ist um wenige Pixel verschoben "
+
+ - level: P5_Cosmetic
+   definition: "Triviales visuelles Problem ohne funktionale Auswirkung."
+   technical_impact: "Keine funktionale Auswirkung."
+   examples:
+     - "Falscher Farbton eines Logos "
+
+# ---
+# Sektion 2: Nicht automatisierbare Bug-Klassen
+# Kodifiziert die Aufgaben, die von einer KI-Reparatur-Automatisierung
+# ausgeschlossen werden MÜSSEN. Basiert auf Teil 2.4 des Berichts.
+# ---
+non_automatable_bug_classes:
+ - class: ArchitectureChange
+   description: "Fehler, deren wahre Behebung eine Änderung am Systemdesign oder den Service-Grenzen erfordert."
+   rationale: "KI fehlt das holistische Verständnis für systemweite architektonische Trade-offs."
+ 
+ - class: DatabaseMigration
+   description: "Fehler, deren Behebung eine Änderung des Datenbankschemas oder eine Datenmigration erfordert."
+   rationale: "Inakzeptabel hohes Risiko eines katastrophalen, irreversiblen Datenverlusts. Migrationsskripte erfordern 100% menschliche Validierung.[22, 23, 24]"
+ 
+ - class: ComplexBusinessLogic
+   description: "Fehler in hochgradig nuancierter, domänenspezifischer oder regulierter Geschäftslogik."
+   rationale: "KI kann die geschäftliche oder regulatorische *Absicht* hinter der Logik nicht verstehen.[19, 20]"
+
+# ---
+# Sektion 3: Obligatorische "Human-in-the-Loop" (HITL)-Trigger
+# Regeln, die das Automatisierungssystem anweisen, innezuhalten
+# und einen Menschen zu eskalieren. Basiert auf Teil 2.6 des Berichts.
+# ---
+hitl_mandatory_triggers:
+ - name: HITL_Trigger_Security
+   description: "Eskaliert jeden Bug, der als Sicherheitsproblem markiert ist."
+   condition: "bug.category == 'Security'"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Hohes Risiko, Nuancen erforderlich."
+
+ - name: HITL_Trigger_DataLoss
+   description: "Eskaliert jeden Bug, der Datenverlust oder -beschädigung involviert."
+   condition: "bug.category IN"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Risiko eines irreversiblen Schadens."
+
+ - name: HITL_Trigger_PII
+   description: "Eskaliert Bugs, die Systeme mit PII-Daten berühren."
+   condition: "bug.context.PII_impact == true"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Datenschutz- und Compliance-Risiken.[31]"
+
+ - name: HITL_Trigger_NotReproducible
+   description: "Eskaliert Bugs, die nicht automatisch reproduziert werden können."
+   condition: "bug.reproducible == false"
+   action: "ESCALATE_HUMAN_ANALYSIS"
+   rationale: "Automatisierung ist ohne Reproduktion blockiert."
+
+ - name: HITL_Trigger_AI_Confidence
+   description: "Eskaliert, wenn der KI-Fix-Vorschlag unter einem Konfidenzschwellenwert liegt."
+   condition: "ai_fix.confidence_score < 0.9"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "KI ist unsicher über ihren eigenen Fix."
+
+ - name: HITL_Trigger_AI_DB_Schema
+   description: "Stoppt und eskaliert, wenn ein KI-Fix versucht, ein Datenbankschema zu ändern."
+   condition: "ai_fix.changes_db_schema == true"
+   action: "HALT_AND_ESCALATE_SENIOR"
+   rationale: "Nicht automatisierbare Hochrisikoaufgabe."
+
+ - name: HITL_Trigger_AI_BlastRadius
+   description: "Eskaliert, wenn der KI-Fix eine große Anzahl von Dateien ändert."
+   condition: "ai_fix.blast_radius.files_changed > 5"
+   action: "ESCALATE_HUMAN_REVIEW"
+   rationale: "Hohe Wahrscheinlichkeit unbeabsichtigter Nebenwirkungen."
+
+
+
+5.2. MAINTENANCE_dependencies.yaml
+
+
+
+
+YAML
+
+
+
+
+# =================================================================
+# MAINTENANCE_dependencies.yaml
+# Definiert die Daten-Inputs und Prozess-Workflows, von denen
+# das Triage-System abhängt.
+# =================================================================
+
+# ---
+# Sektion 1: Daten-Input-Anforderungen für Triage
+# Definiert die minimalen und idealen Daten, die für eine
+# effektive Triage erforderlich sind. Basiert auf Teil 3.1 des Berichts.
+# ---
+triage_data_inputs:
+ - source: UserReport
+   description: "Vom Benutzer gemeldete Probleme (z.B. via Slack, Jira, Support-Tool)."
+   dependency_status: "MINIMAL"
+   requirements: "Muss standardisiert und in ein Bug-Tracking-System eingespeist werden."
+
+ - source: MonitoringAlert
+   description: "Proaktive Warnungen von APM-, Infrastruktur- oder Monitoring-Tools."
+   dependency_status: "REQUIRED"
+   requirements: "Muss in der Lage sein, 'reaktive Triage' auszulösen."
+
+ - source: Logs
+   description: "Detaillierte Anwendungs- und Systemprotokolle."
+   dependency_status: "REQUIRED"
+   requirements: "Erforderlich für die diagnostische Ursachenanalyse."
+
+ - source: CorrelationContext
+   description: "Ein gemeinsamer Kontext (z.B. trace_id), der Logs, Metriken und Requests verknüpft."
+   dependency_status: "IDEAL"
+   requirements: "Ermöglicht 'automatische Kontextpropagierung'. Ohne dies ist die Triage 10x langsamer und manuell."
+
+# ---
+# Sektion 2: Branching- & Workflow-Abhängigkeiten
+# Definiert die Prozessregeln für die zwei Haupt-Fix-Pfade.
+# Basiert auf Teil 3.2 und 3.3 des Berichts.
+# ---
+fix_workflows:
+ - type: Hotfix
+   trigger: "priority == 'P1_Critical'"
+   source_branch: "main"
+   rationale: "Muss direkt von der Produktion abzweigen, um einen schnellen Patch zu ermöglichen."
+   testing_protocol: "ACCELERATED"
+   merge_dependencies:
+     - target: "main"
+       description: "Stellt den Fix in der Produktion bereit."
+     - target: "develop"
+       description: "Kritische Abhängigkeit: Verhindert Regression im nächsten Release."
+   deployment: "IMMEDIATE"
+
+ - type: RegularFix
+   trigger: "priority IN ['P2_High', 'P3_Medium', 'P4_Low', 'P5_Cosmetic']"
+   source_branch: "develop"
+   rationale: "Folgt dem Standard-Entwicklungsfluss."
+   testing_protocol: "FULL_DOD"
+   merge_dependencies:
+     - target: "develop"
+       description: "Integriert den Fix in den Hauptentwicklungszweig."
+   deployment: "SCHEDULED_RELEASE"
+
+# ---
+# Sektion 3: Agile Planungs-Loop-Abhängigkeiten
+# Definiert, wie das Triage-System mit dem Agile-Planungsprozess
+# verbunden ist. Basiert auf Teil 3.4 des Berichts.
+# ---
+agile_planning_loop:
+ - name: BugToFeatureRequest_Conversion
+   description: "Triage-Schritt zur Konvertierung von 'Bugs', die eigentlich Feature-Wünsche sind."
+   process: "Wenn bug.type == 'DesignDecision' OR 'UserExpectationAmbiguity' , DANN konvertiere zu 'FeatureRequest'."
+
+ - name: BacklogDependency
+   description: "Alle nicht-dringenden Arbeiten MÜSSEN im Product Backlog leben."
+   process: "Jeder 'RegularFix' (P2-P5) MUSS im Product Backlog priorisiert werden."
+   rationale: "Erzwingt den Trade-off zwischen Bug-Fixes und neuen Features; verhindert 'Shadow Work'."
+ 
+ - name: GroomingLoopDependency
+   description: "Bugs und Features werden GEMEINSAM im Backlog Refinement priorisiert."
+   process: "Backlog Refinement findet VOR dem Sprint Planning statt, um P2-P5-Bugs zu bewerten und zu sortieren.[46, 48]"
+ 
+ - name: SprintPlanningLoop
+   description: "Das Team zieht priorisierte Arbeit (Bugs + Features) in den Sprint."
+   process: "Das Team zieht Arbeit vom OBEREN ENDE des gepflegten Backlogs.[49, 50]"
+
+
+
+5.3. MAINTENANCE_triage_rules.yaml
+
+
+
+
+YAML
+
+
+
+
+# =================================================================
+# MAINTENANCE_triage_rules.yaml
+# Definiert die operativen Regeln für Priorisierung,
+# "Definition of Done" (DoD), SLAs und Eskalationen.
+# =================================================================
+
+# ---
+# Sektion 1: Priorisierungsmodelle
+# Definiert die dualen Modelle für Echtzeit-Triage und
+# Backlog-Grooming. Basiert auf Teil 4.1 des Berichts.
+# ---
+prioritization_models:
+ 
+ # Modell 1: Echtzeit-Triage-Matrix
+ # Heuristik zur schnellen Bestimmung der Priorität (P1-P5).
+ # Formel: Priorität = f(Schweregrad × Auswirkung)
+ model_1_triage_matrix:
+   name: "Incident Prioritization Matrix"
+   purpose: "Schnelle, heuristische Priorisierung für On-Call und Triage.[54, 55]"
+   axes:
+     rows: "Severity (Technical) [P1_Critical, P2_High, P3_Medium, P4_Low, P5_Cosmetic]"
+     columns: "Impact (Business/User)"
+   matrix:
+     # (Siehe Tabelle 4.1.1 im Bericht für die vollständige Matrix)
+     - { severity: P1_Critical, impact: Widespread, priority: P1_Critical }
+     - { severity: P1_Critical, impact: High,       priority: P1_Critical }
+     - { severity: P1_Critical, impact: Medium,     priority: P2_High }
+     - { severity: P1_Critical, impact: Low,        priority: P2_High }
+     - { severity: P2_High,     impact: Widespread, priority: P1_Critical }
+     - { severity: P2_High,     impact: High,       priority: P2_High }
+     - { severity: P2_High,     impact: Medium,     priority: P3_Medium }
+     - { severity: P2_High,     impact: Low,        priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Widespread, priority: P2_High }
+     - { severity: P3_Medium,   impact: High,       priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Medium,     priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Low,        priority: P4_Low }
+     - { severity: P4_Low,      impact: Widespread, priority: P3_Medium }
+     - { severity: P4_Low,      impact: High,       priority: P4_Low }
+     - { severity: P4_Low,      impact: Medium,     priority: P4_Low }
+     - { severity: P4_Low,      impact: Low,        priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Widespread, priority: P4_Low }
+     - { severity: P5_Cosmetic, impact: High,       priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Medium,     priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Low,        priority: P5_Cosmetic }
+
+ # Modell 2: RICE-Scoring für Backlog-Grooming
+ # Quantitatives Modell zum Vergleich von P2-P5-Bugs und Features.
+ model_2_rice_for_bugs:
+   name: "RICE Scoring for Bug Backlog"
+   purpose: "Quantitative Priorisierung für das Backlog Grooming."
+   formula: "Score = Reach * Impact * Confidence * Ease"
+   factors:
+     - name: Reach
+       description: "Wie viele Benutzer sind betroffen?"
+       scale: "1 (wenige) bis 5 (alle)"
+     - name: Impact
+       description: "Wie stark ist die Beeinträchtigung der UX?"
+       scale: "1 (gering) bis 5 (blockierend)"
+     - name: Confidence
+       description: "Wie sicher sind die Schätzungen (R, I, E)?"
+       scale: "1 (gering) bis 5 (sehr sicher)"
+     - name: Ease
+       description: "Wie einfach/schnell ist der Fix? (Invertierter Aufwand)"
+       scale: "1 (sehr aufwändig) bis 5 (sehr einfach/schnell)"
+   
+# ---
+# Sektion 2: Definition of Done (DoD) für Bug-Fixes
+# Checkliste, die erfüllt sein muss, damit ein Bug als
+# "erledigt" gilt. Basiert auf Teil 4.2 des Berichts.
+# ---
+definition_of_done:
+ - "1. Code ist produziert."
+ - "2. Code ist Peer-Reviewed (min. 1 Genehmigung)."
+ - "3. Code ist in den korrekten Branch gemerged."
+ - "4. Projekt baut fehlerfrei."
+ - "5. OBLIGATORISCH: Neuer Regressionstest(s) wurde(n) hinzugefügt, um den Fehler zu isolieren und ein Wiederauftreten zu verhindern."
+ - "6. Alle Unit- und Integrationstests (inkl. neuer Regressionstests) sind erfolgreich."
+ - "7. Dokumentation (Code, Entwickler, ggf. Benutzer) ist aktualisiert."
+ - "8. Fix ist in der Testumgebung validiert."
+ - "9. Fix ist in der Produktion bereitgestellt und verifiziert."
+
+# ---
+# Sektion 3: Service Level Agreements (SLAs)
+# Definiert die Zielzeiten für Reaktion und Lösung.
+# Basiert auf Teil 4.4 des Berichts (Zeiten in Geschäftsstunden, außer P1).
+# ---
+service_level_agreements:
+ - priority: P1_Critical
+   response_sla: "30 Minuten (24/7)"
+   resolution_sla: "9 Geschäftsstunden"
+   source: ""
+
+ - priority: P2_High
+   response_sla: "9 Geschäftsstunden (1 Geschäftstag)"
+   resolution_sla: "36 Geschäftsstunden (4 Geschäftstage)"
+   source: "[63, 64]"
+
+ - priority: P3_Medium
+   response_sla: "18 Geschäftsstunden (2 Geschäftstage)"
+   resolution_sla: "63 Geschäftsstunden (7 Geschäftstage)"
+   source: ""
+ 
+ - priority: P4_Low
+   response_sla: "27 Geschäftsstunden (3 Geschäftstage)"
+   resolution_sla: "90 Geschäftsstunden (10 Geschäftstage)"
+   source: ""
+ 
+ - priority: P5_Cosmetic
+   response_sla: "Best Effort"
+   resolution_sla: "Best Effort (Backlog)"
+   source: "Framework Policy"
+
+# ---
+# Sektion 4: Eskalationsrichtlinie
+# Definiert die Regeln für die Eskalation von Problemen.
+# Basiert auf Teil 4.5 des Berichts.
+# ---
+escalation_policy:
+ - name: Rule_1_Severity_P1
+   description: "Sofortige Alarmierung des primären On-Call bei P1."
+   trigger: "bug.priority == 'P1_Critical'"
+   action: "PAGE_PRIMARY_ONCALL"
+   rationale: "Sofortige Reaktion auf kritische Vorfälle erforderlich."
+
+ - name: Rule_2_Time_SLA_Breach_Response
+   description: "Automatische Eskalation, wenn P1-Reaktions-SLA verfehlt wird."
+   trigger: "bug.priority == 'P1_Critical' AND time_since_report > 30_minutes AND bug.status == 'New'"
+   action: "PAGE_SECONDARY_ONCALL_AND_LEAD"
+   rationale: "Sicherstellung der P1-Bestätigung."
+
+ - name: Rule_3_Time_SLA_Breach_Resolution
+   description: "Eskalation an das Management, wenn Lösungs-SLA (P2/P3) verfehlt wird."
+   trigger: "(bug.priority == 'P2_High' AND time_since_report > 36_business_hours) OR (bug.priority == 'P3_Medium' AND time_since_report > 63_business_hours)"
+   action: "NOTIFY_PRODUCT_MANAGER_AND_ENGINEERING_MANAGER"
+   rationale: "Erzwingt eine explizite Neupriorisierungsentscheidung."
+
+ - name: Rule_4_Functional_Cannot_Fix
+   description: "Funktionale Eskalation vom SRE an das Entwicklerteam."
+   trigger: "bug.status == 'Investigating' AND sre_cannot_fix_without_help == true"
+   action: "ESCALATE_TO_DEVELOPMENT_TEAM_OWNER"
+   rationale: "Fähigkeitsbasierte Eskalation (Google SRE-Modell).[69, 70]"
+
+ - name: Rule_5_Systemic_ErrorBudget
+   description: "Systemische Eskalation an das Leadership, wenn das Error Budget erschöpft ist."
+   trigger: "service.error_budget_30_day < 0"
+   action: "ESCALATE_LEADERSHIP_AND_REQUEST_FEATURE_RELEASE_PAUSE"
+   rationale: "Ultimativer Hebel: Erzwingt den Fokus auf Zuverlässigkeit über neue Features."
+
+Referenzen
+1. Zugriff am November 12, 2025, https://www.itsm-docs.com/blogs/itil-faq/itil-vs-sre#:~:text=In%20summary%2C%20ITIL%20is%20a,scale%20of%20its%20IT%20operations.
+2. What Is ITIL? Core Principles & Best Practices - Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/itsm/itil
+3. Information Technology Infrastructure Library (ITIL) vs. Site Reliability Engineering (SRE), Zugriff am November 12, 2025, https://www.materialplus.io/perspectives/information-technology-infrastructure-library-itil-vs-site-reliability-engineering-sre-which-is-right-for-your-organization
+4. SRE: The Innovative ITSM Approach | Modern IT Practices | ITIL - QuickStart, Zugriff am November 12, 2025, https://www.quickstart.com/blog/business-productivity/sre-is-the-most-innovative-approach-to-itsm-since-itil/
+5. ITIL, SRE, DevOps: differences and similarities - QRP International, Zugriff am November 12, 2025, https://www.qrpinternational.be/blog/faq/itil-sre-devops/
+6. A Comparison of ITIL 4, SRE and DevOps, Zugriff am November 12, 2025, https://www.devopsinstitute.com/blog-a-comparison-of-itil-4-sre-and-devops/
+7. Differences Between Bug Severity and Priority in Testing [with Examples] - TestGrid, Zugriff am November 12, 2025, https://testgrid.io/blog/bug-severity-and-priority-in-testing/
+8. Bug Severity: How & Why to Measure + Levels Guide - Brainhub, Zugriff am November 12, 2025, https://brainhub.eu/library/bug-severity-levels-guide
+9. Bug Severity Guide: Understanding the Criticality of Software Defects - DEV Community, Zugriff am November 12, 2025, https://dev.to/morrismoses149/bug-severity-guide-understanding-the-criticality-of-software-defects-2e64
+10. Bug Severity vs Priority in Testing - BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/bug-severity-vs-priority
+11. Bugs backlog automation. RICE for bugs | by glebsarkisov ... - Medium, Zugriff am November 12, 2025, https://medium.com/mayflower-team/bugs-backlog-automation-rice-for-bugs-669f5b451382
+12. Severity Levels for Security Issues - Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/trust/security/security-severity-levels
+13. Best Practices for Triaging Software Bugs: Bug Triaging Principles - YouTube, Zugriff am November 12, 2025, https://www.youtube.com/watch?v=8wnGw-P-Hio
+14. Why AI Can't Replace Developers: The Real Limits of AI in Coding - DEV Community, Zugriff am November 12, 2025, https://dev.to/dev_michael/why-ai-cant-replace-developers-the-real-limits-of-ai-in-coding-alf
+15. Why does AI generated code get worse as complexity increases? - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ChatGPTCoding/comments/1ljpiby/why_does_ai_generated_code_get_worse_as/
+16. The Hidden Risks of AI Code Generation: What Every Developer Should Know - Flux, Zugriff am November 12, 2025, https://www.askflux.ai/blog/the-hidden-risks-of-ai-code-generation-what-every-developer-should-know
+17. The Hidden Risks of Overrelying on AI in Production Code - CodeStringers, Zugriff am November 12, 2025, https://www.codestringers.com/insights/risk-of-ai-code/
+18. Can AI code? Understanding AI's capabilities and limits - Graphite.com, Zugriff am November 12, 2025, https://graphite.com/guides/can-ai-code-understanding-capabilities-limits
+19. 6 limitations of AI code assistants and why developers should be cautious | We Love Open Source, Zugriff am November 12, 2025, https://allthingsopen.org/articles/ai-code-assistants-limitations
+20. Can AI Really Code? Understanding the Strengths and Limitations of AI Coding Tools, Zugriff am November 12, 2025, https://softjourn.com/insights/ai-coding-tools
+21. Zero Human Code -What I learned from forcing AI to build (and fix) its own code for 27 straight days | by Daniel Bentes | Medium, Zugriff am November 12, 2025, https://medium.com/@danielbentes/zero-human-code-what-i-learned-from-forcing-ai-to-build-and-fix-its-own-code-for-27-straight-0c7afec363cb
+22. Does AI Solve The Database Migration Problem? - Forbes, Zugriff am November 12, 2025, https://www.forbes.com/councils/forbestechcouncil/2023/08/25/does-ai-solve-the-database-migration-problem/
+23. Database Migration Horror Stories: Lessons from 10 Companies That Got It Wrong (And Right) - Medium, Zugriff am November 12, 2025, https://medium.com/the-tech-draft/database-migration-horror-stories-lessons-from-10-companies-that-got-it-wrong-and-right-71857e3319da
+24. Data Migration with AI: Technical Challenges and Lessons from Real-World Practice, Zugriff am November 12, 2025, https://addepto.com/blog/data-migration-with-ai-technical-challenges-and-lessons-from-real-world-practice/
+25. What is Human-in-the-Loop (HITL) in AI & ML? - Google Cloud, Zugriff am November 12, 2025, https://cloud.google.com/discover/human-in-the-loop
+26. Human-in-the-Loop Agentic Systems Explained | by Tahir | Medium, Zugriff am November 12, 2025, https://medium.com/@tahirbalarabe2/human-in-the-loop-agentic-systems-explained-db9805dbaa86
+27. Human-in-the-loop (HITL) | Research Starters - EBSCO, Zugriff am November 12, 2025, https://www.ebsco.com/research-starters/computer-science/human-loop-hitl
+28. Bug Triage: Definition, Examples, and Best Practices | Atlassian ..., Zugriff am November 12, 2025, https://www.atlassian.com/agile/software-development/bug-triage
+29. Mastering Bug Triage: Key Insights, Importance, and Tips for Improvement - Frugal Testing, Zugriff am November 12, 2025, https://www.frugaltesting.com/blog/mastering-bug-triage-key-insights-importance-and-tips-for-improvement
+30. Bug Triage in Mobile QA: Defect Severity vs. Priority Explained - Quash, Zugriff am November 12, 2025, https://quashbugs.com/blog/bug-triage-defect-priority-vs-severity
+31. What Is Human In The Loop (HITL)? - IBM, Zugriff am November 12, 2025, https://www.ibm.com/think/topics/human-in-the-loop
+32. Streamlining Security Vulnerability Triage with Large Language Models - arXiv, Zugriff am November 12, 2025, https://arxiv.org/html/2501.18908v1
+33. Bug Triage: How to Organize, Filter, and Prioritize Bugs - Marker.io, Zugriff am November 12, 2025, https://marker.io/blog/bug-triage
+34. Best practices for triaging software defects and bugs - SmartBear, Zugriff am November 12, 2025, https://smartbear.com/blog/bug-triaging-best-practices/
+35. Bug Reporting Template for Tracking Product Bugs - Slack, Zugriff am November 12, 2025, https://slack.com/templates/bug-intake-triage
+36. Bug vs feature: what's the difference? (guide + examples) - Canny Blog, Zugriff am November 12, 2025, https://canny.io/blog/bug-vs-feature/
+37. Identifying related alerts in log data by using log correlators, Zugriff am November 12, 2025, https://www.servicenow.com/docs/bundle/zurich-it-operations-management/page/product/health-log-analytics-operator/concept/hla-op-correlator-what-is-a.html
+38. Correlate request logs with traces automatically | Datadog, Zugriff am November 12, 2025, https://www.datadoghq.com/blog/request-log-correlation/
+39. Event Correlation Explained: The Definitive Guide for 2025 - INOC, Zugriff am November 12, 2025, https://www.inoc.com/event-correlation
+40. Hotfix vs. Patch vs. Coldfix vs. Bugfix: Differences Explained – BMC Software | Blogs, Zugriff am November 12, 2025, https://www.bmc.com/blogs/patch-hotfix-coldfix-bugfix/
+41. Gitflow Workflow | Atlassian Git Tutorial, Zugriff am November 12, 2025, https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow
+42. What is the difference between git feature, release and hotfix? - Stack Overflow, Zugriff am November 12, 2025, https://stackoverflow.com/questions/58096933/what-is-the-difference-between-git-feature-release-and-hotfix
+43. Hotfix vs Patch: Core Differences - BrowserStack, Zugriff am November 12, 2025, https://www.browserstack.com/guide/hotfix-vs-patch-differences
+44. Adopt a Git branching strategy - Azure Repos - Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/azure/devops/repos/git/git-branching-guidance?view=azure-devops
+45. Handling initial bug triage : r/agile - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/agile/comments/fcvawr/handling_initial_bug_triage/
+46. Backlog grooming – What it is, best practices, and pitfalls - Adobe for Business, Zugriff am November 12, 2025, https://business.adobe.com/blog/basics/backlog-grooming
+47. The #1 Mistake Made in Agile Backlog Grooming - Briebug Software, Zugriff am November 12, 2025, https://briebug.com/biggest-mistake-in-agile-backlog-grooming/
+48. Backlog grooming - this is how you should do it : r/ProductManagement - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/ProductManagement/comments/jdxspc/backlog_grooming_this_is_how_you_should_do_it/
+49. 3 Best Agile Bug Tracking Strategies - TechNews180, Zugriff am November 12, 2025, https://technews180.com/saas/3-best-agile-bug-tracking-strategies/
+50. Bug Triage Meeting in Agile: What You Need to Know | Careerist Blog, Zugriff am November 12, 2025, https://www.careerist.com/insights/bug-triage-meeting-in-agile-what-you-need-to-know
+51. What could we do to fit everything within 2 weeks (Sprint) like regression bugs triage, bug fixes, UAT, Go/No go, release? | Scrum.org, Zugriff am November 12, 2025, https://www.scrum.org/forum/scrum-forum/71418/what-could-we-do-fit-everything-within-2-weeks-sprint-regression-bugs
+52. 8 bug prioritization methods to try - Shake, Zugriff am November 12, 2025, https://www.shakebugs.com/blog/bug-prioritization-methods/
+53. Severity vs Priority: Bug Prioritization in Software Testing - BairesDev, Zugriff am November 12, 2025, https://www.bairesdev.com/blog/severity-vs-priority/
+54. Does anyone have any widely accepted guidance on bug priorities? : r/jira - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/jira/comments/1dyhx5h/does_anyone_have_any_widely_accepted_guidance_on/
+55. Severity vs Priority vs Urgency vs Impact of Software Bugs - Discussions - The Club, Zugriff am November 12, 2025, https://club.ministryoftesting.com/t/severity-vs-priority-vs-urgency-vs-impact-of-software-bugs/74010
+56. RICE Scoring Model | Prioritization Method Overview - ProductPlan, Zugriff am November 12, 2025, https://www.productplan.com/glossary/rice-scoring-model/
+57. Understanding RICE Scoring | Framework, Pros, Cons - Dovetail, Zugriff am November 12, 2025, https://dovetail.com/product-development/rice-scoring-model/
+58. How To Prioritize Your Product Backlog Using The RICE Framework? - StoriesOnBoard, Zugriff am November 12, 2025, https://storiesonboard.com/blog/prioritization-rice-framework
+59. The Agile Definition of Done: What Product Managers Need to Know - ProductPlan, Zugriff am November 12, 2025, https://www.productplan.com/learn/agile-definition-of-done/
+60. Definition of Done | Agile Alliance, Zugriff am November 12, 2025, https://agilealliance.org/glossary/definition-of-done/
+61. What is the Definition of Done (DoD) in Agile? - Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/agile/project-management/definition-of-done
+62. Definition of Done · nautobot/nautobot Wiki · GitHub, Zugriff am November 12, 2025, https://github.com/nautobot/nautobot/wiki/Definition-of-Done
+63. Article - IT Service Level Agreements - Mines Help Center, Zugriff am November 12, 2025, https://helpcenter.mines.edu/TDClient/1946/Portal/KB/ArticleDet?ID=147440
+64. SLA Criticality Levels - randylee.com, Zugriff am November 12, 2025, https://www.randylee.com/cybersecurity/the-vital-role-of-slas-in-cybersecurity/sla-criticality-levels
+65. What are your SLAs? : r/msp - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/msp/comments/1cbwq8g/what_are_your_slas/
+66. What Is A Good SLA Time? IT Support Turnaround Time - Suptask, Zugriff am November 12, 2025, https://www.suptask.com/blog/what-is-a-good-sla-time
+67. Understanding incident severity levels | Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/incident-management/kpis/severity-levels
+68. How to build an escalation policy for effective incident management - xMatters, Zugriff am November 12, 2025, https://www.xmatters.com/blog/how-to-build-an-escalation-policy-for-effective-incident-management
+69. Escalation policies for effective incident management | Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/incident-management/on-call/escalation-policies
+70. SRE at Google: An example escalation policy | Google Cloud Blog, Zugriff am November 12, 2025, https://cloud.google.com/blog/products/gcp/an-example-escalation-policy-cre-life-lessons

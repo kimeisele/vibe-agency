@@ -1,0 +1,63 @@
+# CODE_GEN_dependencies.yaml
+# Definiert das vollständige Input/Output-Manifest (FDG-ähnlich).
+# Beschreibt, WELCHEN Kontext die KI benötigt und WELCHE Artefakte sie produzieren muss.
+version: 1.0
+
+# 1. Erforderliche Eingabe-Artefakte (Kontext-Schichten)
+# Jede Generierungsanforderung MUSS diese Artefakte liefern.
+# Das Fehlen führt zu einer 'TRIGGER_FAULTY_PREMISE_DETECTED'-Verletzung (siehe constraints.yaml).
+required_inputs:
+ # Schicht 1: Strukturierte Spezifikation (Das "Was")
+ - id: L1_ARCHITECTURE_SPEC
+   format: "json"
+   schema: "http://example.com/schemas/architecture.v1.json"
+   description: "Definiert High-Level-Komponenten, ihre Verantwortung und Schnittstellen."
+   source: "architecture.json"
+
+ # Schicht 2: Datenbank-als-Kontext (Die "Geschäftslogik")
+ - id: L2_DATABASE_SCHEMA
+   format: "sql"
+   description: "Vollständiges DDL-Schema oder logisches Schema. Definiert Geschäftslogik und Daten-Constraints."
+   source: "db_schema.sql"
+   optional: false # Kritisch für datenintensive Anwendungen.
+
+ # Schicht 3: Codebase-als-Kontext (Das "Wo")
+ - id: L3_TASK_CONTEXT
+   format: "yaml"
+   description: "Definiert Intent, Scope (zu ändernde/ignorierende Dateien), Constraints und Akzeptanzkriterien für die spezifische Aufgabe."
+   source: "task_context.yaml"
+   
+ - id: L3_RAG_CONTEXT
+   format: "snippets"
+   description: "Automatisch abgerufene relevante Code-Snippets aus der bestehenden Codebasis (via RAG)."
+   source: "SYSTEM_INTERNAL (RAG_Engine)"
+
+ # Schicht 4: System-als-Kontext (Das "Wie")
+ - id: L4_KNOWLEDGE_GRAPH
+   format: "graph_db_query"
+   description: "Zugriff auf den Repository-Wissensgraphen (z.B. Neo4j), der alle internen Abhängigkeiten, Klassen und Methoden abbildet."
+   source: "SYSTEM_INTERNAL (Knowledge_Graph_API)"
+
+# 2. Manifest der genehmigten externen Abhängigkeiten
+# Definiert, welche Open-Source-Bibliotheken verwendet werden dürfen.
+approved_external_dependencies:
+ - id: "approved_list"
+   source: "dependency_manifest.json" # Externe Datei, die Lizenzen, Versionen und Schwachstellen-Status verwaltet.
+   on_new_dependency_request: "FLAG_FOR_SUPPLY_CHAIN_REVIEW" # Siehe constraints.yaml 
+
+# 3. Erforderliche Ausgabe-Artefakte ("Artefakt-Bundle")
+# Eine Generierung gilt nur dann als erfolgreich, wenn ALLE diese Artefakte erstellt und
+# an das Qualitäts-Framework (Teil 3) übergeben werden.
+required_outputs:
+ - id: "SOURCE_CODE"
+   description: "Der generierte Quellcode in der Zielsprache."
+   target_dir: "/src"
+
+ - id: "UNIT_TESTS"
+   description: "Generierte Unit-Tests, die den Quellcode validieren. Erforderlich für die 'Test Coverage'-Metrik."
+   target_dir: "/tests"
+   min_coverage_target_input: "80%" # Input für das Quality Gate
+
+ - id: "DOCUMENTATION"
+   description: "Generierte Inline-Dokumentation (z.B. Docstrings, Javadoc) und Code-Erklärungen."
+   target_dir: "/src (inline)"

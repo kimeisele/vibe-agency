@@ -1,0 +1,74 @@
+# QA_dependencies.yaml
+#
+# Definiert die Inputs, Daten, Umgebungen und Prozess-Abhängigkeiten
+# für jede Stufe der Validierungs-Pipeline.
+# Basiert auf Teil 2 des Forschungsberichts.
+
+v: 1.0
+kind: QADependencies
+metadata:
+  name: "v1.0-qa-dependencies"
+  description: "Bildet die Testpyramide, CI-Stufen und den Testbarkeits-Vertrag ab."
+spec:
+  # 2.1 Test-Pyramiden-Abhängigkeiten
+  test_pyramid_dependencies:
+    - level: "Unit Tests"
+      purpose: "Testen von Komponenten in Isolation."
+      code_input: "Einzelne Funktion / Klasse"
+      data_input: "Test Doubles (Mocks & Stubs)"
+      environment: "Lokal / CI-Runner (Kein Deployment)"
+      dependencies: "Keine (Isolation)"
+    - level: "Integration Tests"
+      purpose: "Testen, wie Komponenten (Module, DB, Services) zusammenarbeiten."
+      code_input: "Ein oder mehrere bereitgestellte (deployed) Services"
+      data_input: "Echte Test-Datenbank (mit Seed-Daten); Gemockte externe 3rd-Party-APIs (z.B. via WireMock)."
+      environment: "Dedizierte Dev/Test-Umgebung"
+      dependencies: "Service-Deployment, DB-Zugang, Netzwerk"
+    - level: "End-to-End (E2E) Tests"
+      purpose: "Validieren eines vollständigen User-Szenarios (z.B. Kauf-Workflow)."
+      code_input: "Die gesamte, vollständig bereitgestellte Anwendung"
+      data_input: "Stabile, bekannte Testdaten-Sets; User-Simulations-Layer (z.B. Playwright)."
+      environment: "Produktionsnahe Staging-Umgebung"
+      dependencies: "Vollständiger, integrierter Anwendungs-Stack"
+
+  # 2.2 Testbarkeits-Vertrag (Anforderungen an das Code-Gen-Framework)
+  # Damit QA funktioniert, MUSS der generierte Code "testbar" sein.
+  code_gen_testability_contract:
+    - requirement: "Architektonische Testbarkeit (Isolation)"
+      description: "Generierter Code muss entkoppelt sein und Design-Patterns (z.B. Dependency Inversion) folgen, um die Injektion von Mocks/Stubs für Unit-Tests zu ermöglichen."
+    - requirement: "UI-Testbarkeit (Stabile Selektoren)"
+      description: "Das Code-Gen-Framework MUSS automatisch stabile, permanente und einzigartige Testattribute (z.B. 'data-testid') für alle interaktiven UI-Elemente generieren."
+      rationale: "Verhindert 'brittle tests', die bei Design-Änderungen brechen, indem ein 'expliziter Vertrag' für Tests geschaffen wird."
+    - requirement: "API-Testbarkeit (Explizite Verträge)"
+      description: "Das Code-Gen-Framework MUSS für jeden generierten API-Endpunkt eine maschinenlesbare Spezifikation (z.B. OpenAPI / Swagger) generieren."
+      rationale: "Ermöglicht schnelle 'API Contract Tests', die Kompatibilität ohne ein vollständiges Deployment validieren."
+
+  # 2.3 CI/CD-Pipeline-Testreihenfolge (Fail-Fast-Prinzip)
+  ci_cd_pipeline_stages:
+    - stage: 0
+      name: "Pre-Commit / Pull Request (PR-Gate)"
+      trigger: "git push auf Feature-Branch"
+      purpose: "Sofortiges Feedback an den Entwickler (Minuten)."
+      actions:
+        - "Statische Analyse (Linting, SAST, SCA)"
+        - "Ausführung aller Unit Tests"
+      gate: "Ein Fehlschlag blockiert das Mergen des PR."
+    - stage: 1
+      name: "Post-Merge / Continuous Integration (Dev-Umgebung)"
+      trigger: "merge in main/develop Branch"
+      purpose: "Validierung der Modul-Integration und des Deployments."
+      actions:
+        - "Erstellung des Build Artefacts (z.B. Docker-Image)"
+        - "Automatisches Deployment in die Dev-Umgebung"
+        - "Ausführung aller Integration Tests"
+        - "(Optional) Ausführung von Smoke Tests"
+      gate: "Ein Fehlschlag 'bricht den Build' und verhindert die Promotion zu Staging."
+    - stage: 2
+      name: "Promotion / Continuous Delivery (Staging-Umgebung)"
+      trigger: "Manuelle Promotion ('Ready for QA') oder nächtlicher Trigger"
+      purpose: "Vollständige Validierung des Release-Kandidaten."
+      actions:
+        - "Promotion des *exakt gleichen* Artefakts aus Stufe 1 in die Staging-Umgebung."
+        - "Ausführung der vollständigen E2E-Test-Suite."
+        - "Durchführung der manuellen HITL-Tests (Usability, Exploratory)."
+      gate: "Ein Fehlschlag blockiert das Release in die Produktion."

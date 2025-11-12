@@ -1,0 +1,78 @@
+# =================================================================
+# MAINTENANCE_dependencies.yaml
+# Definiert die Daten-Inputs und Prozess-Workflows, von denen
+# das Triage-System abhängt.
+# =================================================================
+
+# ---
+# Sektion 1: Daten-Input-Anforderungen für Triage
+# Definiert die minimalen und idealen Daten, die für eine
+# effektive Triage erforderlich sind.
+# Basiert auf Teil 3.1 des Berichts.
+# ---
+triage_data_inputs:
+ - source: UserReport
+   description: "Vom Benutzer gemeldete Probleme (z.B. via Slack, Jira, Support-Tool)."
+   dependency_status: "MINIMAL"
+   requirements: "Muss standardisiert und in ein Bug-Tracking-System eingespeist werden."
+ - source: MonitoringAlert
+   description: "Proaktive Warnungen von APM-, Infrastruktur- oder Monitoring-Tools."
+   dependency_status: "REQUIRED"
+   requirements: "Muss in der Lage sein, 'reaktive Triage' auszulösen."
+ - source: Logs
+   description: "Detaillierte Anwendungs- und Systemprotokolle."
+   dependency_status: "REQUIRED"
+   requirements: "Erforderlich für die diagnostische Ursachenanalyse."
+ - source: CorrelationContext
+   description: "Ein gemeinsamer Kontext (z.B. trace_id), der Logs, Metriken und Requests verknüpft."
+   dependency_status: "IDEAL"
+   requirements: "Ermöglicht 'automatische Kontextpropagierung'. Ohne dies ist die Triage 10x langsamer und manuell."
+# ---
+# Sektion 2: Branching- & Workflow-Abhängigkeiten
+# Definiert die Prozessregeln für die zwei Haupt-Fix-Pfade.
+# Basiert auf Teil 3.2 und 3.3 des Berichts.
+# ---
+fix_workflows:
+ - type: Hotfix
+   trigger: "priority == 'P1_Critical'"
+   source_branch: "main"
+   rationale: "Muss direkt von der Produktion abzweigen, um einen schnellen Patch zu ermöglichen."
+   testing_protocol: "ACCELERATED"
+   merge_dependencies:
+     - target: "main"
+       description: "Stellt den Fix in der Produktion bereit."
+     - target: "develop"
+       description: "Kritische Abhängigkeit: Verhindert Regression im nächsten Release."
+   deployment: "IMMEDIATE"
+
+ - type: RegularFix
+   trigger: "priority IN ['P2_High', 'P3_Medium', 'P4_Low', 'P5_Cosmetic']"
+   source_branch: "develop"
+   rationale: "Folgt dem Standard-Entwicklungsfluss."
+   testing_protocol: "FULL_DOD"
+   merge_dependencies:
+     - target: "develop"
+       description: "Integriert den Fix in den Hauptentwicklungszweig."
+   deployment: "SCHEDULED_RELEASE"
+
+# ---
+# Sektion 3: Agile Planungs-Loop-Abhängigkeiten
+# Definiert, wie das Triage-System mit dem Agile-Planungsprozess
+# verbunden ist.
+# Basiert auf Teil 3.4 des Berichts.
+# ---
+agile_planning_loop:
+ - name: BugToFeatureRequest_Conversion
+   description: "Triage-Schritt zur Konvertierung von 'Bugs', die eigentlich Feature-Wünsche sind."
+   process: "Wenn bug.type == 'DesignDecision' OR 'UserExpectationAmbiguity' , DANN konvertiere zu 'FeatureRequest'."
+ - name: BacklogDependency
+   description: "Alle nicht-dringenden Arbeiten MÜSSEN im Product Backlog leben."
+   process: "Jeder 'RegularFix' (P2-P5) MUSS im Product Backlog priorisiert werden."
+   rationale: "Erzwingt den Trade-off zwischen Bug-Fixes und neuen Features; verhindert 'Shadow Work'."
+ - name: GroomingLoopDependency
+   description: "Bugs und Features werden GEMEINSAM im Backlog Refinement priorisiert."
+   process: "Backlog Refinement findet VOR dem Sprint Planning statt, um P2-P5-Bugs zu bewerten und zu sortieren.[46, 48]"
+ 
+ - name: SprintPlanningLoop
+   description: "Das Team zieht priorisierte Arbeit (Bugs + Features) in den Sprint."
+   process: "Das Team zieht Arbeit vom OBEREN ENDE des gepflegten Backlogs.[49, 50]"

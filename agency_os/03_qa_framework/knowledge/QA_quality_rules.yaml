@@ -1,0 +1,97 @@
+# QA_quality_rules.yaml
+#
+# Definiert die messbaren "Geschäftsregeln" der Qualität,
+# einschließlich Coverage, Priorisierung und "Definition of Done".
+# Basiert auf Teil 3 des Forschungsberichts.
+
+v: 1.0
+kind: QAQualityRules
+metadata:
+  name: "v1.0-qa-quality-rules"
+  description: "Quantifiziert 'Qualität' durch messbare Regeln und Release-Kriterien."
+spec:
+  # 3.1 v1.0 Test-Coverage-Strategie
+  v1_coverage_strategy:
+    # Pragmatische Regel für v1.0: Verhindert neue technische Schulden.
+    primary_policy: "Jeder neue Pull Request (PR) MUSS eine Code-Coverage (Line/Branch) von 90% auf dem *neu hinzugefügten oder geänderten Code* aufweisen."
+    # Risikobasierte Ziele für bestehende Module (als Richtlinie).
+    risk_based_targets:
+      - module_type: "Core Business Logic (z.B. Auth, Payment)"
+        target_coverage: "90%+"
+        rationale: "Hoch-Risiko, katastrophale Fehler."
+      - module_type: "API Layer / Data Access"
+        target_coverage: "80%+"
+        rationale: "Mittel-Risiko, kritischer Datenpfad."
+      - module_type: "UI Components"
+        target_coverage: "60-70%"
+        rationale: "Niedrig-Risiko (oft logikfrei), hohe Volatilität."
+    metrics_distinction:
+      - "Functional Coverage: 'Wie viele Anforderungen sind abgedeckt?' (Wichtig für Product Owner)."
+      - "Code Coverage: 'Wie viele Codezeilen wurden ausgeführt?' (Technisches Sicherheitsnetz)."
+
+  # 3.2 Test-Priorisierungsstrategie (Risk-Based Testing Quadrant)
+  # Definiert, was zuerst getestet wird, basierend auf 'Impact' (Critical Path) und 'Probability' (Code-Änderung).
+  test_prioritization_model:
+    - priority: "P0 (Test First)"
+      quadrant: "High Impact, High Probability"
+      definition: "Tests für neue oder geänderte 'Critical Path'-Funktionen (z.B. neuer Checkout-Flow)."
+      execution: "Müssen als Smoke-Tests bei jedem Build laufen (CI Stufe 1)."
+    - priority: "P1 (Test Second)"
+      quadrant: "High Impact, Low Probability"
+      definition: "Regressions-Tests für stabile 'Critical Path'-Funktionen (z.B. stabiler Login-Flow)."
+      execution: "Müssen als vollständige Suite vor jedem Release laufen (CD Stufe 2)."
+    - priority: "P2 (Test Third)"
+      quadrant: "Low Impact, High Probability"
+      definition: "Tests für neue oder geänderte Nicht-Kern-Funktionen (z.B. 'Profilbild-Upload')."
+      execution: "Sollten automatisiert werden, laufen aber seltener (z.B. nächtlich)."
+    - priority: "P3 (Test Last / Defer)"
+      quadrant: "Low Impact, Low Probability"
+      definition: "Regressions-Tests für stabile, unwichtige Funktionen (z.B. 'AGB'-Link im Footer)."
+      execution: "Niedrigste Priorität; oft auf manuelle Stichproben oder Exploratory Testing beschränkt."
+
+  # 3.3 Release-Kriterien (Definition of Done für "QA Approved")
+  # Formale, binäre Checkliste, die erfüllt sein muss, um ein Release freizugeben.
+  qa_approved_dod:
+    - section: "Testdurchführung"
+      criteria:
+        - "critical_path_pass_rate (P0 & P1 Tests) == 100%"
+        - "overall_pass_rate (Alle P2-Tests) >= 95%"
+        - "Alle geplanten Tests wurden nachweislich ausgeführt."
+    - section: "Fehlerstatus (Bug Triage)"
+      criteria:
+        - "blocker_bugs_open == 0"
+        - "critical_bugs_open == 0"
+        - "high_impact_bugs_triaged == true (Alle 'High'-Bugs sind 'Fixed', 'Deferred' oder 'Accepted Risk' durch PO)."
+    - section: "Coverage-Ziele"
+      criteria:
+        - "coverage_on_new_code_met == true (z.B. 90%-Regel für alle PRs im Release erfüllt)."
+        - "functional_coverage_met == true (Alle P0/P1-Features sind durch E2E-Tests abgedeckt)."
+    - section: "Manuelle Abnahme (HITL)"
+      criteria:
+        - "manual_ux_review_completed == true (Obligatorisches Usability-Review wurde durchgeführt)."
+        - "code_gen_audit_completed == true (Falls zutreffend: Obligatorisches Review des KI-Codes wurde durchgeführt)."
+    - section: "Formale Freigabe"
+      criteria:
+        - "test_summary_report_signed_off == true (Testbericht wurde erstellt und vom Product Owner abgezeichnet)."
+
+  # 3.4 Policy für Flaky-Test-Management
+  # Systematischer Prozess zur Verwaltung von instabilen Tests, um das Vertrauen in die CI zu erhalten.
+  flaky_test_policy:
+    - phase: 1
+      name: "DETECT (Erkennen)"
+      action: "Ein fehlgeschlagener Test wird in der CI automatisch 2x erneut ausgeführt ('retry: 2')."
+      outcome: "Wenn er besteht, wird der Build als 'grün' markiert, aber der Test wird als 'flaky_count + 1' in einem Dashboard markiert."
+    - phase: 2
+      name: "QUARANTINE (Isolieren)"
+      trigger: "Wenn flaky_count > 3 (innerhalb von 7 Tagen)."
+      action: "Der Test wird automatisch 'unter Quarantäne gestellt' (aus der blockierenden Haupt-CI-Pipeline entfernt)."
+      outcome: "Die Haupt-Pipeline wird wieder stabil ('grün'). Ein 'Tech Debt'-Ticket zur Behebung wird automatisch erstellt."
+    - phase: 3
+      name: "ANALYZE (Analysieren)"
+      action: "Der Test-Owner führt eine Root-Cause-Analyse (RCA) durch."
+      common_causes: "[Async-Wartezeiten (sleeps), Externe Abhängigkeiten, Test-Reihenfolge, Concurrency]."
+    - phase: 4
+      name: "RESOLVE (Beheben)"
+      action: "Der Test wird architektonisch korrigiert (z.B. durch Hinzufügen eines Mocks, explizites Warten)."
+      validation: "Der Test wird 100x im Loop 'Stress-getestet'."
+      outcome: "Nach Erfolg (100/100) wird der Test manuell wieder in die Haupt-CI-Pipeline aufgenommen."

@@ -1,0 +1,271 @@
+System-Architektur: Das zentrale Datenmodell und die Workflow-Orchestrierung für eine KI-Software-AgenturZusammenfassung für das ManagementDieser Bericht skizziert die Systemarchitektur für ein "Agency Operating System" (Agency OS) – ein vollständig integriertes, geschlossenes (closed-loop) Automatisierungssystem, das den gesamten Software Development Lifecycle (SDLC) für eine KI-gesteuerte Software-Agentur steuert. Der vorliegende Entwurf adressiert die Kernherausforderung: das Fehlen eines verbindenden Datenmodells und eines Orchestrierungs-Frameworks, um die bestehenden "Planning"-Komponenten (VIBE+GENESIS) mit den restlichen SDLC-Phasen zu einem kohärenten Ganzen zu verbinden.Die Lösung basiert auf zwei Kernkonzepten:Eine Hybride "Single Source of Truth" (SSoT): Wir definieren ein zentrales, deklaratives project_manifest.json, das innerhalb eines Git-Repositorys versioniert wird. Git dient als Speicher der Wahrheit, während das Manifest als "Anker" dient, der den Projektstatus aggregiert und alle zugehörigen Code- und Daten-Artefakte referenziert.Ein Artefakt-zentriertes Datenmodell: Der Workflow wird nicht durch Agenten, sondern durch die von ihnen erzeugten Artefakte definiert. Standardisierte JSON-Schemata dienen als "Datenverträge" (data contracts) zwischen den autonomen SDLC-Frameworks (Planung, Code, QA, etc.) und gewährleisten so modulare, testbare und austauschbare Komponenten.Für die Ausführung wird eine hybride Orchestrierungs-Architektur empfohlen. Dieses Modell kombiniert die Stärken der drei untersuchten Muster:(C) Git-basiertes (GitOps)-Modell: Dient als deklarativer Auslöser, der auf Änderungen an der SSoT (dem Manifest) im Git-Repository reagiert.(B) Automatisierter Agenten-Orchestrator: Ein "Durable Execution"-System (z.B. Temporal) dient als zustandsbehafteter Ausführer (Executor), der langlebige, fehlertolerante SDLC-Workflows verwaltet.(A) Menschlich (Human-in-the-Loop): Wird nicht als Orchestrator, sondern als integraler, blockierender Aufgabentyp (z.B. "Approval Gate" für QA) innerhalb des automatisierten Workflows behandelt.Die Ergebnisse dieses Berichts umfassen einen detaillierten JSON-Schema-Entwurf für das project_manifest.json, Spezifikationen für fünf kritische Daten-Artefakte, eine Workflow-Matrix zur Visualisierung des Datenflusses und eine vergleichende Bewertung der Orchestrierungs-Technologien.I. Das Projekt-Manifest: Definition der "Single Source of Truth"Die erste Forschungsfrage zielt auf die Definition der "Single Source of Truth" (SSoT) ab. Die Analyse der gängigen Praktiken offenbart eine nuancierte Debatte zwischen der Verwendung eines Git-Repositorys als SSoT und der Notwendigkeit einer übergeordneten Metadaten-Datei.A. Das Hybride SSoT-Modell: Git als Speicher, Manifest als ZustandDie Konfrontation "Git vs. Manifest" ist ein Trugschluss. Die GitOps-Prinzipien positionieren Git zu Recht als die SSoT für deklarative Konfigurationen und Code.1 Ein Git-Repository bietet eine unveränderliche, auditierbare Historie darüber, wer was wann geändert hat.3Diese Perspektive ist jedoch für die Verwaltung eines gesamten Projekts unvollständig. Wie treffend formuliert wurde, muss man fragen: "die Quelle welcher Wahrheit?".5 Git ist die Quelle der "Code-Wahrheit", aber ein Projekt in einer KI-Agentur ist mehr als nur sein Code. Es umfasst Metadaten (Eigentümer, Status), Referenzdaten, Design-Artefakte und den Status von Workflows, die sich über mehrere Systeme erstrecken.6 In vielen Systemen bleibt die "Produktivumgebung" (oder eine übergeordnete Instanz) die SSoT, bis alle Aspekte des Systems in Git abgebildet werden können.8Die architektonische Lösung ist daher ein hybrides SSoT-Modell. Dieses Modell folgt den Mustern von etablierten Systemen wie Googles repo-Tool 9 und, was noch relevanter ist, dem catalog-info.yaml-Deskriptor von Backstage.io.11Die "Single Source of Truth" ist in dieser Architektur eine Manifest-Datei (z.B. project_manifest.json), die sich innerhalb des primären Git-Repositorys befindet und von diesem versioniert wird.Dieses Modell trennt die Verantwortlichkeiten klar:Git (Der Speicher): Dient als robuster, versionierter Speicher für das Manifest und alle zugehörigen Code-Artefakte. Es beantwortet die Frage nach der Historie.Das Manifest (Der Zustand): Dient als deklarativer Anker und Zustandsaggregator. Es ist die Blaupause, die von Ihrem "Agency OS" gelesen wird. Es deklariert, was das Projekt ist 12, was sein aktueller Status ist und wo alle anderen relevanten Artefakte (wie das architecture.json) in bestimmten Versionen zu finden sind.B. Versionierung, Referenzierung und StatusverfolgungUm als SSoT zu fungieren, muss das Manifest drei Kernaufgaben erfüllen:Statusverfolgung: Das Manifest muss den globalen Status des Projekts im SDLC abbilden. Inspiriert von SDLC-Tracking-Mechanismen 13, wird ein zentrales projectPhase-Feld eingeführt. Dieses Enum (z.B. PLANNING, DESIGN, CODING, TESTING, DEPLOYMENT, MAINTENANCE) wird von den verschiedenen Frameworks bei Abschluss ihrer jeweiligen Phase aktualisiert.Artefakt-Referenzierung: Das Manifest darf keine binären oder großen Artefakte enthalten.14 Stattdessen dient es als zentrales Verzeichnis, das auf alle anderen Artefakte verweist. Die Best Practice, wie sie im Backstage-Katalog 12 oder GitLab-Manifesten 14 zu sehen ist, ist die Verwendung von Pfaden (relativ zum Repo-Root) und URLs.Versionierung: Die Versionierung erfolgt auf zwei Ebenen, um vollständige Reproduzierbarkeit zu gewährleisten:Manifest-Version: Das project_manifest.json selbst wird durch Git-Commits versioniert. Jede Änderung am Projektstatus oder den Artefakt-Referenzen führt zu einem neuen Commit.Artefakt-Version: Das Manifest muss auf unveränderliche (immutable) Versionen anderer Artefakte verweisen. Für Code ist dies der git-commit-sha des Main-Branch. Für ein Daten-Artefakt (wie Ihr architecture.json) ist es ebenfalls der git-commit-sha, in dem diese Datei erstellt oder zuletzt geändert wurde.C. (Ergebnis 1) Entwurf und Schema für das project_manifest.jsonBasierend auf den Prinzipien der JSON-Schema-Definition 16 und der Struktur des catalog-info.yaml-Deskriptors von Backstage 12, wird das folgende JSON-Schema für das project_manifest.json vorgeschlagen. Diese Datei dient als "Anker" und SSoT für den gesamten Projekt-Workflow.JSON{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.agency-os.com/project_manifest.v1.json",
+  "title": "Agency OS Project Manifest",
+  "description": "Die zentrale 'Single Source of Truth' (SSoT) für ein Projekt im Agency OS. Sie deklariert Metadaten, Status und Artefakt-Referenzen.",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "description": "Die Version der Manifest-Spezifikation.",
+      "type": "string",
+      "enum": ["agency.os/v1alpha1"]
+    },
+    "kind": {
+      "description": "Die Art der Entität.",
+      "type": "string",
+      "enum": ["Project"]
+    },
+    "metadata": {
+      "description": "Allgemeine, unveränderliche Metadaten über das Projekt.",
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "description": "Eine eindeutige, systemweit generierte UUID für das Projekt.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "description": "Der lesbare Name des Projekts.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Eine kurze Beschreibung des Projektziels.",
+          "type": "string"
+        },
+        "owner": {
+          "description": "Der verantwortliche Agent oder die menschliche Kontaktperson (z.B. E-Mail).",
+          "type": "string",
+          "format": "email"
+        },
+        "createdAt": {
+          "description": "Der Zeitstempel der Projekterstellung.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedAt": {
+          "description": "Der Zeitstempel der letzten Aktualisierung dieses Manifests.",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["projectId", "name", "owner", "createdAt"]
+    },
+    "spec": {
+      "description": "Der 'Desired State' (Soll-Zustand) des Projekts, typischerweise aus dem Planning-Framework.",
+      "type": "object",
+      "properties": {
+        "vibe": {
+          "description": "Das ursprüngliche VIBE-Objekt (Vision, Intention, etc.).",
+          "type": "object"
+        },
+        "genesis": {
+          "description": "Das ursprüngliche GENESIS-Objekt (detaillierte Planung).",
+          "type": "object"
+        }
+      }
+    },
+    "status": {
+      "description": "Der 'Actual State' (Ist-Zustand) des Projekts, der vom Orchestrator verwaltet wird.",
+      "type": "object",
+      "properties": {
+        "projectPhase": {
+          "description": "Die aktuelle Phase des Projekts im SDLC.",
+          "type": "string",
+          "enum":
+        },
+        "lastUpdate": {
+          "description": "Zeitstempel der letzten Statusänderung.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "message": {
+          "description": "Eine lesbare Nachricht über den aktuellen Status (z.B. 'QA-Tests fehlgeschlagen').",
+          "type": "string"
+        }
+      },
+      "required": ["projectPhase"]
+    },
+    "artifacts": {
+      "description": "Ein zentrales Verzeichnis, das auf alle versionierten Artefakte verweist.",
+      "type": "object",
+      "properties": {
+        "planning": {
+          "type": "object",
+          "properties": {
+            "architecture": { "$ref": "#/$defs/artifactLink" }
+          }
+        },
+        "code": {
+          "type": "object",
+          "properties": {
+            "mainRepository": {
+              "type": "object",
+              "properties": {
+                "url": { "type": "string", "format": "uri" },
+                "branch": { "type": "string" },
+                "lastCommit": { "type": "string" }
+              }
+            }
+          }
+        },
+        "test": {
+          "type": "object",
+          "properties": {
+            "lastTestPlan": { "$ref": "#/$defs/artifactLink" },
+            "lastReport": { "$ref": "#/$defs/artifactLink" }
+          }
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "lastReceipt": { "$ref": "#/$defs/artifactLink" }
+          }
+        }
+      }
+    }
+  },
+  "required": ["apiVersion", "kind", "metadata", "status", "artifacts"],
+  "$defs": {
+    "artifactLink": {
+      "description": "Eine standardisierte Referenz auf ein Artefakt, versioniert durch einen Git-Commit.",
+      "type": "object",
+      "properties": {
+        "ref": {
+          "description": "Der Git-Commit-SHA, der diese Version des Artefakts repräsentiert.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Der relative Pfad zum Artefakt (JSON/YAML) innerhalb des Repos.",
+          "type": "string"
+        },
+        "url": {
+          "description": "Optionaler direkter URL zu einem extern gespeicherten Artefakt (z.B. S3).",
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": ["ref", "path"]
+    }
+  }
+}
+II. Die "Connective Tissue": Ein standardisiertes, artefaktbasiertes DatenmodellDie zweite Forschungsfrage zielt auf die "Klebstoff"-Dateien ab – die standardisierten Daten-Artefakte, die als Schnittstellen zwischen den SDLC-Phasen dienen. Die vorgeschlagene Architektur basiert auf einer "Artifact-First"-Designphilosophie.19Diese Philosophie ist der entscheidende architektonische Wandel. Der Wert eines Workflows liegt nicht im Agenten, der ihn ausführt, sondern im Artefakt (der Ausgabe), das er erzeugt.19 Indem der Workflow als eine Kette von Artefakt-Transformationen definiert wird (z.B. architecture.json $\rightarrow$ code_generation_spec.json $\rightarrow$ source_code $\rightarrow$ test_plan.json), werden stabile, testbare Schnittstellen geschaffen.Jedes Framework (VIBE, GENESIS, Code-Gen, QA) wird zu einer reinen Funktion: $Artifact_{Out} = Framework(Artifact_{In})$. Die "Verträge" (contracts) für diese Funktionen sind die JSON-Schemata, die die Artefakte definieren und validieren.20 Dieses Design macht das System hochgradig modular: Jedes Framework kann ausgetauscht werden, solange es den Artefakt-Vertrag erfüllt.22Im Folgenden werden die 5-7 kritischen Daten-Artefakte als konzeptionelle JSON-Strukturen definiert.A. (Ergebnis 2.1) Artefakt (Planung $\rightarrow$ Code): code_generation_spec.jsonDas architecture.json, das von VIBE+GENESIS erzeugt wird, ist notwendig, aber nicht hinreichend für eine qualitativ hochwertige Codegenerierung. Eine "wissensarme" (Knowledge-Starved) Codegenerierung, die nur die Zielarchitektur, aber nicht den Kontext (bestehende Codebasis, Bibliotheken) kennt, wird unidiomatischen oder falschen Code erzeugen.24KI-Agenten benötigen detaillierte, schema-basierte Spezifikationen ihrer APIs und ihres Kontexts.25 Das code_generation_spec.json (erstellt vom VIBE/GENESIS-Framework oder einem nachgelagerten "Design"-Agenten) reichert das architecture.json um diesen notwendigen Kontext an.Konzeptionelle Struktur (code_generation_spec.json):JSON{
+  "specId": "cgs-001",
+  "projectId": "uuid-...",
+  "architectureRef": {
+    "ref": "commit-sha-...",
+    "path": "/artifacts/architecture.v1.json"
+  },
+  "features":
+    },
+    {
+      "featureId": "FEAT-002",
+      "description": "API-Endpunkt zur Erstellung von Benutzerprofilen.",
+      "acceptanceCriteria":
+    }
+  ],
+  "apiDefinitions": {
+    "openapi": "3.1.0",
+    "info": { "title": "User Service", "version": "1.0.0" },
+    "paths": {
+      "/auth/login": {
+        "post": { "description": "Generiere diesen Endpunkt." }
+      },
+      "/users/profile": {
+        "post": { "description": "Generiere diesen Endpunkt." }
+      }
+    }
+  },
+  "contextualAwareness": {
+    "existingRepositoryUrl": "git@github.com:...",
+    "relevantFiles": [
+      "/src/lib/database.py",
+      "/src/models/user_model.py"
+    ],
+    "constraints":
+  }
+}
+B. (Ergebnis 2.2) Artefakt (Code $\rightarrow$ Test): test_plan_spec.jsonDas Code-Generation-Framework muss nicht nur Code, sondern auch Metadaten über den generierten Code erzeugen. Dieses Artefakt dient dem QA-Framework als "Vertrag" (contract) und ermöglicht "Schema-based contract testing".27 Das QA-Framework konsumiert dieses Schema, um automatisch Testfälle zu generieren und die API-Antworten gegen die definierten Schemata zu validieren.22Konzeptionelle Struktur (test_plan_spec.json):JSON{
+  "planId": "tps-001",
+  "projectId": "uuid-...",
+  "codeGenerationRef": {
+    "ref": "commit-sha-..."
+  },
+  "testableEndpoints":
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }
+        },
+        "required": ["token"]
+      }
+    }
+  ],
+  "testableFunctions":,
+  "integrationPoints":
+}
+C. (Ergebnis 2.3) Artefakt (Test $\rightarrow$ Deployment): qa_approval_report.jsonNach der Ausführung der Tests (automatisiert und/oder manuell) wird ein formales "Go/No-Go"-Signal für das Deployment benötigt. Dieses Artefakt ist eine unveränderliche Bescheinigung (Attestation), die die Testergebnisse für einen bestimmten Git-Commit festhält und die Rückverfolgbarkeit (Traceability) im gesamten SDLC gewährleistet.6 Der approval-Block ist die Schnittstelle für den "Human-in-the-Loop" (HITL).Konzeptionelle Struktur (qa_approval_report.json):JSON{
+  "reportId": "qar-001",
+  "projectId": "uuid-...",
+  "testedCommitSha": "commit-sha-...",
+  "testPlanRef": {
+    "ref": "commit-sha-...",
+    "path": "/artifacts/test_plan_spec.v1.json"
+  },
+  "status": "PASSED",
+  "summary": {
+    "totalTests": 150,
+    "passed": 150,
+    "failed": 0,
+    "skipped": 0
+  },
+  "failedTests":,
+  "approval": {
+    "isApproved": true,
+    "approvedBy": "human_qa_manager_alice@agency.com",
+    "timestamp": "2024-10-28T10:30:00Z",
+    "notes": "Alle Tests erfolgreich. Freigabe für Produktion erteilt."
+  }
+}
+D. (Ergebnis 2.4) Artefakt (Wartung $\rightarrow$ Planung): standardized_bug_report.jsonDieses Artefakt ist entscheidend für das "Closed-Loop"-System.30 Es formalisiert einen vagen Bug-Report in eine maschinenlesbare, umsetzbare Spezifikation. Die Vorlagen für effektive Bug-Reports 32 betonen die Notwendigkeit von "Umgebung", "Schritten zur Reproduktion", "Erwartetem Ergebnis" und "Tatsächlichem Ergebnis".Die entscheidende architektonische Erkenntnis ist, dass dieses standardized_bug_report.json kein reiner Bug-Report ist; es ist ein planning_update_request.json.Vergleicht man die Struktur eines Bug-Reports 33 mit einer neuen Feature-Anforderung aus dem VIBE-Framework, wird die semantische Äquivalenz deutlich:"Schritte zur Reproduktion" $\rightarrow$ Kontext"Erwartetes Ergebnis" $\rightarrow$ Akzeptanzkriterien"Tatsächliches Ergebnis" $\rightarrow$ ProblemstellungIndem Bug-Reports in dasselbe oder ein sehr ähnliches JSON-Schema wie neue Feature-Anforderungen gezwungen werden, können sie direkt wieder in das VIBE/GENESIS-Planning-Framework eingespeist werden.35 Ein Bug-Report aus der Wartung löst so automatisch einen neuen PLANNING-Zyklus aus, der einen "Patch" (in Form eines neuen code_generation_spec.json) erzeugt und den gesamten SDLC-Kreislauf von vorne beginnt.Konzeptionelle Struktur (standardized_bug_report.json):JSON{
+  "reportId": "BUG-451",
+  "projectId": "uuid-...",
+  "source": "AUTOMATED_MONITORING",
+  "affectedCommitSha": "commit-sha-...",
+  "environment": {
+    "appVersion": "1.2.3",
+    "os": "Ubuntu 22.04",
+    "notes": "Produktions-Cluster 'eu-west-1'"
+  },
+  "severity": "CRITICAL",
+  "stepsToReproduce":,
+  "behavior": {
+    "actualResult": "API-Antwort ist 500 Internal Server Error.",
+    "expectedResult": "API-Antwort sollte 401 Unauthorized mit einer klaren Fehlermeldung sein."
+  },
+  "visualProof": [
+    {
+      "type": "log_file",
+      "url": "s3://.../error.log"
+    }
+  ],
+  "analysis": {
+    "triageAgentId": "agent-triage-v2",
+    "suspectedComponent": "/src/middleware/auth.py",
+    "proposedFix": "Fehlende 'try-except'-Blockierung um 'jwt.decode()'."
+  }
+}
+E. (Ergebnis 2.5) Artefakt (Deployment $\rightarrow$ SSoT): deployment_receipt.jsonDas letzte Artefakt im Zyklus ist die Bescheinigung des Deployment-Frameworks, dass eine bestimmte Codeversion erfolgreich bereitgestellt wurde. Dieses Signal ist notwendig, damit der Orchestrator den globalen Status im project_manifest.json auf MAINTENANCE aktualisieren kann.Konzeptionelle Struktur (deployment_receipt.json):JSON{
+  "deploymentId": "deploy-uuid-...",
+  "projectId": "uuid-...",
+  "qaReportRef": {
+    "ref": "commit-sha-...",
+    "path": "/artifacts/qa_approval_report.v1.json"
+  },
+  "deployedCommitSha": "commit-sha-...",
+  "targetEnvironment": "PRODUCTION",
+  "status": "SUCCESS",
+  "deploymentTimestamp": "2024-10-28T11:00:00Z",
+  "endpointUrl": "https://api.projekt-xyz.com"
+}
+III. Die "Data-Flow"-Grafik: Eine Artefakt-Framework-MatrixDas dritte gewünschte Ergebnis ist eine Matrix, die den in Abschnitt II definierten Datenfluss visualisiert. Diese Tabelle dient als zentrales Nachschlagewerk für die Abhängigkeiten und die "Datenverträge" zwischen den autonomen Frameworks des "Agency OS".Tabelle 1: Agency OS Workflow-MatrixSDLC-PhaseFramework / AkteurAktionErzeugt Artefakt (Ausgabe)Auslöser für / Konsumiert vonAktualisiert SSoT-Status0. InitiationHuman PM / KundeInitiiert Projektproject_manifest.json (minimal)GitOps ControllerPLANNING1. PlanungVIBE+GENESIS (Agent)Führt Planungszyklus ausarchitecture.json, code_generation_spec.json"Code"-AgentDESIGN2. Entwicklung"Code"-AgentGeneriert Code, Unit-Testssource_code (Git Push), test_plan_spec.json"QA"-AgentCODING $\rightarrow$ TESTING3. Test"QA"-AgentFührt Tests aus (automatisiert)qa_approval_report.json (Status FAILED)"Code"-Agent (Feedback-Schleife)TESTING (bleibt)3a. Test"Code"-AgentBehebt Fehler (Patch)source_code (Git Push), test_plan_spec.json (v2)"QA"-AgentTESTING (bleibt)3b. Test"QA"-Agent + HITLTests bestanden, erhält Freigabeqa_approval_report.json (Status PASSED)"Deploy"-AgentTESTING $\rightarrow$ DEPLOYMENT4. Deployment"Deploy"-Agent (z.B. ArgoCD)Stellt in Prod bereitdeployment_receipt.jsonSSoT/Manifest UpdaterDEPLOYMENT $\rightarrow$ MAINTENANCE5. Wartung"Bug-Triage"-AgentFormalisiert Bug-Reportstandardized_bug_report.jsonVIBE+GENESIS (Agent)Löst neuen PLANNING-Zyklus aus (Loop)IV. Der "Dirigent": Analyse der Workflow-Orchestrierungs-MusterDie dritte Forschungsfrage betrifft die Orchestrierungs-Muster: (A) Menschlich, (B) Automatisierter Agent, (C) Git-basiert. Eine Analyse der Forschung 36 zeigt, dass diese Optionen keine sich gegenseitig ausschließenden Alternativen sind. Ein robustes, skaliertes System kombiniert alle drei, wobei jede Option eine spezifische architektonische Funktion erfüllt.Ein rein menschliches System (A) ist nicht skalierbar.38Ein rein Agenten-basiertes System (B) ohne SSoT wird zu einem imperativen "Gott-Agenten", dem es an Transparenz und deklarativer Kontrolle fehlt.39Ein rein Git-basiertes System (C) ist nur reaktiv.40 Es kann einen Workflow auslösen, aber keinen langlebigen, zustandsbehafteten Prozess verwalten (z.B. drei Tage auf eine menschliche Freigabe warten).Die optimale Architektur ist daher hybrid:(C) Git-basiert (GitOps) dient als deklarativer Auslöser (Trigger). Ein git push auf das project_manifest.json ändert den "Desired State".40(B) Der Automatisierte Agenten-Orchestrator dient als zustandsbehafteter Ausführer (Executor). Er wird vom GitOps-Trigger aktiviert, um den langlebigen Workflow (den SDLC-Graphen) auszuführen, der Retries, Fehlerbehandlung und Pausen verwaltet.41(A) Der Mensch (HITL) dient als validierender Aufgabentyp (Validator). Er ist ein blockierender Schritt (z.B. eine "Approval"-Aufgabe), der vom Orchestrator (B) aufgerufen wird.36A. Option A: Der "Human-in-the-Loop" (HITL) (Der "Prüfer")In dieser Architektur ist der Mensch kein Orchestrator, sondern ein Service, den der Orchestrator aufruft.Vorteile: Unerlässlich für Aufgaben mit hohem Risiko, Ambiguität oder Compliance (z.B. QA-Freigabe, Deployment-Genehmigung).36 Erhöht Vertrauen, Qualität und Auditierbarkeit 38 und handhabt "Edge Cases", bei denen KI-Agenten versagen.Nachteile: Wird zum Engpass, skaliert nicht, verursacht hohe Grenzkosten pro Aufgabe.36Hybride Rolle: Ein "Approval"-Aufgabentyp im Orchestrierungs-Workflow, der eine Benachrichtigung sendet (z.B. via Slack/UI) und auf ein externes Signal (z.B. einen API-Aufruf durch Klick auf "Genehmigen") wartet.B. Option B: Der "Automatisierte Agenten-Orchestrator" (Der "Ausführer")Dies ist das "Gehirn" des Systems, das den in Tabelle 1 definierten Graphen ausführt. Es ist ein "Workflow Orchestration Agent".41Vorteile: Hohe Autonomie.42 Verwaltet den Zustand, Retries, Fehlerbehandlung und die Delegation an untergeordnete Frameworks (VIBE, GENESIS).39 Kann komplexe, langlebige und dynamische Workflows verwalten.44Nachteile: Hohe Komplexität in der Einrichtung; erfordert sorgfältiges "Observability"-Design (Logging, Tracing).45Hybride Rolle: Die Laufzeitumgebung (Runtime), die den SDLC-Prozess als langlebigen Workflow ausführt.C. Das "Git-basierte" (GitOps) Reaktivmodell (Der "Auslöser")GitOps ist ein deklaratives Framework, bei dem ein Agent (z.B. FluxCD, ArgoCD) 2 den Zustand eines Git-Repositorys mit einem Live-System synchronisiert.40Vorteile: Rein deklarativ ("Was", nicht "Wie"); die SSoT ist in Git 1; bietet vollständige Auditierbarkeit, Rückverfolgbarkeit und "Rollback"-Fähigkeit (via git revert).40Nachteile: Per Definition reaktiv und zustandslos (im Sinne von langlebigen Prozessen). Ein GitOps-Tool kann einen Kubernetes-Pod starten, aber es kann nicht einen mehrtägigen QA-Prozess managen, der eine menschliche Freigabe beinhaltet.Hybride Rolle: Der Sensor und Auslöser. Er erkennt eine Änderung im project_manifest.json (z.B. ein Commit ändert projectPhase auf DESIGN) und löst den Orchestrator (B) aus, um den nächsten Schritt ("Code-Gen"-Workflow) zu starten.D. (Ergebnis 4) Tabelle 2: Gegenüberstellung der Orchestrierungs-MusterKriteriumA: Menschlich (HITL)B: Automatisierter OrchestratorC: Git-basiert (GitOps)Empfohlene Hybride RollePrimäres ParadigmaManuell, Ad-hocImperativ, ZustandsbehaftetDeklarativ, ReaktivKombination aller dreiSkalierbarkeitSehr niedrig (pro Person)Hoch (Compute-gebunden)Hoch (Event-gebunden)Ausführer (B)RückverfolgbarkeitSchwach (manuelle Protokolle)Mittel (erfordert Logging)Exzellent (via Git-Log)Auslöser/SSoT (C)FehlertoleranzHoch (menschl. Urteil)Exzellent (via Retries, State)Mittel (nur Zustandssynchronisierung)Ausführer (B)Agilität (Workflow-Änderung)Hoch (Ad-hoc-Entscheidungen)Mittel (Workflow-Code-Änderung)Hoch (Git-Commit)Auslöser/SSoT (C)Verwaltung von LangläufernN/A (ist der Blocker)Exzellent (konzipiert für Warten/Pausen)Sehr schwach (Timeouts)Ausführer (B)Verwaltung von "Desired State"Schwach (implizit)Mittel (imperative Ausführung)Exzellent (Kernprinzip)Auslöser/SSoT (C)Empfohlene RollePrüfer (Approval Task)Ausführer (Execution Engine)Auslöser (Trigger & SSoT-Interface)Hybrid-ArchitekturV. Orchestrierungs-Technologie: Jenseits von DAGsDie letzte technische Frage betrifft die Technologie zur Implementierung des Orchestrators (B). Die Wahl (z.B. DAGs wie Airflow/Prefect vs. workflow.yaml) hängt von der Art des Workflows ab.A. Evaluierung von CI/CD-Systemen (z.B. GitHub Actions)Ein workflow.yaml (wie bei GitHub Actions oder GitLab CI) ist ein event-basierter Task-Runner, kein langlebiger Workflow-Orchestrator.46Eignung: Exzellent für die Rolle des Auslösers (C). Ein git push kann eine GHA-Workflow-Datei auslösen. Dieser Workflow sollte jedoch nur einen einzigen Job haben: ein API-Signal an einen echten Orchestrator (B) zu senden, um den langlebigen Workflow zu starten oder fortzusetzen.Einschränkungen: Nicht für zustandsbehaftete, langlebige Prozesse (z.B. "Warte 3 Tage auf QA") konzipiert; begrenzte Laufzeiten; keine "Durable Execution" (stürzt der Runner, stirbt der Workflow).47B. Evaluierung von Daten-Orchestratoren (z.B. Airflow, Dagster, Prefect)Diese Tools sind DAG-basiert (Directed Acyclic Graph).48 Sie sind exzellent für datenzentrierte Workflows (ETL, ML-Training), bei denen der Fokus auf der Erstellung und Verwaltung von Daten-Assets liegt.51Eignung: Ein Teil-Fit. Das Agency OS produziert Artefakte, die als "Assets" betrachtet werden können. Diese Tools bieten bessere Observability und Retry-Logik als CI/CD-Systeme.45 Prefect ist moderner und Python-nativer.47Einschränkungen: Sie sind batch-orientiert, nicht event-orientiert oder langlebig. Sie sind für Pipelines konzipiert, die starten, laufen und enden (oft nach Zeitplan), nicht für einen Workflow, der Tage auf eine menschliche Freigabe (HITL) warten könnte.51C. Evaluierung von "Durable Execution"-Systemen (z.B. Temporal)Dies ist eine grundlegend andere Technologiekategorie. Temporal ist ein allgemeines, zustandsbehaftetes Workflow-Orchestrierungssystem.51 Es ist explizit für langlebige, fehlertolerante, mission-critical Workflows konzipiert, die Infrastrukturausfälle überleben müssen.Eignung: Exzellenter Fit. Der SDLC-Lebenszyklus ist ein langlebiger, zustandsbehafteter Workflow. Ein in Python, Go oder TypeScript geschriebener Temporal-Workflow kann einen Prozess starten (z.B. run_code_gen()), dann explizit für Tage pausieren (temporal.waitForSignal('qa_approval')) und nach Erhalt des Signals (von der HITL-Schnittstelle) nahtlos fortfahren.53Begründung: Dagster/Prefect sind ideal für Data-Engineering-Teams, die Pipelines außerhalb der Kernanwendung verwalten. Temporal ist ideal für Anwendungsteams, die Workflow-Komplexität innerhalb ihrer Anwendung verwalten.51 Das "Agency OS" ist eine Anwendung.D. Evaluierung von Agenten-nativen Frameworks (z.B. LangGraph, Manager Agents)Diese Tools lösen ein anderes, aber verwandtes Problem: dynamische Graphen.52 Während ein DAG (Airflow) oder ein Temporal-Workflow im Voraus statisch definiert wird, entscheidet bei einem "Manager Agent" 54 oder LangGraph 55 ein LLM zur Laufzeit, was der nächste Schritt ist (ein interpretierter, dynamischer Graph).Diese Unterscheidung führt zu einer entscheidenden architektonischen Erkenntnis: Die Orchestrierungs-Technologie muss hierarchisch sein.Der übergeordnete SDLC-Prozess (Plan $\rightarrow$ Code $\rightarrow$ Test $\rightarrow$ Deploy) ist statisch, langlebig und fehlertolerant. Er ändert sich nicht von Projekt zu Projekt. Dies ist der perfekte Anwendungsfall für Temporal.52Die internen Abläufe Ihrer Frameworks (z.B. die VIBE-Planung, die Codegenerierung) sind dynamisch, kreativ und zyklisch (z.B. Code schreiben, Linter ausführen, Fehler sehen, Code korrigieren, Linter erneut ausführen). Dies ist der perfekte Anwendungsfall für LangGraph oder einen "Manager Agent".54Die empfohlene Architektur verwendet daher beides: Der Temporal-Workflow (der "Dirigent") ruft den LangGraph-Agenten (den "Virtuosen") als einzelne, komplexe "Activity" auf, um die kreative Arbeit zu erledigen.56VI. Synthese und empfohlene Architektur: Das Closed-Loop-BetriebssystemDie Synthese aller Analysen ergibt eine kohärente, präskriptive Blaupause für das "Agency Operating System".A. Die Gesamtarchitektur (Blaupause)Die Architektur besteht aus fünf komplementären Schichten:SSoT-Schicht (Git + Manifest): Das "Was". Ein Git-Repository pro Projekt, das das in Abschnitt I.C definierte project_manifest.json enthält. Dieses Manifest ist der deklarative Anker für den Zustand und die Artefakte des Projekts.Trigger-Schicht (GitOps): Das "Wann". Ein GitOps-Controller 40 oder ein Webhook-System (z.B. GitHub Actions) 47 überwacht das project_manifest.json. Jede relevante Änderung (z.B. ein Commit durch den VIBE-Agenten) löst ein Signal aus.Orchestrierungs-Schicht (Durable Execution): Das "Wie" (Makro). Ein Temporal-Cluster.51 Das Signal von der Trigger-Schicht startet oder setzt einen langlebigen Projekt-Workflow für die betroffene projectId fort. Dieser Workflow ist das Agency OS.Ausführungs-Schicht (Frameworks & Agenten): Die "Akteure" (Mikro). Der Temporal-Workflow ruft Ihre einzelnen Frameworks (VIBE, GENESIS, Code-Gen, QA) als "Activities" auf.Für deterministische Aufgaben (z.B. "Linter ausführen") wird ein einfaches Skript aufgerufen.Für kreative, dynamische Aufgaben (z.B. "Code generieren" oder "Bug-Analyse") ruft Temporal einen autonomen Agenten-Workflow auf, der mit LangGraph oder als "Manager Agent" implementiert ist.54Human-Schicht (HITL): Die "Prüfer". Wenn der Temporal-Workflow eine Genehmigung benötigt (z.B. nach Abschluss des TESTING-Schritts), geht er in einen Wartezustand (temporal.waitForSignal).53 Er sendet ein Signal an eine menschliche Schnittstelle (UI, Slack). Der Workflow setzt sich erst fort, wenn der Mensch ein Signal zurücksendet 36, das die Erstellung des qa_approval_report.json auslöst.B. Der "Closed Loop" in Aktion (Beispiel: Bugfix)Dieses Modell schließt den SDLC-Kreislauf vollständig, wie das Beispiel eines Bugfixes demonstriert:Wartung: Ein Triage-Agent (automatisiert oder HITL) identifiziert einen Bug 30 und erstellt ein standardized_bug_report.json (Artefakt II.D).33Planung: Dieses Artefakt wird in das Projekt-Repository committet.Trigger: Der GitOps-Controller (Schicht 2) erkennt den Commit.40Orchestrierung: Der Controller sendet ein Signal (z.B. trigger_planning_update) an den bestehenden, langlebigen Temporal-Workflow (Schicht 3) für dieses Projekt.52Ausführung (VIBE): Der Temporal-Workflow erwacht und ruft das VIBE/GENESIS-Framework (Schicht 4) auf. Dieses konsumiert den Bug-Report 35 und erzeugt ein neues code_generation_spec.json (einen "Patch").Ausführung (Code): Der Workflow ruft den Code-Gen-Agenten (Schicht 4, potenziell LangGraph-basiert) auf, der den Patch erstellt und committet.Ausführung (Test): Der Workflow ruft den QA-Agenten (Schicht 4) auf, der die Tests ausführt.Mensch (HITL): Der Workflow pausiert (Schicht 5) und wartet auf die Freigabe des Bugfixes.36Deployment: Nach Erhalt des Freigabe-Signals (via qa_approval_report.json) setzt der Temporal-Workflow fort und ruft den "Deploy"-Agenten auf.Der Kreislauf ist geschlossen. Das System kombiniert deklarative Zustandssynchronisierung (GitOps) mit robuster, zustandsbehafteter Workflow-Ausführung (Temporal) und dynamischer, KI-gesteuerter Aufgabenbearbeitung (Agenten-Frameworks).

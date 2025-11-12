@@ -1,0 +1,688 @@
+﻿Framework für Produktions-Deployments v1.0
+
+
+
+
+Teil 1: Ein pragmatisches Deployment-Framework für v1.0
+
+
+Das Ziel dieses Frameworks ist die Definition eines systematischen, robusten und pragmatischen Prozesses für die Bereitstellung von validiertem Code in einer v1.0-Produktionsumgebung.
+Die Kernphilosophie dieses Frameworks ist die Priorisierung von Prozessstabilität, Automatisierung und Einfachheit der Infrastruktur. Für ein v1.0-Produkt ist die Investition in ein übermäßig komplexes Bereitstellungs-Ökosystem ein Anti-Pattern. Die Entwicklung von Bereitstellungsstrategien kann in Generationen eingeteilt werden; fortgeschrittene Strategien der "Generation 2" (wie Canary oder Blue-Green) sind "äußerst situationsabhängig und/oder erfordern erhebliche Investitionen".1 Diese Investition wird für v1.0 nicht in komplexe Routing-Mechanismen oder die Duplizierung ganzer Umgebungen fließen.
+Stattdessen wird die Investition in die Definition eines rigorosen, automatisierten Prozesses gelenkt. Die Wahl einer Bereitstellungsstrategie ist immer ein Kompromiss zwischen "Risiko, Ausfallzeit, Kosten, Komplexität" 2 und der "Nutzung von Infrastruktur und Ressourcen".3 Dieses Framework etabliert die Leitplanken, die eine einfache technische Strategie (z. B. ein Rolling Update) durch klar definierte Abhängigkeiten, Qualitätsregeln und Automatisierungsgrenzen robust und produktionsreif machen. Der Wert liegt nicht in einer komplexen Infrastruktur, sondern in einem robusten, wiederholbaren und ausfallsicheren Prozess.
+Dieses Dokument analysiert die drei Säulen dieses Frameworks – Constraints, Dependencies und Quality Rules – und mündet in den drei angeforderten YAML-Spezifikationsdateien.
+
+
+Teil 2: Analyse der Deployment-Constraints (DEPLOY_constraints.yaml)
+
+
+Dieser Abschnitt definiert die harten Grenzen, Nicht-Verhandlungsbasis und "was wir nicht tun werden" für das v1.0-Framework. Diese Einschränkungen (Constraints) bilden die Grundlage für alle nachgelagerten Architektur- und Prozessentscheidungen.
+
+
+2.1 Empfohlene v1.0-Bereitstellungsstrategie
+
+
+Die Auswahl der Kernstrategie ist die wichtigste Einschränkung. Die Analyse bestätigt die Prämisse der Anfrage: Fortgeschrittene Strategien sind für v1.0 unrealistisch.
+Ablehnung fortgeschrittener Strategien (Blue-Green & Canary):
+* Blue-Green-Deployments: Diese Strategie erfordert "zwei identische Umgebungen" (Blue und Green).2 Der Hauptvorteil ist ein "sofortiger Rollback" 11 durch einfaches Umschalten des Traffics zurück zur blauen Umgebung. Der Nachteil sind die Kosten: Es "erfordert genügend Ressourcen, um zwei komplette Umgebungen gleichzeitig zu betreiben".6 Dieser hohe "anfängliche Einrichtungsaufwand" 11 und die Verdoppelung der Infrastrukturkosten machen es für ein v1.0-Produkt ungeeignet.
+* Canary-Deployments: Diese Strategie ist operativ sogar noch komplexer. Sie erfordert das schrittweise Rollout an einen "kleinen Prozentsatz von Benutzern" 7 und necessitates "erhebliches Monitoring" und "potenziell komplexe Routing-Konfigurationen" 6, um den Traffic-Split (z. B. 90/10) zu verwalten.8 Diese Komplexität ist ein unnötiger Overhead für einen initialen Launch.
+Auswahl der v1.0-Strategie (Rolling Update vs. Recreate):
+Die realistischen, in Plattformen wie Kubernetes 105 eingebauten Optionen sind "Recreate" und "RollingUpdate".9
+* Recreate-Strategie: Diese Strategie ist die einfachste. Sie beendet "alle bestehenden Pods... bevor neue erstellt werden".9 Der Vorteil ist die "Ressourceneffizienz" 10, da nicht beide Versionen gleichzeitig laufen. Der entscheidende Nachteil ist eine "unvermeidliche Ausfallzeit" 10, während der die Benutzer "503- oder Verbindungsfehler sehen".2 Dies ist für eine Produktionsumgebung nicht akzeptabel und sollte auf temporäre Entwicklungs- oder Testumgebungen beschränkt werden.
+* Rolling-Update-Strategie: Dies ist die empfohlene v1.0-Produktionsstrategie und der Standard bei den meisten Orchestratoren (z. B. Kubernetes).9 Sie "aktualisiert Pods schrittweise" 9, indem sie "Anwendungsinstanzen allmählich aktualisiert, um Ausfallzeiten zu minimieren".4 Sie bietet "Zero Downtime" 10 und ist über Parameter wie maxUnavailable (maximale Anzahl nicht verfügbarer Pods) 5 fein steuerbar. Der einzige Nachteil ist ein "langsamerer Rollback" 11 (da die alte Version neu ausgerollt werden muss), was wir jedoch durch Prozessregeln (siehe Teil 3 und 4) mitigieren.
+Die Rolling-Update-Strategie ist somit die definierte Einschränkung für alle Produktions-Deployments.
+
+
+Strategie
+	v1.0 Setup-Komplexität
+	Infrastrukturkosten (relativ)
+	Ausfallzeit während des Deployments
+	Rollback-Geschwindigkeit
+	v1.0-Prod.-Empfehlung
+	Recreate
+	Sehr gering
+	1x
+	Ja (Hoch) 10
+	Langsam (manueller Prozess)
+	Abgelehnt (Nur für Dev/Test)
+	Rolling Update
+	Gering 11
+	~1.25x (temporär während Surge)
+	Nein 10
+	Langsam 11
+	Empfohlen
+	Blue-Green
+	Hoch 6
+	2x 6
+	Nein (minimaler Switch)
+	Sofortig 11
+	Abgelehnt (zu komplex/teuer)
+	Canary
+	Sehr hoch 6
+	1x - 2x
+	Nein
+	Schnell (für betroffene Kohorte)
+	Abgelehnt (zu komplex)
+	
+
+2.2 Definition der v1.0-Infrastruktur-Komplexitätsgrenze
+
+
+Die Wahl der Infrastrukturplattform definiert die "Betriebslast" (Operational Burden), die das Team zu tragen bereit ist. Für v1.0 muss diese Last minimiert werden.
+Die Infrastrukturmodelle (IaaS vs. PaaS vs. CaaS):
+* IaaS (Infrastructure-as-a-Service): Bietet On-Demand-Zugriff auf virtuelle Ressourcen wie Server und Speicher.12 Bei IaaS (z. B. AWS EC2) ist das Team für "das Betriebssystem (OS) verantwortlich... Lizenzierung, Patching, Antivirus (AV), Festplatten, Netzwerkkonnektivität".14 Dies ist eine hohe, undifferenzierte Last, die für v1.0 vermieden werden muss.
+* PaaS (Platform-as-a-Service): Bietet eine verwaltete Umgebung, die die Anwendungsentwicklung und -bereitstellung beschleunigt.12 Das Team verwaltet nur die "Konfiguration der Anwendung/Dienstleistung".14 Heroku ist das klassische Beispiel und bekannt für seine "Einfachheit" und "schnelle Einrichtung" 15, obwohl es "im AWS-Infrastruktur aufgebaut ist".16
+* CaaS (Containers-as-a-Service): Eine Erweiterung von IaaS/PaaS, die speziell für die Bereitstellung von Containern konzipiert ist.12
+Die Kubernetes-Komplexitätsfalle:
+Selbstverwaltetes Kubernetes (K8s) ist für v1.0 explizit zu komplex. K8s hat eine "steile Lernkurve".18 Ein 3-Personen-DevOps-Team benötigte "etwas mehr als ein Jahr" für eine Migration zu K8s.19 Obwohl K8s leistungsstarke Primitive wie "Deployment ohne Ausfallzeit", "einfaches Loadbalancing" und "Selbstheilung" bietet 20, ist der Verwaltungsaufwand für ein v1.0-Team ein Projektkiller. K8s wurde mit den Lehren aus 10 Jahren Google Borg entwickelt, was es "früher komplexer machte".21
+Der v1.0-"Sweet Spot": Managed CaaS / PaaS
+Die ideale v1.0-Infrastruktur ist eine Plattform, die die Vorteile von K8s (wie Rolling Updates und Health Checks) bietet, ohne dessen Komplexität aufzubürden.
+* Managed K8s/CaaS: (z. B. GKE, EKS, AWS Fargate, Google Cloud Run). AWS Fargate ist "einfach zu bedienen", erfordert aber immer noch Konfiguration (ALB, Cluster, Task Definitions).22 Google Cloud Run wird als "viel bessere Entwicklererfahrung" mit "weniger Bullshit" beschrieben.23 Es ist "serverless" 23 und hat einen "eingebauten Load Balancer" 22, was die Einrichtung trivialisiert.
+* PaaS: (z. B. Heroku). Bietet die einfachste Bereitstellung ("Git-basierte Deployments"), abstrahiert aber die Infrastruktur vollständig.16
+Die Wahl einer verwalteten CaaS-Plattform wie Cloud Run oder Fargate (oder einer modernen PaaS) ist entscheidend. Diese Plattformen implementieren bereits die Logik für Rolling Updates 9 und verwalten die Health Checks 25 im Namen des Benutzers. Das Team erbt diese robusten, kampferprobten Primitive, ohne die "Komplexitätssteuer" 19 der K8s-Verwaltung zahlen zu müssen.
+Constraint: Die v1.0-Infrastruktur muss eine verwaltete PaaS- oder CaaS-Plattform (z. B. Heroku, Google Cloud Run, AWS Fargate) sein, die nativ Rolling Updates und Health-Check-Management bereitstellt. Selbstverwaltete K8s-Cluster oder IaaS-basierte (VM-)Deployments sind ausgeschlossen.
+
+
+Modell
+	Operative Last (Management)
+	v1.0 Setup-Kosten
+	Kontrolle / Flexibilität
+	Native Deployment-Primitive
+	IaaS (z.B. EC2, VMs)
+	Sehr hoch (OS, Patching, Skalierung) 14
+	Hoch
+	Total
+	Keine (muss selbst erstellt werden)
+	Self-Managed K8s
+	Extrem hoch (Control Plane, Nodes) 19
+	Extrem hoch
+	Sehr hoch
+	Ja (komplex zu konfigurieren)
+	Managed CaaS (z.B. Cloud Run, Fargate)
+	Gering (Nur App/Container-Konfig) 23
+	Gering 22
+	Mittel
+	Ja (Nativ geerbt) 25
+	PaaS (z.B. Heroku)
+	Sehr gering (Nur App-Code) 16
+	Sehr gering
+	Gering
+	Ja (Nativ geerbt)
+	
+
+2.3 Abgrenzung der Automatisierungsgrenzen
+
+
+Die Anfrage definiert fälschlicherweise bestimmte Elemente als "nicht automatisierbar". Eine korrekte Klassifizierung ist entscheidend.
+* Zertifikate (Vollständig automatisierbar): Die Annahme, dass Zertifikate nicht automatisiert werden können, ist überholt. Das ACME-Protokoll 26 wurde speziell entwickelt, um "automatisch browser-vertrauenswürdige Zertifikate ohne menschliches Eingreifen zu erhalten".27 Tools wie CertBot 26 und Dienste wie Let's Encrypt 27 machen dies zu einem gelösten Problem. Moderne PaaS/CaaS-Plattformen integrieren dies oft nativ.
+   * Constraint: Die Zertifikatsverwaltung muss über ACME automatisiert werden. Manuelle Zertifikatserneuerungen sind für v1.0 nicht zulässig.
+* DNS (Fragile Automatisierung): Hier ist die Besorgnis berechtigt. Während die Erstellung von DNS-Einträgen über APIs automatisiert werden kann (z. B. in AWS Route 53 29 oder über Tools wie dnscontrol 30), ist das Problem die "DNS-Propagierungsverzögerung".31 Die Pipeline kann nicht zuverlässig auf eine globale Aktualisierung warten. Die Lösung ist eine robuste Automatisierung, die "Fehler abfängt und den Schritt wiederholt" 31 oder Verifizierungs-Tools verwendet.32
+   * Constraint: DNS-Automatisierung ist auf "Fire-and-Forget" beschränkt. Kritische Pipeline-Schritte dürfen nicht von der sofortigen globalen DNS-Propagierung abhängen.
+* Compliance (Absichtliches manuelles Gate): Dies ist die wichtigste Neuklassifizierung. Eine manuelle Genehmigung ist kein Scheitern der Automatisierung, sondern ein integraler Bestandteil eines robusten Prozesses. Ein "ordnungsgemäß konfigurierter manueller Job kann ein leistungsfähiges Mittel sein, um Bereitstellungen zu steuern und Compliance-Anforderungen zu erfüllen".33 Alle wichtigen CI/CD-Plattformen unterstützen dies als Best Practice, z. B. als "manuelle (Benutzer-)Genehmigungen" 34 in Azure DevOps oder "Genehmigungs-Workflows" 35 in GitLab.
+   * Constraint: Die Pipeline muss einen "manuellen Genehmigungs"-Schritt vor dem Produktions-Deployment enthalten, um die Compliance- und QA-Abzeichnung zu formalisieren.
+
+
+2.4 Zentrale Quotas und Limits von Cloud-Providern
+
+
+Die CI/CD-Pipeline selbst ist ein starker API-Nutzer und unterliegt Beschränkungen.
+* API-Raten und Quotas: Alle Provider setzen Limits durch.
+   * AWS: Setzt API-Anfragelimits (z. B. 50 Anfragen/Sekunde für Service Quotas) 36 und Timeouts für Pipeline-Aktionen (z. B. 5 Tage für CodeDeploy Blue/Green).37 Fargate hat Limits für gleichzeitige Aufgaben.38
+   * GCP: Limitiert Deployment Manager auf 1.000 Schreibanfragen/Tag 39 und Cloud Deploy auf 600 Bereitstellungsminuten/Tag.40
+   * Azure: Unterliegt regionalen Kapazitätsengpässen (z. B. in Westeuropa) 41 und abonnementbasierten Grenzwerten.43
+   * Drittanbieter: Limits wie die von Docker Hub (100 Pulls / 6 Stunden für nicht authentifizierte IPs) 44 sind eine häufige Fehlerquelle in CI/CD-Pipelines.
+* Intelligente Fehlerbehandlung als Constraint: Die Pipeline-Automatisierung darf nicht naiv sein. Sie muss zwischen verschiedenen Fehlermodi unterscheiden.
+   * Ein RequestLimitExceeded oder ThrottlingException 45 ist ein transienter Fehler. Die Best Practice ist hier ein "exponentieller Backoff".45
+   * Ein OperationNotAllowed 42 oder ein Erreichen des "Current Limit: 0" 42 ist ein harter Fehler. Ein Wiederholungsversuch ist hier Verschwendung von Build-Minuten und wird niemals erfolgreich sein.
+   * Constraint: Die CI/CD-Automatisierungsskripte müssen eine zustandsbehaftete, intelligente Fehlerbehandlung implementieren. Sie müssen zwischen transienten/wiederholbaren Fehlern (z. B. Ratenbegrenzung -> Wiederholung mit Backoff) und harten/nicht wiederholbaren Fehlern (z. B. Quota-Limit -> sofortiger Abbruch und Alarmierung) unterscheiden.
+
+
+Teil 3: Analyse der Deployment-Abhängigkeiten (DEPLOY_dependencies.yaml)
+
+
+Dieser Abschnitt definiert die Eingaben, Übergaben und die sequenzielle Logik, die für die Ausführung eines Deployments erforderlich sind.
+
+
+3.1 Die QA-zu-Deploy-Übergabe (Definition des "Approval Report")
+
+
+Die Anfrage spezifiziert eine Abhängigkeit von einem "Approval Report" des QA-Frameworks. Dies ist die Formalisierung der manuellen Compliance-Gate aus Abschnitt 2.3.
+* Das "Approval Report" (Der Artefakt): Dies ist die automatisierte Ausgabe eines "Security Quality Gate (SQG)".46 Dieses Tor prüft das Artefakt gegen definierte Kriterien. Bei Erfolg oder Misserfolg wird ein "Genehmigungsbericht" (Approval Report) erstellt, der "die nicht erfüllten Kriterien auflistet".46 Dieser Bericht ist die Datengrundlage für die menschliche Entscheidung. Er besteht aus aggregierten Ergebnissen von Unit-Tests, Security-Scans (SAST/DAST) und Integrationstests.
+* Die "Approval" (Die Aktion): Dies ist der manuelle Schritt, der auf dem Bericht basiert. Die Implementierung dieses Schritts wird von allen modernen CI/CD-Plattformen nativ unterstützt:
+   * Jenkins: Verwendet einen input-Schritt 48, der die Pipeline pausiert und auf eine menschliche Eingabe wartet. Der Zugriff kann über den submitter-Parameter auf autorisierte Benutzer (z. B. QA-Leads, DevOps-Team) beschränkt werden.50
+   * GitLab: Verwendet "Geschützte Umgebungen" (Protected Environments).51 Deployments in diese Umgebungen werden "blockiert, bis alle erforderlichen Genehmigungen erteilt wurden".52
+   * GitHub: Verwendet "Umgebungen" (Environments) mit "Erforderlichen Prüfern" (Required Reviewers).54 Die Pipeline pausiert und der Job kann erst fortgesetzt werden, wenn ein autorisierter Prüfer auf "Approve and deploy" klickt.54
+   * Azure DevOps: Definiert "manuelle (Benutzer-)Genehmigungen" vor der Bereitstellung (Pre-deployment).34
+* Implementierungsmodell: "Push" (Synchron) vs. "Pull" (Asynchron/GitOps):
+   1. "Push"-Modell (Synchron): Die Pipeline läuft, stellt auf Staging bereit und pausiert dann vor dem Produktionsschritt.49 Ein Mensch wird benachrichtigt, prüft die Staging-Umgebung und den "Approval Report" 46 und klickt dann in der CI/CD-UI auf "Genehmigen".54 Dies ist das einfachste und für v1.0 empfohlene Modell.
+   2. "Pull"-Modell (Asynchron/GitOps): Ein alternativer, entkoppelter Ansatz wird beschrieben, bei dem die Staging-Bereitstellung abgeschlossen wird. QA testet asynchron. Um die Freigabe zu erteilen, wird ein Git-Tag (z. B. v1.0-pre-release) erstellt 58 oder ein Merge in den main-Branch durchgeführt.60 Eine separate Produktionspipeline wird durch dieses neue Git-Ereignis ausgelöst. Dieses Modell ist skalierbarer, aber für v1.0 unnötig komplex.
+Abhängigkeit: Das Deployment hängt von einem manual_approval Gate ab. Dieses Gate muss vom CI/CD-Tool nativ unterstützt werden (z. B. GitLab Protected Environments 52 oder GitHub Reviewers 55). Der "Approval Report" (aggregierte Testergebnisse) ist die erforderliche Information, die dem menschlichen Genehmiger zur Verfügung gestellt wird, um diese Entscheidung zu treffen.
+
+
+3.2 Kritische Pfad-Sequenzierung für das Deployment
+
+
+Die Reihenfolge der Bereitstellungsschritte ist nicht verhandelbar, insbesondere im Hinblick auf Datenbanken.
+* Das Problem: Der Standard-CI-Fluss ist Source -> Build -> Test -> Deploy.61 Dies wird durch zustandsbehaftete Datenbankmigrationen verkompliziert.63 "Stellen Sie Schemaänderungen zu früh bereit, und der alte Code bricht; zu spät, und der neue Code bricht".63
+* Die Lösung: Der Branchenkonsens ist eindeutig: Datenbankmigrationen müssen als "diskreter Schritt in der Bereitstellungspipeline... vor den Änderungen der Anwendungsversion" erfolgen.64 Man sollte "immer Ihre DB migrieren, bevor Sie neuen Code aktivieren".65 Wenn die Migration fehlschlägt, muss die "gesamte Bereitstellungspipeline anhalten".64
+* Die zwingende Konsequenz (Additive Migrationen): Diese "Migrate-First"-Regel funktioniert nur, wenn eine kritische Vorbedingung erfüllt ist: Die "App muss mit alten und neuen Schemaversionen kompatibel sein".65
+   * Szenario: Die v1.0-App läuft in Produktion. Die Pipeline startet ein Rolling Update auf v1.1.
+   * Schritt 1 (falsch): Die DB-Migration (v1.1) wird ausgeführt und benennt eine Spalte um (ALTER TABLE users RENAME COLUMN...).
+   * Ergebnis: Die noch laufenden v1.0-App-Instanzen können diese Spalte nicht mehr finden. Die gesamte v1.0-Flotte stürzt ab, bevor die v1.1-Instanzen überhaupt gestartet sind. Es kommt zu einer vollständigen Ausfallzeit.
+   * Szenario: Die v1.0-App läuft.
+   * Schritt 1 (richtig): Die DB-Migration (v1.1) wird ausgeführt und ist additiv (z. B. ALTER TABLE users ADD COLUMN new_feature_flag...).66
+   * Ergebnis: Die noch laufenden v1.0-App-Instanzen ignorieren die neue Spalte einfach. Sie funktionieren weiter.
+   * Schritt 2 (richtig): Die v1.1-App-Instanzen werden ausgerollt. Sie sehen die neue Spalte und nutzen sie.
+* Dies bedeutet, dass destruktive Änderungen (Umbenennen, Löschen von Spalten) einen komplexen "Expand/Contract"-Pattern über mehrere Releases erfordern (z. B. 6 Releases, um eine Spalte zu entfernen 66). Für v1.0 ist die Abhängigkeit daher einfach: Migrationen müssen additiv und abwärtskompatibel sein.
+Definierte v1.0-Bereitstellungssequenz:
+1. Trigger: Empfang eines versionierten, unveränderlichen Artefakts (immutable_artifact:v1.1.0) 68 UND einer manuellen Genehmigung (manual_approval:true).52
+2. Pre-Flight: Pipeline hält an; wartet auf manuelle Genehmigung (siehe 3.1).
+3. Step 1 (DB): Automatisiertes Snapshot/Backup der Produktionsdatenbank (für Desaster Recovery, nicht für Rollback).69
+4. Step 2 (DB): Ausführung der abwärtskompatiblen, additiven Datenbankmigrationen (z. B. via Flyway/Liquibase).64
+5. Quality Rule (DB): Wenn Step 2 fehlschlägt: PIPELINE ANHALTEN 64 und Alarm auslösen. Nicht mit Step 3 fortfahren.
+6. Step 3 (App): Start des Rolling Update 9 für das Anwendungs-Artefakt v1.1.0.
+7. Quality Rule (App): Überwachung der Post-Deployment-Qualitätsregeln (siehe Teil 4).
+
+
+3.3 Grundlegende Anforderungen für Rollback
+
+
+Die Möglichkeit eines Rollbacks ist keine Option, sondern eine Kernanforderung. Sie hat spezifische Abhängigkeiten.
+* Applikations-Rollback: Dies ist der einfache Teil. Die Abhängigkeit ist die Verwendung von unveränderlichen, versionierten Artefakten (Immutable Artifacts).68
+   * Ein Rollback ist nicht das "Rückgängigmachen eines Commits und erneutes Bauen".
+   * Ein Rollback ist das "erneute Bereitstellen des vorherigen erfolgreichen Bereitstellungsartefakts".72
+   * Diese Artefakte (z. B. Docker-Images) müssen in einer versionierten Registry 76 unter Verwendung einer klaren Konvention (z. B. Semantic Versioning, SemVer 73) gespeichert werden.
+* Datenbank-Rollback: Dies ist der komplexe Teil und eine häufige Fehlerquelle.
+   * Strategie 1: Rollback (Downgrade-Skripte): Manuelles Schreiben von down-Skripten für jede up-Migration.74 Dies ist "riskant" 74, fehleranfällig und kann bei destruktiven Änderungen (z. B. DROP COLUMN) zu Datenverlust führen.
+   * Strategie 2: Wiederherstellung aus Backup:.69 Dies ist eine Desaster-Recovery-Strategie, keine Deployment-Strategie. Sie verursacht "Ausfallzeiten" und "Datenverlust" aller Transaktionen seit dem Backup.69 Für Deployments inakzeptabel.
+   * Strategie 3: Roll Forward (Fix Forward): Dies ist der DevOps-Konsens.66 "Wir haben aufgegeben und machen jetzt Roll Forward".66 Ein Fehler wird nicht durch ein down-Skript behoben, sondern durch das Pushen einer neuen Version (z. B. v1.1.1), die den Fehler behebt.
+* Die v1.0-Rollback-Strategie: Die beste Rollback-Strategie ist, sie so zu gestalten, dass sie (für die DB) nicht benötigt wird.
+   * Wenn das Deployment von App v1.1 fehlschlägt (siehe Trigger in 4.4), wird ein Applikations-Rollback durchgeführt: Die App wird auf v1.0 zurückgesetzt.
+   * Damit dies funktioniert, muss die v1.0-App mit der v1.1-Datenbankmigration kompatibel sein.
+   * Dies erzwingt die in 3.2 definierte Abhängigkeit: Migrationen müssen additiv und abwärtskompatibel sein.66
+   * Abhängigkeit: Die v1.0-Rollback-Fähigkeit hängt ab von:
+      1. app: Einer unveränderlichen Artefakt-Registry (z. B. Docker Registry, ECR, GCR).76
+      2. database: Einer "Roll-Forward"-Richtlinie 75, die durch strikt additive, abwärtskompatible Migrationsskripte ermöglicht wird.66
+
+
+3.4 Monitoring und Beobachtbarkeit als Deployment-Voraussetzung
+
+
+Ein Deployment kann nicht als erfolgreich bewertet werden, wenn es nicht beobachtet wird. Monitoring ist keine nachträgliche Aufgabe, sondern eine Voraussetzung für die Bereitstellung.
+* Die "Drei Säulen": Beobachtbarkeit (Observability) basiert auf "Metriken, Protokollen (Logs) und Traces".77 Für v1.0 sind robuste Metriken und Logs das absolute Minimum.
+* Die "Golden Signals": Die Mindestanzahl an Metriken, die vor dem ersten Deployment vorhanden sein müssen, sind die "vier goldenen Signale".79
+   1. Latenz (Latency): Die Zeit, die benötigt wird, um eine Anfrage zu bearbeiten (z. B. Antwortzeit der API).79
+   2. Verkehr (Traffic): Die Anzahl der Anfragen, die das System bewältigt (z. B. Anfragen pro Sekunde).79
+   3. Fehler (Errors): Die Rate der fehlgeschlagenen Anfragen (z. B. HTTP 5xx-Serverfehler).79
+   4. Sättigung (Saturation): Wie "voll" das System ist (z. B. CPU-, Arbeitsspeicher-, Festplattenauslastung).79
+* Die pipeline-integrierte Abhängigkeit: Die CI/CD-Pipeline muss mit der Beobachtbarkeitsplattform (z. B. Splunk, Datadog, New Relic, Prometheus) integriert sein.82 Es reicht nicht aus, dass ein Mensch auf ein Dashboard schaut. Die Pipeline-Automatisierung selbst muss die Golden Signals abfragen können.
+   * Wie in Teil 4 dargelegt, werden automatisierte Rollback-Trigger 101 durch Schwellenwerte bei den Golden Signals (insbesondere der Fehlerrate) ausgelöst.
+   * Abhängigkeit: Die CI/CD-Pipeline muss über sicheren, authentifizierten API-Zugriff auf die Beobachtbarkeitsplattform verfügen. Sie muss in der Lage sein, die "Golden Signals" (insbesondere Latenz und Fehlerrate) für die neu bereitgestellte Anwendung in Echtzeit abzufragen. Ohne diese Abhängigkeit ist ein automatisierter, signalbasierter Rollback unmöglich.
+
+
+Teil 4: Definition der Deployment-Qualitätsregeln (DEPLOY_quality_rules.yaml)
+
+
+Dieser Abschnitt definiert die objektiven, messbaren Pass/Fail-Kriterien für ein Deployment.
+
+
+4.1 Die "Definition of Done" (DoD) für ein Produktions-Deployment
+
+
+Die Frage "Wann ist ein Deployment erfolgreich?" muss eindeutig beantwortet werden. Eine "Definition of Done" (DoD) ist eine "Checkliste" 85 und ein "gemeinsamer Qualitätsstandard" 87, der "Missverständnisse vermeidet" 85 und beantwortet: "Ist dieses Feature bereit zur Veröffentlichung?".89
+Die DoD-Beispiele in der Literatur beziehen sich oft auf Agile-User-Stories (z. B. "Code peer-reviewed", "Dokumentation vollständig").85 Dies muss in eine technische DoD für den Deployment-Prozess übersetzt werden.
+Ein Deployment ist nicht "Done", wenn der Kopiervorgang abgeschlossen ist. Ein Deployment ist "Done", wenn es sich als stabil erwiesen hat. Dies erfordert eine obligatorische "Wartezeit nach einer Bereitstellung, um das System genau zu überwachen" 91, eine sogenannte "Soak Time".
+Die v1.0 Deployment Definition of Done (DoD) Checkliste:
+1. ``: Alle CI-Prüfungen (Build, Unit-Tests, Linting, SAST) für das Artefakt sind grün.
+2. ``: Ein versioniertes, unveränderliches Artefakt wurde erstellt und in die Registry gepusht.76
+3. ``: Der automatisierte "Approval Report" 46 ist fehlerfrei und das manuelle Genehmigungs-Gate 52 für die Produktion ist "Genehmigt".
+4. ``: Die Datenbankmigrationen (falls vorhanden) wurden erfolgreich abgeschlossen.64
+5. ``: Die Bereitstellungsplattform (z. B. K8s, Cloud Run) meldet, dass das Rolling Update 100% der Instanzen ersetzt hat.
+6. ``: Alle neuen Anwendungsinstanzen (Pods/Container) bestehen ihre Liveness- und Readiness-Probes (siehe 4.2).
+7. ``: Die "Golden Signals" (Fehler, Latenz) 79 der Anwendung sind stabil und liegen unterhalb der Rollback-Schwellenwerte (siehe 4.4) für eine obligatorische "Soak Time" von 5 Minuten nach Schritt 6.91
+Erst wenn alle 7 Punkte erfüllt sind, wird die Pipeline als "Erfolgreich" markiert und die Verbindung getrennt.
+
+
+4.2 Essentielle v1.0 Health-Checks (Zustandsprüfungen)
+
+
+Health Checks (Zustandsprüfungen) sind die grundlegendsten Qualitätsregeln, die von der Infrastruktur 25 (PaaS/CaaS/K8s) 92 verwendet werden. Sie bestehen aus Liveness- und Readiness-Probes.
+* Liveness Probe (Lebenszustandsprüfung):
+   * Zweck: Beantwortet die Frage: "Ist die Anwendung am Leben oder abgestürzt/deadlocked?".92
+   * Aktion bei Fehler: Der Container wird neu gestartet (z. B. kubectl restart).93
+* Readiness Probe (Bereitschaftsprüfung):
+   * Zweck: Beantwortet die Frage: "Ist die Anwendung bereit, Datenverkehr zu empfangen?" (kann sie z.B. die DB erreichen?).92
+   * Aktion bei Fehler: Der Container wird aus dem Load Balancer entfernt und empfängt keinen Traffic mehr, bis er wieder besteht.93
+* Startup Probe (Startprüfung):
+   * Zweck: Eine optionale Sonde für "langsam startende Container" 96, die den Beginn der Liveness- und Readiness-Probes verzögert, bis die App initialisiert ist.97
+Kritische Implementierungsregel für v1.0:
+Der häufigste Fehler bei der Implementierung von Health Checks ist, sie zu komplex zu machen. Eine Liveness-Probe, die bei einem Fehler einen Neustart auslöst, darf niemals von externen Diensten abhängen. Wenn eine Liveness-Probe eine nachgelagerte DB-Verbindung prüft 95 und diese DB einen vorübergehenden Netzwerkausfall hat, führt dies dazu, dass die gesamte Anwendungsflotte sich selbst neustartet, was einen kleinen Fehler in einen Totalausfall verwandelt.
+Die Readiness-Probe ist der sichere Ort für diese Prüfungen. Fällt sie aus, wird die Instanz nur vorübergehend isoliert, was genau das gewünschte Verhalten ist.
+Qualitätsregel: Die Anwendung muss zwei separate Endpunkte bereitstellen:
+
+
+Sondentyp
+	Zweck
+	Aktion bei Fehler
+	v1.0 Implementierung (Beispiel)
+	Erforderliche Logik
+	Liveness Probe
+	Ist die App intern "gesund"? 92
+	Container neu starten 94
+	GET /livez (HTTP 200)
+	Einfach: Nur internen Zustand prüfen. Kein Netzwerk, keine DB, keine externen APIs.95
+	Readiness Probe
+	Ist die App bereit für Traffic? 92
+	Traffic stoppen 93
+	GET /readyz (HTTP 2xx/3xx) 98
+	Umfassend: Alle kritischen Abhängigkeiten prüfen (z.B. DB-Verbindung, andere APIs).95
+	Startup Probe
+	(Optional) Verzögert Probes 96
+	(Deaktiviert andere Probes)
+	(Nutzt /livez oder /readyz)
+	(Wird bei langsamen Starts >30s benötigt)
+	
+
+4.3 Priorisierung von Deployment-Schritten
+
+
+Die Anfrage zur Priorisierung von Schritten wird als Prozessfrage für v1.0 interpretiert, nicht als Infrastrukturfrage.
+* Interpretation 1 (Infrastruktur): Bezieht sich auf Kubernetes PriorityClass 99, die es höher priorisierten Pods erlaubt, niedriger priorisierte Pods zu verdrängen. Dies ist eine fortgeschrittene Funktion und für v1.0 nicht relevant.
+* Interpretation 2 (Prozess): Bezieht sich auf die Priorisierung von Aufgaben in der CI/CD-Warteschlange. Z. B. muss ein kritischer Hotfix ein geplantes, aber unwichtiges Feature-Release überholen. Octopus Deploy unterstützt dies z. B. durch "Priorisierung beim Erstellen einer neuen Bereitstellung" oder "Verschieben an den Anfang" (Move to top) der Warteschlange.100
+Qualitätsregel: Das v1.0-Szenario ist der Hotfix. Die CI/CD-Plattform muss eine Funktion unterstützen, mit der ein autorisierter Benutzer (DevOps, Tech Lead) eine Bereitstellung (z. B. einen Hotfix) manuell priorisieren kann, um sie an den Anfang der Ausführungswarteschlange zu verschieben.100
+
+
+4.4 Automatisierte Rollback-Auslöser
+
+
+Dies ist die wichtigste Qualitätsregel: die Definition der "Failure Conditions" 101, die einen automatischen Rollback auslösen. Ein Rollback ist eine "Sicherheitsnetz" 101, das die "letzte erfolgreiche Code-Revision" 91 (genauer: das letzte erfolgreiche Artefakt) erneut bereitstellt.
+Es gibt zwei Arten von Fehlschlägen, die einen Rollback auslösen müssen:
+1. "Fast Fail" (Synchroner Auslöser): Das Deployment wird nicht "Ready".
+Dies ist der offensichtliche Fehler. Die neue Version (v1.1) wird ausgerollt, aber ihre Container scheitern an der Readiness-Probe (z. B. Konfigurationsfehler, DB-Verbindungsfehler).102 Die Bereitstellungsplattform (K8s, CaaS) wird dies erkennen, da das Rolling Update niemals einen 100%igen Bereitschaftszustand erreicht.
+* Qualitätsregel (Trigger 1):
+   * Typ: Synchron
+   * Quelle: Bereitstellungsplattform (K8s / CaaS-API)
+   * Bedingung: Das Rolling Update erreicht nicht innerhalb von 10 Minuten den Status "100% Ready" (Timeout).
+   * Aktion: AUTO_ROLLBACK(latest_stable_artifact)
+2. "Slow Fail" (Asynchroner Auslöser): Das Deployment ist "Ready", aber "Unhealthy".
+Dies ist der subtile, aber gefährlichere Fehler. Das Deployment wird als erfolgreich gemeldet (alle Probes sind grün). Aber während der "Soak Time" (siehe 4.1), unter echtem Benutzer-Traffic, zeigt sich ein Problem. Die "Golden Signals" 79 verschlechtern sich. Dies sind die "vordefinierten Fehlerschwellen".101
+* "Erhöhte Fehlerraten (HTTP 5xx...)".103
+* "Leistungsverschlechterung (Latenzspitzen...)".103
+* Ein konkretes Beispiel: "Wenn der Prozentsatz der Fehler... mehr als 10% beträgt, wird die Bereitstellung automatisch zurückgerollt".104
+* Qualitätsregel (Trigger 2):
+   * Typ: Asynchron (während der 5-minütigen "Soak Time" 91)
+   * Quelle: Beobachtbarkeitsplattform (via API-Abfrage, siehe 3.4)
+   * Bedingung: (golden_signal.errors_5xx.rate > 10%) ODER (golden_signal.latency.p95 > 2000ms)
+   * Details: Der Schwellenwert muss für 2 aufeinanderfolgende Minuten überschritten werden (um "Flapping" zu verhindern).
+   * Aktion: AUTO_ROLLBACK(latest_stable_artifact)
+Diese beiden Auslöser stellen sicher, dass sowohl offensichtliche Plattformfehler als auch subtile Anwendungsfehler zu einer automatischen Wiederherstellung des stabilen Zustands führen.
+
+
+Teil 5: v1.0 Deployment-Framework-Spezifikation (YAML)
+
+
+Die folgende Spezifikation fasst die in Teil 2, 3 und 4 analysierten Regeln und Abhängigkeiten als direkt implementierbare YAML-Dateien zusammen.
+
+
+YAML
+
+
+
+
+# DEPLOY_constraints.yaml
+#
+# Definiert die Grenzen, Nicht-Ziele und technischen Einschränkungen 
+# für das v1.0-Produktions-Deployment-Framework.
+# Basiert auf der Analyse in Teil 2 des Berichts.
+
+v: 1.0
+kind: DeploymentConstraints
+metadata:
+ name: "v1.0-production-constraints"
+ description: "Harte Einschränkungen für das v1.0 Deployment-Framework."
+
+spec:
+ # 2.1 Bereitstellungsstrategie
+ deployment_strategy:
+   production:
+     # RollingUpdate ist die einzige zulässige Strategie für v1.0 Prod.
+     # Sie bietet Zero-Downtime  bei geringer Komplexität.
+     type: "RollingUpdate"
+     # Konfiguration, um Verfügbarkeit sicherzustellen.
+     params:
+       maxUnavailable: "25%"
+       maxSurge: "25%"
+   non_production:
+     # 'Recreate' ist für Dev/Test-Umgebungen zulässig, 
+     # um Kosten zu sparen, verursacht aber Ausfallzeiten.[2, 10]
+     type: "Recreate"
+   # Ausgeschlossene Strategien für v1.0
+   unrealistic_strategies_v1:
+     - name: "Blue-Green"
+       reason: "Zu hohe Infrastrukturkosten (2x Umgebung) und Setup-Komplexität."
+     - name: "Canary"
+       reason: "Zu hohe Komplexität bei Routing und Monitoring."
+
+ # 2.2 Infrastruktur-Komplexität
+ infrastructure_complexity_ceiling:
+   # Die operative Last für v1.0 muss minimiert werden.
+   # Wir 'erben' Deployment-Primitive, statt sie selbst zu bauen.
+   platform_model: "Managed (PaaS oder CaaS)"
+   allowed_platforms:
+     - "Google Cloud Run" # Bevorzugt wegen Einfachheit 
+     - "AWS Fargate" # Akzeptabel, mehr Setup 
+     - "Heroku" # Akzeptabel, PaaS 
+   disallowed_platforms_v1:
+     - "Self-Managed Kubernetes" # Zu hohe Komplexität/Lernkurve [19, 21]
+     - "IaaS (VM-basiert)" # Zu hohe operative Last (OS-Patching, etc.) 
+
+ # 2.3 Automatisierungsgrenzen
+ automation_boundaries:
+   - area: "SSL/TLS Certificates"
+     # Dies ist *keine* Grenze; es muss automatisiert werden.
+     automation_level: "Full"
+     method: "ACME Protocol (z.B. Let's Encrypt)"
+     comment: "Manuelle Zertifikate sind nicht zulässig."
+   - area: "DNS Records"
+     automation_level: "Fragile"
+     method: "CI/CD-Skripte (z. B. via AWS CLI, Terraform, dnscontrol )"
+     comment: "Automatisierung ist 'Fire-and-Forget'. Pipeline darf NICHT auf globale Propagierung warten."
+   - area: "Compliance & QA Sign-off"
+     # Dies ist ein absichtlicher manueller Schritt, keine Automatisierungslücke.
+     automation_level: "Intentional Manual Gate"
+     method: "Manuelle Genehmigung im CI/CD-Tool.[33, 52]"
+     comment: "Die Pipeline *automatisiert die Pause* und erzwingt die menschliche Genehmigung."
+
+ # 2.4 Cloud-Provider-Limits
+ pipeline_error_handling:
+   # Die Pipeline muss intelligent auf Fehler reagieren.
+   on_error_type:
+     - error_type: "Transient (z.B. API Throttling, 429, 503)"
+       action: "Retry mit exponentiellem Backoff."
+     - error_type: "Hard (z.B. Quota Exceeded, 403, OperationNotAllowed)"
+       action: "Sofortiger Pipeline-Fehlschlag und Alarmierung."
+   external_limits_to_monitor:
+     - "Docker Hub (Pull Rate Limits) "
+     - "Cloud Provider (API-Raten, gleichzeitige Tasks) [36, 38]"
+     - "Cloud Deploy (Build-Minuten) "
+
+
+
+YAML
+
+
+
+
+# DEPLOY_dependencies.yaml
+#
+# Definiert die Eingaben, Sequenzen und Voraussetzungen, 
+# die für den Start und die Durchführung eines Deployments erforderlich sind.
+# Basiert auf der Analyse in Teil 3 des Berichts.
+
+v: 1.0
+kind: DeploymentDependencies
+metadata:
+ name: "v1.0-production-dependencies"
+ description: "Abhängigkeiten und Sequenzierung für den v1.0 Deployment-Prozess."
+
+spec:
+ # 3.1 QA-zu-Deploy-Übergabe
+ qa_handoff:
+   - name: "Automated Quality Gate Report"
+     type: "Input (data)"
+     description: "Aggregierter Bericht (Testergebnisse, SAST, DAST) von einem Qualitätstor."
+     status: "Muss dem Genehmiger vorgelegt werden."
+   - name: "Manual Production Approval"
+     type: "Input (action)"
+     description: "Ein menschlicher Genehmiger (z.B. QA Lead, Tech Lead) muss das Deployment im CI/CD-Tool explizit freigeben."
+     status: "Blockierende Abhängigkeit für die 'production'-Stufe."
+     implementation: "MUSS über native CI/CD-Funktionen erfolgen (z.B. GitLab Protected Environment , GitHub Reviewer , Jenkins Input [49])."
+
+ # 3.2 Kritische Pfad-Sequenzierung
+ deployment_sequence:
+   # Die Reihenfolge ist kritisch, um Ausfallzeiten zu vermeiden.
+   - step: 1
+     name: "Pre-Flight: Manual Approval"
+     description: "Pipeline pausiert und wartet auf manuelle Genehmigung (siehe qa_handoff)."
+   - step: 2
+     name: "Database Backup"
+     description: "Erstellt einen Snapshot der Produktionsdatenbank (nur für Desaster Recovery)."
+   - step: 3
+     name: "Database Migration"
+     description: "Führt Datenbankmigrationen aus (z. B. via Flyway/Liquibase)."
+     constraints: "Siehe 'database_migration' Sektion unten."
+     on_failure: "HALT_PIPELINE. Nicht mit Step 4 fortfahren."
+   - step: 4
+     name: "Application Rollout"
+     description: "Startet das 'RollingUpdate'  des neuen Anwendungs-Artefakts."
+   - step: 5
+     name: "Post-Deploy: Soak & Monitor"
+     description: "Aktiviert Post-Deployment Quality Rules (siehe DEPLOY_quality_rules.yaml) für eine 'Soak Time' von 5 Minuten."
+
+ # 3.3 Rollback-Abhängigkeiten
+ rollback_prerequisites:
+   application:
+     - name: "Immutable Artifact Registry"
+       description: "Muss ein versioniertes, unveränderliches Artefakt (z.B. Docker-Image) für jede erfolgreiche 'latest_stable' Bereitstellung speichern.[68, 76]"
+       type: "z.B. Docker Registry, AWS ECR, GCR"
+   database:
+     - name: "Rollback-Strategie"
+       # Wir vermeiden DB-Rollbacks (Downgrades), da sie riskant sind.[69, 74]
+       strategy: "Roll-Forward (Fix-Forward)"
+       description: "Fehler werden durch das Pushen eines neuen Fixes (z.B. v1.1.1) behoben, nicht durch Rückgängigmachung."
+     - name: "Migrations-Design"
+       # Dies ist die *eigentliche* Abhängigkeit für einen sicheren App-Rollback.
+       requirement: "Migrationen MÜSSEN additiv und abwärtskompatibel sein."
+       description: "Die v1.0-App muss mit dem v1.1-DB-Schema funktionieren können (indem sie neue Felder ignoriert).[65, 66]"
+
+ # 3.4 Monitoring-Abhängigkeiten
+ observability_prerequisites:
+   # Monitoring ist eine Voraussetzung *vor* dem Deployment.
+   - name: "Golden Signal Instrumentation"
+     description: "Die Anwendung MUSS Metriken für die 4 Golden Signals exportieren."
+     signals:
+       - "Latency (z.B. p95-Antwortzeit)"
+       - "Traffic (z.B. Anfragen/Sek)"
+       - "Errors (z.B. HTTP 5xx-Fehlerrate)"
+       - "Saturation (z.B. CPU-, RAM-Auslastung)"
+   - name: "Centralized Logging"
+     description: "Alle Anwendungs- und Systemprotokolle müssen an einen zentralen Ort (z.B. ELK, Splunk, CloudWatch Logs) gestreamt werden.[77]"
+   - name: "Pipeline API Access"
+     description: "Die CI/CD-Pipeline MUSS über einen API-Schlüssel für die Beobachtbarkeitsplattform verfügen."
+     reason: "Erforderlich, um die 'Golden Signals' während der 'Soak Time' (Trigger 2) automatisch abzufragen.[83, 84]"
+
+
+
+YAML
+
+
+
+
+# DEPLOY_quality_rules.yaml
+#
+# Definiert die messbaren Kriterien für Erfolg (DoD) und Misserfolg (Rollback Triggers)
+# eines Produktions-Deployments.
+# Basiert auf der Analyse in Teil 4 des Berichts.
+
+v: 1.0
+kind: DeploymentQualityRules
+metadata:
+ name: "v1.0-production-quality-rules"
+ description: "Qualitätsregeln, DoD und Rollback-Auslöser für v1.0."
+
+spec:
+ # 4.1 Definition of Done (DoD)
+ definition_of_done:
+   # "Done" bedeutet "stabil in Produktion", nicht nur "Code kopiert".
+   # Basiert auf Agile DoD [85, 89] und SRE-Praktiken.
+   - id: 1
+     name: "CI Checks Passed"
+     description: "Build, Unit-Tests, Linting, SAST sind grün."
+   - id: 2
+     name: "Artifact Versioned"
+     description: "Unveränderliches Artefakt ist in der Registry gespeichert."
+   - id: 3
+     name: "QA/Compliance Approved"
+     description: "Manuelles Produktions-Gate wurde genehmigt."
+   - id: 4
+     name: "DB Migration Complete"
+     description: "Datenbankmigrationen (falls vorhanden) erfolgreich."
+   - id: 5
+     name: "Platform Rollout Complete"
+     description: "Plattform (K8s/CaaS) meldet 100% Abschluss des Rolling Update."
+   - id: 6
+     name: "Health Checks Passing"
+     description: "Alle neuen Instanzen bestehen Liveness- und Readiness-Probes."
+   - id: 7
+     name: "Golden Signals Stable (Soak Time)"
+     description: "Golden Signals bleiben für 5 Minuten *nach* Schritt 6 unter den Alarm-Schwellenwerten."
+
+ # 4.2 Health-Checks (Zustandsprüfungen)
+ health_checks:
+   # Diese müssen von der Anwendung implementiert werden.
+   - name: "Liveness Probe"
+     description: "Prüft, ob der Container neu gestartet werden muss."
+     endpoint: "GET /livez"
+     http_status: 200
+     required_logic: "Minimalistisch. NUR internen Zustand prüfen. KEINE externen Abhängigkeiten (DB, APIs), um Kaskadenfehler zu vermeiden."
+   - name: "Readiness Probe"
+     description: "Prüft, ob der Container Traffic empfangen soll."
+     endpoint: "GET /readyz"
+     http_status: "2xx oder 3xx "
+     required_logic: "Umfassend. MUSS alle kritischen Abhängigkeiten prüfen (z.B. DB-Verbindung, Key-Value-Store)."
+   - name: "Startup Probe"
+     description: "Optional, bei langsamen Starts (>30s), um Liveness-Prüfung zu verzögern."
+     endpoint: "Nutzt /livez oder /readyz"
+
+ # 4.3 Priorisierung von Deployments
+ prioritization:
+   - type: "Hotfix / Emergency"
+     mechanism: "Das CI/CD-Tool MUSS eine 'Move to Top'-Funktion  in der Deployment-Warteschlange unterstützen."
+     description: "Ermöglicht das Vorziehen eines dringenden Hotfixes vor geplante, nicht-dringende Releases."
+
+ # 4.4 Automatisierte Rollback-Auslöser
+ rollback_triggers:
+   # Dies sind die Bedingungen, die einen automatischen Rollback 
+   # auf das 'latest_stable_artifact' auslösen.
+   - trigger: 1
+     name: "Synchronous: Health Check Failure"
+     description: "Das Deployment wird nicht 'Ready' (Fast Fail)."
+     source: "Bereitstellungsplattform (K8s / CaaS-API)"
+     condition: "Rolling Update erreicht nicht '100% Ready' Status innerhalb von 10 Minuten (Timeout)."
+     action: "AUTO_ROLLBACK(latest_stable_artifact)"
+   - trigger: 2
+     name: "Asynchronous: Golden Signal Breach"
+     description: "Das Deployment ist 'Ready', aber 'Unhealthy' (Slow Fail).[101, 103]"
+     source: "Beobachtbarkeitsplattform (via API)"
+     condition: "(golden_signal.errors_5xx.rate > 10%) ODER (golden_signal.latency.p95_ms > 2000)"
+     monitoring_period: "Wird während der 5-minütigen 'Soak Time'  geprüft."
+     threshold_logic: "Bedingung muss für 2 aufeinanderfolgende Minuten bestehen, um 'Flapping' zu vermeiden."
+     action: "AUTO_ROLLBACK(latest_stable_artifact)"
+
+Referenzen
+1. Worthwhile Modern Deployment Strategies — A Full Guide - Callibrity, Zugriff am November 12, 2025, https://www.callibrity.com/articles/worthwhile-modern-deployment-strategies-a-full-guide
+2. Mastering Deployment Strategies for .NET Applications, Zugriff am November 12, 2025, https://wearecommunity.io/communities/dotnettr/articles/6454
+3. DevOps Zero to Hero — Day 20: Deployment Strategies | by Navya Cloudops - Medium, Zugriff am November 12, 2025, https://medium.com/@navya.cloudops/devops-zero-to-hero-day-20-deployment-strategies-e6712b4801e4
+4. The Difference Between Rolling and Blue-Green Deployments | Blog - Harness, Zugriff am November 12, 2025, https://www.harness.io/blog/difference-between-rolling-and-blue-green-deployments
+5. 8 Kubernetes Deployment Strategies: Pros, Cons & Use Cases - Groundcover, Zugriff am November 12, 2025, https://www.groundcover.com/blog/kubernetes-deployment-strategies
+6. Blue/green Versus Canary Deployments: 6 Differences And How To Choose |, Zugriff am November 12, 2025, https://octopus.com/devops/software-deployments/blue-green-vs-canary-deployments/
+7. Kubernetes Deployments: Rolling vs Canary vs Blue-Green - DEV Community, Zugriff am November 12, 2025, https://dev.to/pavanbelagatti/kubernetes-deployments-rolling-vs-canary-vs-blue-green-4k9p
+8. Do you think we are doing Blue-Green deployment? : r/devops - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/devops/comments/1ieuckd/do_you_think_we_are_doing_bluegreen_deployment/
+9. Deployments | Kubernetes, Zugriff am November 12, 2025, https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+10. Understanding Deployment Strategies: Pros, Cons, and Implementation | by Imran Codes, Zugriff am November 12, 2025, https://medium.com/@imrancodes/understanding-deployment-strategies-pros-cons-and-implementation-46d416d171f1
+11. Blue-Green vs. Rolling Deployments: Pros, Cons & Implementation | LaunchDarkly, Zugriff am November 12, 2025, https://launchdarkly.com/blog/blue-green-deployments-versus-rolling-deployments/
+12. What are IaaS, PaaS, and SaaS? - Microsoft Azure, Zugriff am November 12, 2025, https://azure.microsoft.com/en-us/resources/cloud-computing-dictionary/what-are-iaas-paas-and-saas
+13. Iaas, Paas, Saas: What's the difference? - IBM, Zugriff am November 12, 2025, https://www.ibm.com/think/topics/iaas-paas-saas
+14. Can anyone explain the difference between Infrastructure as a Service vs Platform as a Service? : r/cloudcomputing - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/cloudcomputing/comments/qumx0g/can_anyone_explain_the_difference_between/
+15. Heroku vs AWS: Which Cloud Platform is Best for Your App in 2025? | Kuberns Blog, Zugriff am November 12, 2025, https://kuberns.com/blogs/post/heroku-vs-aws-which-platform-is-best-for-developers/
+16. Heroku Vs. AWS: Which Cloud Provider Should You Choose? - CloudZero, Zugriff am November 12, 2025, https://www.cloudzero.com/blog/heroku-vs-aws/
+17. PaaS vs IaaS vs SaaS: What's the difference? - Google Cloud, Zugriff am November 12, 2025, https://cloud.google.com/learn/paas-vs-iaas-vs-saas
+18. Is Kubernetes Too Complicated? - Veeam, Zugriff am November 12, 2025, https://www.veeam.com/blog/is-kubernetes-too-complicated.html
+19. Google admits Kubernetes container tech is too complex - Hacker News, Zugriff am November 12, 2025, https://news.ycombinator.com/item?id=26271470
+20. How do you respond when people say that Kubernetes is too complicated? - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/kubernetes/comments/10juxz6/how_do_you_respond_when_people_say_that/
+21. Kubernetes: The Road to 1.0. From my work on Borg and Omega, to how… | by Brian Grant | ITNEXT, Zugriff am November 12, 2025, https://itnext.io/kubernetes-the-road-to-1-0-525a9420fdf0
+22. Comparing Google Cloud Run vs AWS ECS Fargate: Performance, Scaling, and Costs | by Oleksandr Hanhaliuk | Medium, Zugriff am November 12, 2025, https://medium.com/@o.hanhaliuk/google-cloud-run-vs-aws-ecs-fargate-2bcc49f0dd46
+23. Google Cloud Run vs AWS ECS Fargate : r/googlecloud - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/googlecloud/comments/1m8dszq/google_cloud_run_vs_aws_ecs_fargate/
+24. Heroku vs AWS: which cloud platform should you choose in 2025? | Blog - Northflank, Zugriff am November 12, 2025, https://northflank.com/blog/heroku-vs-aws
+25. Kubernetes vs. Docker | Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/microservices/microservices-architecture/kubernetes-vs-docker
+26. Using ACME protocol and CertBot for security certificate automation - Jisc, Zugriff am November 12, 2025, https://www.jisc.ac.uk/security-certificate-automation/automation-options/using-acme-protocol-and-certbot/
+27. How It Works - Let's Encrypt, Zugriff am November 12, 2025, https://letsencrypt.org/how-it-works/
+28. Getting Started - Let's Encrypt, Zugriff am November 12, 2025, https://letsencrypt.org/getting-started/
+29. End-to-End DevSecOps CI/CD Pipeline: Automating Kubernetes Deployment with GitHub Actions & ArgoCD | by Neamul Kabir Emon | Medium, Zugriff am November 12, 2025, https://medium.com/@neamulkabiremon/end-to-end-devsecops-ci-cd-pipeline-automating-kubernetes-deployment-with-github-actions-argocd-28dcea3bfadb
+30. DNS management with a CI/CD pipeline - Zeller.sh, Zugriff am November 12, 2025, https://zeller.sh/article/cloud/dnspipeline.html
+31. Handling DNS Propagation Delays in Terraform - Cloud Chronicles, Zugriff am November 12, 2025, https://cloudchronicles.blog/blog/Handling-DNS-Propagation-Delays-in-Terraform/
+32. Test DNS Propagation and Global Website Changes with TestLocally, Zugriff am November 12, 2025, https://testlocal.ly/features/dns-propagation
+33. How to limit access to manual pipeline gates and deployments using GitLab, Zugriff am November 12, 2025, https://about.gitlab.com/blog/protecting-manual-jobs/
+34. Deployment gates concepts - Azure Pipelines | Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/gates?view=azure-devops
+35. Security and Compliance best practices for CI/CD pipelines in 2025 - OpsMx, Zugriff am November 12, 2025, https://www.opsmx.com/blog/security-and-compliance-best-practices-for-ci-cd-pipelines-in-2023/
+36. Service quotas for Service Quotas - AWS Documentation, Zugriff am November 12, 2025, https://docs.aws.amazon.com/servicequotas/latest/userguide/reference_limits.html
+37. Quotas in AWS CodePipeline, Zugriff am November 12, 2025, https://docs.aws.amazon.com/codepipeline/latest/userguide/limits.html
+38. Handle Amazon ECS service quotas and API throttling limits - AWS Documentation, Zugriff am November 12, 2025, https://docs.aws.amazon.com/AmazonECS/latest/developerguide/operating-at-scale-service-quotas.html
+39. Cloud Deployment Manager quotas - Google Cloud Documentation, Zugriff am November 12, 2025, https://docs.cloud.google.com/deployment-manager/quotas
+40. Quotas and limits | Cloud Deploy, Zugriff am November 12, 2025, https://cloud.google.com/deploy/quotas
+41. Capacity issues in West Europe : r/AZURE - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/AZURE/comments/199wwlv/capacity_issues_in_west_europe/
+42. Zone Redundant App Service Plan in West Europe - Microsoft Q&A, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/answers/questions/2119612/zone-redundant-app-service-plan-in-west-europe
+43. Azure subscription and service limits, quotas, and constraints - Azure Resource Manager, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits
+44. Prepare now: Docker Hub rate limits will impact GitLab CI/CD, Zugriff am November 12, 2025, https://about.gitlab.com/blog/prepare-now-docker-hub-rate-limits-will-impact-gitlab-ci-cd/
+45. Managing and monitoring API throttling in your workloads | AWS Cloud Operations Blog, Zugriff am November 12, 2025, https://aws.amazon.com/blogs/mt/managing-monitoring-api-throttling-in-workloads/
+46. Security quality gates - 42Crunch, Zugriff am November 12, 2025, https://docs.42crunch.com/latest/content/concepts/security_quality_gates.htm
+47. Define security quality gates - 42Crunch, Zugriff am November 12, 2025, https://docs.42crunch.com/latest/content/tasks/define_security_quality_gates.htm
+48. Pipeline Syntax - Jenkins, Zugriff am November 12, 2025, https://www.jenkins.io/doc/book/pipeline/syntax/
+49. Is there a way to insert a manual approval in Jenkins 2 pipelines? - Super User, Zugriff am November 12, 2025, https://superuser.com/questions/1073489/is-there-a-way-to-insert-a-manual-approval-in-jenkins-2-pipelines
+50. Jenkins pipeline manual step permission - Stack Overflow, Zugriff am November 12, 2025, https://stackoverflow.com/questions/45451448/jenkins-pipeline-manual-step-permission
+51. Protected environments - GitLab Docs, Zugriff am November 12, 2025, https://docs.gitlab.com/ci/environments/protected_environments/
+52. Deployment approvals | GitLab Docs, Zugriff am November 12, 2025, https://docs.gitlab.com/ci/environments/deployment_approvals/
+53. Deployment approvals · Environments · Ci · Help · GitLab - Genboree, Zugriff am November 12, 2025, https://genboree.org/gitlab/help/ci/environments/deployment_approvals.md
+54. Reviewing deployments - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/actions/managing-workflow-runs/reviewing-deployments
+55. Managing environments for deployment - GitHub Docs, Zugriff am November 12, 2025, https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment
+56. Using Environments for Approval Workflows With GitHub Actions - Aaron Powell, Zugriff am November 12, 2025, https://www.aaron-powell.com/posts/2021-01-11-using-environments-for-approval-workflows-with-github/
+57. Control deployments with gates and approvals - Azure Pipelines | Microsoft Learn, Zugriff am November 12, 2025, https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deploy-using-approvals?view=azure-devops
+58. A Deployment Strategy using Git Tags | by Adam Drake - Medium, Zugriff am November 12, 2025, https://adam-drake-frontend-developer.medium.com/a-deployment-strategy-using-git-tags-f75b6368e590
+59. A Deployment Strategy using Git Tags - Adam Drake, Zugriff am November 12, 2025, https://www.adamdrake.dev/blog/a-deployment-strategy-using-git-tags
+60. Git Tagging — How to Use them for Success | by Josh Burgess - Medium, Zugriff am November 12, 2025, https://medium.com/@burgessj247/git-tagging-how-to-use-them-for-success-0e96ada9dec8
+61. CI/CD Process: Flow, Stages, and Critical Best Practices - Codefresh, Zugriff am November 12, 2025, https://codefresh.io/learn/ci-cd-pipelines/ci-cd-process-flow-stages-and-critical-best-practices/
+62. CI/CD Pipeline Phases Explained - Medium, Zugriff am November 12, 2025, https://medium.com/@use.abhiram/ci-cd-pipeline-phases-explained-e8e2833f17c5
+63. How to Build a CI/CD Pipeline for Database Schema Migration - Bytebase, Zugriff am November 12, 2025, https://www.bytebase.com/blog/how-to-build-cicd-pipeline-for-database-schema-migration/
+64. Deploying Schema Migrations | Atlas Guides, Zugriff am November 12, 2025, https://atlasgo.io/guides/deploying/intro
+65. Best practices for managing schema updates during deployments (both rollout and rollback) : r/devops - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/devops/comments/1iwy2su/best_practices_for_managing_schema_updates_during/
+66. How Do You Handle Rollbacks in CI/CD Pipelines? : r/devops - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/devops/comments/1fnh7qp/how_do_you_handle_rollbacks_in_cicd_pipelines/
+67. How do your teams run DB migrations? : r/devops - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/devops/comments/13xxovs/how_do_your_teams_run_db_migrations/
+68. Understanding Rollbacks In DevOps: A Beginner's Guide. - Jeevisoft, Zugriff am November 12, 2025, https://jeevisoft.com/blogs/2025/06/understanding-rollbacks-in-devops-a-beginners-guide/
+69. Database Rollback Strategies in DevOps - Harness, Zugriff am November 12, 2025, https://www.harness.io/harness-devops-academy/database-rollback-strategies-in-devops
+70. Build pipelines, deployment, and immutable artifacts | by Michael Brunton-Spall | Medium, Zugriff am November 12, 2025, https://medium.com/@bruntonspall/build-pipelines-deployment-and-immutable-artifacts-48ae926178a5
+71. Automated Application Rollback with Chef - Chef Blog - Chef Software, Zugriff am November 12, 2025, https://www.chef.io/blog/automated-application-rollback-with-chef
+72. How do you guys handle rollbacks with automated CI/CD pipelines? : r/devops - Reddit, Zugriff am November 12, 2025, https://www.reddit.com/r/devops/comments/eid1ak/how_do_you_guys_handle_rollbacks_with_automated/
+73. Efficiently Managing Artifact Dependencies - Harness, Zugriff am November 12, 2025, https://www.harness.io/harness-devops-academy/efficiently-managing-artifact-dependencies
+74. The three levels of a database rollback strategy | pgroll, Zugriff am November 12, 2025, https://pgroll.com/blog/levels-of-a-database-rollback-strategy
+75. Recovery Strategy, Rollback or Roll Forward? | by Omri Amitay - Medium, Zugriff am November 12, 2025, https://medium.com/@omriamitay/recovery-strategy-rollback-or-roll-forward-fbec55cc39ca
+76. Versioning Infrastructure Components for Safer Rollbacks - Improwised Technologies, Zugriff am November 12, 2025, https://www.improwised.com/blog/versioning-infrastructure-components-rollbacks-deployments/
+77. Understanding observability metrics: Types, golden signals, and best practices | Elastic Blog, Zugriff am November 12, 2025, https://www.elastic.co/blog/observability-metrics
+78. What are the 'Golden Signals' that SRE teams use to detect issues? - Cisco DevNet, Zugriff am November 12, 2025, https://developer.cisco.com/articles/what-are-the-golden-signals/what-are-the-golden-signals-that-sre-teams-use-to-detect-issues/
+79. What are golden signals? - Dynatrace, Zugriff am November 12, 2025, https://www.dynatrace.com/knowledge-base/golden-signals/
+80. Why You Need to Monitor the Four Golden Signals | New Relic, Zugriff am November 12, 2025, https://newrelic.com/blog/best-practices/monitoring-golden-signals
+81. SRE Monitoring: Golden Signals as a Key Metrics for System Reliability - Gart Solutions, Zugriff am November 12, 2025, https://gartsolutions.com/sre-monitoring-golden-signals-as-a-key-metrics-for-system-reliability/
+82. CI/CD | Elastic Docs, Zugriff am November 12, 2025, https://www.elastic.co/docs/solutions/observability/cicd
+83. The Complete Guide to CI/CD Pipeline Monitoring: Metrics, Tools, and Best Practices for Delivery Visibility | Splunk, Zugriff am November 12, 2025, https://www.splunk.com/en_us/blog/learn/monitoring-ci-cd.html
+84. Improving CI/CD Pipelines through Observability - InfoQ, Zugriff am November 12, 2025, https://www.infoq.com/articles/ci-cd-observability/
+85. Understanding the "Definition of Done" for the Success of Your Project - PM Majik, Zugriff am November 12, 2025, https://www.pmmajik.com/understanding-the-definition-of-done-for-the-success-of-your-project/
+86. Definition of Done (DoD) Checklist | Your Checklists, Zugriff am November 12, 2025, https://www.checklistsformanagers.com/checklist/definition-of-done-dod-checklist
+87. Definition of Done: The Complete Guide with Examples & Checklist (2025) - Teaching Agile, Zugriff am November 12, 2025, https://teachingagile.com/scrum/psm-1/scrum-implementation/definition-of-done
+88. What is the Definition of Done (DoD) in Agile? - Atlassian, Zugriff am November 12, 2025, https://www.atlassian.com/agile/project-management/definition-of-done
+89. Acceptance Criteria vs Definition of Done: How to Keep Agile Teams Aligned - AltexSoft, Zugriff am November 12, 2025, https://www.altexsoft.com/blog/acceptance-criteria-definition-of-done/
+90. The Definition of Done in Scrum | Agile Academy, Zugriff am November 12, 2025, https://www.agile-academy.com/en/scrum-master/what-is-the-definition-of-done-dod-in-agile/
+91. [DL.ADS.2] Implement automatic rollbacks for failed deployments - DevOps Guidance, Zugriff am November 12, 2025, https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/dl.ads.2-implement-automatic-rollbacks-for-failed-deployments.html
+92. Readiness vs liveliness probes: How to set them up and when to use them in your Kubernetes cluster | Google Cloud Blog, Zugriff am November 12, 2025, https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-setting-up-health-checks-with-readiness-and-liveness-probes
+93. Readiness vs. Liveness probes: what is the difference? (and startup probes!) - Medium, Zugriff am November 12, 2025, https://medium.com/@jrkessl/readiness-vs-liveness-probes-what-is-the-difference-and-startup-probes-215560f043e4
+94. Configure Liveness, Readiness and Startup Probes - Kubernetes, Zugriff am November 12, 2025, https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+95. Liveness and Readiness Probes - Red Hat, Zugriff am November 12, 2025, https://www.redhat.com/en/blog/liveness-and-readiness-probes
+96. Liveness, Readiness, and Startup Probes - Kubernetes, Zugriff am November 12, 2025, https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+97. Kubernetes Liveness Probes: Configuration & Best Practices - Groundcover, Zugriff am November 12, 2025, https://www.groundcover.com/blog/kubernetes-liveness-probe
+98. Values that you specify when you create or update health checks - Amazon Route 53, Zugriff am November 12, 2025, https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/health-checks-creating-values.html
+99. Pod Priority and Preemption - Kubernetes, Zugriff am November 12, 2025, https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+100. Prioritizing Deployments | Octopus blog, Zugriff am November 12, 2025, https://octopus.com/blog/prioritize-deployments
+101. Automated Rollbacks in DevOps: Ensuring Stability and Faster Recovery in CI/CD Pipelines, Zugriff am November 12, 2025, https://medium.com/@samairabosh/automated-rollbacks-in-devops-ensuring-stability-and-faster-recovery-in-ci-cd-pipelines-c197e39f9db6
+102. How can an agent design a rollback strategy to deal with erroneous updates?, Zugriff am November 12, 2025, https://www.tencentcloud.com/techpedia/126329
+103. Handling Rollback Strategies for Failed Product Deployments - Agile Seekers, Zugriff am November 12, 2025, https://agileseekers.com/blog/handling-rollback-strategies-for-failed-product-deployments
+104. Automating rollback of failed Amazon ECS deployments | AWS Compute Blog, Zugriff am November 12, 2025, https://aws.amazon.com/blogs/compute/automating-rollback-of-failed-amazon-ecs-deployments/
+105. 7 Kubernetes Deployment Strategies: Pros, Cons, And How To Choose |, Zugriff am November 12, 2025, https://octopus.com/devops/kubernetes-deployments/kubernetes-deployment-strategies/
+106. Kubernetes Vs. Docker Vs. OpenShift: A 2025 Shootout - CloudZero, Zugriff am November 12, 2025, https://www.cloudzero.com/blog/kubernetes-vs-docker/
+107. Rollback Automation: Best Practices for CI/CD | Hokstad Consulting, Zugriff am November 12, 2025, https://hokstadconsulting.com/blog/rollback-automation-best-practices-for-ci-cd

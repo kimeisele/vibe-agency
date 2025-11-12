@@ -1,0 +1,100 @@
+# CODE_GEN_quality_rules.yaml
+# Definiert die automatisierte Governance-Schicht (APCE-ähnlich).
+# Beschreibt, wie Qualität gemessen wird und was die "Definition of Done" ist.
+version: 1.0
+
+# 1. Priorisierungsstrategie
+# Definiert die Reihenfolge der Generierung für komplexe Systeme.
+generation_strategy:
+ - id: "STRATEGY_CORE_FIRST"
+   description: "Generiert und stabilisiert zuerst 'Core'-Komponenten (hoher Fan-In), bevor 'Extensions' (niedriger Fan-In) generiert werden."
+   core_definition:
+     type: "DEPENDENCY_GRAPH_ANALYSIS"
+     metric: "FAN_IN_COUNT"
+     threshold: "> 5" # Beispiel: Ein Modul, von dem >5 andere Module abhängen, ist 'Core'.
+
+# 2. Quality Gates (Automatisiertes "Ready for QA")
+# Definiert die automatisierten Prüfpunkte in der CI-Pipeline.
+# Ein Commit ist 'Ready for QA', wenn er ALLE Gates im 'v1.0_gate_profile' passiert.
+quality_gates:
+ - id: "GATE_FUNCTIONAL_CORRECTNESS"
+   description: "Alle generierten Unit-Tests (aus dem Artefakt-Bundle) müssen erfolgreich durchlaufen."
+   tool: "JEST / PyTest / JUnit"
+   check: "run_tests"
+   rule: "FAIL if (errors > 0)"
+
+ - id: "GATE_TEST_COVERAGE"
+   description: "Die generierten Tests müssen eine Mindestabdeckung des generierten Codes erreichen."
+   tool: "JaCoCo / Cobertura"
+   check: "measure_line_coverage"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+   description: "Prüft auf Code Smells, Duplizierung und Komplexität. Kritisch zur Vermeidung von unwartbarem KI-Code."
+   tool: "SonarQube / Codacy"
+   check: "static_analysis:maintainability"
+   profile: "v1.0_gate_profile"
+   # Anmerkung: Nutzt idealerweise Sonar 'AI Code Assurance' für eine tiefere Analyse.
+ - id: "GATE_STATIC_ANALYSIS_SECURITY"
+   description: "Prüft auf bekannte Schwachstellen (SAST). Nicht verhandelbares Gate."
+   tool: "SonarQube / Snyk"
+   check: "static_analysis:security"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_SUPPLY_CHAIN_VULNERABILITY"
+   description: "Prüft (neue) externe Abhängigkeiten auf bekannte Schwachstellen."
+   tool: "Dependabot / Snyk"
+   check: "scan_dependencies"
+   profile: "v1.0_gate_profile"
+
+ - id: "GATE_SUPPLY_CHAIN_LICENSE"
+   description: "Prüft (neue) externe Abhängigkeiten auf Lizenzkonformität."
+   tool: "FOSSA / WhiteSource"
+   check: "scan_licenses"
+   rule: "FAIL if (license_not_in:)" # Beispiel-Policy
+
+# 3. Qualitätsprofile (Definition von "Good Enough")
+# Definiert die spezifischen Schwellenwerte für die Quality Gates.
+quality_profiles:
+ - name: "v1.0_gate_profile"
+   description: "Mindeststandards für 'Good Enough for v1.0'. Wird als 'Ready for QA' betrachtet."
+   rules:
+     - gate_id: "GATE_TEST_COVERAGE"
+       metric: "LINE_COVERAGE"
+       rule: "FAIL if (value < 70)" # %
+     
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "COGNITIVE_COMPLEXITY_MAX"
+       rule: "FAIL if (value > 25)" # 
+       
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "DUPLICATION_RATE"
+       rule: "FAIL if (value > 10)" # % 
+
+     - gate_id: "GATE_STATIC_ANALYSIS_SECURITY"
+       metric: "CRITICAL_VULNERABILITIES"
+       rule: "FAIL if (value > 0)" # Nicht verhandelbar 
+
+     - gate_id: "GATE_STATIC_ANALYSIS_SECURITY"
+       metric: "HIGH_VULNERABILITIES"
+       rule: "FAIL if (value > 0)"
+
+     - gate_id: "GATE_SUPPLY_CHAIN_VULNERABILITY"
+       metric: "CRITICAL_VULNERABILITIES"
+       rule: "FAIL if (value > 0)"
+
+ - name: "v2.0_production_profile"
+   description: "Verschärfte Regeln für reife, produktionsgehärtete Systeme."
+   inherits: "v1.0_gate_profile"
+   rules:
+     - gate_id: "GATE_TEST_COVERAGE"
+       metric: "LINE_COVERAGE"
+       rule: "FAIL if (value < 90)" # %
+     
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "COGNITIVE_COMPLEXITY_MAX"
+       rule: "FAIL if (value > 15)" # Strenger
+       
+     - gate_id: "GATE_STATIC_ANALYSIS_MAINTAINABILITY"
+       metric: "DUPLICATION_RATE"
+       rule: "FAIL if (value > 5)" # %

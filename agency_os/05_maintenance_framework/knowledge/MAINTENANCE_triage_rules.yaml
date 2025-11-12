@@ -1,0 +1,144 @@
+# =================================================================
+# MAINTENANCE_triage_rules.yaml
+# Definiert die operativen Regeln für Priorisierung,
+# "Definition of Done" (DoD), SLAs und Eskalationen.
+# =================================================================
+
+# ---
+# Sektion 1: Priorisierungsmodelle
+# Definiert die dualen Modelle für Echtzeit-Triage und
+# Backlog-Grooming. Basiert auf Teil 4.1 des Berichts.
+# ---
+prioritization_models:
+ 
+ # Modell 1: Echtzeit-Triage-Matrix
+ # Heuristik zur schnellen Bestimmung der Priorität (P1-P5).
+ # Formel: Priorität = f(Schweregrad × Auswirkung)
+ model_1_triage_matrix:
+   name: "Incident Prioritization Matrix"
+   purpose: "Schnelle, heuristische Priorisierung für On-Call und Triage.[54, 55]"
+   axes:
+     rows: "Severity (Technical) [P1_Critical, P2_High, P3_Medium, P4_Low, P5_Cosmetic]"
+     columns: "Impact (Business/User)"
+   matrix:
+     # (Siehe Tabelle 4.1.1 im Bericht für die vollständige Matrix)
+     - { severity: P1_Critical, impact: Widespread, priority: P1_Critical }
+     - { severity: P1_Critical, impact: High,       priority: P1_Critical }
+     - { severity: P1_Critical, impact: Medium,     priority: P2_High }
+     - { severity: P1_Critical, impact: Low,        priority: P2_High }
+     - { severity: P2_High,     impact: Widespread, priority: P1_Critical }
+     - { severity: P2_High,     impact: High,       priority: P2_High }
+     - { severity: P2_High,     impact: Medium,     priority: P3_Medium }
+     - { severity: P2_High,     impact: Low,        priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Widespread, priority: P2_High }
+     - { severity: P3_Medium,   impact: High,       priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Medium,     priority: P3_Medium }
+     - { severity: P3_Medium,   impact: Low,        priority: P4_Low }
+     - { severity: P4_Low,      impact: Widespread, priority: P3_Medium }
+     - { severity: P4_Low,      impact: High,       priority: P4_Low }
+     - { severity: P4_Low,      impact: Medium,     priority: P4_Low }
+     - { severity: P4_Low,      impact: Low,        priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Widespread, priority: P4_Low }
+     - { severity: P5_Cosmetic, impact: High,       priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Medium,     priority: P5_Cosmetic }
+     - { severity: P5_Cosmetic, impact: Low,        priority: P5_Cosmetic }
+
+ # Modell 2: RICE-Scoring für Backlog-Grooming
+ # Quantitatives Modell zum Vergleich von P2-P5-Bugs und Features.
+ model_2_rice_for_bugs:
+   name: "RICE Scoring for Bug Backlog"
+   purpose: "Quantitative Priorisierung für das Backlog Grooming."
+   formula: "Score = Reach * Impact * Confidence * Ease"
+   factors:
+     - name: Reach
+       description: "Wie viele Benutzer sind betroffen?"
+       scale: "1 (wenige) bis 5 (alle)"
+     - name: Impact
+       description: "Wie stark ist die Beeinträchtigung der UX?"
+       scale: "1 (gering) bis 5 (blockierend)"
+     - name: Confidence
+       description: "Wie sicher sind die Schätzungen (R, I, E)?"
+       scale: "1 (gering) bis 5 (sehr sicher)"
+     - name: Ease
+       description: "Wie einfach/schnell ist der Fix? (Invertierter Aufwand)"
+       scale: "1 (sehr aufwändig) bis 5 (sehr einfach/schnell)"
+   
+# ---
+# Sektion 2: Definition of Done (DoD) für Bug-Fixes
+# Checkliste, die erfüllt sein muss, damit ein Bug als
+# "erledigt" gilt.
+# Basiert auf Teil 4.2 des Berichts.
+# ---
+definition_of_done:
+ - "1. Code ist produziert."
+ - "2. Code ist Peer-Reviewed (min. 1 Genehmigung)."
+ - "3. Code ist in den korrekten Branch gemerged."
+ - "4. Projekt baut fehlerfrei."
+ - "5. OBLIGATORISCH: Neuer Regressionstest(s) wurde(n) hinzugefügt, um den Fehler zu isolieren und ein Wiederauftreten zu verhindern."
+ - "6. Alle Unit- und Integrationstests (inkl. neuer Regressionstests) sind erfolgreich."
+ - "7. Dokumentation (Code, Entwickler, ggf. Benutzer) ist aktualisiert."
+ - "8. Fix ist in der Testumgebung validiert."
+ - "9. Fix ist in der Produktion bereitgestellt und verifiziert."
+# ---
+# Sektion 3: Service Level Agreements (SLAs)
+# Definiert die Zielzeiten für Reaktion und Lösung.
+# Basiert auf Teil 4.4 des Berichts (Zeiten in Geschäftsstunden, außer P1).
+# ---
+service_level_agreements:
+ - priority: P1_Critical
+   response_sla: "30 Minuten (24/7)"
+   resolution_sla: "9 Geschäftsstunden"
+   source: ""
+
+ - priority: P2_High
+   response_sla: "9 Geschäftsstunden (1 Geschäftstag)"
+   resolution_sla: "36 Geschäftsstunden (4 Geschäftstage)"
+   source: "[63, 64]"
+
+ - priority: P3_Medium
+   response_sla: "18 Geschäftsstunden (2 Geschäftstage)"
+   resolution_sla: "63 Geschäftsstunden (7 Geschäftstage)"
+   source: ""
+ 
+ - priority: P4_Low
+   response_sla: "27 Geschäftsstunden (3 Geschäftstage)"
+   resolution_sla: "90 Geschäftsstunden (10 Geschäftstage)"
+   source: ""
+ 
+ - priority: P5_Cosmetic
+   response_sla: "Best Effort"
+   resolution_sla: "Best Effort (Backlog)"
+   source: "Framework Policy"
+
+# ---
+# Sektion 4: Eskalationsrichtlinie
+# Definiert die Regeln für die Eskalation von Problemen.
+# Basiert auf Teil 4.5 des Berichts.
+# ---
+escalation_policy:
+ - name: Rule_1_Severity_P1
+   description: "Sofortige Alarmierung des primären On-Call bei P1."
+   trigger: "bug.priority == 'P1_Critical'"
+   action: "PAGE_PRIMARY_ONCALL"
+   rationale: "Sofortige Reaktion auf kritische Vorfälle erforderlich."
+ - name: Rule_2_Time_SLA_Breach_Response
+   description: "Automatische Eskalation, wenn P1-Reaktions-SLA verfehlt wird."
+   trigger: "bug.priority == 'P1_Critical' AND time_since_report > 30_minutes AND bug.status == 'New'"
+   action: "PAGE_SECONDARY_ONCALL_AND_LEAD"
+   rationale: "Sicherstellung der P1-Bestätigung."
+ - name: Rule_3_Time_SLA_Breach_Resolution
+   description: "Eskalation an das Management, wenn Lösungs-SLA (P2/P3) verfehlt wird."
+   trigger: "(bug.priority == 'P2_High' AND time_since_report > 36_business_hours) OR (bug.priority == 'P3_Medium' AND time_since_report > 63_business_hours)"
+   action: "NOTIFY_PRODUCT_MANAGER_AND_ENGINEERING_MANAGER"
+   rationale: "Erzwingt eine explizite Neupriorisierungsentscheidung."
+ - name: Rule_4_Functional_Cannot_Fix
+   description: "Funktionale Eskalation vom SRE an das Entwicklerteam."
+   trigger: "bug.status == 'Investigating' AND sre_cannot_fix_without_help == true"
+   action: "ESCALATE_TO_DEVELOPMENT_TEAM_OWNER"
+   rationale: "Fähigkeitsbasierte Eskalation (Google SRE-Modell).[69, 70]"
+
+ - name: Rule_5_Systemic_ErrorBudget
+   description: "Systemische Eskalation an das Leadership, wenn das Error Budget erschöpft ist."
+   trigger: "service.error_budget_30_day < 0"
+   action: "ESCALATE_LEADERSHIP_AND_REQUEST_FEATURE_RELEASE_PAUSE"
+   rationale: "Ultimativer Hebel: Erzwingt den Fokus auf Zuverlässigkeit über neue Features."

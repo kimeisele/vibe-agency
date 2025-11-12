@@ -1,0 +1,72 @@
+# DEPLOY_constraints.yaml
+#
+# Definiert die Grenzen, Nicht-Ziele und technischen Einschränkungen 
+# für das v1.0-Produktions-Deployment-Framework.
+# Basiert auf der Analyse in Teil 2 des Berichts.
+v: 1.0
+kind: DeploymentConstraints
+metadata:
+ name: "v1.0-production-constraints"
+ description: "Harte Einschränkungen für das v1.0 Deployment-Framework."
+spec:
+ # 2.1 Bereitstellungsstrategie
+ deployment_strategy:
+   production:
+     # RollingUpdate ist die einzige zulässige Strategie für v1.0 Prod.
+     # Sie bietet Zero-Downtime  bei geringer Komplexität.
+     type: "RollingUpdate"
+     # Konfiguration, um Verfügbarkeit sicherzustellen.
+     params:
+       maxUnavailable: "25%"
+       maxSurge: "25%"
+   non_production:
+     # 'Recreate' ist für Dev/Test-Umgebungen zulässig, 
+     # um Kosten zu sparen, verursacht aber Ausfallzeiten.[2, 10]
+     type: "Recreate"
+   # Ausgeschlossene Strategien für v1.0
+   unrealistic_strategies_v1:
+     - name: "Blue-Green"
+       reason: "Zu hohe Infrastrukturkosten (2x Umgebung) und Setup-Komplexität."
+     - name: "Canary"
+       reason: "Zu hohe Komplexität bei Routing und Monitoring."
+ # 2.2 Infrastruktur-Komplexität
+ infrastructure_complexity_ceiling:
+   # Die operative Last für v1.0 muss minimiert werden.
+   # Wir 'erben' Deployment-Primitive, statt sie selbst zu bauen.
+   platform_model: "Managed (PaaS oder CaaS)"
+   allowed_platforms:
+     - "Google Cloud Run" # Bevorzugt wegen Einfachheit 
+     - "AWS Fargate" # Akzeptabel, mehr Setup 
+     - "Heroku" # Akzeptabel, PaaS 
+   disallowed_platforms_v1:
+     - "Self-Managed Kubernetes" # Zu hohe Komplexität/Lernkurve [19, 21]
+     - "IaaS (VM-basiert)" # Zu hohe operative Last (OS-Patching, etc.) 
+
+ # 2.3 Automatisierungsgrenzen
+ automation_boundaries:
+   - area: "SSL/TLS Certificates"
+     # Dies ist *keine* Grenze; es muss automatisiert werden.
+     automation_level: "Full"
+     method: "ACME Protocol (z.B. Let's Encrypt)"
+     comment: "Manuelle Zertifikate sind nicht zulässig."
+   - area: "DNS Records"
+     automation_level: "Fragile"
+     method: "CI/CD-Skripte (z. B. via AWS CLI, Terraform, dnscontrol )"
+     comment: "Automatisierung ist 'Fire-and-Forget'. Pipeline darf NICHT auf globale Propagierung warten."
+   - area: "Compliance & QA Sign-off"
+     # Dies ist ein absichtlicher manueller Schritt, keine Automatisierungslücke.
+     automation_level: "Intentional Manual Gate"
+     method: "Manuelle Genehmigung im CI/CD-Tool.[33, 52]"
+     comment: "Die Pipeline *automatisiert die Pause* und erzwingt die menschliche Genehmigung."
+ # 2.4 Cloud-Provider-Limits
+ pipeline_error_handling:
+   # Die Pipeline muss intelligent auf Fehler reagieren.
+   on_error_type:
+     - error_type: "Transient (z.B. API Throttling, 429, 503)"
+       action: "Retry mit exponentiellem Backoff."
+     - error_type: "Hard (z.B. Quota Exceeded, 403, OperationNotAllowed)"
+       action: "Sofortiger Pipeline-Fehlschlag und Alarmierung."
+   external_limits_to_monitor:
+     - "Docker Hub (Pull Rate Limits) "
+     - "Cloud Provider (API-Raten, gleichzeitige Tasks) [36, 38]"
+     - "Cloud Deploy (Build-Minuten) "
