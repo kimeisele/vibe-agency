@@ -1,0 +1,424 @@
+# AOS_Ontology.yaml
+# Central Semantic Definition for Knowledge Bases
+# This file serves as the "Master Data Dictionary" and "Semantic Schema"
+# for all Knowledge Base files across AOS v0.2 and beyond.
+#
+# Purpose:
+# --------
+# Solves NIST's "semantic variation" and "tribal knowledge" problems by:
+# 1. Defining all semantic terms used in KB files (*.yaml)
+# 2. Specifying their types, definitions, and source files
+# 3. Enabling automated semantic audits (detects conflicts, misuse, evolution)
+# 4. Providing a single source of truth for KB governance
+#
+# How it works:
+# 1. All KB files must reference terms defined here
+# 2. CI/CD runs semantic_audit.py which validates KB consistency
+# 3. Semantic violations trigger review tasks via CODEOWNERS governance
+
+version: "1.0"
+last_updated: "2025-11-12"
+maintained_by: "@aos-knowledge-curators"
+
+# SECTION 1: Core Semantic Terms
+# These terms are used across multiple KB files and frameworks
+
+terms:
+  # === Scope & Feasibility Concepts ===
+
+  feature_scope_conflict:
+    definition: "A feature that is incompatible with v1.0 scope due to complexity, cost, or architectural mismatch"
+    type: "concept"
+    used_in:
+      - "FAE_constraints.yaml"
+    examples:
+      - "real_time_video_streaming_self_hosted"
+      - "ai_ml_recommendation_engine"
+      - "microservice_architecture"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "feasibility"
+
+  nfr_conflict:
+    definition: "Non-Functional Requirements that are contradictory and cannot be simultaneously optimized (NFR trade-off)"
+    type: "concept"
+    used_in:
+      - "FAE_constraints.yaml"
+    examples:
+      - "real_time_performance_latency vs serverless_architecture"
+      - "high_availability vs v1.0_budget"
+      - "high_security_compliance vs rapid_development"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "feasibility"
+
+  tech_incompatibility:
+    definition: "Two technologies or patterns that are fundamentally incompatible and cannot coexist in a single system"
+    type: "concept"
+    used_in:
+      - "FAE_constraints.yaml"
+    examples:
+      - "websockets incompatible with serverless_lambda"
+      - "monolithic_architecture incompatible with polyglot_stack"
+      - "hipaa_compliance incompatible with standard_heroku"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "architecture"
+
+  tech_rto:
+    definition: "Required Technical On-ramp: Infrastructure or dependencies that MUST exist for a technology to function"
+    type: "concept"
+    used_in:
+      - "FAE_constraints.yaml"
+    examples:
+      - "webrtc requires (signaling_server, stun_server, turn_server)"
+      - "oauth_social_login requires (oauth_provider_api_keys, secure_callback_url_handler)"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "architecture"
+
+  dependency_chain:
+    definition: "A feature and its direct dependencies; may have complexity_multipliers when extended"
+    type: "concept"
+    used_in:
+      - "FAE_constraints.yaml"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "complexity"
+
+  complexity_multiplier:
+    definition: "Factor by which a base feature's complexity increases when a 'trigger' feature is added"
+    type: "numeric_multiplier"
+    range: "1.0 to 10.0"
+    used_in:
+      - "FAE_constraints.yaml:dependency_chains"
+    examples:
+      - "user_authentication + oauth_social_login: 2.0x multiplier"
+      - "payment_processing + subscription_billing: 3.0x multiplier"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "complexity"
+
+  scope_v1_0:
+    definition: "The minimal, well-defined product scope suitable for a first release"
+    type: "reference_scope"
+    used_in:
+      - "FAE_constraints.yaml"
+    owner: "@aos-knowledge-curator-fae"
+    semantic_category: "scope"
+
+  # === Code Generation Concepts ===
+
+  global_exclusion:
+    definition: "A domain, technology, or tag that is completely excluded from autonomous code generation"
+    type: "constraint"
+    used_in:
+      - "CODE_GEN_constraints.yaml:global_exclusions"
+    examples:
+      - "EXCLUDE_LEGACY_STACK (COBOL, MUMPS)"
+      - "EXCLUDE_HIGH_RISK_DOMAINS (security, cryptography, concurrency)"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "code_generation"
+
+  hallucination_trigger:
+    definition: "An input pattern or context that is known to cause LLM hallucinations or low-quality code generation"
+    type: "pattern"
+    used_in:
+      - "CODE_GEN_constraints.yaml:hallucination_triggers"
+    examples:
+      - "MISSING_CRITICAL_CONTEXT"
+      - "AMBIGUOUS_REQUIREMENTS"
+      - "NEW_DEPENDENCY_NOT_IN_MANIFEST"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "code_generation"
+
+  known_error_pattern:
+    definition: "A documented, systematic error that LLM-generated code produces; identified by static analysis"
+    type: "pattern"
+    used_in:
+      - "CODE_GEN_constraints.yaml:known_error_patterns"
+    examples:
+      - "PATTERN_OMISSION_CORNER_CASE (missing error handling)"
+      - "PATTERN_API_MISUSE (wrong parameters or types)"
+      - "PATTERN_LATENT_CONCURRENCY_BUG (race conditions)"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "code_generation"
+
+  # === Quality Assurance Concepts ===
+
+  quality_gate:
+    definition: "An automated checkpoint in CI/CD that validates code quality; gates block merges if failed"
+    type: "process"
+    used_in:
+      - "CODE_GEN_quality_rules.yaml:quality_gates"
+    examples:
+      - "GATE_FUNCTIONAL_CORRECTNESS (unit tests pass)"
+      - "GATE_TEST_COVERAGE (>70% line coverage)"
+      - "GATE_STATIC_ANALYSIS_SECURITY (no critical vulnerabilities)"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "quality_assurance"
+
+  quality_profile:
+    definition: "A named set of quality gate thresholds (e.g., v1.0 vs v2.0); defines 'Definition of Done'"
+    type: "profile"
+    used_in:
+      - "CODE_GEN_quality_rules.yaml:quality_profiles"
+    examples:
+      - "v1.0_gate_profile (70% coverage, <25 cognitive complexity)"
+      - "v2.0_production_profile (90% coverage, <15 cognitive complexity)"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "quality_assurance"
+
+  non_automatable_area:
+    definition: "A testing or validation domain that cannot be automated and requires human-in-the-loop (HITL)"
+    type: "constraint"
+    used_in:
+      - "QA_constraints.yaml:non_automatable_areas"
+    examples:
+      - "Subjective User Experience (UX) & Usability"
+      - "Esthetics & Emotional Impression"
+      - "Context-dependent Business Logic"
+    owner: "@aos-knowledge-curator-qa"
+    semantic_category: "quality_assurance"
+
+  hitl_mandatory_scenario:
+    definition: "A testing or decision scenario where Human-in-the-Loop intervention is mandatory"
+    type: "constraint"
+    used_in:
+      - "QA_constraints.yaml:hitl_mandatory_scenarios"
+    examples:
+      - "Exploratory Testing"
+      - "Usability & Acceptance Tests"
+      - "Audit of AI/LLM-generated Code"
+    owner: "@aos-knowledge-curator-qa"
+    semantic_category: "governance"
+
+  # === AI & Governance Concepts ===
+
+  ai_in_the_loop:
+    definition: "AITL: An AI agent is deployed to review, refine, or solve the output of another AI agent"
+    type: "pattern"
+    used_in:
+      - "system_steward_framework"
+    owner: "@aos-knowledge-curators"
+    semantic_category: "governance"
+    synonyms:
+      - "agentic_workflow"
+
+  human_in_the_loop:
+    definition: "HITL: A human (SME, curator, approver) is required to review, approve, or decide on an AI-generated output"
+    type: "pattern"
+    used_in:
+      - "system_steward_framework"
+      - "QA_constraints.yaml"
+    owner: "@aos-knowledge-curators"
+    semantic_category: "governance"
+
+  knowledge_curator:
+    definition: "A named SME responsible for the semantic integrity and governance of a specific KB (e.g., @aos-knowledge-curator-code)"
+    type: "role"
+    used_in:
+      - "system_steward_framework"
+      - "SOP_006"
+    owner: "@aos-system-architect"
+    semantic_category: "governance"
+
+  semantic_audit:
+    definition: "Automated validation that checks KB files for semantic conflicts, term misuse, type violations, and consistency"
+    type: "process"
+    used_in:
+      - "system_steward_framework"
+    owner: "@aos-knowledge-curators"
+    semantic_category: "governance"
+
+  # === Framework-Specific Terms ===
+
+  planning_framework:
+    definition: "AOS Framework 01: Transforms unstructured user requests into structured project specifications"
+    type: "framework"
+    used_in:
+      - "agency_os/01_planning_framework"
+    knowledge_bases:
+      - "FAE_constraints.yaml"
+      - "APCE_rules.yaml"
+      - "FDG_dependencies.yaml"
+    owner: "@aos-knowledge-curator-planning"
+    semantic_category: "architecture"
+
+  code_gen_framework:
+    definition: "AOS Framework 02: Autonomously generates code, tests, and documentation from specifications"
+    type: "framework"
+    used_in:
+      - "agency_os/02_code_gen_framework"
+    knowledge_bases:
+      - "CODE_GEN_constraints.yaml"
+      - "CODE_GEN_quality_rules.yaml"
+      - "CODE_GEN_dependencies.yaml"
+    owner: "@aos-knowledge-curator-code"
+    semantic_category: "architecture"
+
+  qa_framework:
+    definition: "AOS Framework 03: Validates, tests, and certifies generated code for quality and security"
+    type: "framework"
+    used_in:
+      - "agency_os/03_qa_framework"
+    knowledge_bases:
+      - "QA_constraints.yaml"
+      - "QA_quality_rules.yaml"
+      - "QA_dependencies.yaml"
+    owner: "@aos-knowledge-curator-qa"
+    semantic_category: "architecture"
+
+
+# SECTION 2: Semantic Categories (for organization and audit)
+semantic_categories:
+  feasibility:
+    description: "Concepts related to scope feasibility and project viability"
+    terms:
+      - feature_scope_conflict
+      - nfr_conflict
+      - complexity_multiplier
+      - scope_v1_0
+
+  architecture:
+    description: "Concepts related to system architecture, technology stack, and design patterns"
+    terms:
+      - tech_incompatibility
+      - tech_rto
+      - dependency_chain
+      - planning_framework
+      - code_gen_framework
+      - qa_framework
+
+  code_generation:
+    description: "Concepts specific to autonomous code generation and AI guardrails"
+    terms:
+      - global_exclusion
+      - hallucination_trigger
+      - known_error_pattern
+
+  quality_assurance:
+    description: "Concepts related to testing, validation, and quality gates"
+    terms:
+      - quality_gate
+      - quality_profile
+      - non_automatable_area
+      - hitl_mandatory_scenario
+
+  governance:
+    description: "Concepts related to decision-making, approval workflows, and system stewardship"
+    terms:
+      - ai_in_the_loop
+      - human_in_the_loop
+      - knowledge_curator
+      - semantic_audit
+
+
+# SECTION 3: Type Definitions (for schema validation)
+type_system:
+  concept:
+    description: "An abstract idea or domain-specific concept"
+    validation: "Must have clear definition and examples"
+
+  constraint:
+    description: "A binary or enumerable limitation or exclusion rule"
+    validation: "Must specify the scope of applicability"
+
+  pattern:
+    description: "A documented, recurring structure or antipattern"
+    validation: "Must have examples or test cases"
+
+  process:
+    description: "A documented workflow or procedure"
+    validation: "Must specify inputs, steps, and outputs"
+
+  role:
+    description: "A named responsibility or position in the system"
+    validation: "Must specify permissions and accountability"
+
+  framework:
+    description: "A large, organized system with multiple components and KBs"
+    validation: "Must specify component list and governance"
+
+
+# SECTION 4: Audit & Consistency Rules
+# These rules are used by semantic_audit.py to detect anomalies
+
+audit_rules:
+  - rule_id: "AUDIT_001_UNDEFINED_TERM"
+    name: "Undefined Term Usage"
+    description: "Detects terms used in KB files that are not defined in AOS_Ontology"
+    severity: "ERROR"
+    action: "FAIL_VALIDATION"
+
+  - rule_id: "AUDIT_002_TYPE_MISMATCH"
+    name: "Type Mismatch"
+    description: "Detects when a term is used with a value type that doesn't match its definition"
+    severity: "ERROR"
+    action: "FAIL_VALIDATION"
+    example: "A numeric field used with string value"
+
+  - rule_id: "AUDIT_003_OWNER_MISMATCH"
+    name: "Owner Consistency"
+    description: "Warns if a term's owner (curator) is different across KB files"
+    severity: "WARNING"
+    action: "REPORT_AND_FLAG_FOR_REVIEW"
+
+  - rule_id: "AUDIT_004_CIRCULAR_DEPENDENCY"
+    name: "Circular Term Dependencies"
+    description: "Detects semantic cycles (A references B, B references A) that indicate conflicting definitions"
+    severity: "WARNING"
+    action: "REPORT_AND_FLAG_FOR_REVIEW"
+
+  - rule_id: "AUDIT_005_ORPHANED_TERM"
+    name: "Orphaned Term"
+    description: "Detects terms defined in ontology but not used in any KB file"
+    severity: "INFO"
+    action: "REPORT_FOR_CLEANUP"
+
+  - rule_id: "AUDIT_006_STALE_TERM"
+    name: "Stale Term"
+    description: "Detects terms not updated in >6 months (flagged for deprecation review)"
+    severity: "INFO"
+    action: "NOTIFY_OWNER"
+
+
+# SECTION 5: Evolution & Versioning
+# How to safely evolve this ontology over time
+
+evolution_policy:
+  version_strategy: "semantic_versioning"
+  breaking_changes: "MAJOR version bump (e.g., 1.0 -> 2.0)"
+  new_terms: "MINOR version bump"
+  clarifications: "PATCH version bump"
+
+  adding_terms:
+    process: "Via Git PR with review from @aos-knowledge-curators"
+    required_fields:
+      - definition
+      - type
+      - used_in
+      - owner
+      - semantic_category
+    optional_fields:
+      - examples
+      - synonyms
+
+  removing_terms:
+    process: "Deprecated flag first (PATCH), removed in next MAJOR"
+    deprecation_period: "6 months minimum"
+    notification: "Automated warning in semantic_audit.py"
+
+  updating_terms:
+    process: "Via Git PR; semantic_audit.py checks for backward compatibility"
+    requires_curator_approval: true
+
+
+# SECTION 6: Related Documents
+# This ontology is used by:
+related_documents:
+  - file: "system_steward_framework/knowledge/sops/SOP_006_Curate_Knowledge_Base.md"
+    purpose: "Process for curating and updating KB files using this ontology"
+
+  - file: "scripts/semantic_audit.py"
+    purpose: "Automated validation engine that checks KB files against this ontology"
+
+  - file: ".github/CODEOWNERS"
+    purpose: "Governance layer that assigns curators to specific KBs"
+
+  - file: "docs/GOVERNANCE_MODEL.md"
+    purpose: "High-level explanation of AOS governance framework"

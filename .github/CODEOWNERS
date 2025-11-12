@@ -1,0 +1,96 @@
+# CODEOWNERS
+# Governance file that assigns Knowledge Curators to specific KB files
+#
+# Usage:
+# ------
+# When a PR modifies files matching these patterns, GitHub automatically
+# requests a review from the specified users/teams before merge.
+# With "Require review from Code Owners" enabled in branch protection rules,
+# these reviews are mandatory.
+#
+# Syntax: <file_pattern> <@user_or_team>
+#
+# For more info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# =============================================================================
+# TIER 1: Core Knowledge Bases (AOS Frameworks)
+# These are the "system of record" for AOS architecture and constraints.
+# Changes require review from domain-specific curators.
+# =============================================================================
+
+# Planning Framework (Framework 01)
+# Feasibility Analysis Engine, Architecture Pattern Consistency Engine, Feature Dependency Graph
+/agency_os/01_planning_framework/knowledge/FAE_constraints.yaml @aos-knowledge-curator-fae
+/agency_os/01_planning_framework/knowledge/APCE_rules.yaml @aos-knowledge-curator-apce
+/agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml @aos-knowledge-curator-fdg
+
+# Code Generation Framework (Framework 02)
+# Code generation constraints, quality rules, and dependencies
+/agency_os/02_code_gen_framework/knowledge/CODE_GEN_constraints.yaml @aos-knowledge-curator-code
+/agency_os/02_code_gen_framework/knowledge/CODE_GEN_quality_rules.yaml @aos-knowledge-curator-code
+/agency_os/02_code_gen_framework/knowledge/CODE_GEN_dependencies.yaml @aos-knowledge-curator-code
+
+# QA Framework (Framework 03)
+# Quality assurance constraints, validation rules, and testing strategies
+/agency_os/03_qa_framework/knowledge/QA_constraints.yaml @aos-knowledge-curator-qa
+/agency_os/03_qa_framework/knowledge/QA_quality_rules.yaml @aos-knowledge-curator-qa
+/agency_os/03_qa_framework/knowledge/QA_dependencies.yaml @aos-knowledge-curator-qa
+
+# Deploy Framework (Framework 04)
+# Deployment constraints, quality rules, and dependencies
+/agency_os/04_deploy_framework/knowledge/DEPLOY_constraints.yaml @aos-knowledge-curator-deploy
+/agency_os/04_deploy_framework/knowledge/DEPLOY_quality_rules.yaml @aos-knowledge-curator-deploy
+/agency_os/04_deploy_framework/knowledge/DEPLOY_dependencies.yaml @aos-knowledge-curator-deploy
+
+# Maintenance Framework (Framework 05)
+# Maintenance triage rules, constraints, and dependencies
+/agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml @aos-knowledge-curator-maintenance
+/agency_os/05_maintenance_framework/knowledge/MAINTENANCE_constraints.yaml @aos-knowledge-curator-maintenance
+/agency_os/05_maintenance_framework/knowledge/MAINTENANCE_dependencies.yaml @aos-knowledge-curator-maintenance
+
+# System Core (Framework 00)
+# Orchestration, system contracts, and central ontology
+/agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml @aos-system-architect
+/agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml @aos-system-architect
+/agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml @aos-system-architect
+
+# Central Ontology (Semantic Authority)
+# This file is the "source of truth" for all semantic terms used across KBs
+# Changes require review from all curators to ensure consistency
+/agency_os/00_system/knowledge/AOS_Ontology.yaml @aos-knowledge-curators
+
+# =============================================================================
+# TIER 2: SOP & Governance Documents
+# Standard Operating Procedures and governance frameworks
+# Changes require review from system architect and knowledge curators
+# =============================================================================
+
+/system_steward_framework/knowledge/sops/ @aos-system-architect @aos-knowledge-curators
+/system_steward_framework/knowledge/audit/ @aos-system-architect @aos-knowledge-curators
+
+# =============================================================================
+# TIER 3: Prompts & Agent Definitions
+# Core agent personalities and task definitions
+# Changes require curator sign-off (but less strict than KBs)
+# =============================================================================
+
+/agency_os/*/prompts/ @aos-prompt-team
+/agency_os/*/agents/ @aos-prompt-team
+/system_steward_framework/prompts/ @aos-system-architect
+
+# =============================================================================
+# TIER 4: CI/CD & Infrastructure
+# Automated validation scripts and governance enforcement
+# Changes require system architect + ops approval
+# =============================================================================
+
+/scripts/semantic_audit.py @aos-system-architect
+/.github/ @aos-system-architect
+/docs/GOVERNANCE_MODEL.md @aos-system-architect @aos-knowledge-curators
+
+# =============================================================================
+# FALLBACK: Default Reviewers
+# For files not explicitly listed above
+# =============================================================================
+
+* @aos-system-architect
