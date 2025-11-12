@@ -1,0 +1,60 @@
+composition_version: "2.0"
+agent_id: VIBE_ALIGNER
+agent_version: "3.0"
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Core personality, identity, and responsibilities"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "FAE, FDG, APCE YAML knowledge bases"
+
+  - source: ${task_prompt}
+    type: task
+    required: true
+    path_pattern: tasks/${task_id}.md
+    description: "Specific task instructions (education, extraction, validation, etc.)"
+
+  - source: ${gate_prompts}
+    type: validation
+    required: false
+    resolve_from: tasks/${task_id}.meta.yaml#validation_gates
+    description: "Quality gates for current task"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Session state, artifacts from previous tasks, user inputs"
+
+variables:
+  project_id: ${runtime_context.project_id}
+  current_phase: ${runtime_context.current_phase}
+  user_scope_choice: ${runtime_context.user_scope_choice}
+
+conflict_resolution:
+  strategy: last_wins
+  exceptions:
+    - section: AGENT_CONSTRAINTS
+      strategy: merge_all
+      reason: "All constraints are cumulative"
+    - section: CRITICAL_SUCCESS_CRITERIA
+      strategy: merge_all
+      reason: "All success criteria must be met"
+
+notes: |
+  VIBE_ALIGNER is a sequential 6-phase workflow.
+  Each task builds on artifacts from previous tasks:
+  - Task 1 → session state (education complete)
+  - Task 2 → extracted_features.json
+  - Task 3 → validated_features.json (FAE)
+  - Task 4 → features_with_dependencies.json (FDG)
+  - Task 5 → negotiated_features.json (APCE)
+  - Task 6 → feature_spec.json (FINAL OUTPUT)
+
+  The runtime must maintain session state across tasks
+  and pass artifacts between tasks.

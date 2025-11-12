@@ -1,0 +1,29 @@
+task_id: education_calibration
+phase: 1
+dependencies: []  # First task, no prerequisites
+
+inputs:
+  - type: context
+    ref: user_request
+    description: "User's initial project idea (unstructured)"
+
+outputs:
+  - type: session_state
+    ref: calibration_complete
+    fields:
+      - user_scope_choice: "prototype|mvp|v1.0"
+      - user_educated: boolean
+      - core_problem_statement: string
+      - target_users: string
+
+validation_gates:
+  - gate_education_completed.md
+
+estimated_complexity: low
+estimated_tokens: 800
+estimated_duration: "5-10 minutes (conversational)"
+
+notes: |
+  This task is purely conversational and educational.
+  No artifacts are created, but session state is updated to track education completion.
+  Critical for preventing scope creep in later phases.

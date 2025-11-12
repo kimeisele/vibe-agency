@@ -1,0 +1,39 @@
+task_id: feature_extraction
+phase: 2
+dependencies:
+  - task_id: education_calibration
+    reason: "Must know user's scope choice before extracting features"
+
+inputs:
+  - type: session_state
+    ref: calibration_complete
+    required_fields:
+      - user_scope_choice
+      - core_problem_statement
+  - type: context
+    ref: user_feature_descriptions
+    description: "User's feature requests (unstructured)"
+
+outputs:
+  - type: artifact
+    ref: extracted_features.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#extracted_features
+    fields:
+      - extracted_features[].id
+      - extracted_features[].name
+      - extracted_features[].description
+      - extracted_features[].input
+      - extracted_features[].processing
+      - extracted_features[].output
+
+validation_gates:
+  - gate_concrete_specifications.md
+
+estimated_complexity: medium
+estimated_tokens: 1500
+estimated_duration: "10-20 minutes (conversational)"
+
+notes: |
+  This task involves back-and-forth with the user to clarify feature details.
+  Uses inference rules to minimize unnecessary questions.
+  Output is NOT final feature_spec.json yet - that comes after FAE/FDG/APCE validation.

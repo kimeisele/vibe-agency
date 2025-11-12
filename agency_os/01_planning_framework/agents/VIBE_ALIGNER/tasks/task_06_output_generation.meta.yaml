@@ -1,0 +1,48 @@
+task_id: output_generation
+phase: 6
+dependencies:
+  - task_id: scope_negotiation
+    reason: "Must have negotiated and prioritized features before generating final output"
+
+inputs:
+  - type: artifact
+    ref: negotiated_features.json
+    required_fields:
+      - negotiated_features[].id
+      - negotiated_features[].priority
+      - negotiated_features[].complexity_score
+      - scope_negotiation.total_complexity
+  - type: session_state
+    ref: all_phase_results
+    description: "Complete state from all previous phases"
+  - type: knowledge
+    ref: ORCHESTRATION_data_contracts.yaml
+    critical: true
+    purpose: "Schema validation for feature_spec.json"
+
+outputs:
+  - type: artifact
+    ref: feature_spec.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#feature_spec
+    critical: true
+    handoff_to: GENESIS_BLUEPRINT
+    fields:
+      - project.*
+      - features[].*
+      - scope_negotiation.*
+      - validation.*
+      - metadata.*
+
+validation_gates:
+  - gate_valid_json_output.md
+  - gate_all_phases_completed.md
+
+estimated_complexity: medium
+estimated_tokens: 1500
+estimated_duration: "10-15 minutes (includes user review)"
+
+notes: |
+  This is the final task in the VIBE_ALIGNER workflow.
+  Output must be valid JSON matching the data contract schema.
+  feature_spec.json is the handoff artifact to GENESIS_BLUEPRINT.
+  User must approve the specification before proceeding to next agent.

@@ -1,0 +1,42 @@
+task_id: scope_negotiation
+phase: 5
+dependencies:
+  - task_id: gap_detection
+    reason: "Must have complete feature list with dependencies before calculating complexity"
+
+inputs:
+  - type: artifact
+    ref: features_with_dependencies.json
+    required_fields:
+      - features_with_dependencies[].id
+      - features_with_dependencies[].dependencies
+  - type: knowledge
+    ref: APCE_rules.yaml
+    critical: true
+  - type: session_state
+    ref: user_scope_choice
+
+outputs:
+  - type: artifact
+    ref: negotiated_features.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#negotiated_features
+    fields:
+      - negotiated_features[].id
+      - negotiated_features[].priority
+      - negotiated_features[].complexity_score
+      - negotiated_features[].estimated_effort
+      - scope_negotiation.total_complexity
+      - scope_negotiation.timeline_estimate
+
+validation_gates:
+  - gate_complexity_within_threshold.md
+
+estimated_complexity: high
+estimated_tokens: 2500
+estimated_duration: "20-40 minutes (includes multi-round negotiation)"
+
+notes: |
+  This is the most conversational task - may involve extended back-and-forth.
+  Critical for preventing project failure due to unrealistic scope.
+  Must load APCE_rules.yaml before execution.
+  Negotiation may result in feature reprioritization or timeline adjustments.

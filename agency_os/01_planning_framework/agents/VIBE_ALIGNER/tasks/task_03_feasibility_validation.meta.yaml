@@ -1,0 +1,40 @@
+task_id: feasibility_validation
+phase: 3
+dependencies:
+  - task_id: feature_extraction
+    reason: "Must have extracted features before validating feasibility"
+
+inputs:
+  - type: artifact
+    ref: extracted_features.json
+    required_fields:
+      - extracted_features[].id
+      - extracted_features[].name
+      - extracted_features[].description
+  - type: knowledge
+    ref: FAE_constraints.yaml
+    critical: true
+  - type: session_state
+    ref: user_scope_choice
+
+outputs:
+  - type: artifact
+    ref: validated_features.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#validated_features
+    fields:
+      - validated_features[].id
+      - validated_features[].fae_validation.passed
+      - validated_features[].fae_validation.constraints_checked
+      - validated_features[].fae_validation.issues
+
+validation_gates:
+  - gate_fae_all_passed.md
+
+estimated_complexity: medium
+estimated_tokens: 2000
+estimated_duration: "15-30 minutes (includes negotiation if features rejected)"
+
+notes: |
+  This task may involve multiple rounds of negotiation if features are rejected.
+  Critical for preventing scope creep and unrealistic expectations.
+  Must load FAE_constraints.yaml before execution.

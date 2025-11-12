@@ -1,0 +1,37 @@
+task_id: gap_detection
+phase: 4
+dependencies:
+  - task_id: feasibility_validation
+    reason: "Must validate features before checking for missing dependencies"
+
+inputs:
+  - type: artifact
+    ref: validated_features.json
+    required_fields:
+      - validated_features[].id
+      - validated_features[].name
+      - validated_features[].fae_validation.passed
+  - type: knowledge
+    ref: FDG_dependencies.yaml
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: features_with_dependencies.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#features_with_dependencies
+    fields:
+      - features_with_dependencies[].id
+      - features_with_dependencies[].dependencies.required
+      - features_with_dependencies[].dependencies.optional
+
+validation_gates:
+  - gate_no_missing_dependencies.md
+
+estimated_complexity: medium
+estimated_tokens: 1800
+estimated_duration: "10-15 minutes (includes user confirmation)"
+
+notes: |
+  This task is proactive - it suggests components the user didn't mention.
+  Critical for ensuring architectures are complete and functional.
+  Must load FDG_dependencies.yaml before execution.
