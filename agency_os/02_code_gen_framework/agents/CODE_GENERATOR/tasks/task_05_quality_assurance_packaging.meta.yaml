@@ -1,0 +1,41 @@
+task_id: quality_assurance_packaging
+phase: 5
+description: QA checks, self-correction, and final packaging
+dependencies:
+  - task_id: code_generation
+    reason: "Need generated code"
+  - task_id: test_generation
+    reason: "Need generated tests"
+  - task_id: documentation_generation
+    reason: "Need generated documentation"
+
+inputs:
+  - type: artifact
+    ref: generated_code.json
+  - type: artifact
+    ref: generated_tests.json
+  - type: artifact
+    ref: generated_documentation.json
+  - type: knowledge
+    ref: CODE_GEN_quality_rules.yaml
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: artifact_bundle
+    schema_ref: ORCHESTRATION_data_contracts.yaml#artifact_bundle
+    critical: true
+    handoff_to: QA_VALIDATOR
+
+validation_gates:
+  - gate_quality_gates_passed.md
+  - gate_artifact_bundle_valid.md
+
+estimated_complexity: medium
+estimated_tokens: 1800
+estimated_duration: "8-12 minutes"
+
+notes: |
+  Final task - produces the artifact_bundle for TESTING phase.
+  Must ensure all quality gates pass before packaging.
+  artifact_bundle is the handoff artifact to QA_VALIDATOR.

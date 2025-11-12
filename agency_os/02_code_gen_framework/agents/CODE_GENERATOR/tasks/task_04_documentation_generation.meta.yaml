@@ -1,0 +1,31 @@
+task_id: documentation_generation
+phase: 4
+description: Generate inline docs and project documentation
+dependencies:
+  - task_id: code_generation
+    reason: "Must have code before documenting it"
+
+inputs:
+  - type: artifact
+    ref: generated_code.json
+  - type: artifact
+    ref: code_gen_spec.json
+
+outputs:
+  - type: artifact
+    ref: generated_documentation.json
+    fields:
+      - inline_docs[]
+      - api_documentation
+      - readme_updates
+
+validation_gates:
+  - gate_all_code_documented.md
+
+estimated_complexity: medium
+estimated_tokens: 1500
+estimated_duration: "5-10 minutes"
+
+notes: |
+  Documentation is critical for maintainability.
+  All public APIs must be documented.

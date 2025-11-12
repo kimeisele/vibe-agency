@@ -1,0 +1,59 @@
+composition_version: "2.0"
+agent_id: CODE_GENERATOR
+agent_version: "1.0"
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Core personality, identity, and responsibilities"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "CODE_GEN constraints, dependencies, quality rules"
+
+  - source: ${task_prompt}
+    type: task
+    required: true
+    path_pattern: tasks/${task_id}.md
+    description: "Specific task instructions (spec analysis, code gen, tests, docs, QA)"
+
+  - source: ${gate_prompts}
+    type: validation
+    required: false
+    resolve_from: tasks/${task_id}.meta.yaml#validation_gates
+    description: "Quality gates for current task"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Artifacts from previous tasks, runtime state"
+
+variables:
+  project_id: ${runtime_context.project_id}
+  current_phase: ${runtime_context.current_phase}
+  spec_ref: ${runtime_context.code_gen_spec_ref}
+
+conflict_resolution:
+  strategy: last_wins
+  exceptions:
+    - section: AGENT_CONSTRAINTS
+      strategy: merge_all
+      reason: "All constraints are cumulative"
+    - section: CRITICAL_SUCCESS_CRITERIA
+      strategy: merge_all
+      reason: "All success criteria must be met"
+
+notes: |
+  CODE_GENERATOR is a sequential 5-phase workflow.
+  Each task builds on artifacts from previous tasks:
+  - Task 1 → validation_result.json
+  - Task 2 → generated_code.json
+  - Task 3 → generated_tests.json
+  - Task 4 → generated_documentation.json
+  - Task 5 → artifact_bundle (FINAL OUTPUT)
+
+  The runtime must maintain artifacts across tasks
+  and pass them between phases.

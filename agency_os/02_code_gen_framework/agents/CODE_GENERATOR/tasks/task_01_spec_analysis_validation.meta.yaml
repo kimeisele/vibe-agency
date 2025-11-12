@@ -1,0 +1,40 @@
+task_id: spec_analysis_validation
+phase: 1
+description: Parse and validate code_gen_spec.json
+dependencies: []  # First task, no prerequisites
+
+inputs:
+  - type: artifact
+    ref: code_gen_spec.json
+    required_fields:
+      - specId
+      - projectId
+      - features
+      - apiDefinitions
+  - type: knowledge
+    ref: CODE_GEN_constraints.yaml
+    critical: true
+  - type: knowledge
+    ref: CODE_GEN_dependencies.yaml
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: validation_result.json
+    fields:
+      - validation_passed
+      - parsed_features
+      - dependency_map
+      - issues
+
+validation_gates:
+  - gate_spec_valid.md
+  - gate_no_constraint_violations.md
+
+estimated_complexity: low
+estimated_tokens: 1000
+estimated_duration: "2-5 minutes"
+
+notes: |
+  Critical gating task - if validation fails, entire workflow stops.
+  Must load CODE_GEN_constraints.yaml before execution.

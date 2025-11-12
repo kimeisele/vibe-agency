@@ -1,0 +1,33 @@
+task_id: test_generation
+phase: 3
+description: Generate comprehensive unit and integration tests
+dependencies:
+  - task_id: code_generation
+    reason: "Must have code before generating tests"
+
+inputs:
+  - type: artifact
+    ref: generated_code.json
+    required_fields:
+      - generated_modules[]
+      - api_endpoints[]
+  - type: knowledge
+    ref: CODE_GEN_quality_rules.yaml
+
+outputs:
+  - type: artifact
+    ref: generated_tests.json
+    fields:
+      - test_files[]
+      - integration_tests[]
+
+validation_gates:
+  - gate_test_coverage_adequate.md
+
+estimated_complexity: high
+estimated_tokens: 2500
+estimated_duration: "10-15 minutes"
+
+notes: |
+  Critical for quality - no code should be without tests.
+  Coverage targets: Core 100%, Extensions 90%.

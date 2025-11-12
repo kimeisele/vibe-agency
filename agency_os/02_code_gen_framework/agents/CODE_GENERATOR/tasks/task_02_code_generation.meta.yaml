@@ -1,0 +1,39 @@
+task_id: code_generation
+phase: 2
+description: Generate production-ready source code
+dependencies:
+  - task_id: spec_analysis_validation
+    reason: "Must validate spec before generating code"
+
+inputs:
+  - type: artifact
+    ref: validation_result.json
+    required_fields:
+      - validation_passed
+      - parsed_features
+      - dependency_map
+  - type: artifact
+    ref: code_gen_spec.json
+  - type: knowledge
+    ref: CODE_GEN_quality_rules.yaml
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: generated_code.json
+    fields:
+      - generated_modules[]
+      - api_endpoints[]
+
+validation_gates:
+  - gate_genesis_pattern_enforced.md
+  - gate_all_features_implemented.md
+
+estimated_complexity: high
+estimated_tokens: 3000
+estimated_duration: "10-20 minutes"
+
+notes: |
+  Core code generation task - most complex phase.
+  Must enforce Genesis Core Pattern strictly.
+  Generated code must be syntactically correct.

@@ -1,0 +1,84 @@
+version: "1.0"
+agent_id: CODE_GENERATOR
+agent_version: "1.0"
+
+required_knowledge:
+  - path: agency_os/02_code_gen_framework/knowledge/CODE_GEN_constraints.yaml
+    purpose: "Technical constraints and limitations for code generation"
+    critical: true
+    used_in_tasks:
+      - spec_analysis_validation
+      - code_generation
+    description: "Defines what technologies/patterns are allowed/forbidden"
+
+  - path: agency_os/02_code_gen_framework/knowledge/CODE_GEN_dependencies.yaml
+    purpose: "Maps features to required libraries/frameworks"
+    critical: true
+    used_in_tasks:
+      - spec_analysis_validation
+      - code_generation
+    description: "Ensures all dependencies are identified and resolved"
+
+  - path: agency_os/02_code_gen_framework/knowledge/CODE_GEN_quality_rules.yaml
+    purpose: "Coding standards, best practices, quality gates"
+    critical: true
+    used_in_tasks:
+      - code_generation
+      - test_generation
+      - quality_assurance_packaging
+    description: "Defines linting rules, coverage targets, security checks"
+
+  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    purpose: "Data contracts and schemas for all artifacts"
+    critical: true
+    used_in_tasks:
+      - spec_analysis_validation
+      - quality_assurance_packaging
+    description: "Defines schemas for code_gen_spec.json and artifact_bundle"
+
+optional_knowledge: []
+
+task_specific_loading:
+  spec_analysis_validation:
+    required:
+      - CODE_GEN_constraints.yaml
+      - CODE_GEN_dependencies.yaml
+      - ORCHESTRATION_data_contracts.yaml
+    optional: []
+    notes: "Validation cannot proceed without constraints and dependencies"
+
+  code_generation:
+    required:
+      - CODE_GEN_constraints.yaml
+      - CODE_GEN_dependencies.yaml
+      - CODE_GEN_quality_rules.yaml
+    optional: []
+    notes: "Must enforce quality rules during generation"
+
+  test_generation:
+    required:
+      - CODE_GEN_quality_rules.yaml
+    optional: []
+    notes: "Coverage targets defined in quality rules"
+
+  documentation_generation:
+    required: []
+    optional: []
+    notes: "No external knowledge needed - uses generated code as source"
+
+  quality_assurance_packaging:
+    required:
+      - CODE_GEN_quality_rules.yaml
+      - ORCHESTRATION_data_contracts.yaml
+    optional: []
+    notes: "QA checks and artifact bundle schema validation"
+
+notes: |
+  CODE_GENERATOR relies on three main knowledge engines:
+  1. Constraints - What's allowed/forbidden
+  2. Dependencies - What libraries/frameworks are needed
+  3. Quality Rules - How to ensure code quality
+
+  Without these, the agent cannot generate compliant code.
+
+  The runtime must load knowledge files per task based on task_specific_loading rules.
