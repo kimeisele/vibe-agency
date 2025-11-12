@@ -1,0 +1,20 @@
+task_id: task_04_handle_qa_approval
+task_name: "Handle QA Approval State"
+state: AWAITING_QA_APPROVAL
+sequence_order: 4
+
+description: "Wait for human approval/rejection of QA results (long-running pause)"
+
+required_inputs:
+  - qa_report_json
+  - project_manifest_json
+
+expected_outputs: []
+
+specialist_agents: []
+
+validation_gates:
+  - gate_state_integrity
+
+next_state: DEPLOYMENT or CODING (conditional)
+estimated_complexity: low

@@ -1,0 +1,24 @@
+task_id: task_06_handle_maintenance
+task_name: "Handle Maintenance State"
+state: MAINTENANCE
+sequence_order: 6
+
+description: "Orchestrate BUG_TRIAGE to analyze bugs and determine fix path"
+
+required_inputs:
+  - bug_report_json
+  - project_manifest_json
+
+expected_outputs:
+  - triage_result_json
+  - code_gen_spec_json (conditional)
+
+specialist_agents:
+  - BUG_TRIAGE
+
+validation_gates:
+  - gate_state_integrity
+  - gate_artifact_presence
+
+next_state: CODING (hotfix) or PLANNING (regular fix)
+estimated_complexity: medium

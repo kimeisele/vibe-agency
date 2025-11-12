@@ -1,0 +1,20 @@
+task_id: task_05_consistency_validation
+task_name: "Consistency Validation"
+phase: 5
+sequence_order: 5
+
+description: "Ensure changes don't create conflicts in the architecture"
+
+required_inputs:
+  - diff_patches_array
+  - existing_architecture_json
+
+expected_outputs:
+  - validation_result_json
+
+validation_gates:
+  - gate_no_orphaned_deps
+  - gate_no_duplicates
+  - gate_config_schema_match
+
+estimated_complexity: medium

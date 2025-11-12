@@ -1,0 +1,22 @@
+task_id: task_06_output_generation
+task_name: "Output Generation"
+phase: 6
+sequence_order: 6
+
+description: "Generate the final update_spec.json artifact"
+
+required_inputs:
+  - change_analysis_json
+  - feasibility_result_json
+  - ripple_analysis_json
+  - diff_patches_array
+  - validation_result_json
+
+expected_outputs:
+  - update_spec_json
+
+validation_gates:
+  - gate_json_valid
+  - gate_all_sections_present
+
+estimated_complexity: low

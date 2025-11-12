@@ -1,0 +1,25 @@
+task_id: task_05_handle_deployment
+task_name: "Handle Deployment State"
+state: DEPLOYMENT
+sequence_order: 5
+
+description: "Orchestrate DEPLOY_MANAGER to deploy to production"
+
+required_inputs:
+  - qa_report_json
+  - code_commit_sha
+  - project_manifest_json
+
+expected_outputs:
+  - deploy_receipt_json
+  - bug_report_json (conditional)
+
+specialist_agents:
+  - DEPLOY_MANAGER
+
+validation_gates:
+  - gate_state_integrity
+  - gate_artifact_presence
+
+next_state: PRODUCTION or MAINTENANCE (conditional)
+estimated_complexity: high

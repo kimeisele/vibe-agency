@@ -1,0 +1,26 @@
+task_id: task_01_handle_planning
+task_name: "Handle Planning State"
+state: PLANNING
+sequence_order: 1
+
+description: "Orchestrate VIBE_ALIGNER and GENESIS_BLUEPRINT to produce architecture spec"
+
+required_inputs:
+  - client_brief_or_bug_report
+  - project_manifest_json
+
+expected_outputs:
+  - feature_spec_json
+  - architecture_json
+  - code_gen_spec_json
+
+specialist_agents:
+  - VIBE_ALIGNER
+  - GENESIS_BLUEPRINT
+
+validation_gates:
+  - gate_state_integrity
+  - gate_artifact_presence
+
+next_state: CODING
+estimated_complexity: high

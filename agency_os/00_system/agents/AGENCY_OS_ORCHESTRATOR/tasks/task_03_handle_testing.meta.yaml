@@ -1,0 +1,24 @@
+task_id: task_03_handle_testing
+task_name: "Handle Testing State"
+state: TESTING
+sequence_order: 3
+
+description: "Orchestrate QA_VALIDATOR to run tests and produce QA report"
+
+required_inputs:
+  - test_plan_json
+  - code_commit_sha
+  - project_manifest_json
+
+expected_outputs:
+  - qa_report_json
+
+specialist_agents:
+  - QA_VALIDATOR
+
+validation_gates:
+  - gate_state_integrity
+  - gate_artifact_presence
+
+next_state: AWAITING_QA_APPROVAL
+estimated_complexity: medium
