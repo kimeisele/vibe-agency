@@ -1,0 +1,168 @@
+
+{
+  "genesis_architecture": {
+    "project": {
+      "name": "agency-os",
+      "category": "CLI Tool",
+      "scale": "Production",
+      "version": "v1.0"
+    },
+    "core_modules": [
+      {
+        "name": "schema",
+        "purpose": "Defines all data contracts and schemas for artifacts (e.g., project_manifest, architecture.json).",
+        "why_core": "Foundation for artifact-centric workflow.",
+        "dependencies": ["dataclasses", "typing"],
+        "api": ["@dataclass ModelName"],
+        "estimated_loc": 150,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/schema.py"
+      },
+      {
+        "name": "io",
+        "purpose": "Handles reading and writing of all JSON/YAML artifacts and project files.",
+        "why_core": "Needed by all extensions that interact with artifacts.",
+        "dependencies": ["pathlib", "json", "pyyaml"],
+        "api": ["read_json(Path)", "write_json(Path, data)", "read_yaml(Path)"],
+        "estimated_loc": 100,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/io.py"
+      },
+      {
+        "name": "validation",
+        "purpose": "Validates data artifacts against their JSON schemas.",
+        "why_core": "Ensures data contract integrity between workflow stages.",
+        "dependencies": ["jsonschema"],
+        "api": ["validate(data: Dict, schema: Dict) -> bool"],
+        "estimated_loc": 80,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/validation.py"
+      },
+      {
+        "name": "config",
+        "purpose": "Manages configuration for the Agency OS itself (e.g., API keys, Temporal address).",
+        "why_core": "Required for any production-grade application.",
+        "dependencies": ["pathlib", "pyyaml"],
+        "api": ["load_config(Path)", "get(key)"],
+        "estimated_loc": 70,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/config.py"
+      },
+      {
+        "name": "process",
+        "purpose": "Handles execution of external command-line processes, primarily Git.",
+        "why_core": "Needed for GitOps triggers and interacting with local repositories.",
+        "dependencies": ["subprocess"],
+        "api": ["run_command(command: str) -> CommandResult"],
+        "estimated_loc": 120,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/process.py"
+      },
+      {
+        "name": "error",
+        "purpose": "Standardized error handling and logging for the OS.",
+        "why_core": "Foundation for robust workflows.",
+        "dependencies": ["logging"],
+        "api": ["log_error(e)", "handle_error(e)"],
+        "estimated_loc": 80,
+        "test_coverage_target": "100%",
+        "file_path": "agency_os/core/error.py"
+      }
+    ],
+    "extensions": [
+      {
+        "name": "project_manager",
+        "purpose": "Manages the lifecycle of client projects, including creation and state updates of project_manifest.json.",
+        "implements_feature": "feat_project_lifecycle",
+        "uses_core": ["io", "validation", "schema", "process"],
+        "external_deps": ["gitpython"],
+        "api": ["create_project(name, brief)", "update_project_status(project_id, phase, message)"],
+        "estimated_loc": 250,
+        "test_coverage_target": "90%",
+        "file_path": "agency_os/extensions/project_manager.py"
+      },
+      {
+        "name": "planning_skill",
+        "purpose": "Orchestrates the VIBE+GENESIS planning phase, consuming a brief and producing architecture.json.",
+        "implements_feature": "feat_planning_phase",
+        "uses_core": ["io", "validation", "schema", "error"],
+        "external_deps": ["langchain", "anthropic_sdk"],
+        "api": ["execute_planning(project_id) -> Artifact"],
+        "estimated_loc": 400,
+        "test_coverage_target": "90%",
+        "file_path": "agency_os/extensions/planning_skill.py"
+      },
+      {
+        "name": "coding_skill",
+        "purpose": "Orchestrates the code generation phase, consuming architecture.json and producing source code.",
+        "implements_feature": "feat_coding_phase",
+        "uses_core": ["io", "process", "error"],
+        "external_deps": ["langchain", "anthropic_sdk"],
+        "api": ["execute_code_generation(project_id) -> Artifact"],
+        "estimated_loc": 350,
+        "test_coverage_target": "90%",
+        "file_path": "agency_os/extensions/coding_skill.py"
+      },
+      {
+        "name": "cli_interface",
+        "purpose": "Provides the human-in-the-loop command-line interface for interacting with the Agency OS.",
+        "implements_feature": "feat_human_cli",
+        "uses_core": ["config", "process"],
+        "external_deps": ["click", "rich"],
+        "api": ["@click.group cli", "cli.add_command(...)"],
+        "estimated_loc": 300,
+        "test_coverage_target": "90%",
+        "file_path": "agency_os/cli.py"
+      }
+    ],
+    "config_system": {
+      "mandatory": true,
+      "reason": "The OS requires configuration for external services like Git, Temporal, and AI model providers.",
+      "schema_location": "agency_os/config/schema.yaml",
+      "example_configs": ["config.example.yaml"]
+    },
+    "directory_structure": {
+      "root": "agency_os/",
+      "core": "agency_os/core/",
+      "extensions": "agency_os/extensions/",
+      "config": "agency_os/config/",
+      "tests": "tests/",
+      "entry_points": ["agency_os/cli.py"]
+    },
+    "dependencies": {
+      "core": ["pyyaml", "jsonschema"],
+      "extensions": ["gitpython", "langchain", "anthropic_sdk", "click", "rich"]
+    },
+    "validation": {
+      "fae_passed": true,
+      "checks": [
+        "✅ Core module count: 6 (within 6-12 range)",
+        "✅ Core uses only stdlib (except config/validation)",
+        "✅ Extensions isolated",
+        "✅ All features have extensions"
+      ],
+      "violations": []
+    }
+  },
+  "implementation_guide": {
+    "build_order": [
+      "1. Create directory structure: mkdir -p agency_os/{core,extensions,config} tests",
+      "2. Implement core modules, starting with schema.py.",
+      "3. Write unit tests for each core module.",
+      "4. Implement the CLI interface (cli.py) as the main entry point.",
+      "5. Implement the project_manager extension.",
+      "6. Implement the planning_skill and coding_skill extensions.",
+      "7. Integration tests for the full workflow."
+    ],
+    "next_steps": [
+      "1. Create the base directory structure.",
+      "2. Begin implementation of agency_os/core/schema.py."
+    ]
+  },
+  "metadata": {
+    "genesis_version": "5.0",
+    "created_at": "2025-11-12T13:00:00Z",
+    "input_source": "User-provided architecture document",
+    "fae_validation": "passed"
+  }
+}
