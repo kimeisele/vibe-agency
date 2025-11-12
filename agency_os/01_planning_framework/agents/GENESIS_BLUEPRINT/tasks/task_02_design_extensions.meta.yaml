@@ -1,0 +1,47 @@
+task_id: design_extensions
+phase: 2
+description: "Map each feature to one extension module with clear API and dependencies"
+
+dependencies:
+  - task_01_select_core_modules
+
+inputs:
+  - type: artifact
+    ref: feature_spec.json
+    source_agent: VIBE_ALIGNER
+    required_fields:
+      - features[].id
+      - features[].name
+      - features[].priority
+      - features[].complexity_score
+      - features[].processing
+
+  - type: artifact
+    ref: core_modules_selection.json
+    source_task: task_01_select_core_modules
+    required_fields:
+      - core_modules[].name
+
+outputs:
+  - type: artifact
+    ref: extensions_design.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#extensions
+    consumers:
+      - task_03_generate_config_schema
+      - task_05_handoff
+
+validation_gates:
+  - gate_no_extensions_in_core.md
+  - gate_extension_isolation.md
+  - gate_all_features_mapped.md
+
+estimated_complexity: medium
+estimated_tokens: 1800
+estimated_duration: "3-4 minutes"
+
+success_criteria:
+  - "One extension per feature (1:1 mapping)"
+  - "No extension imports another extension"
+  - "All extensions use core modules (no duplicated logic)"
+  - "External dependencies clearly justified"
+  - "Every extension has config-based constructor"

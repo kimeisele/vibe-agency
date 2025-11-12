@@ -135,12 +135,74 @@ categories:
           - "Architecture.json generation"
           - "Tech stack decision logic"
         lineCount: 951
+        note: "DEPRECATED in v0.2 - replaced by atomized agents/GENESIS_BLUEPRINT/"
 
       - path: "agency_os/01_planning_framework/prompts/GENESIS_UPDATE.md"
         contains: ["architecture_updates", "iterative_changes"]
         keyTopics:
           - "Incremental architecture updates"
         lineCount: 645
+
+  # NEW in v0.2: Atomized GENESIS_BLUEPRINT tasks
+  - id: "planning_architecture_tasks"
+    intent:
+      - "core module selection"
+      - "extension design"
+      - "config generation"
+      - "architecture validation"
+    description: "Granular, executable architecture generation tasks (v0.2)"
+    files:
+      - path: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/tasks/task_01_select_core_modules.md"
+        type: task_prompt
+        agent: GENESIS_BLUEPRINT
+        task_id: select_core_modules
+        contains: ["stdlib_selection", "capability_analysis", "core_module_specs"]
+        semantic_tags:
+          - "module_selection"
+          - "dependency_analysis"
+          - "stdlib_only"
+        lineCount: ~250
+
+      - path: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/tasks/task_02_design_extensions.md"
+        type: task_prompt
+        agent: GENESIS_BLUEPRINT
+        task_id: design_extensions
+        contains: ["feature_mapping", "extension_api", "isolation_validation"]
+        semantic_tags:
+          - "extension_design"
+          - "feature_implementation"
+          - "api_design"
+        lineCount: ~200
+
+      - path: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/tasks/task_03_generate_config_schema.md"
+        type: task_prompt
+        agent: GENESIS_BLUEPRINT
+        task_id: generate_config_schema
+        contains: ["yaml_schema", "config_fields", "directory_structure"]
+        semantic_tags:
+          - "configuration"
+          - "schema_generation"
+        lineCount: ~150
+
+      - path: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/tasks/task_04_validate_architecture.md"
+        type: task_prompt
+        agent: GENESIS_BLUEPRINT
+        task_id: validate_architecture
+        contains: ["fae_validation", "tech_conflicts", "v1_scope_check"]
+        semantic_tags:
+          - "validation"
+          - "fae_constraints"
+        lineCount: ~100
+
+      - path: "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/tasks/task_05_handoff.md"
+        type: task_prompt
+        agent: GENESIS_BLUEPRINT
+        task_id: handoff
+        contains: ["architecture_json", "code_gen_spec", "final_output"]
+        semantic_tags:
+          - "handoff"
+          - "artifact_generation"
+        lineCount: ~150
 
 # =================================================================
 # CATEGORY: Code Generation

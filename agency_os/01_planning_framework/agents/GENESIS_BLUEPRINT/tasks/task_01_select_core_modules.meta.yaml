@@ -1,0 +1,46 @@
+task_id: select_core_modules
+phase: 1
+description: "Algorithmically select minimal core modules based on feature capabilities"
+
+dependencies: []  # No prerequisite tasks
+
+inputs:
+  - type: artifact
+    ref: feature_spec.json
+    source_agent: VIBE_ALIGNER
+    required_fields:
+      - project.name
+      - project.category
+      - project.scale
+      - features[].id
+      - features[].name
+      - features[].input
+      - features[].processing
+      - features[].output
+
+  - type: knowledge
+    ref: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    purpose: "Artifact schema definitions"
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: core_modules_selection.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#core_modules
+    consumers:
+      - task_02_design_extensions
+      - task_05_handoff
+
+validation_gates:
+  - gate_stdlib_only_core.md
+  - gate_module_count_range.md
+
+estimated_complexity: medium
+estimated_tokens: 1500
+estimated_duration: "2-3 minutes"
+
+success_criteria:
+  - "Core module count between 6-12"
+  - "All core modules use only stdlib (except config → pyyaml)"
+  - "Every selected module has clear rationale"
+  - "Selection algorithm deterministic (same input → same output)"

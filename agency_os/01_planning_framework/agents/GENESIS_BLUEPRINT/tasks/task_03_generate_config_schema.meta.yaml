@@ -1,0 +1,43 @@
+task_id: generate_config_schema
+phase: 3
+description: "Generate YAML config schema and directory structure for the project"
+
+dependencies:
+  - task_02_design_extensions
+
+inputs:
+  - type: artifact
+    ref: feature_spec.json
+    required_fields:
+      - project.name
+      - project.category
+
+  - type: artifact
+    ref: core_modules_selection.json
+    required_fields:
+      - core_modules[].name
+
+  - type: artifact
+    ref: extensions_design.json
+    required_fields:
+      - extensions[].name
+      - extensions[].external_deps
+
+outputs:
+  - type: artifact
+    ref: config_system.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#config_system
+    consumers:
+      - task_05_handoff
+
+validation_gates: []
+
+estimated_complexity: low
+estimated_tokens: 1200
+estimated_duration: "2 minutes"
+
+success_criteria:
+  - "Config schema covers all extensions"
+  - "No hardcoded values in extension specs"
+  - "Example config provided for users"
+  - "Directory structure follows Genesis pattern"

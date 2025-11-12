@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+"""
+Prompt Runtime - AOS v0.2 Composition Engine
+
+Composes atomized prompt fragments (core + task + knowledge + gates + context)
+into a final executable prompt for LLM execution.
+
+Usage:
+    runtime = PromptRuntime()
+    result = runtime.execute_task(
+        agent_id="GENESIS_BLUEPRINT",
+        task_id="select_core_modules",
+        context={...}
+    )
+"""
+
+import yaml
+import json
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
+
+
+@dataclass
+class CompositionSpec:
+    """Parsed _composition.yaml structure"""
+    composition_version: str
+    agent_id: str
+    agent_version: str
+    composition_order: List[Dict]
+    variables: Dict[str, str]
+    conflict_resolution: Dict
+    metadata: Dict
+
+
+@dataclass
+class TaskMetadata:
+    """Parsed task_*.meta.yaml structure"""
+    task_id: str
+    phase: int
+    description: str
+    dependencies: List[str]
+    inputs: List[Dict]
+    outputs: List[Dict]
+    validation_gates: List[str]
+    estimated_complexity: str
+    estimated_tokens: int
+
+
+class PromptRuntime:
+    """
+    Runtime engine for composing and executing atomized prompts.
+
+    This is a PROTOTYPE - demonstrates the composition concept.
+    Production version would integrate with actual LLM API.
+    """
+
+    def __init__(self, base_path: str = "/home/user/vibe-agency"):
+        self.base_path = Path(base_path)
+        self.knowledge_cache = {}  # Cache loaded YAML files
+
+    def execute_task(self, agent_id: str, task_id: str, context: Dict[str, Any]) -> str:
+        """
+        Compose and execute an atomized task.
+
+        Args:
+            agent_id: Agent identifier (e.g., "GENESIS_BLUEPRINT")
+            task_id: Task identifier (e.g., "select_core_modules")
+            context: Runtime context (project_id, artifacts, etc.)
+
+        Returns:
+            Composed prompt string ready for LLM execution
+        """
+        print(f"\n{'='*60}")
+        print(f"Executing: {agent_id}.{task_id}")
+        print(f"{'='*60}\n")
+
+        # 1. Load composition spec
+        comp_spec = self._load_composition_spec(agent_id)
+        print(f"✓ Loaded composition spec (v{comp_spec.composition_version})")
+
+        # 2. Load task metadata
+        task_meta = self._load_task_metadata(agent_id, task_id)
+        print(f"✓ Loaded task metadata (phase {task_meta.phase})")
+
+        # 3. Resolve knowledge dependencies
+        knowledge_files = self._resolve_knowledge_deps(agent_id, task_meta)
+        print(f"✓ Resolved {len(knowledge_files)} knowledge dependencies")
+
+        # 4. Compose final prompt
+        final_prompt = self._compose_prompt(
+            agent_id=agent_id,
+            composition_spec=comp_spec,
+            task_id=task_id,
+            task_meta=task_meta,
+            knowledge_files=knowledge_files,
+            runtime_context=context
+        )
+        print(f"✓ Composed final prompt ({len(final_prompt)} chars)")
+
+        # 5. Validation gates (dry-run)
+        if task_meta.validation_gates:
+            print(f"✓ Validation gates loaded: {', '.join(task_meta.validation_gates)}")
+
+        print(f"\n{'='*60}")
+        print(f"COMPOSITION COMPLETE")
+        print(f"{'='*60}\n")
+
+        return final_prompt
+
+    def _load_composition_spec(self, agent_id: str) -> CompositionSpec:
+        """Load and parse _composition.yaml"""
+        agent_path = self._get_agent_path(agent_id)
+        comp_file = agent_path / "_composition.yaml"
+
+        with open(comp_file) as f:
+            data = yaml.safe_load(f)
+
+        return CompositionSpec(
+            composition_version=data["composition_version"],
+            agent_id=data["agent_id"],
+            agent_version=data["agent_version"],
+            composition_order=data["composition_order"],
+            variables=data.get("variables", {}),
+            conflict_resolution=data.get("conflict_resolution", {}),
+            metadata=data.get("metadata", {})
+        )
+
+    def _load_task_metadata(self, agent_id: str, task_id: str) -> TaskMetadata:
+        """Load and parse task_*.meta.yaml"""
+        agent_path = self._get_agent_path(agent_id)
+        # Try with task_ prefix first, fall back to bare task_id
+        meta_file = agent_path / "tasks" / f"task_{task_id}.meta.yaml"
+        if not meta_file.exists():
+            meta_file = agent_path / "tasks" / f"{task_id}.meta.yaml"
+
+        with open(meta_file) as f:
+            data = yaml.safe_load(f)
+
+        return TaskMetadata(
+            task_id=data["task_id"],
+            phase=data["phase"],
+            description=data["description"],
+            dependencies=data.get("dependencies", []),
+            inputs=data.get("inputs", []),
+            outputs=data.get("outputs", []),
+            validation_gates=data.get("validation_gates", []),
+            estimated_complexity=data.get("estimated_complexity", "unknown"),
+            estimated_tokens=data.get("estimated_tokens", 0)
+        )
+
+    def _resolve_knowledge_deps(self, agent_id: str, task_meta: TaskMetadata) -> List[str]:
+        """
+        Resolve which knowledge YAML files to load for this task.
+
+        Returns list of file contents (as YAML strings).
+        """
+        agent_path = self._get_agent_path(agent_id)
+        deps_file = agent_path / "_knowledge_deps.yaml"
+
+        with open(deps_file) as f:
+            deps = yaml.safe_load(f)
+
+        knowledge_files = []
+
+        # Load required knowledge
+        for req in deps.get("required_knowledge", []):
+            # Check if this task uses this knowledge file
+            if task_meta.task_id in req.get("used_by_tasks", []):
+                content = self._load_knowledge_file(req["path"])
+                knowledge_files.append(f"# {req['purpose']}\n{content}")
+
+        # Load optional knowledge (if conditions met)
+        for opt in deps.get("optional_knowledge", []):
+            if task_meta.task_id in opt.get("used_by_tasks", []):
+                content = self._load_knowledge_file(opt["path"])
+                knowledge_files.append(f"# {opt['purpose']}\n{content}")
+
+        return knowledge_files
+
+    def _load_knowledge_file(self, relative_path: str) -> str:
+        """Load a knowledge YAML file (with caching)"""
+        if relative_path in self.knowledge_cache:
+            return self.knowledge_cache[relative_path]
+
+        full_path = self.base_path / relative_path
+
+        with open(full_path) as f:
+            content = f.read()
+
+        self.knowledge_cache[relative_path] = content
+        return content
+
+    def _compose_prompt(
+        self,
+        agent_id: str,
+        composition_spec: CompositionSpec,
+        task_id: str,
+        task_meta: TaskMetadata,
+        knowledge_files: List[str],
+        runtime_context: Dict[str, Any]
+    ) -> str:
+        """
+        Compose the final prompt by combining fragments according to composition_order.
+        """
+        agent_path = self._get_agent_path(agent_id)
+        composed_parts = []
+
+        for step in composition_spec.composition_order:
+            source = step["source"]
+            step_type = step["type"]
+
+            # === BASE PROMPT (Core Personality) ===
+            if source.endswith(".md") and step_type == "base":
+                core_prompt = self._load_file(agent_path / source)
+                composed_parts.append(f"# === CORE PERSONALITY ===\n\n{core_prompt}")
+
+            # === KNOWLEDGE FILES ===
+            elif source == "${knowledge_files}" and step_type == "knowledge":
+                if knowledge_files:
+                    knowledge_section = "\n\n---\n\n".join(knowledge_files)
+                    composed_parts.append(f"# === KNOWLEDGE BASE ===\n\n{knowledge_section}")
+
+            # === TASK PROMPT ===
+            elif source == "${task_prompt}" and step_type == "task":
+                # Try with task_ prefix first, fall back to bare task_id
+                task_file = agent_path / "tasks" / f"task_{task_id}.md"
+                if not task_file.exists():
+                    task_file = agent_path / "tasks" / f"{task_id}.md"
+                task_prompt = self._load_file(task_file)
+                composed_parts.append(f"# === TASK INSTRUCTIONS ===\n\n{task_prompt}")
+
+            # === VALIDATION GATES ===
+            elif source == "${gate_prompts}" and step_type == "validation":
+                if task_meta.validation_gates:
+                    gate_sections = []
+                    for gate_id in task_meta.validation_gates:
+                        gate_file = gate_id if gate_id.endswith(".md") else f"{gate_id}.md"
+                        gate_prompt = self._load_file(agent_path / "gates" / gate_file)
+                        gate_sections.append(gate_prompt)
+
+                    gates_combined = "\n\n---\n\n".join(gate_sections)
+                    composed_parts.append(f"# === VALIDATION GATES ===\n\n{gates_combined}")
+
+            # === RUNTIME CONTEXT ===
+            elif source == "${runtime_context}" and step_type == "context":
+                context_str = self._format_runtime_context(runtime_context)
+                composed_parts.append(f"# === RUNTIME CONTEXT ===\n\n{context_str}")
+
+        # Combine all parts with separators
+        final_prompt = "\n\n" + "="*60 + "\n\n".join(composed_parts)
+
+        return final_prompt
+
+    def _format_runtime_context(self, context: Dict[str, Any]) -> str:
+        """Format runtime context as markdown"""
+        lines = ["**Runtime Context:**\n"]
+        for key, value in context.items():
+            if isinstance(value, dict):
+                lines.append(f"- **{key}:**")
+                for k, v in value.items():
+                    lines.append(f"  - {k}: `{v}`")
+            else:
+                lines.append(f"- **{key}:** `{value}`")
+
+        return "\n".join(lines)
+
+    def _get_agent_path(self, agent_id: str) -> Path:
+        """Get the path to an agent's directory"""
+        # GENESIS_BLUEPRINT -> agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT
+        # This is hardcoded for demo - production would use a registry
+
+        if agent_id == "GENESIS_BLUEPRINT":
+            return self.base_path / "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT"
+
+        raise ValueError(f"Unknown agent_id: {agent_id}")
+
+    def _load_file(self, path: Path) -> str:
+        """Load a file's contents"""
+        with open(path) as f:
+            return f.read()
+
+
+# =================================================================
+# CLI Interface (for testing)
+# =================================================================
+
+if __name__ == "__main__":
+    import sys
+
+    # Example usage
+    runtime = PromptRuntime()
+
+    context = {
+        "project_id": "test_project_001",
+        "current_phase": "PLANNING",
+        "artifacts": {
+            "feature_spec": "workspaces/test/artifacts/planning/feature_spec.json"
+        },
+        "workspace_path": "workspaces/test/"
+    }
+
+    # Test composition
+    # Note: task_id must match the filename (task_01_select_core_modules -> "01_select_core_modules")
+    composed_prompt = runtime.execute_task(
+        agent_id="GENESIS_BLUEPRINT",
+        task_id="01_select_core_modules",  # Matches task_01_select_core_modules.md
+        context=context
+    )
+
+    # Output to file for inspection
+    output_file = Path("/home/user/vibe-agency/COMPOSED_PROMPT_EXAMPLE.md")
+    with open(output_file, "w") as f:
+        f.write(composed_prompt)
+
+    print(f"✓ Composed prompt written to: {output_file}")
+    print(f"\nFirst 500 chars of composed prompt:")
+    print("-" * 60)
+    print(composed_prompt[:500] + "...")

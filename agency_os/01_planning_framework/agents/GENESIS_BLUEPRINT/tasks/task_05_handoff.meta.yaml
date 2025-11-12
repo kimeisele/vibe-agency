@@ -1,0 +1,53 @@
+task_id: handoff
+phase: 5
+description: "Generate final architecture.json and code_gen_spec.json for CODE_GENERATOR"
+
+dependencies:
+  - task_04_validate_architecture
+
+inputs:
+  - type: artifact
+    ref: feature_spec.json
+
+  - type: artifact
+    ref: core_modules_selection.json
+
+  - type: artifact
+    ref: extensions_design.json
+
+  - type: artifact
+    ref: config_system.json
+
+  - type: artifact
+    ref: validation_result.json
+    required_fields:
+      - validation.fae_passed
+    precondition: "validation.fae_passed == true"
+
+outputs:
+  - type: artifact
+    ref: architecture.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#architecture
+    location: "artifacts/planning/architecture.json"
+    consumers:
+      - CODE_GENERATOR
+      - QA_VALIDATOR
+
+  - type: artifact
+    ref: code_gen_spec.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#code_gen_spec
+    location: "artifacts/planning/code_gen_spec.json"
+    consumers:
+      - CODE_GENERATOR
+
+validation_gates: []
+
+estimated_complexity: low
+estimated_tokens: 1000
+estimated_duration: "1-2 minutes"
+
+success_criteria:
+  - "architecture.json contains complete spec"
+  - "code_gen_spec.json is CODE_GENERATOR-ready"
+  - "All previous task outputs integrated"
+  - "Success message displayed"

@@ -1,0 +1,74 @@
+version: "1.0"
+agent_id: GENESIS_BLUEPRINT
+
+# Knowledge files this agent requires to function
+required_knowledge:
+  - path: agency_os/01_planning_framework/knowledge/FAE_constraints.yaml
+    purpose: "Feature Anti-Expansion rules - v1.0 feasibility constraints"
+    critical: true
+    used_by_tasks:
+      - task_04_validate_architecture
+    description: |
+      Defines which features are incompatible with v1.0 scope.
+      Includes technical constraints, recommended alternatives.
+
+  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    purpose: "JSON schemas for all artifacts (feature_spec, architecture, etc.)"
+    critical: true
+    used_by_tasks:
+      - task_01_select_core_modules
+      - task_02_design_extensions
+      - task_03_generate_config_schema
+      - task_04_validate_architecture
+      - task_05_handoff
+    description: |
+      Defines expected structure of all input/output artifacts.
+      Essential for validation and schema compliance.
+
+# Optional knowledge (loaded conditionally)
+optional_knowledge:
+  - path: agency_os/01_planning_framework/knowledge/APCE_rules.yaml
+    purpose: "Automated Prioritization & Complexity Engine - complexity scoring"
+    critical: false
+    used_by_tasks:
+      - task_02_design_extensions  # For LOC estimation
+    load_if: ${feature_spec.features[].complexity_score} exists
+    description: |
+      Provides Modified Fibonacci complexity scoring and LOC estimation.
+      Helps estimate extension module sizes.
+
+  - path: agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml
+    purpose: "Feature Dependency Graph - inter-feature prerequisites"
+    critical: false
+    used_by_tasks: []  # Not currently used by GENESIS_BLUEPRINT
+    description: |
+      Maps feature dependencies. Could be used in future for
+      determining extension ordering/initialization.
+
+  - path: agency_os/02_code_gen_framework/knowledge/CODE_GEN_dependencies.yaml
+    purpose: "Library recommendations for Extensions layer"
+    critical: false
+    used_by_tasks:
+      - task_02_design_extensions
+    load_if: ${task_id} == "design_extensions"
+    description: |
+      Suggests external libraries for common use cases.
+      Helps populate extension.external_deps field.
+
+# Knowledge resolution strategy
+resolution:
+  # How to handle missing required knowledge
+  missing_required: "FAIL"  # Fail task execution if required knowledge missing
+
+  # How to handle missing optional knowledge
+  missing_optional: "WARN"  # Continue execution, log warning
+
+  # Cache knowledge files for this session
+  cache_enabled: true
+  cache_duration: "session"  # Keep loaded YAMLs in memory for entire orchestration run
+
+# Metadata
+metadata:
+  created: "2025-11-12"
+  purpose: "Declares GENESIS_BLUEPRINT's knowledge dependencies"
+  note: "PromptRuntime uses this to load YAMLs before task execution"

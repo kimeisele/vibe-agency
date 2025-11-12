@@ -1,0 +1,41 @@
+task_id: validate_architecture
+phase: 4
+description: "Validate architecture against FAE constraints (v1.0 scope, tech conflicts)"
+
+dependencies:
+  - task_03_generate_config_schema
+
+inputs:
+  - type: artifact
+    ref: core_modules_selection.json
+
+  - type: artifact
+    ref: extensions_design.json
+    required_fields:
+      - extensions[].name
+      - extensions[].implements_feature
+      - extensions[].external_deps
+
+  - type: knowledge
+    ref: agency_os/01_planning_framework/knowledge/FAE_constraints.yaml
+    purpose: "Technical feasibility constraints"
+    critical: true
+
+outputs:
+  - type: artifact
+    ref: validation_result.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#validation_result
+    consumers:
+      - task_05_handoff
+
+validation_gates:
+  - gate_fae_validation_passed.md
+
+estimated_complexity: low
+estimated_tokens: 800
+estimated_duration: "1-2 minutes"
+
+success_criteria:
+  - "No v2.0 features in architecture"
+  - "No tech stack conflicts"
+  - "If violations: clear error message with alternatives"
