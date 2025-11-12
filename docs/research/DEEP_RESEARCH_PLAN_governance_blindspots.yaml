@@ -1,0 +1,452 @@
+# DEEP RESEARCH PLAN: Governance Blindspots & Regression Prevention
+# Generated: 2025-11-12
+# Context: Phase 1 Governance Foundation Complete - Need to eliminate blindspots before Phase 2
+
+research_plan:
+  plan_id: "RESEARCH_001_governance_blindspots"
+  generated_by: "Lead Architect + Steward (Sonnet 4.5)"
+  target_agent: "Google Deep Research Agent"
+  priority: "CRITICAL"
+  deadline: "Before Phase 2 starts"
+
+  context:
+    current_phase: "Phase 1 Complete (validated 2025-11-12)"
+    governance_status:
+      - "4-Layer Governance Stack operational"
+      - "semantic_audit.py fixed (multi-doc YAML support)"
+      - "All 17 KB files validate successfully"
+      - "CODEOWNERS defined but curators not assigned yet"
+
+    problem_statement: |
+      We have built a governance foundation but have identified 5 critical blindspots
+      (see CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md Part 7). Before proceeding to Phase 2
+      (Runtime Integration) and Phase 3 (Feedback Loops), we MUST eliminate these blindspots
+      to avoid catastrophic failures, regressions, and "AI slop".
+
+      User requirement: "KEINE SPEKULATION UND HALLUZINATION. wenn wir das nicht machen,
+      riskieren wir das projekt zu zerstören."
+
+---
+
+## RESEARCH TOPIC 1: Curator Scalability & Operational Load
+
+knowledge_gap:
+  blindspot_id: "Blindspot_1_Curator_Scalability"
+  source: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md:651-657"
+
+  question: "Can 5 knowledge curators realistically manage 17+ KB files at scale?"
+
+  why_critical: |
+    - CODEOWNERS requires curator approval for every KB change
+    - If curators become bottleneck → Phase 2-3 deployments stall
+    - User mentioned: "wir wurden früher so krass hart durch regressionen gefickt"
+    - Need to know: optimal curator/KB ratio, time budgets, tooling requirements
+
+  sub_questions:
+    - "What is industry best practice for KB curation team size?"
+    - "How do teams like Stripe, GitHub, Kubernetes manage knowledge governance at scale?"
+    - "What metrics track curator workload (PR approval time, queue depth, etc.)?"
+    - "What tooling exists for KB curator dashboards/automation?"
+    - "When do teams add specialized curators vs. generalist curators?"
+
+  search_terms:
+    - ["knowledge base governance", "curator team size", "scalability"]
+    - ["CODEOWNERS enforcement", "review bottleneck", "PR approval metrics"]
+    - ["semantic drift prevention", "knowledge management team", "roles"]
+    - ["GitLab knowledge base", "GitHub repository governance", "curator workload"]
+    - ["ontology curation", "semantic validation team", "operational metrics"]
+
+  sources_to_check:
+    - type: "industry_case_studies"
+      targets:
+        - "Stripe engineering blog (API documentation governance)"
+        - "GitHub engineering (CODEOWNERS usage patterns)"
+        - "Kubernetes SIG documentation (multi-team KB management)"
+        - "HashiCorp (Terraform/Vault documentation governance)"
+
+    - type: "academic_research"
+      targets:
+        - "Software engineering knowledge management (IEEE, ACM)"
+        - "Semantic ontology curation at scale"
+        - "Technical documentation governance models"
+
+    - type: "tooling_research"
+      targets:
+        - "Knowledge base management platforms (Notion, Confluence governance features)"
+        - "Semantic validation tools (beyond YAML linting)"
+        - "Curator workflow automation (GitHub Actions, GitLab CI patterns)"
+
+  expected_findings:
+    - "Recommended curator:KB ratio (e.g., 1:10, 1:20)"
+    - "Time budget per curator (hours/week for KB reviews)"
+    - "Tooling requirements (dashboards, automation, alerts)"
+    - "Warning signs of curator overload (metrics, patterns)"
+    - "Scaling strategies (when to add curators, how to split domains)"
+
+  integration_target:
+    file: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md"
+    section: "Part 7 - Blindspot 1"
+    action: "Update with research findings + adjust Phase 2 plan if needed"
+
+---
+
+## RESEARCH TOPIC 2: Regression Prevention Patterns (Anti-Slop Architecture)
+
+knowledge_gap:
+  blindspot_id: "NEW_regression_prevention"
+  source: "User request: 'wir wurden früher so krass hart durch regressionen gefickt'"
+
+  question: "What are proven architectural patterns to prevent regressions in knowledge-driven AI systems?"
+
+  why_critical: |
+    - User explicitly mentioned regression trauma
+    - Current governance has Layer 3 (semantic_audit.py) but is this sufficient?
+    - Need to know: what OTHER layers/patterns prevent KB regressions?
+    - Phase 2-3 will add runtime KB loading → more regression risk
+
+  sub_questions:
+    - "What causes regressions in knowledge base systems? (semantic drift, stale rules, conflicts)"
+    - "How do production AI systems (Anthropic, OpenAI, Google) prevent KB regressions?"
+    - "What is 'snapshot testing' for knowledge bases? (compare KB versions)"
+    - "What is 'canary deployment' for KB changes? (test on subset before full rollout)"
+    - "What metrics detect KB regression in production? (error rate spike, quality drop)"
+    - "How to test KB changes BEFORE they reach runtime?"
+
+  search_terms:
+    - ["knowledge base regression testing", "semantic validation", "ontology change management"]
+    - ["AI system regression prevention", "prompt engineering testing", "knowledge drift detection"]
+    - ["configuration management best practices", "infrastructure as code", "version control"]
+    - ["canary deployment", "blue-green deployment", "knowledge base rollback"]
+    - ["CI/CD for knowledge bases", "semantic test automation", "schema evolution"]
+
+  sources_to_check:
+    - type: "AI_engineering_practices"
+      targets:
+        - "Anthropic engineering (prompt versioning, knowledge management)"
+        - "OpenAI docs (fine-tuning regression prevention)"
+        - "Google AI (evaluation-driven development patterns)"
+        - "Hugging Face (model card governance, dataset versioning)"
+
+    - type: "SRE_patterns"
+      targets:
+        - "Google SRE book (configuration management, rollback strategies)"
+        - "Kubernetes config management (ConfigMaps, versioning)"
+        - "Terraform state management (plan/apply pattern for KB changes?)"
+
+    - type: "software_testing_research"
+      targets:
+        - "Snapshot testing (Jest, pytest-regtest patterns)"
+        - "Contract testing (Pact pattern for KB interfaces)"
+        - "Property-based testing (QuickCheck, Hypothesis for KB validation)"
+
+  expected_findings:
+    - "Regression prevention layers (beyond semantic audit)"
+    - "Testing strategies for KB changes (unit, integration, canary)"
+    - "Rollback mechanisms (how to undo bad KB changes)"
+    - "Monitoring patterns (detect KB regressions in production)"
+    - "Change management workflow (plan → test → deploy → monitor)"
+
+  integration_target:
+    file: "docs/GOVERNANCE_MODEL.md"
+    section: "NEW Section: Regression Prevention Architecture"
+    action: "Add regression prevention layer to 4-Layer Governance Stack (make it 5 layers?)"
+
+---
+
+## RESEARCH TOPIC 3: Runtime KB Loading & Latency Impact
+
+knowledge_gap:
+  blindspot_id: "Blindspot_4_Runtime_KB_Loading"
+  source: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md:675-679"
+
+  question: "How do we load KBs at runtime without unacceptable latency?"
+
+  why_critical: |
+    - Phase 2 requires prompt_runtime.py with dynamic KB loading
+    - RAG (Retrieval-Augmented Generation) will fetch KB rules into prompts
+    - If latency > 500ms → user experience suffers
+    - Need to know: caching strategies, vector DB performance, indexing patterns
+
+  sub_questions:
+    - "What is acceptable latency for KB loading? (industry benchmarks)"
+    - "How do production RAG systems (Anthropic Claude Code, GitHub Copilot) handle KB caching?"
+    - "Vector DB performance comparison (Pinecone, Weaviate, ChromaDB, FAISS)"
+    - "What is 'semantic caching' for LLM prompts? (cache KB retrieval results)"
+    - "How to invalidate KB cache when files change? (cache invalidation strategy)"
+    - "What is 'lazy loading' vs 'eager loading' for KB rules?"
+
+  search_terms:
+    - ["RAG latency optimization", "retrieval augmented generation", "performance"]
+    - ["vector database performance", "semantic search speed", "embedding cache"]
+    - ["LLM prompt caching", "context window optimization", "knowledge retrieval"]
+    - ["cache invalidation strategy", "TTL", "KB versioning"]
+    - ["lazy loading vs eager loading", "dynamic prompt assembly"]
+
+  sources_to_check:
+    - type: "RAG_engineering"
+      targets:
+        - "LangChain documentation (retrieval strategies, caching)"
+        - "LlamaIndex patterns (knowledge graph integration)"
+        - "Anthropic Claude prompt caching (from docs)"
+        - "OpenAI RAG best practices"
+
+    - type: "vector_db_benchmarks"
+      targets:
+        - "Vector database performance comparison studies"
+        - "Pinecone, Weaviate, ChromaDB documentation (latency SLAs)"
+        - "FAISS performance tuning guides"
+
+    - type: "caching_patterns"
+      targets:
+        - "Redis caching patterns (for semantic results)"
+        - "CDN caching for static KB files"
+        - "HTTP cache headers for KB API"
+
+  expected_findings:
+    - "Target latency SLA for KB loading (e.g., <100ms p99)"
+    - "Recommended vector DB for our scale (17 KB files, ~21 ontology terms)"
+    - "Caching strategy (what to cache, for how long, invalidation rules)"
+    - "Indexing pattern (how to structure KB files for fast retrieval)"
+    - "Fallback strategy (if KB load fails, degrade gracefully)"
+
+  integration_target:
+    file: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md"
+    section: "Part 7 - Blindspot 4"
+    action: "Resolve blindspot + add Phase 2 Task 1B architecture decision"
+
+---
+
+## RESEARCH TOPIC 4: Ontology Evolution & Backwards Compatibility
+
+knowledge_gap:
+  blindspot_id: "Blindspot_2_Ontology_Evolution"
+  source: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md:659-663"
+
+  question: "How do we safely evolve AOS_Ontology.yaml as new frameworks emerge?"
+
+  why_critical: |
+    - Currently 21 terms; will grow to 50+ as AOS expands
+    - Need versioning strategy (MAJOR/MINOR/PATCH like semver?)
+    - Adding/removing/changing terms could break existing KBs
+    - User said: "das richtige wissen, zur richtigen zeit" → ontology must evolve
+
+  sub_questions:
+    - "How do semantic web ontologies handle evolution? (OWL, RDF versioning)"
+    - "What is 'schema evolution' best practice? (database migration patterns)"
+    - "How to deprecate terms without breaking KBs? (grace period, warnings)"
+    - "How to test ontology changes? (dry-run on all KBs before deploying)"
+    - "What is 'ontology versioning'? (v1.0, v1.1, v2.0 — breaking vs non-breaking)"
+
+  search_terms:
+    - ["ontology evolution", "semantic web versioning", "OWL RDF schema change"]
+    - ["schema migration", "backwards compatibility", "deprecation strategy"]
+    - ["semantic versioning", "API versioning patterns", "breaking changes"]
+    - ["knowledge graph evolution", "ontology refactoring", "term lifecycle"]
+
+  sources_to_check:
+    - type: "semantic_web_research"
+      targets:
+        - "W3C ontology versioning best practices"
+        - "Schema.org evolution history (how they add/deprecate terms)"
+        - "DBpedia ontology change management"
+
+    - type: "database_evolution"
+      targets:
+        - "Database schema migration tools (Flyway, Liquibase patterns)"
+        - "GraphQL schema evolution (additive vs breaking changes)"
+        - "Protocol Buffers versioning (protobuf compatibility rules)"
+
+    - type: "API_versioning"
+      targets:
+        - "REST API versioning patterns (v1, v2, deprecation headers)"
+        - "Stripe API evolution (how they handle backwards compatibility)"
+        - "Kubernetes API deprecation policy (grace periods)"
+
+  expected_findings:
+    - "Ontology versioning scheme (semver-like? calendar-based?)"
+    - "Deprecation process (warning → grace period → removal)"
+    - "Testing strategy for ontology changes (impact analysis on all KBs)"
+    - "Migration guide template (for curators when terms change)"
+    - "Rollback plan (if ontology change breaks production)"
+
+  integration_target:
+    file: "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+    section: "NEW header section: versioning_policy"
+    action: "Add formal versioning rules + update SOP_006 with ontology change process"
+
+---
+
+## RESEARCH TOPIC 5: Feedback Loop Effectiveness (AITL/HITL Balance)
+
+knowledge_gap:
+  blindspot_id: "Blindspot_5_Feedback_Loop_Closure"
+  source: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md:681-685"
+
+  question: "Will AI-in-the-Loop (STRATEGY_SYNTHESIZER) actually improve KB quality or create more problems?"
+
+  why_critical: |
+    - Phase 3 will add AITL agent that proposes KB changes
+    - Risk: AITL could introduce "AI slop" → worse than manual curation
+    - Need to know: when to trust AITL, when to require HITL approval
+    - User said: "fighting ai slop an every step" → must validate AITL effectiveness
+
+  sub_questions:
+    - "What is industry experience with AI-generated knowledge base updates?"
+    - "How do teams like Anthropic, OpenAI use AI to improve their own systems?"
+    - "What is 'reinforcement learning from human feedback' (RLHF) effectiveness? (studies, benchmarks)"
+    - "What is 'test-time self-improvement' (TT-SI) in production?"
+    - "When does AITL help vs hurt? (metrics, guardrails, failure modes)"
+    - "What approval thresholds work? (e.g., high-confidence AITL auto-approves, low-confidence requires HITL)"
+
+  search_terms:
+    - ["RLHF effectiveness", "reinforcement learning human feedback", "AI alignment"]
+    - ["test-time self-improvement", "inference-time learning", "adaptive AI"]
+    - ["AI-in-the-loop", "human-in-the-loop", "hybrid intelligence"]
+    - ["AI slop prevention", "model collapse", "synthetic data quality"]
+    - ["confidence thresholds", "AI decision approval", "human oversight"]
+
+  sources_to_check:
+    - type: "AI_alignment_research"
+      targets:
+        - "Anthropic research on RLHF (constitutional AI papers)"
+        - "OpenAI RLHF studies (InstructGPT, ChatGPT training)"
+        - "DeepMind alignment research"
+
+    - type: "production_AI_systems"
+      targets:
+        - "GitHub Copilot (how they improve suggestions from user feedback)"
+        - "Grammarly (HITL correction → model improvement)"
+        - "Google Search (human rater guidelines, quality evaluation)"
+
+    - type: "AI_safety_research"
+      targets:
+        - "Model collapse studies (recursive AI-generated data)"
+        - "AI slop detection (hallucination metrics, factuality)"
+        - "Confidence calibration (when AI knows it doesn't know)"
+
+  expected_findings:
+    - "AITL success criteria (accuracy, precision, recall for KB improvements)"
+    - "Confidence threshold recommendations (e.g., >90% → auto-approve, <90% → HITL)"
+    - "Failure mode patterns (when AITL makes things worse)"
+    - "Monitoring metrics (track AITL proposal quality over time)"
+    - "Kill switch criteria (when to disable AITL and fall back to HITL-only)"
+
+  integration_target:
+    file: "CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md"
+    section: "Part 5 - Phase 3 (Feedback Loops)"
+    action: "Add AITL effectiveness criteria + safety guardrails before implementing"
+
+---
+
+## RESEARCH OUTPUT FORMAT
+
+expected_deliverable:
+  format: "Markdown report with sections for each research topic"
+
+  structure:
+    - topic_title: "[Research Topic Name]"
+    - executive_summary: "3-5 sentences with key findings"
+    - detailed_findings:
+        - finding_1: "Description with source citation"
+        - finding_2: "..."
+    - recommendations:
+        - recommendation_1: "Actionable change for AOS"
+        - rationale: "Why this matters"
+        - implementation: "How to integrate (which file, which section)"
+    - sources:
+        - citation_1: "[Title] by [Author/Org], [URL], [Date accessed]"
+
+  quality_criteria:
+    - "All findings MUST have source citations (no speculation)"
+    - "Recommendations MUST be actionable (not vague 'consider X')"
+    - "Integration targets MUST specify exact file:section to update"
+    - "Confidence level per finding (HIGH/MEDIUM/LOW based on source quality)"
+
+  integration_checklist:
+    - "Update CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md Part 7 (resolve blindspots)"
+    - "Update docs/GOVERNANCE_MODEL.md (add new patterns/layers)"
+    - "Update agency_os/00_system/knowledge/AOS_Ontology.yaml (if versioning needed)"
+    - "Create new SOPs if research reveals missing processes"
+    - "Update Phase 2-3 roadmap if research changes priorities"
+
+---
+
+## RESEARCH EXECUTION INSTRUCTIONS (for Google Deep Research Agent)
+
+instructions:
+  1_search_strategy:
+    - "Use search terms provided for each topic"
+    - "Prioritize: Industry case studies > Academic research > Tool documentation"
+    - "Focus on PRODUCTION systems (not theoretical papers)"
+    - "Look for metrics, benchmarks, failure stories (not just success stories)"
+
+  2_source_evaluation:
+    - "Prefer: Engineering blogs from Anthropic, OpenAI, Google, GitHub, Stripe"
+    - "Academic: IEEE, ACM, arxiv.org (recent papers 2022+)"
+    - "Docs: Official documentation from tools/platforms mentioned"
+    - "Avoid: Generic blog posts, opinion pieces without data"
+
+  3_synthesis:
+    - "For each topic, identify 3-5 KEY FINDINGS (not 20)"
+    - "Extract ACTIONABLE patterns (not just concepts)"
+    - "Note CONFLICTS (if sources disagree, document both views)"
+    - "Highlight RISKS (what could go wrong if we implement this)"
+
+  4_citations:
+    - "Every finding MUST cite source: [Title, Author/Org, URL, Date]"
+    - "Quote relevant passages (not just paraphrase)"
+    - "Provide context (who uses this, at what scale)"
+
+---
+
+## SUCCESS CRITERIA
+
+research_success_if:
+  - "All 5 blindspots have research findings with citations"
+  - "At least 3 actionable recommendations per topic"
+  - "Integration targets specified (which files to update)"
+  - "Risks/limitations documented (not just benefits)"
+  - "User can make informed architecture decisions (not guessing)"
+
+failure_modes_to_avoid:
+  - "Vague findings like 'teams should consider X'"
+  - "No citations (speculation)"
+  - "Only theoretical research (no production examples)"
+  - "Recommending solutions without understanding constraints"
+  - "Creating MORE blindspots instead of resolving them"
+
+---
+
+## POST-RESEARCH NEXT STEPS
+
+after_research_complete:
+  1. "Review findings with Lead Architect + Steward (this session)"
+  2. "Update CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md v1.1 → v1.2"
+  3. "Integrate recommendations into Phase 2-3 roadmap"
+  4. "Update GOVERNANCE_MODEL.md with new regression prevention layer"
+  5. "Create any new SOPs revealed by research"
+  6. "Re-run Phase 1 Success Criteria check (did research change anything?)"
+  7. "Document new blindspots discovered during research"
+  8. "Commit all changes with 'research: [topic]' commit message"
+
+---
+
+## META: WHY THIS RESEARCH PLAN EXISTS
+
+rationale: |
+  User said: "KEINE SPEKULATION UND HALLUZINATION. wenn wir das nicht machen,
+  riskieren wir das projekt zu zerstören."
+
+  This research plan embodies the anti-slop philosophy:
+  1. Admit what we don't know (5 blindspots documented)
+  2. Generate structured research plan (this file)
+  3. Delegate to specialized research agent (hundreds of websites)
+  4. Integrate findings with citations (no speculation)
+  5. Make evidence-based decisions (not guessing)
+
+  This is how we "fight AI slop at every step" — by building on REAL knowledge,
+  not hallucinated best practices.
+
+---
+
+END OF RESEARCH PLAN
