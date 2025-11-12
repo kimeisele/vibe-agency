@@ -1,0 +1,40 @@
+
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "<UUID_PLACEHOLDER>",
+    "name": "<PROJECT_NAME_PLACEHOLDER>",
+    "description": "<PROJECT_DESCRIPTION_PLACEHOLDER>",
+    "owner": "<OWNER_EMAIL_PLACEHOLDER>",
+    "createdAt": "<TIMESTAMP_PLACEHOLDER>"
+  },
+  "spec": {
+    "vibe": {},
+    "genesis": {}
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "lastUpdate": "<TIMESTAMP_PLACEHOLDER>",
+    "message": "Project initialized."
+  },
+  "artifacts": {
+    "planning": {
+      "architecture": null
+    },
+    "code": {
+      "mainRepository": {
+        "url": "<GIT_URL_PLACEHOLDER>",
+        "branch": "main",
+        "lastCommit": null
+      }
+    },
+    "test": {
+      "lastTestPlan": null,
+      "lastReport": null
+    },
+    "deployment": {
+      "lastReceipt": null
+    }
+  }
+}

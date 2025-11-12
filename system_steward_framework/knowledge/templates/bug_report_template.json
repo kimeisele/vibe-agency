@@ -1,0 +1,23 @@
+
+{
+  "severity": "<P1_Critical|P2_High|P3_Medium|P4_Low|P5_Cosmetic>",
+  "category": "<Security|Performance|Functional|UI|Other>",
+  "title": "<SHORT_DESCRIPTIVE_TITLE_PLACEHOLDER>",
+  "stepsToReproduce": [
+    "Step 1: ...",
+    "Step 2: ...",
+    "Step 3: ..."
+  ],
+  "expectedResult": "<WHAT_SHOULD_HAVE_HAPPENED_PLACEHOLDER>",
+  "actualResult": "<WHAT_ACTUALLY_HAPPENED_PLACEHOLDER>",
+  "environment": {
+    "appVersion": "<APP_VERSION_PLACEHOLDER>",
+    "os": "<OS_PLACEHOLDER>",
+    "notes": "<ANY_OTHER_CONTEXT_PLACEHOLDER>"
+  },
+  "context": {
+    "PII_impact": false
+  },
+  "reproducible": true,
+  "correlated_trace_id": "<OPTIONAL_TRACE_ID_PLACEHOLDER>"
+}

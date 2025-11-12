@@ -1,0 +1,67 @@
+
+{
+  "project": {
+    "name": "<PROJECT_NAME_PLACEHOLDER>",
+    "category": "<Web App|Mobile App|API Service|CLI Tool>",
+    "scale": "<Solo User|Small Team|Production>",
+    "target_scope": "<prototype|mvp|v1.0>",
+    "core_problem": "<CORE_PROBLEM_STATEMENT_PLACEHOLDER>",
+    "target_users": "<TARGET_USER_PERSONA_PLACEHOLDER>"
+  },
+  "features": [
+    {
+      "id": "feature_1",
+      "name": "<FEATURE_NAME_PLACEHOLDER>",
+      "priority": "<must_have|should_have|could_have>",
+      "complexity_score": 0,
+      "estimated_effort": "<EFFORT_ESTIMATE_PLACEHOLDER>",
+      "input": {
+        "format": "<USER_INPUT_FORMAT_PLACEHOLDER>",
+        "example": "<INPUT_EXAMPLE_PLACEHOLDER>",
+        "constraints": "<INPUT_CONSTRAINTS_PLACEHOLDER>"
+      },
+      "processing": {
+        "description": "<PROCESSING_LOGIC_DESCRIPTION_PLACEHOLDER>",
+        "external_dependencies": [],
+        "side_effects": []
+      },
+      "output": {
+        "format": "<OUTPUT_FORMAT_PLACEHOLDER>",
+        "example": "<OUTPUT_EXAMPLE_PLACEHOLDER>",
+        "success_criteria": "<SUCCESS_CRITERIA_PLACEHOLDER>"
+      },
+      "dependencies": {
+        "required": [],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": null,
+        "constraints_checked": [],
+        "issues": []
+      }
+    }
+  ],
+  "scope_negotiation": {
+    "total_complexity": 0,
+    "complexity_breakdown": {
+      "must_have": 0,
+      "should_have": 0,
+      "wont_have_v1": 0
+    },
+    "timeline_estimate": "<TIMELINE_ESTIMATE_PLACEHOLDER>",
+    "v1_exclusions": []
+  },
+  "validation": {
+    "fae_passed": null,
+    "fdg_passed": null,
+    "apce_passed": null,
+    "all_features_complete": null,
+    "ready_for_genesis": null
+  },
+  "metadata": {
+    "vibe_version": "3.0",
+    "created_at": "<TIMESTAMP_PLACEHOLDER>",
+    "user_educated": null,
+    "scope_negotiated": null
+  }
+}
