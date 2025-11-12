@@ -1,0 +1,73 @@
+version: "1.0"
+agent_id: SSF_ROUTER
+
+# Knowledge files this router requires
+required_knowledge:
+  - path: system_steward_framework/knowledge/sops/SOP_001_Start_New_Project.md
+    purpose: "Initialize new project workflow"
+    critical: true
+    load_if: ${intent} == "start_project" OR ${current_state} == "INITIALIZING"
+
+  - path: system_steward_framework/knowledge/sops/SOP_002_Handle_Bug_Report.md
+    purpose: "Bug triage workflow"
+    critical: true
+    load_if: ${intent} == "report_bug"
+
+  - path: system_steward_framework/knowledge/sops/SOP_003_Execute_HITL_Approval.md
+    purpose: "Human-in-the-loop approval workflow"
+    critical: true
+    load_if: ${current_state} == "AWAITING_QA_APPROVAL"
+
+  - path: system_steward_framework/knowledge/sops/SOP_004_Extend_AOS_Framework.md
+    purpose: "Extend AOS with new frameworks"
+    critical: true
+    load_if: ${intent} == "extend_aos"
+
+  - path: system_steward_framework/knowledge/sops/SOP_005_Run_Semantic_Audit.md
+    purpose: "Run semantic validation"
+    critical: true
+    load_if: ${intent} == "run_audit"
+
+  - path: system_steward_framework/knowledge/sops/SOP_006_Curate_Knowledge_Base.md
+    purpose: "KB curation workflow"
+    critical: true
+    load_if: ${intent} == "curate_kb"
+
+# Architecture documentation (loaded on-demand)
+optional_knowledge:
+  - path: system_steward_framework/knowledge/architecture/00_system_overview.md
+    purpose: "System architecture overview"
+    load_if: ${intent} == "understand_architecture"
+
+  - path: system_steward_framework/knowledge/architecture/01_planning_framework.md
+    purpose: "Planning framework architecture"
+    load_if: ${intent_topic} == "framework_01"
+
+  - path: system_steward_framework/knowledge/architecture/02_code_gen_framework.md
+    purpose: "Code generation framework architecture"
+    load_if: ${intent_topic} == "framework_02"
+
+  - path: system_steward_framework/knowledge/architecture/03_qa_framework.md
+    purpose: "QA framework architecture"
+    load_if: ${intent_topic} == "framework_03"
+
+  - path: system_steward_framework/knowledge/architecture/04_deploy_framework.md
+    purpose: "Deployment framework architecture"
+    load_if: ${intent_topic} == "framework_04"
+
+  - path: system_steward_framework/knowledge/architecture/05_maintenance_framework.md
+    purpose: "Maintenance framework architecture"
+    load_if: ${intent_topic} == "framework_05"
+
+# Resolution strategy
+resolution:
+  missing_required: "WARN"  # Router can still function without specific SOP
+  missing_optional: "SILENT"  # Architecture docs are optional
+  cache_enabled: true
+  cache_duration: "session"
+
+# Metadata
+metadata:
+  created: "2025-11-12"
+  purpose: "Declares SSF_ROUTER's knowledge dependencies (SOPs + Architecture)"
+  note: "Uses conditional loading - only loads KB files matching current intent"
