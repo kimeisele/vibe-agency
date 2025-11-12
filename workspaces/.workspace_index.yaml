@@ -1,0 +1,74 @@
+# =================================================================
+# Workspace Registry
+# =================================================================
+# VERSION: 1.0.0
+# PURPOSE: Registry of all active project workspaces
+# USAGE: Allows the orchestrator to discover projects without
+#        scanning the file system.
+# =================================================================
+
+version: "1.0.0"
+kind: "WorkspaceRegistry"
+metadata:
+  description: "Registry of all active Agency OS project workspaces"
+  lastUpdated: "2025-11-12"
+  totalWorkspaces: 1
+
+# =================================================================
+# ACTIVE WORKSPACES
+# =================================================================
+workspaces:
+  - id: "vibe-internal-001"
+    name: "vibe_internal"
+    type: "internal"
+    description: "Internal Vibe Agency projects and development work"
+    manifestPath: "workspaces/vibe_internal/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-12"
+    lastUpdated: "2025-11-12"
+    metadata:
+      owner: "agent@vibe.agency"
+      tags: ["internal", "agency-os-development"]
+
+  # Example external client workspace (commented out)
+  # - id: "client-a-alpha-001"
+  #   name: "client_a/project_alpha"
+  #   type: "external"
+  #   description: "Client A - Project Alpha"
+  #   manifestPath: "workspaces/client_a/project_alpha/project_manifest.json"
+  #   status: "active"
+  #   createdAt: "2025-11-12"
+  #   lastUpdated: "2025-11-12"
+  #   metadata:
+  #     owner: "client_a@example.com"
+  #     tags: ["client", "production"]
+
+# =================================================================
+# ARCHIVED WORKSPACES (completed or deprecated)
+# =================================================================
+archived: []
+
+# =================================================================
+# WORKSPACE CONVENTIONS
+# =================================================================
+conventions:
+  namingPattern: "snake_case (e.g., vibe_internal, client_name)"
+  idPattern: "kebab-case with counter (e.g., client-a-alpha-001)"
+
+  directoryStructure: |
+    workspaces/
+    ├── workspace_name/
+    │   ├── project_manifest.json    # Required: Project SSoT
+    │   └── artifacts/               # Generated artifacts
+    │       ├── planning/            # feature_spec.json, architecture.json
+    │       ├── code/                # Source code artifacts
+    │       ├── test/                # qa_report.json, test results
+    │       └── deployment/          # deploy_receipt.json
+
+  requiredFiles:
+    - "project_manifest.json"
+    - "artifacts/" # (directory)
+
+  optionalFiles:
+    - "README.md" # Workspace-specific documentation
+    - ".env.example" # Environment variable template

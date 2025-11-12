@@ -1,0 +1,38 @@
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+    "name": "vibe-agency",
+    "description": "The root project for the Vibe Agency OS.",
+    "owner": "agent@vibe.agency",
+    "createdAt": "2025-11-12T14:00:00Z",
+    "lastUpdatedAt": "2025-11-12T14:00:00Z"
+  },
+  "spec": {
+    "vibe": {},
+    "genesis": {}
+  },
+  "status": {
+    "projectPhase": "CODING",
+    "lastUpdate": "2025-11-12T14:00:00Z",
+    "message": "All specialist agent prompts designed and knowledge bases relocated."
+  },
+  "artifacts": {
+    "planning": {
+      "architecture": {
+        "ref": "ef1c122a4a57d07036f70cb2b5460c199f25059f",
+        "path": "/artifacts/planning/architecture.v1.json"
+      }
+    },
+    "code": {
+      "mainRepository": {
+        "url": "https://github.com/kimeisele/vibe-agency.git",
+        "branch": "main",
+        "lastCommit": "ef1c122a4a57d07036f70cb2b5460c199f25059f"
+      }
+    },
+    "test": {},
+    "deployment": {}
+  }
+}

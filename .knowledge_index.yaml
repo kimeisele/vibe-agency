@@ -1,0 +1,400 @@
+# =================================================================
+# Agency OS Knowledge Index
+# =================================================================
+# VERSION: 1.0.0
+# PURPOSE: Machine-readable index for AI agent knowledge discovery
+# USAGE: Agents query this file to locate rules, constraints, and
+#        specifications by semantic intent, not by file path.
+# =================================================================
+
+version: "1.0.0"
+kind: "KnowledgeIndex"
+metadata:
+  description: "Central index for Agency OS knowledge base navigation"
+  lastUpdated: "2025-11-12"
+  totalKnowledgeFiles: 26
+  totalPromptFiles: 8
+
+# =================================================================
+# CATEGORY: Core System Architecture
+# =================================================================
+categories:
+  - id: "state_machine"
+    intent:
+      - "workflow orchestration"
+      - "SDLC state transitions"
+      - "error loops and recovery"
+    description: "The core state machine that governs the entire SDLC workflow"
+    files:
+      - path: "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        contains: ["states", "transitions", "loops"]
+        keyTopics:
+          - "7 workflow states (PLANNING → PRODUCTION)"
+          - "6 automated transitions"
+          - "4 error/feedback loops"
+
+      - path: "agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md"
+        contains: ["orchestrator_logic", "state_handlers"]
+        keyTopics:
+          - "Master orchestrator prompt"
+          - "State transition logic"
+
+  - id: "data_contracts"
+    intent:
+      - "artifact schemas"
+      - "JSON structure validation"
+      - "data contract definitions"
+    description: "All artifact schemas that flow between specialist agents"
+    files:
+      - path: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+        contains: ["project_manifest", "feature_spec", "code_gen_spec", "qa_report", "deploy_receipt", "bug_report"]
+        keyTopics:
+          - "6 core data schemas"
+          - "Required fields per artifact"
+          - "Artifact versioning rules"
+
+  - id: "technology_stack"
+    intent:
+      - "tech stack recommendations"
+      - "durable execution engines"
+      - "workflow runtime comparison"
+    description: "Technology evaluation and recommendations for Agency OS runtime"
+    files:
+      - path: "agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml"
+        contains: ["temporal", "prefect", "github_actions"]
+        keyTopics:
+          - "Durable execution patterns"
+          - "Engine comparison matrix"
+
+# =================================================================
+# CATEGORY: Planning & Scope Management
+# =================================================================
+  - id: "planning_complexity"
+    intent:
+      - "feature complexity scoring"
+      - "effort estimation"
+      - "prioritization rules"
+    description: "Automated Prioritization & Complexity Engine (APCE) rules"
+    files:
+      - path: "agency_os/01_planning_framework/knowledge/APCE_rules.yaml"
+        contains: ["complexity_scores", "value_patterns", "multipliers", "moscow_rules"]
+        keyTopics:
+          - "Modified Fibonacci complexity scale"
+          - "60+ feature types with base scores"
+          - "Value vs Effort quadrants"
+          - "Compounding complexity multipliers"
+        lineCount: 1303
+
+      - path: "agency_os/01_planning_framework/prompts/VIBE_ALIGNER_v3.md"
+        contains: ["scope_orchestration", "feature_extraction"]
+        keyTopics:
+          - "User requirement parsing"
+          - "Scope negotiation templates"
+
+  - id: "planning_constraints"
+    intent:
+      - "v1.0 scope limits"
+      - "anti-patterns"
+      - "feasibility analysis"
+    description: "Feature Anti-Expansion (FAE) constraints for v1.0"
+    files:
+      - path: "agency_os/01_planning_framework/knowledge/FAE_constraints.yaml"
+        contains: ["v1_constraints", "anti_patterns", "deferred_features"]
+        keyTopics:
+          - "What NOT to build in v1.0"
+          - "Scope creep prevention"
+          - "Deferral justifications"
+        lineCount: 717
+
+  - id: "planning_dependencies"
+    intent:
+      - "feature dependencies"
+      - "prerequisite features"
+      - "dependency graph"
+    description: "Feature Dependency Graph (FDG) - largest knowledge file"
+    files:
+      - path: "agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml"
+        contains: ["dependency_graph", "prerequisites", "blockers"]
+        keyTopics:
+          - "Inter-feature dependencies"
+          - "Parallel vs sequential features"
+          - "Blocking relationships"
+        lineCount: 2546
+
+  - id: "planning_architecture"
+    intent:
+      - "system architecture generation"
+      - "technical specification"
+      - "genesis pattern"
+    description: "Architecture blueprint generation (Genesis)"
+    files:
+      - path: "agency_os/01_planning_framework/prompts/GENESIS_BLUEPRINT_v5.md"
+        contains: ["architecture_generation", "tech_stack_selection"]
+        keyTopics:
+          - "Genesis Core Pattern"
+          - "Architecture.json generation"
+          - "Tech stack decision logic"
+        lineCount: 951
+
+      - path: "agency_os/01_planning_framework/prompts/GENESIS_UPDATE.md"
+        contains: ["architecture_updates", "iterative_changes"]
+        keyTopics:
+          - "Incremental architecture updates"
+        lineCount: 645
+
+# =================================================================
+# CATEGORY: Code Generation
+# =================================================================
+  - id: "code_quality_rules"
+    intent:
+      - "code quality gates"
+      - "test coverage requirements"
+      - "quality thresholds"
+    description: "Code generation quality rules and gates"
+    files:
+      - path: "agency_os/02_code_gen_framework/knowledge/CODE_GEN_quality_rules.yaml"
+        contains: ["quality_gates", "test_coverage", "code_standards"]
+        keyTopics:
+          - "Minimum test coverage: 80%"
+          - "Linting pass requirements"
+          - "Code review automation"
+
+  - id: "code_constraints"
+    intent:
+      - "hallucination prevention"
+      - "code generation limits"
+      - "error patterns"
+    description: "Constraints on code generation to prevent hallucinations"
+    files:
+      - path: "agency_os/02_code_gen_framework/knowledge/CODE_GEN_constraints.yaml"
+        contains: ["hallucination_triggers", "anti_patterns"]
+        keyTopics:
+          - "No fictional APIs"
+          - "No speculative implementations"
+          - "Verified library usage only"
+
+  - id: "code_dependencies"
+    intent:
+      - "library recommendations"
+      - "framework selection"
+      - "tech stack dependencies"
+    description: "Recommended libraries and frameworks for code generation"
+    files:
+      - path: "agency_os/02_code_gen_framework/knowledge/CODE_GEN_dependencies.yaml"
+        contains: ["libraries", "frameworks", "tools"]
+        keyTopics:
+          - "Vetted library list"
+          - "Version constraints"
+
+  - id: "code_generation_prompts"
+    intent:
+      - "code generator agent"
+      - "implementation workflow"
+    description: "CODE_GENERATOR specialist agent prompt"
+    files:
+      - path: "agency_os/02_code_gen_framework/prompts/CODE_GENERATOR_v1.md"
+        contains: ["code_generation_workflow"]
+        keyTopics:
+          - "Spec to code translation"
+          - "Test generation alongside code"
+
+# =================================================================
+# CATEGORY: QA & Testing
+# =================================================================
+  - id: "qa_quality_rules"
+    intent:
+      - "test pyramid"
+      - "release criteria"
+      - "QA gates"
+    description: "QA quality rules and release criteria"
+    files:
+      - path: "agency_os/03_qa_framework/knowledge/QA_quality_rules.yaml"
+        contains: ["test_pyramid", "release_criteria", "coverage_targets"]
+        keyTopics:
+          - "Test pyramid ratios"
+          - "Release go/no-go criteria"
+          - "HITL approval triggers"
+
+  - id: "qa_constraints"
+    intent:
+      - "non-automatable testing"
+      - "manual testing requirements"
+      - "HITL scenarios"
+    description: "QA constraints and Human-in-the-Loop requirements"
+    files:
+      - path: "agency_os/03_qa_framework/knowledge/QA_constraints.yaml"
+        contains: ["hitl_required", "manual_testing"]
+        keyTopics:
+          - "When to require human approval"
+          - "Non-automatable test areas"
+
+  - id: "qa_dependencies"
+    intent:
+      - "testing tools"
+      - "test environments"
+      - "QA infrastructure"
+    description: "Testing tools and environment dependencies"
+    files:
+      - path: "agency_os/03_qa_framework/knowledge/QA_dependencies.yaml"
+        contains: ["testing_frameworks", "ci_tools"]
+        keyTopics:
+          - "Recommended test runners"
+          - "CI/CD integration"
+
+  - id: "qa_validation_prompts"
+    intent:
+      - "QA validator agent"
+      - "test execution workflow"
+    description: "QA_VALIDATOR specialist agent prompt"
+    files:
+      - path: "agency_os/03_qa_framework/prompts/QA_VALIDATOR_v1.md"
+        contains: ["test_execution", "qa_report_generation"]
+        keyTopics:
+          - "Automated test execution"
+          - "QA report generation"
+
+# =================================================================
+# CATEGORY: Deployment
+# =================================================================
+  - id: "deploy_quality_rules"
+    intent:
+      - "health checks"
+      - "rollback triggers"
+      - "deployment gates"
+    description: "Deployment quality rules and rollback criteria"
+    files:
+      - path: "agency_os/04_deploy_framework/knowledge/DEPLOY_quality_rules.yaml"
+        contains: ["health_checks", "rollback_triggers"]
+        keyTopics:
+          - "Post-deployment health validation"
+          - "Automatic rollback conditions"
+
+  - id: "deploy_constraints"
+    intent:
+      - "security policies"
+      - "resource limits"
+      - "deployment strategies"
+    description: "Deployment constraints and security policies"
+    files:
+      - path: "agency_os/04_deploy_framework/knowledge/DEPLOY_constraints.yaml"
+        contains: ["security_policies", "resource_limits"]
+        keyTopics:
+          - "Zero-downtime deployment"
+          - "Blue/green strategies"
+
+  - id: "deploy_dependencies"
+    intent:
+      - "CI/CD tools"
+      - "cloud providers"
+      - "deployment platforms"
+    description: "Deployment infrastructure and tool dependencies"
+    files:
+      - path: "agency_os/04_deploy_framework/knowledge/DEPLOY_dependencies.yaml"
+        contains: ["cicd_tools", "cloud_platforms"]
+        keyTopics:
+          - "GitHub Actions vs GitLab CI"
+          - "Cloud platform recommendations"
+
+  - id: "deploy_manager_prompts"
+    intent:
+      - "deployment manager agent"
+      - "deployment workflow"
+    description: "DEPLOY_MANAGER specialist agent prompt"
+    files:
+      - path: "agency_os/04_deploy_framework/prompts/DEPLOY_MANAGER_v1.md"
+        contains: ["deployment_execution"]
+        keyTopics:
+          - "Automated deployment process"
+          - "Deployment receipt generation"
+
+# =================================================================
+# CATEGORY: Maintenance & Bug Triage
+# =================================================================
+  - id: "maintenance_triage"
+    intent:
+      - "bug severity classification"
+      - "SLA requirements"
+      - "triage rules"
+    description: "Bug triage rules and severity classification"
+    files:
+      - path: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml"
+        contains: ["severity_rules", "sla_definitions", "hotfix_criteria"]
+        keyTopics:
+          - "P1-P5 severity levels"
+          - "Hotfix vs regular fix criteria"
+          - "SLA response times"
+
+  - id: "maintenance_constraints"
+    intent:
+      - "non-automatable bugs"
+      - "HITL maintenance"
+      - "escalation triggers"
+    description: "Maintenance constraints and escalation rules"
+    files:
+      - path: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_constraints.yaml"
+        contains: ["hitl_triggers", "escalation_rules"]
+        keyTopics:
+          - "When to escalate to human"
+          - "Non-automatable bug types"
+
+  - id: "maintenance_dependencies"
+    intent:
+      - "monitoring tools"
+      - "logging infrastructure"
+      - "alerting systems"
+    description: "Monitoring and logging dependencies"
+    files:
+      - path: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_dependencies.yaml"
+        contains: ["monitoring_tools", "logging_platforms"]
+        keyTopics:
+          - "Recommended monitoring stacks"
+          - "Log aggregation tools"
+
+  - id: "bug_triage_prompts"
+    intent:
+      - "bug triage agent"
+      - "maintenance workflow"
+    description: "BUG_TRIAGE specialist agent prompt"
+    files:
+      - path: "agency_os/05_maintenance_framework/prompts/BUG_TRIAGE_v1.md"
+        contains: ["bug_analysis", "triage_workflow"]
+        keyTopics:
+          - "Automated bug classification"
+          - "Fix priority determination"
+
+# =================================================================
+# QUERY EXAMPLES FOR AI AGENTS
+# =================================================================
+queryExamples:
+  - query: "What is the minimum test coverage for v1.0?"
+    matchesCategory: "qa_quality_rules"
+    expectedFile: "agency_os/03_qa_framework/knowledge/QA_quality_rules.yaml"
+    answer: "80% code coverage minimum"
+
+  - query: "What features should NOT be in v1.0?"
+    matchesCategory: "planning_constraints"
+    expectedFile: "agency_os/01_planning_framework/knowledge/FAE_constraints.yaml"
+    answer: "See v1_constraints section for deferred features"
+
+  - query: "How do I calculate feature complexity?"
+    matchesCategory: "planning_complexity"
+    expectedFile: "agency_os/01_planning_framework/knowledge/APCE_rules.yaml"
+    answer: "Use base_complexity * multipliers (compounding)"
+
+  - query: "What are the workflow states?"
+    matchesCategory: "state_machine"
+    expectedFile: "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    answer: "7 states: PLANNING, CODING, TESTING, AWAITING_QA_APPROVAL, DEPLOYMENT, PRODUCTION, MAINTENANCE"
+
+  - query: "When should a bug be a hotfix?"
+    matchesCategory: "maintenance_triage"
+    expectedFile: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml"
+    answer: "P1_Critical severity with production impact"
+
+# =================================================================
+# VALIDATION METADATA
+# =================================================================
+validation:
+  allFilesExist: true
+  lastValidated: "2025-11-12"
+  brokenLinks: []

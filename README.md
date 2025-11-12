@@ -10,10 +10,29 @@ The entire system is "artifact-centric," meaning the workflow is driven by the c
 
 ## Project Structure
 
-The repository is organized into two main directories:
+The repository is organized as follows:
 
--   `agency_os/`: Contains the core "operating system," including the prompts and knowledge bases for each specialist AI agent (e.g., Planning, Code Generation, QA).
--   `system_steward_framework/`: Contains the meta-level governance for the system itself, including architectural documentation, Standard Operating Procedures (SOPs), and templates.
+-   **`agency_os/`**: Contains the core "operating system," including the prompts and knowledge bases for each specialist AI agent (e.g., Planning, Code Generation, QA).
+-   **`system_steward_framework/`**: Contains the meta-level governance for the system itself, including architectural documentation, Standard Operating Procedures (SOPs), and templates.
+-   **`workspaces/`**: Dedicated directory for client projects and internal work. Each workspace contains a `project_manifest.json` (single source of truth) and an `artifacts/` directory for generated outputs.
+-   **`.knowledge_index.yaml`**: Machine-readable semantic index for AI agents to discover rules, constraints, and specifications by intent (e.g., "What is the test coverage requirement?").
+-   **`docs/`**: High-level analysis and documentation about the Agency OS system itself.
+
+### What This Repository Is
+
+This is the **SPECIFICATION** of Agency OS, not its implementation:
+- ✅ Prompts for specialist AI agents (written in Markdown)
+- ✅ Knowledge bases with rules, constraints, and dependencies (YAML files)
+- ✅ State machine definition for the SDLC workflow
+- ✅ Data contracts (JSON schemas) for all artifacts
+
+### What This Repository Is NOT
+
+- ❌ A software library you `npm install` or `pip install`
+- ❌ Executable code that runs standalone
+- ❌ A framework you import into your application
+
+To **use** this system, load these prompts and knowledge bases into an AI agent runtime (like Claude with Temporal or Prefect for durable execution).
 
 ## Getting Started & Analysis
 
