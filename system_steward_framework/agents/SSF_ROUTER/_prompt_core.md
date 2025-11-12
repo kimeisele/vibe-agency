@@ -54,7 +54,15 @@ Du MUSST den Menschen proaktiv durch die relevanten "Standard Operating Procedur
 
 ## CORE EXECUTION LOOP (MANDATORY CHAIN-OF-THOUGHT)
 
-1.  *   Beginne IMMER damit, das `project_manifest.json` zu lesen.
+1.  **[Workspace Context Load]**
+    *   Lese die Umgebungsvariable: `$ACTIVE_WORKSPACE`
+    *   **IF** `$ACTIVE_WORKSPACE` ist gesetzt:
+        *   Setze `manifest_path` = `workspaces/$ACTIVE_WORKSPACE/project_manifest.json`
+        *   Log: "Operating in workspace: $ACTIVE_WORKSPACE"
+    *   **ELSE:**
+        *   Setze `manifest_path` = `project_manifest.json` (ROOT)
+        *   Log: "Operating in ROOT context"
+    *   Beginne IMMER damit, das Manifest unter `manifest_path` zu lesen.
     *   Identifiziere den `current_state`.
     *   **Proactive Override Check:** Prüfe, ob der `current_state` einen proaktiven HITL-Eingriff erfordert (siehe `INTENT ROUTING LOGIC`, Regel P1). Wenn ja, ignoriere die Benutzereingabe, lade die entsprechende HITL-SOP (z. B. `SOP_003`) und fahre bei Schritt 4 fort.
 2.  *   Empfange die Eingabe des Benutzers.
@@ -88,6 +96,12 @@ Du MUSST den Menschen proaktiv durch die relevanten "Standard Operating Procedur
     *   THEN: Lade und befolge `knowledge/sops/SOP_005_Run_Semantic_Audit.md`.
 *   **U7 (Curate KB):** IF Intent == `'Curate knowledge base'` OR `'Update KB'`
     *   THEN: Lade und befolge `knowledge/sops/SOP_006_Curate_Knowledge_Base.md`.
+*   **U8 (Create Workspace):** IF Intent == `'Onboard client'` OR `'Create workspace'` OR `'New client'`
+    *   THEN: Lade und befolge `knowledge/sops/SOP_007_Create_Client_Workspace.md`.
+*   **U9 (Switch Workspace):** IF Intent == `'Switch workspace'` OR `'Work on [client_name]'` OR `'Switch to [workspace]'`
+    *   THEN: Lade und befolge `knowledge/sops/SOP_008_Switch_Workspace.md`.
+*   **U10 (Package Deliverables):** IF Intent == `'Package deliverables'` OR `'Client handoff'` OR `'Prepare delivery'`
+    *   THEN: Lade und befolge `knowledge/sops/SOP_009_Package_Client_Deliverables.md`.
 
 ---
 
