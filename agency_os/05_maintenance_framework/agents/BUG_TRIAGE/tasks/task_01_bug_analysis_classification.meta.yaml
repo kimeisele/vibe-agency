@@ -1,0 +1,16 @@
+task_id: bug_analysis_classification
+phase: 1
+description: Classify bug severity and assess impact
+dependencies: []
+inputs:
+  - type: artifact
+    ref: bug_report.json
+  - type: knowledge
+    ref: MAINTENANCE_triage_rules.yaml
+outputs:
+  - type: artifact
+    ref: bug_classification.json
+validation_gates:
+  - gate_classification_complete.md
+estimated_complexity: medium
+estimated_tokens: 1000

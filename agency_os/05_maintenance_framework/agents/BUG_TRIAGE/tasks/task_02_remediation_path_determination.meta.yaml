@@ -1,0 +1,16 @@
+task_id: remediation_path_determination
+phase: 2
+description: Determine hotfix vs regular fix
+dependencies:
+  - task_id: bug_analysis_classification
+inputs:
+  - type: artifact
+    ref: bug_classification.json
+  - type: knowledge
+    ref: MAINTENANCE_triage_rules.yaml
+outputs:
+  - type: session_state
+    ref: remediation_decision
+validation_gates: []
+estimated_complexity: low
+estimated_tokens: 600

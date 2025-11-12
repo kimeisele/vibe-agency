@@ -1,0 +1,15 @@
+task_id: post_deployment_validation
+phase: 3
+description: Health checks and smoke tests
+dependencies:
+  - task_id: deployment_execution
+inputs:
+  - type: session_state
+    ref: deployment_executed
+outputs:
+  - type: artifact
+    ref: post_deployment_results.json
+validation_gates:
+  - gate_health_checks_passed.md
+estimated_complexity: medium
+estimated_tokens: 1200

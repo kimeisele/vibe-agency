@@ -1,0 +1,17 @@
+version: "1.0"
+agent_id: QA_VALIDATOR
+agent_version: "1.0"
+
+required_knowledge:
+  - path: agency_os/03_qa_framework/knowledge/QA_constraints.yaml
+    purpose: "Technical constraints for code quality and testing"
+    critical: true
+  - path: agency_os/03_qa_framework/knowledge/QA_dependencies.yaml
+    purpose: "Testing tools and environment dependencies"
+    critical: true
+  - path: agency_os/03_qa_framework/knowledge/QA_quality_rules.yaml
+    purpose: "Quality gates, coverage targets, acceptance criteria"
+    critical: true
+  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    purpose: "Schemas for artifact_bundle, test_plan.json, qa_report.json"
+    critical: true

@@ -1,0 +1,19 @@
+task_id: static_analysis
+phase: 3
+description: SAST, SCA, code quality checks
+dependencies:
+  - task_id: setup_environment
+inputs:
+  - type: artifact
+    ref: artifact_bundle
+  - type: knowledge
+    ref: QA_quality_rules.yaml
+  - type: knowledge
+    ref: QA_constraints.yaml
+outputs:
+  - type: artifact
+    ref: static_analysis_results.json
+validation_gates:
+  - gate_no_critical_vulnerabilities.md
+estimated_complexity: medium
+estimated_tokens: 1500

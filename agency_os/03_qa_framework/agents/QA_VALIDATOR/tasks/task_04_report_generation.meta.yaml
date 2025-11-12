@@ -1,0 +1,22 @@
+task_id: report_generation
+phase: 4
+description: Generate final qa_report.json
+dependencies:
+  - task_id: automated_test_execution
+  - task_id: static_analysis
+inputs:
+  - type: artifact
+    ref: test_results.json
+  - type: artifact
+    ref: static_analysis_results.json
+  - type: artifact
+    ref: test_plan.json
+outputs:
+  - type: artifact
+    ref: qa_report.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#qa_report
+    handoff_to: DEPLOY_MANAGER
+validation_gates:
+  - gate_qa_report_valid.md
+estimated_complexity: medium
+estimated_tokens: 1000

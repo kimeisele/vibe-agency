@@ -1,0 +1,15 @@
+task_id: setup_environment
+phase: 1
+description: Setup isolated testing environment
+dependencies: []
+inputs:
+  - type: artifact
+    ref: artifact_bundle
+  - type: knowledge
+    ref: QA_dependencies.yaml
+outputs:
+  - type: session_state
+    ref: environment_ready
+validation_gates: []
+estimated_complexity: low
+estimated_tokens: 500

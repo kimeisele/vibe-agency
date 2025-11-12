@@ -1,0 +1,19 @@
+task_id: output_generation
+phase: 3
+description: Generate hotfix spec or backlog signal
+dependencies:
+  - task_id: remediation_path_determination
+inputs:
+  - type: session_state
+    ref: remediation_decision
+  - type: artifact
+    ref: bug_report.json
+outputs:
+  - type: artifact
+    ref: code_gen_spec.json
+    optional: true
+    description: "Only for hotfixes"
+validation_gates:
+  - gate_hotfix_minimal.md
+estimated_complexity: medium
+estimated_tokens: 1200

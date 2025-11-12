@@ -1,0 +1,18 @@
+task_id: report_generation
+phase: 4
+description: Generate final deploy_receipt.json
+dependencies:
+  - task_id: post_deployment_validation
+inputs:
+  - type: artifact
+    ref: post_deployment_results.json
+  - type: artifact
+    ref: qa_report.json
+outputs:
+  - type: artifact
+    ref: deploy_receipt.json
+    schema_ref: ORCHESTRATION_data_contracts.yaml#deploy_receipt
+validation_gates:
+  - gate_deploy_receipt_valid.md
+estimated_complexity: low
+estimated_tokens: 800

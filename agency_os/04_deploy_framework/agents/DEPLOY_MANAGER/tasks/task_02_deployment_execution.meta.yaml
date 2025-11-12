@@ -1,0 +1,16 @@
+task_id: deployment_execution
+phase: 2
+description: Execute deployment to target environment
+dependencies:
+  - task_id: pre_deployment_checks
+inputs:
+  - type: artifact
+    ref: artifact_bundle
+  - type: knowledge
+    ref: DEPLOY_quality_rules.yaml
+outputs:
+  - type: session_state
+    ref: deployment_executed
+validation_gates: []
+estimated_complexity: high
+estimated_tokens: 2000

@@ -1,0 +1,15 @@
+task_id: automated_test_execution
+phase: 2
+description: Execute all automated tests
+dependencies:
+  - task_id: setup_environment
+inputs:
+  - type: artifact
+    ref: test_plan.json
+outputs:
+  - type: artifact
+    ref: test_results.json
+validation_gates:
+  - gate_all_tests_executed.md
+estimated_complexity: high
+estimated_tokens: 2000

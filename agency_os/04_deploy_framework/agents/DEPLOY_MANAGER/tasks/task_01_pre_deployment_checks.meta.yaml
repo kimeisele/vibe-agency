@@ -1,0 +1,21 @@
+task_id: pre_deployment_checks
+phase: 1
+description: Validate QA approval and environment readiness
+dependencies: []
+inputs:
+  - type: artifact
+    ref: qa_report.json
+    required_fields:
+      - status
+      - approval.isApproved
+  - type: knowledge
+    ref: DEPLOY_constraints.yaml
+  - type: knowledge
+    ref: DEPLOY_dependencies.yaml
+outputs:
+  - type: session_state
+    ref: pre_deployment_validated
+validation_gates:
+  - gate_qa_approved.md
+estimated_complexity: low
+estimated_tokens: 600
