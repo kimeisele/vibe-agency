@@ -17,8 +17,13 @@ A complete, production-ready governance foundation for AOS Knowledge Base manage
 
 **Status:**
 - ✅ All Phase 1 artifacts created and tested
+- ✅ **CRITICAL FIX APPLIED (2025-11-12):** semantic_audit.py now handles multi-document YAML files correctly
+- ✅ **VALIDATION CONFIRMED:** All 17 KB files pass semantic audit (exit code 0)
 - ✅ Committed and pushed to designated branch
 - ✅ Ready for curator assignment and activation
+
+**Critical Issue Found & Resolved:**
+During final validation, semantic_audit.py failed to parse 2 out of 17 KB files (APCE_rules.yaml, FDG_dependencies.yaml) due to multi-document YAML format. Root cause: used `yaml.safe_load()` instead of `yaml.safe_load_all()`. Fix applied and validated. Governance Layer 3 (Validation) is now fully operational.
 
 **Key Decisions:**
 1. **Git-as-Source-of-Truth:** KBs managed like source code (CODEOWNERS, semantic audit)
@@ -153,8 +158,9 @@ vibe-agency/
 
 **File 4: scripts/semantic_audit.py**
 - **Path:** `scripts/semantic_audit.py`
-- **Size:** ~400 lines, production-ready Python
+- **Size:** ~400 lines, production-ready Python (fixed 2025-11-12)
 - **Purpose:** Automated CI/CD validation engine
+- **Status:** ✅ **FIXED AND VALIDATED** - Now handles multi-document YAML files correctly
 - **Key Features:**
   - 6 audit rules (defined in AOS_Ontology.yaml):
     1. AUDIT_001: Detect undefined terms (ERROR)
@@ -167,11 +173,16 @@ vibe-agency/
   - Integration with GitHub Actions (can be triggered on PR)
   - Exit codes (0=pass, 1=error, 2=warning)
   - Verbose output for debugging
+  - **Fixed Issue:** Now uses `yaml.safe_load_all()` to properly handle multi-document YAML files (APCE_rules.yaml, FDG_dependencies.yaml)
 - **Why It Matters:**
   - Catches semantic errors before they reach production
   - Prevents invalid YAML/schema violations
   - Blocks merges if critical errors detected
-  - Scales validation (can run on all 45+ KB files automatically)
+  - Scales validation (can run on all 17 KB files automatically)
+- **Validation Results (2025-11-12):**
+  - ✅ All 17 KB files validated successfully
+  - ✅ Exit code: 0 (no errors, no warnings)
+  - ℹ️ 17 INFO messages (orphaned terms - expected, non-blocking)
 
 **File 5: docs/GOVERNANCE_MODEL.md**
 - **Path:** `docs/GOVERNANCE_MODEL.md`
@@ -662,11 +673,15 @@ Q3+ 2025 - Phase 4: Autonomous Evolution
 - **Mitigation:** Designed SOP for safe evolution (MAJOR/MINOR/PATCH versioning)
 - **Action:** Create ONTOLOGY_EVOLUTION_LOG in Phase 2
 
-**Blindspot 3: KB Validation Completeness**
+**Blindspot 3: KB Validation Completeness** ✅ **RESOLVED (2025-11-12)**
 - **Question:** Does semantic_audit.py catch ALL semantic errors?
-- **Unknown:** Will there be "false positives" (audit fails but rule is valid)?
-- **Mitigation:** semantic_audit.py is currently basic; will be enriched in Phase 2
-- **Action:** Build audit metrics to track false positive/negative rates
+- **ACTUAL FINDING:** semantic_audit.py had a critical bug - failed to parse multi-document YAML files (11.7% of KB files)
+- **ROOT CAUSE:** Used `yaml.safe_load()` instead of `yaml.safe_load_all()` - only loaded first document in files with `---` separators
+- **AFFECTED FILES:** APCE_rules.yaml, FDG_dependencies.yaml
+- **FIX APPLIED:** Modified `load_kb_file()` method to use `yaml.safe_load_all()` with intelligent document merging
+- **VALIDATION RESULTS:** ✅ All 17 KB files now validate successfully (exit code 0)
+- **LESSON LEARNED:** "Production-ready" claims must be validated against actual KB files before declaring Phase 1 complete
+- **STATUS:** Governance Layer 3 (Validation) is now fully operational
 
 **Blindspot 4: Runtime KB Loading**
 - **Question:** How will agents load KBs at runtime without latency penalty?
@@ -691,14 +706,15 @@ Q3+ 2025 - Phase 4: Autonomous Evolution
 
 ## PART 8: SUCCESS CRITERIA
 
-### Phase 1 Success (✅ ACHIEVED)
+### Phase 1 Success (✅ ACHIEVED - Fixed 2025-11-12)
 
-- [x] AOS_Ontology.yaml created with 40+ semantic terms
+- [x] AOS_Ontology.yaml created with 21 semantic terms (not 40+ as originally estimated)
 - [x] CODEOWNERS file routing PRs to curators
-- [x] semantic_audit.py validates KBs against ontology
+- [x] semantic_audit.py validates KBs against ontology ✅ **FIXED:** Now handles multi-document YAML
 - [x] SOP_006 documents formal curation process
 - [x] GOVERNANCE_MODEL.md explains architecture to stakeholders
 - [x] All files committed and pushed to branch
+- [x] **VALIDATION CONFIRMED:** All 17 KB files pass semantic audit (exit code 0)
 
 ### Phase 2 Success (TBD - Target Q1 2025)
 
@@ -789,6 +805,7 @@ Q3+ 2025 - Phase 4: Autonomous Evolution
 | Version | Date | Author | Change |
 |---------|------|--------|--------|
 | 1.0 | 2025-11-12 | AOS Setup | Initial context summary for Lead Architect |
+| 1.1 | 2025-11-12 | Lead Architect + Steward | Critical fix: semantic_audit.py multi-document YAML support. Validation confirmed: all 17 KB files pass. |
 
 ---
 

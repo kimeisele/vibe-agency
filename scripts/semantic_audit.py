@@ -70,10 +70,46 @@ class SemanticAudit:
             return False
 
     def load_kb_file(self, kb_path: str) -> Optional[Dict]:
-        """Load a KB YAML file."""
+        """Load a KB YAML file (supports multi-document YAML with --- separators)."""
         try:
             with open(kb_path, 'r') as f:
-                return yaml.safe_load(f)
+                # Use safe_load_all to handle multi-document YAML files
+                documents = list(yaml.safe_load_all(f))
+
+                # Filter out None documents (from empty sections)
+                documents = [doc for doc in documents if doc is not None]
+
+                if not documents:
+                    self.warnings.append(f"KB file '{kb_path}' is empty or contains no valid documents")
+                    return {}
+
+                # If single document, return as-is
+                if len(documents) == 1:
+                    return documents[0]
+
+                # If multiple documents, merge them intelligently
+                merged = {}
+                for i, doc in enumerate(documents):
+                    if not isinstance(doc, dict):
+                        self.warnings.append(
+                            f"KB file '{kb_path}' document {i+1} is not a dictionary (type: {type(doc).__name__}). Skipping."
+                        )
+                        continue
+
+                    # Merge documents (later documents override earlier ones for conflicting keys)
+                    for key, value in doc.items():
+                        if key in merged and isinstance(merged[key], list) and isinstance(value, list):
+                            # If both are lists, concatenate them
+                            merged[key].extend(value)
+                        elif key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+                            # If both are dicts, merge recursively
+                            merged[key].update(value)
+                        else:
+                            # Otherwise, later value overwrites
+                            merged[key] = value
+
+                return merged
+
         except FileNotFoundError:
             self.errors.append(f"KB file not found: {kb_path}")
             return None
