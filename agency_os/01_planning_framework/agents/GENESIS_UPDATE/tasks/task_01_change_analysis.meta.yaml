@@ -1,0 +1,17 @@
+task_id: task_01_change_analysis
+task_name: "Change Analysis"
+phase: 1
+sequence_order: 1
+
+description: "Analyze the user's change request and categorize it"
+
+required_inputs:
+  - existing_architecture_json
+  - change_request_text
+
+expected_outputs:
+  - change_analysis_json
+
+validation_gates: []
+
+estimated_complexity: low

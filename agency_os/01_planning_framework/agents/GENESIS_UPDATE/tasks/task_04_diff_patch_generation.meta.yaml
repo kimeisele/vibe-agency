@@ -1,0 +1,19 @@
+task_id: task_04_diff_patch_generation
+task_name: "Diff Patch Generation"
+phase: 4
+sequence_order: 4
+
+description: "Generate surgical, minimal diff patches (NOT full files)"
+
+required_inputs:
+  - ripple_analysis_json
+  - existing_architecture_json
+
+expected_outputs:
+  - diff_patches_array
+
+validation_gates:
+  - gate_no_full_regeneration
+  - gate_diff_format_valid
+
+estimated_complexity: high

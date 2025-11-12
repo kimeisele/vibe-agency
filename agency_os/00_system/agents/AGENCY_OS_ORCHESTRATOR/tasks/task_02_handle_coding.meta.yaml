@@ -1,0 +1,26 @@
+task_id: task_02_handle_coding
+task_name: "Handle Coding State"
+state: CODING
+sequence_order: 2
+
+description: "Orchestrate CODE_GENERATOR to produce source code and tests"
+
+required_inputs:
+  - code_gen_spec_json
+  - project_manifest_json
+
+expected_outputs:
+  - artifact_bundle
+  - test_plan_json
+  - code_commit_sha
+
+specialist_agents:
+  - CODE_GENERATOR
+
+validation_gates:
+  - gate_state_integrity
+  - gate_artifact_presence
+  - gate_code_quality
+
+next_state: TESTING
+estimated_complexity: high

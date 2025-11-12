@@ -1,0 +1,37 @@
+knowledge_version: "1.0"
+agent_id: GENESIS_UPDATE
+
+# Knowledge files this agent depends on
+knowledge_files:
+  - id: FAE_constraints
+    path: agency_os/01_planning_framework/knowledge/FAE_constraints.yaml
+    required: true
+    purpose: "Validate new features against v1.0 scope constraints"
+    used_by_tasks:
+      - task_02_feasibility_check
+
+  - id: FDG_dependencies
+    path: agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml
+    required: true
+    purpose: "Check required dependencies for new features"
+    used_by_tasks:
+      - task_02_feasibility_check
+
+  - id: ORCHESTRATION_data_contracts
+    path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    required: true
+    purpose: "Schemas for architecture.json and update_spec.json"
+    used_by_tasks:
+      - task_01_change_analysis
+      - task_06_output_generation
+
+# Loading strategy
+loading_strategy:
+  mode: eager  # Load all at agent initialization
+  cache: true  # Cache for reuse across tasks
+  validation: strict  # Fail if any required file is missing
+
+# Metadata
+metadata:
+  created: "2025-11-12"
+  purpose: "Defines knowledge dependencies for GENESIS_UPDATE agent"

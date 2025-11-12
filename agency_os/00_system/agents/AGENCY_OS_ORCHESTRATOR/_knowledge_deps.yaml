@@ -1,0 +1,46 @@
+knowledge_version: "1.0"
+agent_id: AGENCY_OS_ORCHESTRATOR
+
+# Knowledge files this agent depends on
+knowledge_files:
+  - id: ORCHESTRATION_workflow_design
+    path: agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+    required: true
+    purpose: "State machine logic and transition rules"
+    used_by_tasks:
+      - task_01_handle_planning
+      - task_02_handle_coding
+      - task_03_handle_testing
+      - task_04_handle_qa_approval
+      - task_05_handle_deployment
+      - task_06_handle_maintenance
+
+  - id: ORCHESTRATION_data_contracts
+    path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    required: true
+    purpose: "Schemas for project_manifest.json and all artifacts"
+    used_by_tasks:
+      - task_01_handle_planning
+      - task_02_handle_coding
+      - task_03_handle_testing
+      - task_04_handle_qa_approval
+      - task_05_handle_deployment
+      - task_06_handle_maintenance
+
+  - id: ORCHESTRATION_technology_comparison
+    path: agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml
+    required: false
+    purpose: "Principles of Durable Execution (for understanding the underlying engine)"
+    used_by_tasks:
+      - task_04_handle_qa_approval
+
+# Loading strategy
+loading_strategy:
+  mode: eager  # Load all at agent initialization
+  cache: true  # Cache for reuse across tasks
+  validation: strict  # Fail if any required file is missing
+
+# Metadata
+metadata:
+  created: "2025-11-12"
+  purpose: "Defines knowledge dependencies for AGENCY_OS_ORCHESTRATOR agent"
