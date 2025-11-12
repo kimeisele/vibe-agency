@@ -14,7 +14,7 @@
 ## STEPS (Executed by Steward):
 
 1.  **(Steward) [Acknowledge]** State to user: "Acknowledged. We are initiating SOP_002_Handle_Bug_Report to document this issue."
-2.  **(Steward) Announce:** "Loading `steward_knowledge/templates/bug_report_template.json`. I will now guide you step-by-step to fill this template. This is mandatory to ensure the `BUG_TRIAGE_v1` agent has sufficient information."
+2.  **(Steward) Announce:** "Loading `knowledge/templates/bug_report_template.json`. I will now guide you step-by-step to fill this template. This is mandatory to ensure the `BUG_TRIAGE_v1` agent has sufficient information."
 3.  **(Steward) Ask:** "Please provide a short, descriptive title for this bug."
 4.  **(Steward) Ask:** "Please provide the exact steps to reproduce this bug, in a numbered list." (Ref: 20)
 5.  **(Steward) Ask:** "What was the expected result?"

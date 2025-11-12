@@ -1,0 +1,45 @@
+version: "1.0"
+agent_id: LEAD_ARCHITECT
+
+required_knowledge:
+  - path: CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md
+    purpose: "Strategic overview and Phase 1 status"
+    critical: true
+    description: |
+      Complete governance foundation status, roadmap, and blindspots.
+
+  - path: docs/GOVERNANCE_MODEL.md
+    purpose: "4-layer governance stack architecture"
+    critical: true
+    description: |
+      Defines ontology, CODEOWNERS, semantic audit, and SOP layers.
+
+  - path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+    purpose: "Master semantic definition"
+    critical: true
+    description: |
+      All semantic terms and their governance rules.
+
+optional_knowledge:
+  - path: docs/research/DEEP_RESEARCH_PLAN_governance_blindspots.yaml
+    purpose: "Research plan for 5 blindspots"
+    critical: false
+
+  - path: docs/research/phase-04/Deep Research Plan_ Governance Blindspots.txt
+    purpose: "Research results - governance hardening"
+    critical: false
+
+  - path: docs/research/phase-04/Extracted Configuration Blueprint for Phase 2 Implementation.yaml
+    purpose: "AI-generated blueprint from research"
+    critical: false
+
+resolution:
+  missing_required: "FAIL"
+  missing_optional: "WARN"
+  cache_enabled: true
+  cache_duration: "session"
+
+metadata:
+  created: "2025-11-12"
+  purpose: "LEAD_ARCHITECT agent knowledge dependencies"
+  note: "Loads strategic governance docs and research results"

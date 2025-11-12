@@ -1,0 +1,49 @@
+composition_version: "2.0"
+agent_id: SSF_ROUTER
+agent_version: "1.0"
+
+# System Steward Router - Intent-based Orchestrator
+# Loads appropriate SOPs/Architecture docs based on user intent
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Core personality, Guardian Directives, execution loop"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "SOPs and Architecture documentation"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Project manifest, current_state, available SOPs"
+
+# Variables for runtime substitution
+variables:
+  project_manifest_path: ${runtime_context.project_manifest}
+  current_state: ${runtime_context.current_state}
+  available_sops: ${runtime_context.sops_registry}
+
+# Conflict resolution
+conflict_resolution:
+  strategy: last_wins
+  exceptions:
+    - section: GUARDIAN_DIRECTIVES
+      strategy: merge_all
+    - section: INTENT_ROUTING_RULES
+      strategy: merge_all
+
+# Metadata
+metadata:
+  created: "2025-11-12"
+  purpose: "System Steward Router - orchestrates SOP execution based on intent"
+  refactored_from:
+    - SSF_SHELL.md
+    - SSF_CORE_PERSONALITY.md
+  notes: |
+    This is a META-AGENT that routes user intent to specialized agents or SOPs.
+    Unlike task-based agents (GENESIS_BLUEPRINT), this is an intent router.

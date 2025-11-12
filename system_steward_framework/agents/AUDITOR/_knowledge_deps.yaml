@@ -1,0 +1,26 @@
+version: "1.0"
+agent_id: AUDITOR
+
+required_knowledge:
+  - path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+    purpose: "Master semantic definition - audit rules and term definitions"
+    critical: true
+    description: |
+      Defines all valid semantic terms, their types, and audit rules.
+      AUDITOR validates all KB files against this ontology.
+
+  - path: docs/GOVERNANCE_MODEL.md
+    purpose: "Governance framework and curation policies"
+    critical: false
+    description: |
+      Provides context for audit severity levels and escalation procedures.
+
+resolution:
+  missing_required: "FAIL"
+  missing_optional: "WARN"
+  cache_enabled: true
+  cache_duration: "session"
+
+metadata:
+  created: "2025-11-12"
+  purpose: "AUDITOR agent knowledge dependencies"

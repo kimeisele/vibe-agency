@@ -1,0 +1,35 @@
+composition_version: "2.0"
+agent_id: AUDITOR
+agent_version: "1.0"
+
+# Semantic Auditor Agent - validates KB files against ontology
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Auditor personality and validation rules"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "AOS Ontology and audit rules"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Files to audit, audit mode (validate/report/dry-run)"
+
+variables:
+  audit_mode: ${runtime_context.audit_mode}
+  target_files: ${runtime_context.target_files}
+  ontology_path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+
+conflict_resolution:
+  strategy: last_wins
+
+metadata:
+  created: "2025-11-12"
+  purpose: "Semantic KB validation agent"
+  refactored_from: AUDITOR_AGENT_v1.md

@@ -1,0 +1,34 @@
+composition_version: "2.0"
+agent_id: LEAD_ARCHITECT
+agent_version: "1.0"
+
+# Lead Architect Session - governance & architecture decision-making
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Lead Architect personality and intent routing"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "Governance docs, research plans, context summaries"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Session state, research results, decision context"
+
+variables:
+  session_mode: ${runtime_context.session_mode}  # architecture, research, governance
+  research_files: ${runtime_context.research_files}
+
+conflict_resolution:
+  strategy: last_wins
+
+metadata:
+  created: "2025-11-12"
+  purpose: "Lead Architect governance and architecture sessions"
+  refactored_from: LEAD_ARCHITECT_SESSION_PROMPT.md
