@@ -1,0 +1,571 @@
+# =================================================================
+# CRITICAL PATH ANALYSIS - CORRECTED
+# =================================================================
+# VERSION: 2.0 (CORRECTED)
+# DATE: 2025-11-13
+# PURPOSE: Realistic implementation roadmap based on actual state
+# FIXES: Previous version claimed components were missing that actually exist
+# =================================================================
+
+version: "2.0"
+kind: "CriticalPathAnalysis"
+metadata:
+  description: "CORRECTED: Realistic roadmap from actual current state"
+  created: "2025-11-13"
+  corrects: "CRITICAL_PATH_ANALYSIS.yaml v1.0"
+  corrections:
+    - "PromptRuntime EXISTS (was marked as missing)"
+    - "KB loading EXISTS (was marked as missing)"
+    - "workspace_utils EXISTS (was marked as in_progress)"
+    - "Reduced timeline from 12 weeks to 2-3 weeks"
+    - "Added missing client workflow documentation"
+
+# =================================================================
+# ACTUAL CURRENT STATE (Fact-Checked)
+# =================================================================
+current_state:
+  date: "2025-11-13"
+  completion_percentage: 60  # Was incorrectly stated as 40%
+
+  actually_completed:
+    - name: "Prompt Composition System"
+      status: "WORKING"
+      files:
+        - "agency_os/00_system/runtime/prompt_runtime.py (319 lines)"
+      capabilities:
+        - "Loads _composition.yaml configs"
+        - "Assembles prompts from markdown + YAML"
+        - "Injects knowledge base files"
+        - "Returns composed prompt string"
+      limitation: "Only supports GENESIS_BLUEPRINT (hardcoded line 273)"
+
+    - name: "Workspace Management"
+      status: "WORKING"
+      files:
+        - "scripts/workspace_utils.py (561 lines)"
+      capabilities:
+        - "Multi-workspace isolation"
+        - "Manifest load/save"
+        - "Registry management"
+        - "Path resolution"
+
+    - name: "Knowledge Base Infrastructure"
+      status: "COMPLETE"
+      files:
+        - "17 YAML knowledge bases (6,090 lines)"
+        - "scripts/semantic_audit.py (validation)"
+        - ".knowledge_index.yaml (semantic index)"
+
+    - name: "Prompt Templates"
+      status: "COMPLETE"
+      files:
+        - "11 agent directories with prompts"
+        - "50+ task/gate markdown files"
+
+    - name: "Data Contracts"
+      status: "COMPLETE"
+      files:
+        - "ORCHESTRATION_data_contracts.yaml (9 schemas)"
+
+    - name: "State Machine Design"
+      status: "SPECIFIED (not implemented)"
+      files:
+        - "ORCHESTRATION_workflow_design.yaml"
+
+  actually_missing:
+    - name: "LLM API Integration"
+      impact: "Cannot execute prompts automatically"
+      estimate: "~100 lines, 1 day"
+
+    - name: "State Machine Executor"
+      impact: "Cannot automate workflows"
+      estimate: "~200 lines, 2 days"
+
+    - name: "Artifact Validator"
+      impact: "Cannot validate JSON outputs"
+      estimate: "~150 lines, 1 day"
+
+    - name: "Agent Registry (dynamic)"
+      impact: "Only 1 of 11 agents works"
+      estimate: "~50 lines, 2 hours"
+
+    - name: "Client Workflow Documentation"
+      impact: "Users don't know how to use the system"
+      estimate: "5 markdown files, 1 day"
+
+  blockers:
+    - blocker_id: "B1_CORRECTED"
+      name: "No User Documentation"
+      severity: "CRITICAL"
+      impact: "System is unusable without knowing how to use it"
+      blocks: "All user adoption"
+      resolution: "Write docs/user-guide/"
+
+    - blocker_id: "B2_CORRECTED"
+      name: "No LLM Integration"
+      severity: "HIGH"
+      impact: "Manual prompt copy/paste required"
+      blocks: "Automation"
+      resolution: "Add scripts/llm_executor.py (~100 lines)"
+
+    - blocker_id: "B3_CORRECTED"
+      name: "Hardcoded Agent Support"
+      severity: "MEDIUM"
+      impact: "Only 1 of 11 agents works"
+      blocks: "Multi-agent workflows"
+      resolution: "Fix _get_agent_path() in prompt_runtime.py"
+
+# =================================================================
+# CORRECTED MILESTONES (Realistic Timeline)
+# =================================================================
+milestones:
+  # -------------------------------------------------------------------------
+  - milestone_id: "M1_CORRECTED"
+    name: "Client Workflow Documentation"
+    description: "Users know how to use the system"
+    target_date: "Day 1"
+    priority: "P0"
+    status: "NOT_STARTED"
+
+    rationale: |
+      Without docs, even if code works, no one knows:
+      - How to start a project
+      - What outputs to expect
+      - How to review results
+      This is THE critical gap, not code.
+
+    deliverables:
+      - name: "User Quick Start Guide"
+        file: "docs/user-guide/quickstart.md"
+        content:
+          - "5-minute overview"
+          - "Prerequisites"
+          - "First project walkthrough"
+
+      - name: "Client Workflow Guide"
+        file: "docs/user-guide/client-workflow.md"
+        content:
+          - "From idea to deployment (client perspective)"
+          - "Phase breakdown (PLANNING → CODING → TESTING → DEPLOY)"
+          - "What to expect at each phase"
+          - "How to review artifacts"
+
+      - name: "Operator Workflow Guide"
+        file: "docs/user-guide/operator-workflow.md"
+        content:
+          - "How to run the system"
+          - "Manual execution steps (until automation complete)"
+          - "Workspace management"
+          - "SOP cross-references"
+
+      - name: "Troubleshooting Guide"
+        file: "docs/user-guide/troubleshooting.md"
+        content:
+          - "Common errors"
+          - "How to debug"
+          - "Validation failures"
+
+      - name: "Architecture Overview (Non-Technical)"
+        file: "docs/user-guide/how-it-works.md"
+        content:
+          - "Single-LLM architecture (not multi-agent)"
+          - "Prompt composition concept"
+          - "Knowledge base role"
+          - "What 'agents' actually are"
+
+    success_criteria:
+      - "✅ User can read docs and understand how to start project"
+      - "✅ Operator can follow manual workflow"
+      - "✅ Architecture misconceptions clarified"
+
+    estimated_effort: "1 day"
+
+  # -------------------------------------------------------------------------
+  - milestone_id: "M2_CORRECTED"
+    name: "LLM API Integration"
+    description: "Prompts can be executed automatically"
+    target_date: "Day 2"
+    priority: "P0"
+    status: "NOT_STARTED"
+    depends_on: []  # Can be done in parallel with M1
+
+    deliverables:
+      - name: "LLM Executor"
+        file: "scripts/llm_executor.py"
+        features:
+          - "Import anthropic SDK"
+          - "Send composed prompt to Claude API"
+          - "Parse JSON response"
+          - "Handle errors/retries (3x)"
+        code_estimate: "~100 lines"
+        api_usage:
+          provider: "Anthropic"
+          model: "claude-sonnet-4"
+          cost_estimate: "$0.50-$5 per agent execution"
+
+      - name: "Integration with PromptRuntime"
+        file: "Update: agency_os/00_system/runtime/prompt_runtime.py"
+        changes:
+          - "Add execute_with_llm() method"
+          - "Optional: Keep execute_task() returning string for testing"
+
+      - name: "Test Script"
+        file: "tests/test_llm_executor.py"
+        tests:
+          - "Can execute GENESIS_BLUEPRINT task"
+          - "Retries on failure"
+          - "Parses JSON response"
+
+    success_criteria:
+      - "✅ Can execute: python llm_executor.py --agent GENESIS_BLUEPRINT --task task_01"
+      - "✅ Returns parsed JSON result"
+      - "✅ Errors are retried"
+
+    estimated_effort: "1 day"
+
+  # -------------------------------------------------------------------------
+  - milestone_id: "M3_CORRECTED"
+    name: "Agent Registry (Support All Agents)"
+    description: "Fix hardcoding, support all 11 agents"
+    target_date: "Day 2 (afternoon)"
+    priority: "P0"
+    status: "NOT_STARTED"
+    depends_on: []  # Can be done in parallel
+
+    deliverables:
+      - name: "Fix _get_agent_path()"
+        file: "Update: agency_os/00_system/runtime/prompt_runtime.py"
+        current_code: |
+          # Lines 268-276 (HARDCODED)
+          def _get_agent_path(self, agent_id: str) -> Path:
+              if agent_id == "GENESIS_BLUEPRINT":
+                  return self.base_path / "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT"
+              raise ValueError(f"Unknown agent_id: {agent_id}")
+
+        new_code: |
+          # Dynamic agent path resolution
+          AGENT_REGISTRY = {
+              "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
+              "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
+              "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
+              "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
+              "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
+              "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
+              "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
+              "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
+              "AUDITOR": "system_steward_framework/agents/AUDITOR",
+              "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
+              "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
+          }
+
+          def _get_agent_path(self, agent_id: str) -> Path:
+              if agent_id not in AGENT_REGISTRY:
+                  raise ValueError(f"Unknown agent_id: {agent_id}")
+              return self.base_path / AGENT_REGISTRY[agent_id]
+
+      - name: "Test All Agents"
+        file: "tests/test_all_agents.py"
+        test: "Verify all 11 agents can load prompts"
+
+    success_criteria:
+      - "✅ All 11 agents can be invoked"
+      - "✅ Test suite passes for all agents"
+
+    estimated_effort: "2 hours"
+
+  # -------------------------------------------------------------------------
+  - milestone_id: "M4_CORRECTED"
+    name: "Artifact Validator"
+    description: "Validate JSON outputs against schemas"
+    target_date: "Day 3"
+    priority: "P1"
+    status: "NOT_STARTED"
+    depends_on: ["M2_CORRECTED"]  # Needs LLM integration to have outputs to validate
+
+    deliverables:
+      - name: "Artifact Validator"
+        file: "scripts/validate_artifact.py"
+        features:
+          - "Load data contract schemas"
+          - "JSON Schema validation"
+          - "Clear error messages"
+        dependencies:
+          - "jsonschema (pip install jsonschema)"
+        code_estimate: "~150 lines"
+
+      - name: "Integration with LLM Executor"
+        feature: "Auto-validate after agent execution"
+
+      - name: "Test Suite"
+        file: "tests/test_validator.py"
+        tests:
+          - "Valid feature_spec.json passes"
+          - "Invalid JSON fails with clear error"
+
+    success_criteria:
+      - "✅ Can validate all 9 artifact types"
+      - "✅ Invalid artifacts rejected with clear errors"
+
+    estimated_effort: "1 day"
+
+  # -------------------------------------------------------------------------
+  - milestone_id: "M5_CORRECTED"
+    name: "Manual State Orchestrator"
+    description: "Operator can manually trigger state transitions"
+    target_date: "Day 4-5"
+    priority: "P1"
+    status: "NOT_STARTED"
+    depends_on: ["M2_CORRECTED", "M3_CORRECTED"]
+
+    deliverables:
+      - name: "Orchestration Script"
+        file: "scripts/orchestrate.py"
+        features:
+          - "Read current state from manifest"
+          - "Load workflow definition (ORCHESTRATION_workflow_design.yaml)"
+          - "Show available transitions"
+          - "Execute transition (invoke agent, update state)"
+        usage: |
+          # Show current state
+          python orchestrate.py --workspace acme_corp --status
+
+          # Execute transition
+          python orchestrate.py --workspace acme_corp --transition T1_StartCoding
+
+      - name: "Workflow Engine (simple)"
+        features:
+          - "Map states to agents"
+          - "Trigger agent execution"
+          - "Update manifest"
+          - "Validate artifacts before transition"
+
+      - name: "Test Full Workflow"
+        test: "Execute PLANNING → CODING → TESTING manually"
+
+    success_criteria:
+      - "✅ Can manually execute all state transitions"
+      - "✅ Artifacts validated before state change"
+      - "✅ Manifest updated correctly"
+
+    estimated_effort: "2 days"
+
+    note: |
+      This is MANUAL orchestration.
+      Automated (file watching, auto-trigger) is P2 - not needed for MVP.
+
+  # -------------------------------------------------------------------------
+  - milestone_id: "M6_CORRECTED"
+    name: "First Real Use Case"
+    description: "Execute one real project end-to-end"
+    target_date: "Day 6-7"
+    priority: "P0"
+    status: "NOT_STARTED"
+    depends_on: ["M1_CORRECTED", "M2_CORRECTED", "M3_CORRECTED", "M4_CORRECTED", "M5_CORRECTED"]
+
+    deliverables:
+      - name: "Test Project"
+        description: "Use system for real (internal) project"
+        steps:
+          - "Create workspace (SOP_007)"
+          - "Start project (manual execution)"
+          - "Execute VIBE_ALIGNER"
+          - "Review feature_spec.json"
+          - "Execute GENESIS_BLUEPRINT"
+          - "Review architecture.json"
+          - "Document learnings"
+
+      - name: "Retrospective"
+        file: "docs/retrospectives/first_use_case.md"
+        content:
+          - "What worked"
+          - "What didn't work"
+          - "User confusion points"
+          - "Documentation gaps"
+          - "Code bugs found"
+
+    success_criteria:
+      - "✅ Project completes PLANNING → CODING phases"
+      - "✅ Artifacts generated and validated"
+      - "✅ Bugs documented (not necessarily fixed)"
+      - "✅ Documentation updated based on learnings"
+
+    estimated_effort: "2 days (includes execution + retrospective)"
+
+# =================================================================
+# CORRECTED DEPENDENCY GRAPH
+# =================================================================
+dependency_graph: |
+  M1 (Docs) ──┐
+              ├─→ M6 (First Use Case)
+  M2 (LLM) ───┤
+              │
+  M3 (Registry) ─→ M5 (Orchestrator) ──┘
+              │
+  M4 (Validator) ─┘
+
+  Timeline:
+  Day 1: M1 (Docs)
+  Day 2: M2 (LLM) + M3 (Registry) in parallel
+  Day 3: M4 (Validator)
+  Day 4-5: M5 (Orchestrator)
+  Day 6-7: M6 (First Use Case)
+
+# =================================================================
+# CORRECTED TIMELINE SUMMARY
+# =================================================================
+timeline_summary:
+  total_duration: "1-2 weeks (not 12 weeks)"
+
+  previous_estimate: "12 weeks"
+  corrected_estimate: "1-2 weeks"
+  reason: "Previous estimate assumed components were missing that actually exist"
+
+  phase_1_foundation:
+    duration: "Day 1-3"
+    milestones: ["M1", "M2", "M3", "M4"]
+    deliverable: "All code gaps closed"
+    effort: "~3 days"
+
+  phase_2_integration:
+    duration: "Day 4-5"
+    milestones: ["M5"]
+    deliverable: "Manual workflow functional"
+    effort: "~2 days"
+
+  phase_3_validation:
+    duration: "Day 6-7"
+    milestones: ["M6"]
+    deliverable: "First real project executed"
+    effort: "~2 days"
+
+  buffer:
+    duration: "Day 8-10"
+    purpose: "Bug fixes, documentation updates"
+
+# =================================================================
+# WHAT WAS WRONG WITH PREVIOUS VERSION
+# =================================================================
+corrections_made:
+  - correction: "PromptRuntime completion"
+    previous_claim: "PromptRuntime not started"
+    reality: "Exists and works (319 lines)"
+    impact: "Saved ~1 week of work"
+
+  - correction: "KB loading completion"
+    previous_claim: "KB loading mechanism missing"
+    reality: "Implemented in prompt_runtime.py (lines 152-179)"
+    impact: "Saved ~3 days of work"
+
+  - correction: "Workspace utils completion"
+    previous_claim: "In progress"
+    reality: "Complete and functional (561 lines)"
+    impact: "Saved ~5 days of work"
+
+  - correction: "Timeline reduction"
+    previous_claim: "12 weeks total"
+    reality: "1-2 weeks needed"
+    impact: "80% timeline reduction"
+
+  total_work_saved: "~2.5 weeks of redundant implementation"
+
+# =================================================================
+# IMMEDIATE NEXT STEPS (What to do RIGHT NOW)
+# =================================================================
+immediate_next_steps:
+  day_1:
+    - action: "Write Client Workflow Documentation"
+      owner: "Technical Writer or Lead Architect"
+      priority: "P0"
+      files:
+        - "docs/user-guide/quickstart.md"
+        - "docs/user-guide/client-workflow.md"
+        - "docs/user-guide/operator-workflow.md"
+      estimated_hours: 8
+
+  day_2_morning:
+    - action: "Add LLM API Integration"
+      owner: "Backend Engineer"
+      priority: "P0"
+      files:
+        - "scripts/llm_executor.py"
+      estimated_hours: 4
+
+  day_2_afternoon:
+    - action: "Fix Agent Registry (remove hardcoding)"
+      owner: "Backend Engineer"
+      priority: "P0"
+      files:
+        - "Update: agency_os/00_system/runtime/prompt_runtime.py"
+      estimated_hours: 2
+
+  day_3:
+    - action: "Implement Artifact Validator"
+      owner: "Backend Engineer"
+      priority: "P1"
+      files:
+        - "scripts/validate_artifact.py"
+      estimated_hours: 8
+
+  day_4_5:
+    - action: "Build Manual Orchestrator"
+      owner: "Backend Engineer"
+      priority: "P1"
+      files:
+        - "scripts/orchestrate.py"
+      estimated_hours: 16
+
+  day_6_7:
+    - action: "Execute First Real Project"
+      owner: "Team"
+      priority: "P0"
+      deliverable: "Real artifacts + retrospective"
+
+# =================================================================
+# SCOPE THAT WAS INCORRECTLY INFLATED
+# =================================================================
+scope_corrections:
+  removed_from_critical_path:
+    - item: "PromptRuntime implementation"
+      reason: "Already exists"
+      work_saved: "1 week"
+
+    - item: "KB loading mechanism"
+      reason: "Already implemented"
+      work_saved: "3 days"
+
+    - item: "Workspace management"
+      reason: "Already complete"
+      work_saved: "5 days"
+
+    - item: "RAG system for large KBs"
+      reason: "Not needed (direct injection works)"
+      work_saved: "1 week"
+
+    - item: "Durable execution engine (Temporal/Prefect)"
+      reason: "Not needed (simple script sufficient)"
+      work_saved: "2 weeks"
+
+  total_scope_reduction: "~6 weeks of unnecessary work"
+
+# =================================================================
+# CONCLUSION
+# =================================================================
+conclusion:
+  previous_assessment: "System 40% complete, 12 weeks remaining"
+  corrected_assessment: "System 60% complete, 1-2 weeks remaining"
+
+  key_insight: |
+    The biggest gap is not CODE - it's DOCUMENTATION.
+    Users don't know how to use the system because there's no user guide.
+
+  critical_path:
+    1. "Write user documentation (1 day)"
+    2. "Add LLM integration (1 day)"
+    3. "Fix agent registry (2 hours)"
+    4. "Test with real project"
+
+  realistic_timeline: "1-2 weeks to MVP"
+
+# =================================================================
+# END OF CORRECTED CRITICAL PATH ANALYSIS
+# =================================================================

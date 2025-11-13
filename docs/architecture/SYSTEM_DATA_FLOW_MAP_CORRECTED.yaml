@@ -1,0 +1,530 @@
+# =================================================================
+# SYSTEM DATA FLOW MAP - CORRECTED
+# =================================================================
+# VERSION: 2.0 (CORRECTED)
+# DATE: 2025-11-13
+# PURPOSE: Accurate description of how data flows through the system
+# FIXES: Previous version suggested multi-agent architecture; reality is single-LLM
+# =================================================================
+
+version: "2.0"
+kind: "SystemDataFlowMap"
+metadata:
+  description: "CORRECTED: Accurate data flow for single-LLM prompt composition system"
+  created: "2025-11-13"
+  corrects: "SYSTEM_DATA_FLOW_MAP.yaml v1.0"
+  corrections:
+    - "Clarified: 'Agents' are prompt templates, not separate processes"
+    - "Clarified: System uses single LLM (Claude Code), not multiple agents"
+    - "Corrected: Data flow is sequential prompt composition, not message passing"
+
+# =================================================================
+# ARCHITECTURE REALITY
+# =================================================================
+architecture_type: "Single-LLM Prompt Composition System"
+
+what_it_is_not:
+  - "❌ Multi-agent orchestration (multiple AI processes communicating)"
+  - "❌ Agent mesh (agents calling each other)"
+  - "❌ Microservices architecture"
+  - "❌ Event-driven message queue system"
+
+what_it_actually_is:
+  - "✅ Modular prompt template library"
+  - "✅ Single LLM (Claude Code) with different composed prompts"
+  - "✅ State-based workflow guidance"
+  - "✅ File-based data exchange (JSON artifacts)"
+
+key_insight: |
+  "Agent switching" = Loading different prompt template into same LLM
+  Not: Different AI agents talking to each other
+  Think: vim with different modes, not multiple programs
+
+# =================================================================
+# SYSTEM COMPONENTS (Corrected)
+# =================================================================
+components:
+  # -------------------------
+  # SINGLE LLM RUNTIME
+  # -------------------------
+  - component_id: "LLM_RUNTIME"
+    name: "Claude Code (Single LLM)"
+    type: "execution_engine"
+    location: "External (Anthropic API)"
+    role: "The ONE AI that processes ALL prompts"
+    reality: |
+      There is exactly ONE Claude instance.
+      It receives different composed prompts.
+      It does not "talk to" other agents.
+
+  # -------------------------
+  # PROMPT COMPOSITION ENGINE
+  # -------------------------
+  - component_id: "PROMPT_RUNTIME"
+    name: "Prompt Composition Engine"
+    type: "text_assembler"
+    location: "agency_os/00_system/runtime/prompt_runtime.py"
+    status: "EXISTS (319 lines)"
+    role: "Assembles prompts from fragments"
+
+    inputs:
+      - "agent_id (which prompt template to load)"
+      - "task_id (which task within agent)"
+      - "runtime_context (variables to inject)"
+
+    process:
+      - "Load _composition.yaml (assembly instructions)"
+      - "Load _prompt_core.md (base personality)"
+      - "Load knowledge base YAML files"
+      - "Load task-specific markdown"
+      - "Inject runtime variables"
+      - "Concatenate all fragments"
+
+    output:
+      - "String (composed prompt text)"
+
+    does_not_do:
+      - "❌ Call LLM API"
+      - "❌ Execute agents"
+      - "❌ Orchestrate workflows"
+
+  # -------------------------
+  # "AGENTS" (ACTUALLY: PROMPT TEMPLATES)
+  # -------------------------
+  - component_id: "AGENT_TEMPLATES"
+    name: "Agent Directories (Prompt Templates)"
+    type: "configuration"
+    location: "agency_os/*/agents/*/"
+    status: "COMPLETE (11 agents)"
+    reality: |
+      These are NOT running processes.
+      They are directories containing:
+      - Markdown files (prompt text)
+      - YAML files (configuration)
+
+    agents:
+      - id: "VIBE_ALIGNER"
+        framework: "01_planning_framework"
+        purpose: "Feature extraction from user requirements"
+        prompt_files:
+          - "_prompt_core.md (base personality)"
+          - "tasks/task_01_education_calibration.md"
+          - "tasks/task_02_feature_extraction.md"
+          - "tasks/task_03_feasibility_validation.md"
+          - "tasks/task_04_gap_detection.md"
+          - "tasks/task_05_scope_negotiation.md"
+          - "tasks/task_06_output_generation.md"
+        knowledge_deps:
+          - "FAE_constraints.yaml"
+          - "FDG_dependencies.yaml"
+          - "APCE_rules.yaml"
+
+      - id: "GENESIS_BLUEPRINT"
+        framework: "01_planning_framework"
+        purpose: "Technical architecture from feature spec"
+        prompt_files:
+          - "_prompt_core.md"
+          - "tasks/task_01_select_core_modules.md"
+          - "tasks/task_02_design_extensions.md"
+          - "tasks/task_03_generate_config_schema.md"
+          - "tasks/task_04_validate_architecture.md"
+          - "tasks/task_05_handoff.md"
+
+      - id: "CODE_GENERATOR"
+        framework: "02_code_gen_framework"
+        purpose: "Generate code from architecture"
+
+      - id: "QA_VALIDATOR"
+        framework: "03_qa_framework"
+        purpose: "Run tests and static analysis"
+
+      - id: "DEPLOY_MANAGER"
+        framework: "04_deploy_framework"
+        purpose: "Deploy to production"
+
+      - id: "BUG_TRIAGE"
+        framework: "05_maintenance_framework"
+        purpose: "Analyze and classify bugs"
+
+      - id: "SSF_ROUTER"
+        framework: "system_steward_framework"
+        purpose: "Route user intent to SOPs"
+
+      - id: "AUDITOR"
+        framework: "system_steward_framework"
+        purpose: "Validate knowledge base integrity"
+
+      - id: "LEAD_ARCHITECT"
+        framework: "system_steward_framework"
+        purpose: "High-level design decisions"
+
+      - id: "AGENCY_OS_ORCHESTRATOR"
+        framework: "00_system"
+        purpose: "State machine coordination"
+
+      - id: "GENESIS_UPDATE"
+        framework: "01_planning_framework"
+        purpose: "Update existing architecture"
+
+  # -------------------------
+  # WORKSPACE MANAGEMENT
+  # -------------------------
+  - component_id: "WORKSPACE_UTILS"
+    name: "Workspace Management"
+    type: "utility_library"
+    location: "scripts/workspace_utils.py"
+    status: "EXISTS (561 lines)"
+    role: "Multi-client workspace isolation"
+
+    functions:
+      - "get_active_workspace() → reads $ACTIVE_WORKSPACE env var"
+      - "resolve_manifest_path(workspace) → path to project_manifest.json"
+      - "load_workspace_manifest(workspace) → parse manifest"
+      - "save_workspace_manifest(manifest, workspace) → write manifest"
+      - "register_workspace(...) → add new workspace to registry"
+      - "archive_workspace(workspace) → move to archived"
+
+  # -------------------------
+  # STATE MACHINE (DESIGN ONLY)
+  # -------------------------
+  - component_id: "STATE_MACHINE"
+    name: "SDLC Workflow State Machine"
+    type: "specification"
+    location: "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    status: "DESIGNED (not implemented)"
+    role: "Defines valid state transitions"
+
+    states:
+      - "INITIALIZING"
+      - "PLANNING"
+      - "CODING"
+      - "TESTING"
+      - "AWAITING_QA_APPROVAL"
+      - "DEPLOYING"
+      - "COMPLETED"
+
+    reality: |
+      This is a YAML file describing desired workflow.
+      No executor exists to automate transitions.
+      Currently: Manual state updates in project_manifest.json
+
+  # -------------------------
+  # DATA CONTRACTS (SCHEMAS)
+  # -------------------------
+  - component_id: "DATA_CONTRACTS"
+    name: "Artifact Schemas"
+    type: "specification"
+    location: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+    status: "COMPLETE (9 schemas)"
+    role: "Define expected JSON structure for artifacts"
+
+    schemas:
+      - "feature_spec.json"
+      - "architecture.json"
+      - "code_bundle.json"
+      - "qa_report.json"
+      - "deploy_receipt.json"
+      - "bug_report.json"
+      - "triage_result.json"
+      - "change_request.json"
+      - "update_patch.json"
+
+    reality: |
+      These are schemas (documentation).
+      No validation runtime exists (yet).
+
+# =================================================================
+# ACTUAL DATA FLOW (How It Really Works)
+# =================================================================
+data_flow_reality:
+  # -------------------------
+  # STEP 1: User Input
+  # -------------------------
+  - step: 1
+    name: "User Provides Requirements"
+    actor: "Human"
+    action: "Describes project idea"
+    format: "Natural language text"
+    location: "Claude Code chat or text file"
+
+  # -------------------------
+  # STEP 2: Prompt Composition
+  # -------------------------
+  - step: 2
+    name: "Compose Agent Prompt"
+    actor: "PromptRuntime"
+    action: "Assemble prompt for VIBE_ALIGNER"
+    inputs:
+      - "agent_id: 'VIBE_ALIGNER'"
+      - "task_id: 'feature_extraction'"
+      - "runtime_context: {user_requirements: '...', workspace: 'acme_corp'}"
+    process:
+      - "Load _composition.yaml"
+      - "Load _prompt_core.md (base personality)"
+      - "Load FAE_constraints.yaml (feasibility rules)"
+      - "Load FDG_dependencies.yaml (dependency graph)"
+      - "Load APCE_rules.yaml (complexity scoring)"
+      - "Load task_02_feature_extraction.md (task instructions)"
+      - "Inject runtime_context variables"
+      - "Concatenate all fragments into single prompt"
+    output:
+      type: "String"
+      size: "~15,000-50,000 characters"
+      content: "Fully composed prompt ready for LLM"
+
+  # -------------------------
+  # STEP 3: LLM Execution (MANUAL - No automation yet)
+  # -------------------------
+  - step: 3
+    name: "Execute Prompt with Claude"
+    actor: "Human (MANUAL) or llm_executor.py (NOT YET IMPLEMENTED)"
+    action: "Send composed prompt to Claude API"
+    current_reality: "Human copies composed prompt and sends to Claude Code"
+    desired_reality: "scripts/llm_executor.py sends automatically"
+    process:
+      - "Send prompt to Anthropic API (claude-sonnet-4)"
+      - "Receive response (text)"
+      - "Parse JSON from response"
+    output:
+      type: "JSON"
+      example: "feature_spec.json"
+
+  # -------------------------
+  # STEP 4: Artifact Storage
+  # -------------------------
+  - step: 4
+    name: "Save Artifact to Workspace"
+    actor: "Human or automation script"
+    action: "Write JSON to workspace artifacts folder"
+    location: "workspaces/{workspace}/artifacts/planning/feature_spec.json"
+    validation: "MANUAL (no validator yet)"
+
+  # -------------------------
+  # STEP 5: State Update
+  # -------------------------
+  - step: 5
+    name: "Update Manifest State"
+    actor: "Human or orchestrator script"
+    action: "Update project_manifest.json"
+    changes:
+      - "status.projectPhase: 'PLANNING' → 'CODING'"
+      - "artifacts.planning.feature_spec.path: '...'"
+    current_reality: "Human edits manifest manually"
+    desired_reality: "scripts/orchestrate.py updates automatically"
+
+  # -------------------------
+  # STEP 6: Next Agent (Repeat)
+  # -------------------------
+  - step: 6
+    name: "Execute Next Agent"
+    actor: "PromptRuntime"
+    action: "Repeat steps 2-5 for GENESIS_BLUEPRINT"
+    inputs:
+      - "agent_id: 'GENESIS_BLUEPRINT'"
+      - "task_id: 'select_core_modules'"
+      - "runtime_context: {feature_spec: '...', workspace: 'acme_corp'}"
+    output: "architecture.json"
+
+# =================================================================
+# DATA FLOW DIAGRAM (Corrected)
+# =================================================================
+data_flow_diagram: |
+  User Requirements (Text)
+          ↓
+  PromptRuntime.execute_task()
+          ↓
+  Composed Prompt (String, ~20KB)
+          ↓
+  [MANUAL STEP] Copy to Claude Code
+          ↓
+  Claude API (claude-sonnet-4)
+          ↓
+  JSON Response
+          ↓
+  [MANUAL STEP] Save to workspace
+          ↓
+  workspaces/{workspace}/artifacts/{phase}/{artifact}.json
+          ↓
+  [MANUAL STEP] Update manifest
+          ↓
+  project_manifest.json (projectPhase updated)
+          ↓
+  Repeat for next agent
+
+# =================================================================
+# WHAT "AGENT INVOCATION" ACTUALLY MEANS
+# =================================================================
+agent_invocation_reality:
+  misconception: |
+    "SSF_ROUTER invokes VIBE_ALIGNER agent"
+    Sounds like: Service A calls Service B
+
+  reality: |
+    1. PromptRuntime loads VIBE_ALIGNER prompt templates
+    2. Composes single large prompt string
+    3. (Manual: Human sends to Claude Code)
+    4. Claude processes prompt and returns JSON
+    5. JSON saved as artifact
+    6. Manifest updated
+    7. Repeat with GENESIS_BLUEPRINT prompt templates
+
+  key_point: |
+    Same Claude instance processes all prompts.
+    "Agent switching" = Different prompt text, same LLM.
+
+# =================================================================
+# FILE-BASED DATA EXCHANGE
+# =================================================================
+data_exchange_mechanism:
+  type: "File-based (not message queue)"
+
+  artifacts_as_interface:
+    description: "Agents communicate via JSON files, not API calls"
+    example:
+      - "VIBE_ALIGNER outputs: feature_spec.json"
+      - "GENESIS_BLUEPRINT inputs: feature_spec.json"
+      - "GENESIS_BLUEPRINT outputs: architecture.json"
+      - "CODE_GENERATOR inputs: architecture.json"
+
+  workspace_isolation:
+    description: "Each client has separate workspace directory"
+    structure: |
+      workspaces/
+        acme_corp/
+          project_manifest.json       ← Single source of truth
+          artifacts/
+            planning/
+              feature_spec.json
+            coding/
+              architecture.json
+              code_bundle.json
+            testing/
+              qa_report.json
+            deployment/
+              deploy_receipt.json
+
+# =================================================================
+# MISSING AUTOMATION LAYERS
+# =================================================================
+missing_automation:
+  - component: "LLM Executor"
+    current: "Human copies prompts manually"
+    needed: "scripts/llm_executor.py (~100 lines)"
+    impact: "Automation blocked"
+
+  - component: "State Orchestrator"
+    current: "Human updates manifest manually"
+    needed: "scripts/orchestrate.py (~200 lines)"
+    impact: "Workflow not automated"
+
+  - component: "Artifact Validator"
+    current: "No validation"
+    needed: "scripts/validate_artifact.py (~150 lines)"
+    impact: "Invalid artifacts not caught"
+
+# =================================================================
+# CORRECTED TERMINOLOGY
+# =================================================================
+terminology_corrections:
+  previous_term: "Agent"
+  corrected_term: "Prompt Template"
+  explanation: |
+    What we call "agents" are directories with markdown/YAML files.
+    They are NOT:
+    - Separate processes
+    - Running services
+    - Autonomous AI entities
+
+  previous_term: "Agent invocation"
+  corrected_term: "Prompt composition + LLM execution"
+  explanation: |
+    "Invoking VIBE_ALIGNER" means:
+    1. Load VIBE_ALIGNER markdown files
+    2. Concatenate into prompt
+    3. Send to Claude API
+    4. Parse response
+
+  previous_term: "Multi-agent system"
+  corrected_term: "Single-LLM modular prompt system"
+  explanation: |
+    One LLM (Claude) processes different prompts.
+    Not: Multiple AI agents communicating.
+
+  previous_term: "Agent communication"
+  corrected_term: "File-based artifact passing"
+  explanation: |
+    Agents don't "talk" to each other.
+    They read/write JSON files in shared workspace.
+
+# =================================================================
+# USER PERSPECTIVE (Client Workflow)
+# =================================================================
+user_workflow:
+  role: "Client who wants to build software"
+
+  step_1:
+    action: "Describe project idea"
+    user_does: "Writes requirements in natural language"
+    example: "I want a booking system for my yoga studio with calendar and payments"
+
+  step_2:
+    action: "System processes with VIBE_ALIGNER"
+    user_sees: "Receives feature_spec.json with structured features"
+    user_does: "Reviews features, approves or requests changes"
+
+  step_3:
+    action: "System processes with GENESIS_BLUEPRINT"
+    user_sees: "Receives architecture.json with technical design"
+    user_does: "Reviews architecture, approves"
+
+  step_4:
+    action: "System generates code (CODE_GENERATOR)"
+    user_sees: "Receives code_bundle.json with source code"
+    user_does: "Reviews code (optional)"
+
+  step_5:
+    action: "System runs tests (QA_VALIDATOR)"
+    user_sees: "Receives qa_report.json with test results"
+    user_does: "Reviews test results, approves if passing"
+
+  step_6:
+    action: "System deploys (DEPLOY_MANAGER)"
+    user_sees: "Receives deploy_receipt.json with deployment info"
+    user_does: "Access deployed application"
+
+  missing_documentation:
+    - "No guide explaining this workflow exists"
+    - "User doesn't know what to expect at each step"
+    - "User doesn't know how to review artifacts"
+    - "This is the CRITICAL gap - not code"
+
+# =================================================================
+# CONCLUSION
+# =================================================================
+conclusion:
+  system_type: "Single-LLM Prompt Composition System"
+
+  not_multi_agent: |
+    This is NOT a multi-agent AI system.
+    It is a structured way to organize complex LLM prompts.
+
+  data_flow_type: "Sequential file-based workflow"
+
+  missing_pieces:
+    - "Automation glue (LLM executor, orchestrator)"
+    - "User-facing documentation (client workflow)"
+    - "Artifact validation"
+
+  core_strength:
+    - "Excellent prompt organization (modular, maintainable)"
+    - "Clear separation of concerns (each agent has specific role)"
+    - "Comprehensive knowledge bases"
+
+  recommended_description: |
+    "A modular prompt architecture for organizing complex
+    software development workflows with a single LLM,
+    using file-based artifacts and state-driven transitions."
+
+# =================================================================
+# END OF CORRECTED DATA FLOW MAP
+# =================================================================
