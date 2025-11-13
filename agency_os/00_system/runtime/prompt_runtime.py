@@ -96,8 +96,13 @@ class PromptRuntime:
     Production version would integrate with actual LLM API.
     """
 
-    def __init__(self, base_path: str = "/home/user/vibe-agency"):
-        self.base_path = Path(base_path)
+    def __init__(self, base_path: Optional[str] = None):
+        if base_path is None:
+            # Auto-detect repo root (4 levels up from prompt_runtime.py)
+            # agency_os/00_system/runtime/prompt_runtime.py -> vibe-agency/
+            self.base_path = Path(__file__).resolve().parent.parent.parent.parent
+        else:
+            self.base_path = Path(base_path)
         self.knowledge_cache = {}  # Cache loaded YAML files
 
     def execute_task(self, agent_id: str, task_id: str, context: Dict[str, Any]) -> str:
