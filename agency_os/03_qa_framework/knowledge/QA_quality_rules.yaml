@@ -1,8 +1,8 @@
 # QA_quality_rules.yaml
 #
-# Definiert die messbaren "Geschäftsregeln" der Qualität,
+# Defines die messbaren "Geschäftsregeln" der Qualität,
 # einschließlich Coverage, Priorisierung und "Definition of Done".
-# Basiert auf Teil 3 des Forschungsberichts.
+# Based auf Teil 3 des Forschungsberichts.
 
 v: 1.0
 kind: QAQualityRules
@@ -30,7 +30,7 @@ spec:
       - "Code Coverage: 'Wie viele Codezeilen wurden ausgeführt?' (Technisches Sicherheitsnetz)."
 
   # 3.2 Test-Priorisierungsstrategie (Risk-Based Testing Quadrant)
-  # Definiert, was zuerst getestet wird, basierend auf 'Impact' (Critical Path) und 'Probability' (Code-Änderung).
+  # Defines, was zuerst getestet wird, basierend auf 'Impact' (Critical Path) und 'Probability' (Code-Änderung).
   test_prioritization_model:
     - priority: "P0 (Test First)"
       quadrant: "High Impact, High Probability"

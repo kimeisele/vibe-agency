@@ -1,8 +1,8 @@
 # DEPLOY_quality_rules.yaml
 #
-# Definiert die messbaren Kriterien für Erfolg (DoD) und Misserfolg (Rollback Triggers)
+# Defines die messbaren Kriterien für Erfolg (DoD) und Misserfolg (Rollback Triggers)
 # eines Produktions-Deployments.
-# Basiert auf der Analyse in Teil 4 des Berichts.
+# Based auf der Analyse in Teil 4 des Berichts.
 v: 1.0
 kind: DeploymentQualityRules
 metadata:
@@ -12,7 +12,7 @@ spec:
  # 4.1 Definition of Done (DoD)
  definition_of_done:
    # "Done" bedeutet "stabil in Produktion", nicht nur "Code kopiert".
-   # Basiert auf Agile DoD [85, 89] und SRE-Praktiken.
+   # Based auf Agile DoD [85, 89] und SRE-Praktiken.
    - id: 1
      name: "CI Checks Passed"
      description: "Build, Unit-Tests, Linting, SAST sind grün."
@@ -34,14 +34,14 @@ spec:
    - id: 7
      name: "Golden Signals Stable (Soak Time)"
      description: "Golden Signals bleiben für 5 Minuten *nach* Schritt 6 unter den Alarm-Schwellenwerten."
- # 4.2 Health-Checks (Zustandsprüfungen)
+ # 4.2 Health-Checks (statesprüfungen)
  health_checks:
    # Diese müssen von der Anwendung implementiert werden.
    - name: "Liveness Probe"
      description: "Prüft, ob der Container neu gestartet werden muss."
      endpoint: "GET /livez"
      http_status: 200
-     required_logic: "Minimalistisch. NUR internen Zustand prüfen. KEINE externen Abhängigkeiten (DB, APIs), um Kaskadenfehler zu vermeiden."
+     required_logic: "Minimalistisch. NUR internen state prüfen. KEINE externen Abhängigkeiten (DB, APIs), um Kaskadenfehler zu vermeiden."
    - name: "Readiness Probe"
      description: "Prüft, ob der Container Traffic empfangen soll."
      endpoint: "GET /readyz"
@@ -72,5 +72,5 @@ spec:
      source: "Beobachtbarkeitsplattform (via API)"
      condition: "(golden_signal.errors_5xx.rate > 10%) ODER (golden_signal.latency.p95_ms > 2000)"
      monitoring_period: "Wird während der 5-minütigen 'Soak Time'  geprüft."
-     threshold_logic: "Bedingung muss für 2 aufeinanderfolgende Minuten bestehen, um 'Flapping' zu vermeiden."
+     threshold_logic: "Bedingung must be 2 aufeinanderfolgende Minuten bestehen, um 'Flapping' zu vermeiden."
      action: "AUTO_ROLLBACK(latest_stable_artifact)"

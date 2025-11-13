@@ -1,13 +1,13 @@
 # DEPLOY_dependencies.yaml
 #
-# Definiert die Eingaben, Sequenzen und Voraussetzungen, 
-# die für den Start und die Durchführung eines Deployments erforderlich sind.
-# Basiert auf der Analyse in Teil 3 des Berichts.
+# Defines die Eingaben, Sequenzen und Voraussetzungen, 
+# die for the Start und die Durchführung eines Deployments erforderlich sind.
+# Based auf der Analyse in Teil 3 des Berichts.
 v: 1.0
 kind: DeploymentDependencies
 metadata:
  name: "v1.0-production-dependencies"
- description: "Abhängigkeiten und Sequenzierung für den v1.0 Deployment-Prozess."
+ description: "Abhängigkeiten und Sequenzierung for the v1.0 Deployment-Prozess."
 spec:
  # 3.1 QA-zu-Deploy-Übergabe
  qa_handoff:
@@ -18,7 +18,7 @@ spec:
    - name: "Manual Production Approval"
      type: "Input (action)"
      description: "Ein menschlicher Genehmiger (z.B. QA Lead, Tech Lead) muss das Deployment im CI/CD-Tool explizit freigeben."
-     status: "Blockierende Abhängigkeit für die 'production'-Stufe."
+     status: "Blockierende Abhängigkeit for the 'production'-Stufe."
      implementation: "MUSS über native CI/CD-Funktionen erfolgen (z.B. GitLab Protected Environment , GitHub Reviewer , Jenkins Input [49])."
  # 3.2 Kritische Pfad-Sequenzierung
  deployment_sequence:
@@ -60,7 +60,7 @@ spec:
  observability_prerequisites:
    # Monitoring ist eine Voraussetzung *vor* dem Deployment.
    - name: "Golden Signal Instrumentation"
-     description: "Die Anwendung MUSS Metriken für die 4 Golden Signals exportieren."
+     description: "Die Anwendung MUSS Metriken for the 4 Golden Signals exportieren."
      signals:
        - "Latency (z.B. p95-Antwortzeit)"
        - "Traffic (z.B. Anfragen/Sek)"
@@ -69,5 +69,5 @@ spec:
    - name: "Centralized Logging"
      description: "Alle Anwendungs- und Systemprotokolle müssen an einen zentralen Ort (z.B. ELK, Splunk, CloudWatch Logs) gestreamt werden.[77]"
    - name: "Pipeline API Access"
-     description: "Die CI/CD-Pipeline MUSS über einen API-Schlüssel für die Beobachtbarkeitsplattform verfügen."
+     description: "Die CI/CD-Pipeline MUSS über einen API-Schlüssel for the Beobachtbarkeitsplattform verfügen."
      reason: "Erforderlich, um die 'Golden Signals' während der 'Soak Time' (Trigger 2) automatisch abzufragen.[83, 84]"

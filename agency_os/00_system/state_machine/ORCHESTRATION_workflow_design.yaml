@@ -1,14 +1,14 @@
 # =================================================================
 # ORCHESTRATION_workflow_design.yaml
-# Definiert die SDLC-Zustandsmaschine, ihre Zustände, Übergänge
+# Defines die SDLC-statesmaschine, ihre Zustände, Übergänge
 # und Fehlerbehandlungs-Schleifen.
-# Basiert auf der Analyse in Teil 1 dieses Berichts.
+# Based auf der Analyse in Teil 1 dieses Berichts.
 # =================================================================
 version: 1.0.0
 kind: SDLCStateMachine
 
 # 1. Definition der Workflow-Zustände (States)
-# Jeder Zustand entspricht einem Kern-Framework.
+# Jeder state entspricht einem Kern-Framework.
 states:
  - name: "PLANNING"
    description: "Impliziter Startzustand. Anforderungen werden in ein project_manifest umgewandelt."
@@ -43,13 +43,13 @@ states:
    responsible_framework: "N/A (Terminal State)"
 
  - name: "MAINTENANCE"
-   description: "Paralleler, ereignisgesteuerter Zustand, gesteuert durch. Löst Fix-Workflows aus."
+   description: "Paralleler, ereignisgesteuerter state, gesteuert durch. Löst Fix-Workflows aus."
    responsible_framework: "MAINTENANCE "
    input_artifact: "bug_report.json"
    output_artifact: "code_gen_spec.json" # (Für den Fix)
 
  - name: "EXTERNAL_EVENT"
-   description: "Ein Pseudo-Zustand, der einen externen, ereignisgesteuerten Startpunkt für einen Workflow darstellt, z.B. einen eingehenden Bug-Report."
+   description: "Ein Pseudo-state, der einen externen, ereignisgesteuerten Startpunkt für einen Workflow darstellt, z.B. einen eingehenden Bug-Report."
    responsible_framework: "Orchestrator (Event Listener)"
 
 # 2. Definition der Workflow-Übergänge (Transitions)
@@ -97,7 +97,7 @@ loops:
    from_state: "AWAITING_QA_APPROVAL"
    to_state: "CODING"
    trigger: "HITL-Ereignis: 'qa_rejected_signal' empfangen ODER qa_report.status == 'REJECTED'."
-   action: "Übergebe qa_report.json als Feedback-Paket an den CODING-Zustand."
+   action: "Übergebe qa_report.json als Feedback-Paket an den CODING-state."
 
  - name: "L2_DeployFailed"
    description: "Deployment fehlgeschlagen und zurückgerollt, erfordert P1-Bugfix."

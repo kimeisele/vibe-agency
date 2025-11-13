@@ -1,14 +1,14 @@
 # QA_constraints.yaml
 #
-# Definiert die fundamentalen Grenzen, "Nicht-Ziele" und
+# Defines die fundamentalen Grenzen, "Nicht-Ziele" und
 # Einschränkungen des v1.0 QA-Frameworks.
-# Basiert auf Teil 1 des Forschungsberichts.
+# Based auf Teil 1 des Forschungsberichts.
 
 v: 1.0
 kind: QAConstraints
 metadata:
   name: "v1.0-qa-constraints"
-  description: "Definiert, was nicht (oder noch nicht) getestet wird und welche Tool-Einschränkungen akzeptiert werden."
+  description: "Defines, was nicht (oder noch nicht) getestet wird und welche Tool-Einschränkungen akzeptiert werden."
 spec:
   # 1.1 Inhärente Automatisierungsgrenzen
   # Bereiche, die objektiv nicht durch Automatisierung validiert werden können.

@@ -1,14 +1,14 @@
 # =================================================================
 # MAINTENANCE_dependencies.yaml
-# Definiert die Daten-Inputs und Prozess-Workflows, von denen
+# Defines die Daten-Inputs und Prozess-Workflows, von denen
 # das Triage-System abhängt.
 # =================================================================
 
 # ---
 # Sektion 1: Daten-Input-Anforderungen für Triage
-# Definiert die minimalen und idealen Daten, die für eine
+# Defines die minimalen und idealen Daten, die für eine
 # effektive Triage erforderlich sind.
-# Basiert auf Teil 3.1 des Berichts.
+# Based auf Teil 3.1 des Berichts.
 # ---
 triage_data_inputs:
  - source: UserReport
@@ -22,15 +22,15 @@ triage_data_inputs:
  - source: Logs
    description: "Detaillierte Anwendungs- und Systemprotokolle."
    dependency_status: "REQUIRED"
-   requirements: "Erforderlich für die diagnostische Ursachenanalyse."
+   requirements: "Erforderlich for the diagnostische Ursachenanalyse."
  - source: CorrelationContext
    description: "Ein gemeinsamer Kontext (z.B. trace_id), der Logs, Metriken und Requests verknüpft."
    dependency_status: "IDEAL"
    requirements: "Ermöglicht 'automatische Kontextpropagierung'. Ohne dies ist die Triage 10x langsamer und manuell."
 # ---
 # Sektion 2: Branching- & Workflow-Abhängigkeiten
-# Definiert die Prozessregeln für die zwei Haupt-Fix-Pfade.
-# Basiert auf Teil 3.2 und 3.3 des Berichts.
+# Defines die Prozessregeln for the zwei Haupt-Fix-Pfade.
+# Based auf Teil 3.2 und 3.3 des Berichts.
 # ---
 fix_workflows:
  - type: Hotfix
@@ -57,9 +57,9 @@ fix_workflows:
 
 # ---
 # Sektion 3: Agile Planungs-Loop-Abhängigkeiten
-# Definiert, wie das Triage-System mit dem Agile-Planungsprozess
+# Defines, wie das Triage-System mit dem Agile-Planungsprozess
 # verbunden ist.
-# Basiert auf Teil 3.4 des Berichts.
+# Based auf Teil 3.4 des Berichts.
 # ---
 agile_planning_loop:
  - name: BugToFeatureRequest_Conversion

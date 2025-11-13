@@ -1,5 +1,5 @@
 # CODE_GEN_constraints.yaml
-# Definiert die "sicheren Betriebsgrenzen" (FAE-ähnlich).
+# Defines die "sicheren Betriebsgrenzen" (FAE-ähnlich).
 # Beschreibt, was die KI NICHT generieren darf und welche Muster zu Fehlern führen.
 version: 1.0
 
@@ -42,7 +42,7 @@ hallucination_triggers:
    action: "FLAG_FOR_SUPPLY_CHAIN_REVIEW" # Leitet zur automatisierten Lizenz- und Schwachstellenprüfung (siehe quality_rules).
 
 # 3. Bekannte KI-Fehlermuster (Taxonomie)
-# Diese Muster werden von der Quality-Rules-Engine (Teil 3) zur Überprüfung verwendet.
+# Diese Muster werden von der Quality-Rules-Engine (Teil 3) zur Überprüfung uset.
 known_error_patterns:
  - id: PATTERN_OMISSION_CORNER_CASE
    description: "Der generierte Code behandelt nur den 'Happy Path', es fehlt eine explizite Fehler- oder Ausnahmebehandlung."

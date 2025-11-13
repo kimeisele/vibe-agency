@@ -1,14 +1,14 @@
 # =================================================================
 # MAINTENANCE_constraints.yaml
-# Definiert die Grenzen des Systems, Schweregrade und die Regeln
+# Defines die Grenzen des Systems, Schweregrade und die Regeln
 # für menschliches Eingreifen (HITL).
 # =================================================================
 
 # ---
 # Sektion 1: Taxonomie der Bug-Schweregrade
-# Definiert die gemeinsame Sprache zur Klassifizierung des
+# Defines die gemeinsame Sprache zur Klassifizierung des
 # technischen Schweregrads eines Fehlers.
-# Basiert auf Teil 2.2 des Berichts.
+# Based auf Teil 2.2 des Berichts.
 # ---
 bug_severity_levels:
  - level: P1_Critical
@@ -50,7 +50,7 @@ bug_severity_levels:
 # Sektion 2: Nicht automatisierbare Bug-Klassen
 # Kodifiziert die Aufgaben, die von einer KI-Reparatur-Automatisierung
 # ausgeschlossen werden MÜSSEN.
-# Basiert auf Teil 2.4 des Berichts.
+# Based auf Teil 2.4 des Berichts.
 # ---
 non_automatable_bug_classes:
  - class: ArchitectureChange
@@ -68,7 +68,7 @@ non_automatable_bug_classes:
 # Sektion 3: Obligatorische "Human-in-the-Loop" (HITL)-Trigger
 # Regeln, die das Automatisierungssystem anweisen, innezuhalten
 # und einen Menschen zu eskalieren.
-# Basiert auf Teil 2.6 des Berichts.
+# Based auf Teil 2.6 des Berichts.
 # ---
 hitl_mandatory_triggers:
  - name: HITL_Trigger_Security

@@ -1,13 +1,13 @@
 # =================================================================
 # MAINTENANCE_triage_rules.yaml
-# Definiert die operativen Regeln für Priorisierung,
+# Defines die operativen Regeln für Priorisierung,
 # "Definition of Done" (DoD), SLAs und Eskalationen.
 # =================================================================
 
 # ---
 # Sektion 1: Priorisierungsmodelle
-# Definiert die dualen Modelle für Echtzeit-Triage und
-# Backlog-Grooming. Basiert auf Teil 4.1 des Berichts.
+# Defines die dualen Modelle für Echtzeit-Triage und
+# Backlog-Grooming. Based auf Teil 4.1 des Berichts.
 # ---
 prioritization_models:
  
@@ -21,7 +21,7 @@ prioritization_models:
      rows: "Severity (Technical) [P1_Critical, P2_High, P3_Medium, P4_Low, P5_Cosmetic]"
      columns: "Impact (Business/User)"
    matrix:
-     # (Siehe Tabelle 4.1.1 im Bericht für die vollständige Matrix)
+     # (Siehe Tabelle 4.1.1 im Bericht for the vollständige Matrix)
      - { severity: P1_Critical, impact: Widespread, priority: P1_Critical }
      - { severity: P1_Critical, impact: High,       priority: P1_Critical }
      - { severity: P1_Critical, impact: Medium,     priority: P2_High }
@@ -67,7 +67,7 @@ prioritization_models:
 # Sektion 2: Definition of Done (DoD) für Bug-Fixes
 # Checkliste, die erfüllt sein muss, damit ein Bug als
 # "erledigt" gilt.
-# Basiert auf Teil 4.2 des Berichts.
+# Based auf Teil 4.2 des Berichts.
 # ---
 definition_of_done:
  - "1. Code ist produziert."
@@ -81,8 +81,8 @@ definition_of_done:
  - "9. Fix ist in der Produktion bereitgestellt und verifiziert."
 # ---
 # Sektion 3: Service Level Agreements (SLAs)
-# Definiert die Zielzeiten für Reaktion und Lösung.
-# Basiert auf Teil 4.4 des Berichts (Zeiten in Geschäftsstunden, außer P1).
+# Defines die Zielzeiten für Reaktion und Lösung.
+# Based auf Teil 4.4 des Berichts (Zeiten in Geschäftsstunden, außer P1).
 # ---
 service_level_agreements:
  - priority: P1_Critical
@@ -112,8 +112,8 @@ service_level_agreements:
 
 # ---
 # Sektion 4: Eskalationsrichtlinie
-# Definiert die Regeln für die Eskalation von Problemen.
-# Basiert auf Teil 4.5 des Berichts.
+# Defines die Regeln for the Eskalation von Problemen.
+# Based auf Teil 4.5 des Berichts.
 # ---
 escalation_policy:
  - name: Rule_1_Severity_P1

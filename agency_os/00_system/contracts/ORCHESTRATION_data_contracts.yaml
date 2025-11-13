@@ -1,14 +1,14 @@
 # =================================================================
 # ORCHESTRATION_data_contracts.yaml
-# Definiert die JSON-Schemas für alle Artefakte, die zwischen
-# den Workflow-Zuständen übergeben werden.
-# Basiert auf der Analyse in Teil 2 dieses Berichts.
+# Defines JSON schemas for all artifacts passed between
+# workflow states.
+# Based on the analysis in Part 2 of this report.
 # =================================================================
 version: 1.0.0
 kind: SchemaCollection
 
-# 1. Governance-Regeln für die Schema-Evolution
-# Basierend auf [4, 10, 11, 12]
+# 1. Governance rules for schema evolution
+# Based on [4, 10, 11, 12]
 schema_evolution_rules:
  - type: "ADD_OPTIONAL_FIELD"
    compatibility: "BACKWARD_COMPATIBLE"
@@ -21,27 +21,27 @@ schema_evolution_rules:
  - type: "ADD_REQUIRED_FIELD"
    compatibility: "BREAKING_CHANGE"
    version_bump: "MAJOR"
-   allowed: false # (Muss für v1.0 vermieden werden)
+   allowed: false # (Must be avoided for v1.0)
  - type: "REMOVE_FIELD"
    compatibility: "BREAKING_CHANGE"
    version_bump: "MAJOR"
-   allowed: false # (Muss für v1.0 vermieden werden)
+   allowed: false # (Must be avoided for v1.0)
  - type: "RENAME_FIELD"
    compatibility: "BREAKING_CHANGE"
    version_bump: "MAJOR"
-   allowed: false # (Verwende "Expand/Contract"-Pattern )
+   allowed: false # (Use "Expand/Contract" pattern)
  - type: "CHANGE_FIELD_TYPE"
    compatibility: "BREAKING_CHANGE"
    version_bump: "MAJOR"
    allowed: false
 
-# 2. Schema-Definitionen (Auszüge der wichtigsten Felder)
+# 2. Schema definitions (excerpts of most important fields)
 schemas:
 
  - name: "project_manifest.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/project_manifest.v1.0.0.json"
-   description: "Der zentrale Vertrag, der den Zustand des Workflows und die Links zu Artefakten enthält."
+   description: "The central contract containing workflow state and artifact links."
    fields:
      - name: "schema_version"
        type: "string"
@@ -65,7 +65,7 @@ schemas:
  - name: "code_gen_spec.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
-   description: "Input für den CODING-Zustand. Definiert den L1-L4-Kontext für die KI."
+   description: "Input for the CODING state. Defines the L1-L4 context for the AI."
    fields:
      - name: "schema_version"
        type: "string"
@@ -96,7 +96,7 @@ schemas:
  - name: "test_plan.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/test_plan.v1.0.0.json"
-   description: "Input für den TESTING-Zustand. Definiert den Test-Scope."
+   description: "Input for the TESTING state. Defines the test scope."
    fields:
      - name: "schema_version"
        type: "string"

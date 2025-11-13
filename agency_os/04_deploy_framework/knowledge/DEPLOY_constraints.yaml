@@ -1,8 +1,8 @@
 # DEPLOY_constraints.yaml
 #
-# Definiert die Grenzen, Nicht-Ziele und technischen Einschränkungen 
+# Defines die Grenzen, Nicht-Ziele und technischen Einschränkungen 
 # für das v1.0-Produktions-Deployment-Framework.
-# Basiert auf der Analyse in Teil 2 des Berichts.
+# Based auf der Analyse in Teil 2 des Berichts.
 v: 1.0
 kind: DeploymentConstraints
 metadata:

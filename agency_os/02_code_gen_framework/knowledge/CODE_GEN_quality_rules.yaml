@@ -1,10 +1,10 @@
 # CODE_GEN_quality_rules.yaml
-# Definiert die automatisierte Governance-Schicht (APCE-ähnlich).
+# Defines die automatisierte Governance-Schicht (APCE-ähnlich).
 # Beschreibt, wie Qualität gemessen wird und was die "Definition of Done" ist.
 version: 1.0
 
 # 1. Priorisierungsstrategie
-# Definiert die Reihenfolge der Generierung für komplexe Systeme.
+# Defines die Reihenfolge der Generierung für komplexe Systeme.
 generation_strategy:
  - id: "STRATEGY_CORE_FIRST"
    description: "Generiert und stabilisiert zuerst 'Core'-Komponenten (hoher Fan-In), bevor 'Extensions' (niedriger Fan-In) generiert werden."
@@ -14,7 +14,7 @@ generation_strategy:
      threshold: "> 5" # Beispiel: Ein Modul, von dem >5 andere Module abhängen, ist 'Core'.
 
 # 2. Quality Gates (Automatisiertes "Ready for QA")
-# Definiert die automatisierten Prüfpunkte in der CI-Pipeline.
+# Defines die automatisierten Prüfpunkte in der CI-Pipeline.
 # Ein Commit ist 'Ready for QA', wenn er ALLE Gates im 'v1.0_gate_profile' passiert.
 quality_gates:
  - id: "GATE_FUNCTIONAL_CORRECTNESS"
@@ -54,7 +54,7 @@ quality_gates:
    rule: "FAIL if (license_not_in:)" # Beispiel-Policy
 
 # 3. Qualitätsprofile (Definition von "Good Enough")
-# Definiert die spezifischen Schwellenwerte für die Quality Gates.
+# Defines die spezifischen Schwellenwerte for the Quality Gates.
 quality_profiles:
  - name: "v1.0_gate_profile"
    description: "Mindeststandards für 'Good Enough for v1.0'. Wird als 'Ready for QA' betrachtet."

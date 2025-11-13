@@ -1,8 +1,8 @@
 # QA_dependencies.yaml
 #
-# Definiert die Inputs, Daten, Umgebungen und Prozess-Abhängigkeiten
+# Defines die Inputs, Daten, Umgebungen und Prozess-Abhängigkeiten
 # für jede Stufe der Validierungs-Pipeline.
-# Basiert auf Teil 2 des Forschungsberichts.
+# Based auf Teil 2 des Forschungsberichts.
 
 v: 1.0
 kind: QADependencies
