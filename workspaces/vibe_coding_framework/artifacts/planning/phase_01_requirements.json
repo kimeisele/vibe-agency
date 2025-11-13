@@ -1,0 +1,183 @@
+{
+  "phase": "01_requirements_gathering",
+  "framework_version": "1.1.0",
+  "project_type": "commercial",
+  "timestamp": "2025-11-13T00:00:00Z",
+  "abstraction_level": "META",
+  "meta_context": "Framework to build frameworks - recursive requirement",
+
+  "project_context": {
+    "project_name": "VIBE Coding Framework",
+    "project_vision": "Empower non-technical users to create professional-grade code specifications through conversational AI-guided interviews",
+    "target_audience": "Product managers, entrepreneurs, business analysts without coding knowledge",
+    "core_challenge": "How to transform vague ideas into structured, actionable specifications that developers can use",
+    "inspiration": "Claude Skills (structured prompts) but more dynamic, refactorable, and domain-agnostic",
+    "meta_advantage": "Dogfooding - built using our own planning framework, proving the concept"
+  },
+
+  "problem_statement": {
+    "primary_problems": [
+      {
+        "id": "P001",
+        "description": "Non-technical users lack vocabulary to express technical requirements",
+        "evidence": "76% of developers use AI tools, but non-coders can't prompt effectively",
+        "impact": "Ideas die because founders can't communicate them to developers"
+      },
+      {
+        "id": "P002",
+        "description": "Gap between no-code platforms (build apps) and code generation (requires specs)",
+        "evidence": "Bubble/Backendless build apps, Copilot/Bolt require technical specs as input",
+        "impact": "Missing 'specification layer' - tools jump straight from idea to code"
+      },
+      {
+        "id": "P003",
+        "description": "Static PRDs don't capture iterative refinement of ideas",
+        "evidence": "Traditional specs are documents, not dynamic/refactorable artifacts",
+        "impact": "Specs become outdated, hard to modify, don't reflect evolving understanding"
+      },
+      {
+        "id": "P004",
+        "description": "VIBE Agency clients struggle to articulate project requirements",
+        "evidence": "Internal pain point - hours spent in discovery calls extracting requirements",
+        "impact": "Time wasted, miscommunication, scope creep"
+      }
+    ]
+  },
+
+  "user_stories": [
+    {
+      "id": "US001",
+      "as_a": "Product Manager without coding background",
+      "i_want": "Conversational interview that guides me through specification creation",
+      "so_that": "I can create professional specs without needing technical vocabulary",
+      "acceptance_criteria": [
+        "Framework asks clarifying questions about my idea",
+        "I can answer in plain language (no technical jargon required)",
+        "Output is structured specification ready for developers",
+        "I can refine/edit the spec iteratively"
+      ]
+    },
+    {
+      "id": "US002",
+      "as_a": "Entrepreneur with app idea but no technical co-founder",
+      "i_want": "Template-based starting points for common app types (web, mobile, API)",
+      "so_that": "I don't start from blank canvas, but customize proven patterns",
+      "acceptance_criteria": [
+        "Library of templates (e.g., 'E-commerce web app', 'Social mobile app')",
+        "Template asks domain-specific questions",
+        "Customizable based on my unique requirements",
+        "Export to formats developers use (markdown, JSON, Jira, etc.)"
+      ]
+    },
+    {
+      "id": "US003",
+      "as_a": "Business Analyst translating business needs to technical specs",
+      "i_want": "Framework that captures both business context and technical requirements",
+      "so_that": "Developers understand not just WHAT to build but WHY",
+      "acceptance_criteria": [
+        "Spec includes business goals, user needs, technical constraints",
+        "Links between business outcomes and technical features",
+        "Traceability (feature X solves problem Y for user Z)"
+      ]
+    },
+    {
+      "id": "US004",
+      "as_a": "Developer receiving specs",
+      "i_want": "Specs that answer my questions (edge cases, NFRs, constraints)",
+      "so_that": "I can start coding without 10 follow-up clarification meetings",
+      "acceptance_criteria": [
+        "Spec covers functional AND non-functional requirements",
+        "Edge cases identified",
+        "Technical constraints documented",
+        "Acceptance criteria defined for each feature"
+      ]
+    },
+    {
+      "id": "US005",
+      "as_a": "VIBE Agency consultant",
+      "i_want": "Framework I can use with clients during discovery calls",
+      "so_that": "We systematically capture requirements instead of ad-hoc notes",
+      "acceptance_criteria": [
+        "Can run framework live in client meeting",
+        "Captures decisions and rationale in real-time",
+        "Exports professional deliverable at end of meeting",
+        "Client sees value immediately (transparent process)"
+      ]
+    }
+  ],
+
+  "scope_boundaries": {
+    "in_scope_mvp": [
+      "Conversational interview engine (guided question flow)",
+      "Template library for common patterns (5-10 starter templates)",
+      "Specification output (markdown, JSON formats)",
+      "Iterative refinement (edit/improve existing specs)",
+      "Integration with AI code tools (export format compatible with Bolt, Cursor, etc.)"
+    ],
+    "out_of_scope_mvp": [
+      "Code generation (framework creates SPECS, not code)",
+      "Visual/graphical editors (text/conversation first)",
+      "Project management features (Jira integration future phase)",
+      "Collaborative editing (single-user MVP)",
+      "Custom template builder (use pre-built templates only)"
+    ],
+    "future_phases": [
+      "Phase 2: Collaborative specification editing",
+      "Phase 3: Custom template builder",
+      "Phase 4: Integration marketplace (Jira, Linear, GitHub Issues)",
+      "Phase 5: AI-powered spec quality analysis"
+    ]
+  },
+
+  "constraints": {
+    "technical": [
+      "Must be 'dynamic and refactorable' (user requirement - specs are editable)",
+      "Must work for non-technical users (no coding knowledge assumed)",
+      "Must be 'robust' (user requirement - reliable, handles edge cases)",
+      "Must differentiate from Claude Skills (more flexible, not just LLM tasks)"
+    ],
+    "organizational": [
+      "Dogfooding requirement - use framework to improve itself",
+      "VIBE Agency integration - must fit into existing ecosystem",
+      "Client-facing - must be professional, not prototype-quality"
+    ],
+    "business": [
+      "Must validate market need (RA-001: Do users want spec tools?)",
+      "Must prove developer acceptance (RA-002: Are specs usable?)",
+      "Monetization strategy unclear (freemium? open-source? B2B?)"
+    ]
+  },
+
+  "key_differentiators": {
+    "vs_no_code_platforms": "Creates specifications, not apps - upstream of no-code tools",
+    "vs_ai_code_generators": "Focuses on WHAT to build (spec) vs HOW to build it (code)",
+    "vs_traditional_prd_tools": "Conversational and dynamic vs. static documents",
+    "vs_claude_skills": "Domain-agnostic (any software) vs. LLM-task-specific"
+  },
+
+  "success_criteria_mvp": [
+    "Non-technical user can create usable spec in < 30 minutes",
+    "Developers rate spec quality 7/10 or higher",
+    "Spec completeness: Covers functional reqs, NFRs, constraints, acceptance criteria",
+    "Iterative refinement works: User can edit/improve spec without starting over"
+  ],
+
+  "open_questions": {
+    "technical": [
+      "What does 'robust' mean specifically? (user requirement)",
+      "What does 'dynamic' mean specifically? (user requirement)",
+      "How similar to Claude Skills? (architecture, format, UX?)",
+      "CLI-based or web UI or both?"
+    ],
+    "business": [
+      "Who pays? (Individual users, teams, agencies?)",
+      "Open-source or proprietary?",
+      "Freemium model viable?"
+    ],
+    "product": [
+      "How many templates needed for MVP?",
+      "What specification format(s) do developers prefer?",
+      "Integration priority: Which AI code tools first?"
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "canvas_type": "full_interview_with_research",
+  "project_type": "commercial",
+  "mode": "HYBRID_MODE_v1.1",
+  "duration_minutes": 12,
+  "user_confidence": "MEDIUM-LOW",
+  "research_sources": [
+    "WebSearch: AI code generation frameworks non-technical users (SUCCESS)",
+    "WebSearch: no-code low-code visual programming (SUCCESS)",
+    "WebSearch: Claude Skills architecture (FAILED - unavailable)",
+    "WebSearch: AI specification generation PRD tools (FAILED - unavailable)",
+    "User context: Meta-requirement (framework to build frameworks)"
+  ],
+  "observations": [
+    "EDGE CASE: Commercial project with vague requirements - triggers hybrid mode",
+    "EDGE CASE: Meta/recursive requirement (framework for framework building)",
+    "EDGE CASE: WebSearch partial failure - framework needs fallback strategy",
+    "User explicitly asked for research: 'interessieren, wenn du das jetzt selber recherchierst'"
+  ],
+
+  "lean_canvas": {
+    "problem": [
+      "Non-technical users struggle to create professional-grade code specifications (76% of developers use AI, but non-coders are left behind)",
+      "Existing no-code platforms create apps directly, not specifications (Bubble, Backendless) - missing the specification layer",
+      "AI code tools (Copilot, Bolt) require technical knowledge to prompt effectively",
+      "Gap: No framework exists that helps non-technical users articulate WHAT they want to build (specifications) before HOW to build it (code)"
+    ],
+
+    "customer_segments": [
+      "Primary: Product Managers without coding background (need to spec features for dev teams)",
+      "Secondary: Entrepreneurs/Founders with business ideas but no technical co-founder",
+      "Tertiary: Business Analysts who translate business needs to technical specs",
+      "Edge: VIBE Agency clients who need specs but lack technical vocabulary"
+    ],
+
+    "unique_value_proposition": "The first conversational framework that transforms vague ideas into professional specifications through guided dialogue, not code generation",
+
+    "solution": [
+      "Conversational specification builder (like Claude Skills, but for ANY domain, not just LLM tasks)",
+      "Template library for common patterns (web app, mobile app, API, data pipeline, etc.)",
+      "Iterative refinement through questions (guided interview approach)",
+      "Output: Professional PRD/specification ready for developers OR AI code generators"
+    ],
+
+    "channels": [
+      "VIBE Agency website (primary distribution for clients)",
+      "GitHub (open-source framework, community adoption)",
+      "Product Hunt launch (reach PM/entrepreneur community)",
+      "Integration with AI code tools (Bolt, Cursor, Replit) as 'spec layer'"
+    ],
+
+    "revenue_streams": [
+      "Option 1: Open-source core + Premium templates ($49-99/month)",
+      "Option 2: B2B licensing to agencies (VIBE Agency bundle)",
+      "Option 3: Freemium SaaS (free for individuals, paid for teams)",
+      "Option 4: Consulting services (custom framework implementations)"
+    ],
+
+    "cost_structure": [
+      "Development costs (framework core, templates, UI)",
+      "LLM API costs (if using AI for question generation)",
+      "Hosting (if SaaS model)",
+      "Documentation and examples",
+      "Community support and maintenance"
+    ],
+
+    "key_metrics": [
+      "Specification completion rate (% users who finish full spec)",
+      "Developer satisfaction (do devs find specs useful?)",
+      "Time-to-spec (how fast can non-coders create specs?)",
+      "Template usage (which domains/patterns are most popular?)",
+      "Adoption rate (monthly active users)"
+    ],
+
+    "unfair_advantage": [
+      "Meta-advantage: Built using our own planning framework (dogfooding)",
+      "VIBE Agency battle-tested workflows (real client feedback)",
+      "Integration with existing VIBE ecosystem (Agency OS, Planning Framework)",
+      "First-mover in 'specification generation' space (vs. code generation)"
+    ]
+  },
+
+  "riskiest_assumptions": [
+    {
+      "id": "RA-001",
+      "assumption": "Non-technical users WANT to create specifications (vs. just wanting the app built)",
+      "validation_method": "User interviews with 20 PMs/entrepreneurs - ask: 'Would you pay for tool that helps you write better specs?'",
+      "risk_level": "CRITICAL"
+    },
+    {
+      "id": "RA-002",
+      "assumption": "Specifications from framework are good enough for developers to use",
+      "validation_method": "Developer feedback study - give them 10 framework-generated specs, rate quality 1-10",
+      "risk_level": "CRITICAL"
+    },
+    {
+      "id": "RA-003",
+      "assumption": "Users prefer conversational approach over forms/wizards",
+      "validation_method": "A/B test: Conversational UI vs. Form-based UI, measure completion rate",
+      "risk_level": "HIGH"
+    },
+    {
+      "id": "RA-004",
+      "assumption": "Framework is 'robust and dynamic' enough (user requirement - unclear definition)",
+      "validation_method": "Define 'robust' and 'dynamic' with user, then prototype and iterate",
+      "risk_level": "HIGH"
+    }
+  ],
+
+  "research_insights": {
+    "market_context": {
+      "ai_code_generation_adoption": "76% of developers use AI coding tools (Stack Overflow 2024)",
+      "code_written_by_ai": "41% of all code, 256 billion lines in 2024",
+      "democratization_trend": "AI enables non-technical participation in software development",
+      "gap_identified": "Tools focus on CODE generation, not SPECIFICATION generation"
+    },
+    "competitive_landscape": {
+      "ai_code_tools": [
+        "GitHub Copilot (code completion, developer-focused)",
+        "StackBlitz Bolt (multi-framework, embedded IDE)",
+        "Replit AI (10-40% faster coding)",
+        "Cursor, Codeium (AI assistants)"
+      ],
+      "no_code_platforms": [
+        "Bubble (visual programming for apps)",
+        "Backendless (MIT visual language)",
+        "Betty Blocks (process automation)"
+      ],
+      "specification_tools": [
+        "None found specifically for AI-augmented spec generation",
+        "Gap: Market opportunity"
+      ]
+    },
+    "key_differentiators": {
+      "not_code_generation": "Framework creates SPECIFICATIONS, not code (upstream of code tools)",
+      "conversation_first": "Guided dialogue vs. blank canvas or rigid forms",
+      "domain_agnostic": "Works for any software type (web, mobile, API, data, ML, etc.)",
+      "refactorable": "User requirement - specs should be editable/improvable (vs. static PRDs)"
+    }
+  },
+
+  "meta_observations": {
+    "framework_test_edge_cases": [
+      "EDGE CASE 1: Recursive/Meta requirements (framework for frameworks) - How does LEAN_CANVAS handle abstraction?",
+      "EDGE CASE 2: Commercial + Vague = Hybrid mode not explicitly defined in v1.1",
+      "EDGE CASE 3: WebSearch failures - Need fallback strategy in framework",
+      "EDGE CASE 4: User is simultaneously the builder AND the customer (dogfooding scenario)"
+    ],
+    "framework_improvements_needed": [
+      "IMPROVEMENT 1: Define 'Hybrid Mode' - commercial projects with vague requirements should get Full Interview + Auto-Research",
+      "IMPROVEMENT 2: Graceful degradation when WebSearch fails - use cached knowledge, mark gaps",
+      "IMPROVEMENT 3: Handle meta/abstract requirements - add 'abstraction level' field to project_manifest",
+      "IMPROVEMENT 4: Dogfooding scenario - framework should recognize when user is building similar tool"
+    ]
+  }
+}

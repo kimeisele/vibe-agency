@@ -1,0 +1,543 @@
+{
+  "blueprint_version": "1.0",
+  "project_id": "vibe_coding_framework_001",
+  "project_name": "VIBE Coding Framework",
+  "project_type": "commercial",
+  "abstraction_level": "META",
+  "framework_version": "1.1.0",
+  "generated_at": "2025-11-13T00:00:00Z",
+
+  "executive_summary": {
+    "vision": "Empower non-technical users to create professional-grade code specifications through conversational AI-guided interviews",
+    "mission": "Bridge the gap between vague ideas and actionable specifications, making software planning accessible to everyone",
+    "target_users": "Product managers, entrepreneurs, business analysts without coding knowledge; VIBE Agency clients",
+    "core_differentiator": "First conversational framework for SPECIFICATION generation (not code generation) - creates the input layer for AI code tools",
+    "mvp_timeline": "12-16 weeks (3-4 months, single developer)",
+    "technology_stack": "Python 3.10+, Click CLI, LangChain, Rich, Jinja2, diskcache"
+  },
+
+  "system_architecture": {
+    "architectural_style": "Modular CLI Framework with Plugin Architecture",
+    "deployment_model": "CLI (local installation) for MVP, SaaS (web-based) for Phase 3",
+    "data_storage": "Local-first (file-based specs), optional cloud sync in Phase 3",
+
+    "architecture_diagram_ascii": "
+┌─────────────────────────────────────────────────────────────────┐
+│                    VIBE Coding Framework CLI                    │
+│                    (vibe-spec command)                          │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌──────────────┐   ┌──────────────────┐
+│  Interview    │   │  Template    │   │  Output          │
+│  Engine       │   │  Library     │   │  Generator       │
+│  (Flow)       │   │  (Patterns)  │   │  (Specs)         │
+└───────┬───────┘   └──────┬───────┘   └────────┬─────────┘
+        │                  │                     │
+        │   ┌──────────────┴─────────┐          │
+        │   │                        │          │
+        ▼   ▼                        ▼          ▼
+┌────────────────────┐   ┌──────────────────────────────┐
+│  LLM Orchestrator  │   │   Knowledge Base (Reused)    │
+│  (Question Gen,    │   │  - NFR_CATALOG.yaml          │
+│   Plain Language   │   │  - FAE_constraints.yaml      │
+│   Parsing)         │   │  - Templates (LEAN, VIBE)    │
+└─────────┬──────────┘   └──────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────┐
+│         LLM Provider Abstraction Layer               │
+│  - Claude API (default)                              │
+│  - OpenAI GPT-4 (alternative)                        │
+│  - Local LLMs (future: Llama, Mistral)               │
+└──────────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────┐
+│              Caching & State Management              │
+│  - LLM Response Cache (diskcache)                    │
+│  - Interview State (JSON)                            │
+│  - Specification Versions (file-based)               │
+└──────────────────────────────────────────────────────┘
+    ",
+
+    "component_breakdown": [
+      {
+        "package_name": "vibe_spec.core",
+        "responsibility": "Interview engine, question flow, state management",
+        "technologies": ["Python-statemachine", "YAML/JSON parsers"],
+        "key_classes": [
+          "InterviewEngine (orchestrates question flow)",
+          "QuestionNode (represents single question in tree)",
+          "FlowState (manages interview state, backtracking)",
+          "AnswerValidator (validates user inputs)"
+        ],
+        "dependencies": ["vibe_spec.templates", "vibe_spec.llm"]
+      },
+      {
+        "package_name": "vibe_spec.templates",
+        "responsibility": "Template library, question definitions, pattern matching",
+        "technologies": ["Jinja2", "YAML"],
+        "key_classes": [
+          "TemplateLibrary (loads and manages templates)",
+          "TemplateSelector (helps user choose template)",
+          "QuestionTree (tree structure from YAML)",
+          "DogfoodedTemplates (LEAN_CANVAS, VIBE_ALIGNER wrappers)"
+        ],
+        "dependencies": []
+      },
+      {
+        "package_name": "vibe_spec.llm",
+        "responsibility": "LLM integration, question generation, plain language parsing",
+        "technologies": ["LangChain", "Anthropic/OpenAI SDKs"],
+        "key_classes": [
+          "LLMOrchestrator (main LLM interface)",
+          "QuestionGenerator (F005: generates contextual questions)",
+          "PlainLanguageParser (F006: extracts structured data)",
+          "LLMProviderAdapter (abstraction for multiple providers)",
+          "ResponseCache (caches LLM outputs)"
+        ],
+        "dependencies": ["LangChain", "Anthropic SDK"]
+      },
+      {
+        "package_name": "vibe_spec.knowledge",
+        "responsibility": "NFR catalog, FAE constraints, dogfooded components",
+        "technologies": ["YAML"],
+        "key_classes": [
+          "NFRTriageModule (F007: reuses NFR_CATALOG.yaml)",
+          "ConstraintChecker (F008: reuses FAE_constraints.yaml)",
+          "KnowledgeLoader (loads YAML knowledge bases)"
+        ],
+        "dependencies": ["Dogfooded: agency_os/01_planning_framework/knowledge/"]
+      },
+      {
+        "package_name": "vibe_spec.output",
+        "responsibility": "Specification generation, export formats",
+        "technologies": ["Jinja2", "JSON"],
+        "key_classes": [
+          "SpecificationBuilder (constructs spec from answers)",
+          "MarkdownExporter (generates PRD.md)",
+          "JSONExporter (generates spec.json for AI tools)",
+          "TraceabilityMapper (links features to problems/users)"
+        ],
+        "dependencies": ["vibe_spec.core"]
+      },
+      {
+        "package_name": "vibe_spec.refinement",
+        "responsibility": "Iterative editing, diff generation, version management",
+        "technologies": ["JSON", "difflib"],
+        "key_classes": [
+          "SpecificationLoader (loads existing specs)",
+          "SectionEditor (edit specific sections)",
+          "DiffGenerator (show changes)",
+          "VersionManager (track iterations - Phase 2)"
+        ],
+        "dependencies": ["vibe_spec.core", "vibe_spec.output"]
+      },
+      {
+        "package_name": "vibe_spec.cli",
+        "responsibility": "CLI interface, user interaction",
+        "technologies": ["Click", "Rich"],
+        "key_classes": [
+          "VIBESpecCLI (main entry point)",
+          "ProgressDisplay (visual progress with Rich)",
+          "HelpSystem (contextual help)",
+          "Tutorial (first-run onboarding)"
+        ],
+        "dependencies": ["All other packages"]
+      }
+    ]
+  },
+
+  "data_model": {
+    "interview_state_schema": {
+      "description": "JSON-based state for current interview",
+      "fields": {
+        "interview_id": "UUID",
+        "template_id": "string (e.g., 'web_app')",
+        "current_question_id": "string",
+        "answers": "dict (question_id → answer)",
+        "metadata": "dict (project_name, user_email, etc.)",
+        "created_at": "timestamp",
+        "updated_at": "timestamp",
+        "history": "list of (question_id, answer, timestamp) for backtracking"
+      }
+    },
+    "specification_output_schema": {
+      "description": "Generated specification format",
+      "formats": {
+        "markdown": {
+          "sections": [
+            "# Project Overview",
+            "## Problem Statement",
+            "## User Stories",
+            "## Features (MoSCoW prioritized)",
+            "## Non-Functional Requirements",
+            "## Technical Constraints",
+            "## Acceptance Criteria",
+            "## Risks and Assumptions"
+          ]
+        },
+        "json": {
+          "fields": {
+            "project_metadata": "object",
+            "problems": "array of problem objects",
+            "user_stories": "array of user story objects",
+            "features": "array of feature objects (with dependencies)",
+            "nfrs": "array of NFR objects (categorized by ISO 25010)",
+            "constraints": "array of constraint objects",
+            "traceability": "graph (feature → user_story → problem)"
+          }
+        }
+      }
+    },
+    "template_schema": {
+      "description": "YAML-based question tree",
+      "structure": {
+        "template_id": "string",
+        "name": "string",
+        "description": "string",
+        "use_cases": "array of strings",
+        "question_tree": {
+          "root_question": {
+            "id": "string",
+            "text": "string",
+            "type": "string (text, choice, multi_choice, number)",
+            "help_text": "string (optional)",
+            "validation": "object (optional)",
+            "branches": "array of (condition, next_question_id)"
+          }
+        }
+      }
+    }
+  },
+
+  "api_contracts": {
+    "llm_provider_interface": {
+      "base_class": "LLMProviderAdapter",
+      "required_methods": [
+        {
+          "name": "generate_question",
+          "signature": "def generate_question(self, context: dict) -> str",
+          "description": "Generate follow-up question based on context"
+        },
+        {
+          "name": "parse_answer",
+          "signature": "def parse_answer(self, question: str, answer: str) -> dict",
+          "description": "Extract structured data from plain language answer"
+        },
+        {
+          "name": "get_provider_name",
+          "signature": "def get_provider_name(self) -> str",
+          "description": "Return provider name (e.g., 'claude', 'gpt4')"
+        }
+      ],
+      "implementations": [
+        "ClaudeProvider (default)",
+        "OpenAIProvider",
+        "LocalLLMProvider (future)"
+      ]
+    },
+    "cli_commands": {
+      "vibe-spec new": "Start new specification interview",
+      "vibe-spec new --template=<name>": "Start with specific template",
+      "vibe-spec continue <interview_id>": "Resume interrupted interview",
+      "vibe-spec edit <spec_file>": "Refine existing specification",
+      "vibe-spec templates": "List available templates",
+      "vibe-spec export <interview_id> --format=<md|json>": "Export specification",
+      "vibe-spec validate <spec_file>": "Check spec completeness",
+      "vibe-spec config": "Configure LLM provider, budget, etc.",
+      "vibe-spec --help": "Show help and examples"
+    }
+  },
+
+  "non_functional_requirements_implementation": {
+    "performance": {
+      "requirement": "LLM responses < 3s, template loading < 1s",
+      "implementation": [
+        "Aggressive LLM response caching (diskcache)",
+        "Template preloading at startup",
+        "Async LLM calls (don't block UI)",
+        "Progress indicators for slow operations"
+      ]
+    },
+    "security": {
+      "requirement": "User privacy (SEC-CONFIDENTIALITY)",
+      "implementation": [
+        "Consent flow before first LLM call",
+        "Opt-in analytics/error reporting",
+        "Local-first storage (no mandatory cloud)",
+        "Clear privacy policy in docs"
+      ]
+    },
+    "reliability": {
+      "requirement": "Offline capability, LLM fallback (REL-AVAILABILITY, REL-FAULT-TOLERANCE)",
+      "implementation": [
+        "Template-only mode (works offline)",
+        "Graceful degradation if LLM API fails",
+        "Autosave interview progress every 30s",
+        "Retry logic with exponential backoff"
+      ]
+    },
+    "maintainability": {
+      "requirement": "Modular, testable, dogfooding (MAIN-MODULARITY, MAIN-REUSABILITY)",
+      "implementation": [
+        "Plugin architecture (swappable components)",
+        "Reuse NFR_CATALOG.yaml, FAE_constraints.yaml",
+        "Reuse LEAN_CANVAS, VIBE_ALIGNER as templates",
+        "70%+ test coverage",
+        "CI/CD with GitHub Actions"
+      ]
+    },
+    "usability": {
+      "requirement": "Non-technical onboarding < 30 min (USAB-LEARNABILITY)",
+      "implementation": [
+        "Interactive tutorial on first run",
+        "Contextual help for every question",
+        "Plain language (no jargon)",
+        "Progress tracking (3/10 questions)",
+        "Examples for ambiguous questions"
+      ]
+    },
+    "portability": {
+      "requirement": "Cross-platform CLI, multi-LLM support (PORT-PLATFORM, PORT-LLM-PROVIDER)",
+      "implementation": [
+        "Python 3.10+ (Linux/macOS/Windows)",
+        "LLM provider abstraction",
+        "Configuration file for provider selection",
+        "pathlib for platform-independent paths"
+      ]
+    },
+    "cost": {
+      "requirement": "LLM cost management (COST-LLM-API)",
+      "implementation": [
+        "Response caching (avoid redundant API calls)",
+        "User budget limits ($5/project)",
+        "Fallback to templates when budget exceeded",
+        "Cost estimation shown upfront"
+      ]
+    }
+  },
+
+  "implementation_roadmap": {
+    "phase_1_mvp": {
+      "duration": "12-16 weeks",
+      "features": ["F001", "F002", "F003", "F004", "F006", "F010_CLI"],
+      "deliverables": [
+        "Conversational Interview Engine (tree-based)",
+        "Template Library (5 starter templates)",
+        "Specification Output (Markdown, JSON)",
+        "Iterative Refinement (edit mode)",
+        "Plain Language Parser (LLM-powered)",
+        "CLI Interface (Click + Rich)",
+        "Dogfooding: NFR and FAE integration"
+      ],
+      "milestones": [
+        {
+          "week": "1-2",
+          "task": "Setup project structure, CLI skeleton, LLM integration POC"
+        },
+        {
+          "week": "3-5",
+          "task": "Interview Engine (state machine, question tree, backtracking)"
+        },
+        {
+          "week": "6-8",
+          "task": "Template Library (5 templates: web, mobile, API, data, admin)"
+        },
+        {
+          "week": "9-10",
+          "task": "LLM Orchestrator (F005 Question Gen, F006 Parser)"
+        },
+        {
+          "week": "11-12",
+          "task": "Output Generator (Markdown, JSON), Refinement (F004)"
+        },
+        {
+          "week": "13-14",
+          "task": "Dogfooding integration (NFR_CATALOG, FAE_constraints)"
+        },
+        {
+          "week": "15-16",
+          "task": "UX polish (tutorial, help, examples), testing, documentation"
+        }
+      ]
+    },
+    "phase_2_intelligence": {
+      "duration": "8-10 weeks",
+      "features": ["F005", "F007", "F008"],
+      "deliverables": [
+        "AI Question Generation (F005)",
+        "NFR Triage Module (F007)",
+        "Constraint Checker (F008)",
+        "Version history for refinement",
+        "Web UI prototype"
+      ]
+    },
+    "future_phases": {
+      "phase_3_saas": {
+        "features": ["F010_Web", "Collaborative editing"],
+        "notes": "Web-based SaaS platform, multi-user, cloud sync"
+      },
+      "phase_4_integrations": {
+        "features": ["F009"],
+        "notes": "Export to Bolt, Cursor, Replit, Jira, Linear"
+      },
+      "phase_5_quality": {
+        "features": ["F011"],
+        "notes": "AI-powered spec quality analysis"
+      }
+    }
+  },
+
+  "testing_strategy": {
+    "unit_tests": {
+      "coverage_target": "70%+",
+      "focus_areas": [
+        "Interview Engine (state machine, branching logic)",
+        "Question Tree parsing (YAML → QuestionNode objects)",
+        "Plain Language Parser (mock LLM for determinism)",
+        "Specification Builder (answers → spec structure)",
+        "Template validation"
+      ],
+      "tools": "pytest, pytest-mock, coverage.py"
+    },
+    "integration_tests": {
+      "scenarios": [
+        "End-to-end: new → template → interview → export",
+        "Refinement: load spec → edit section → re-export",
+        "LLM fallback: trigger API error → verify fallback to templates",
+        "Dogfooding: Run framework on itself (meta-test)"
+      ]
+    },
+    "usability_tests": {
+      "target": "10 non-technical users",
+      "metrics": [
+        "Completion rate (% who finish first spec)",
+        "Time to completion (target: < 30 min)",
+        "Satisfaction score (1-10)",
+        "Developer acceptance (rate spec quality 1-10)"
+      ]
+    }
+  },
+
+  "deployment_and_distribution": {
+    "installation_method": "pip install (PyPI)",
+    "installation_steps": [
+      "pip install vibe-spec",
+      "vibe-spec config --llm-provider=claude --api-key=<key>",
+      "vibe-spec new --template=web_app",
+      "Follow conversational interview",
+      "vibe-spec export <id> --format=md > my_project_spec.md"
+    ],
+    "configuration": {
+      "config_file": "~/.vibe-spec/config.yaml",
+      "fields": {
+        "llm_provider": "claude | gpt4 | local",
+        "api_key": "string (encrypted)",
+        "budget_per_project": "number (USD)",
+        "cache_enabled": "boolean",
+        "analytics_opt_in": "boolean"
+      }
+    },
+    "distribution_channels": [
+      "PyPI (primary: pip install)",
+      "GitHub repository (source code, issues, community templates)",
+      "VIBE Agency website (client onboarding tool)"
+    ]
+  },
+
+  "risk_mitigation": {
+    "technical_risks": [
+      {
+        "risk": "LLM quality inconsistency (generates irrelevant questions)",
+        "mitigation": "Human-curated fallback templates, quality filtering, user feedback loop",
+        "probability": "MEDIUM",
+        "impact": "HIGH"
+      },
+      {
+        "risk": "LLM API costs exceed budget",
+        "mitigation": "Aggressive caching, user budget limits, fallback to templates",
+        "probability": "MEDIUM",
+        "impact": "MEDIUM"
+      },
+      {
+        "risk": "Non-technical users get stuck on complex questions",
+        "mitigation": "Skip buttons, examples, help text, fallback to simpler templates",
+        "probability": "HIGH",
+        "impact": "HIGH"
+      }
+    ],
+    "business_risks": [
+      {
+        "risk": "Market validation - do users want spec tools? (RA-001)",
+        "mitigation": "MVP validation with 20 target users, pivot if no traction",
+        "probability": "MEDIUM",
+        "impact": "CRITICAL"
+      },
+      {
+        "risk": "Developer rejection - specs not useful (RA-002)",
+        "mitigation": "Developer feedback study before public launch",
+        "probability": "MEDIUM",
+        "impact": "CRITICAL"
+      }
+    ]
+  },
+
+  "success_metrics": {
+    "mvp_success_criteria": [
+      "80% of non-technical users complete first spec in < 30 min",
+      "Developers rate spec quality 7/10 or higher",
+      "Specs include all required sections (functional, NFRs, constraints, acceptance criteria)",
+      "Dogfooding test: Framework can generate spec for itself (meta-validation)"
+    ],
+    "phase_2_success_criteria": [
+      "AI Question Generation (F005) reduces user time by 20%",
+      "NFR Triage (F007) captures 90%+ of relevant NFRs",
+      "Constraint Checker (F008) prevents 50%+ of impossible requirements"
+    ],
+    "long_term_vision_metrics": [
+      "1000+ monthly active users (PyPI downloads)",
+      "10+ community-contributed templates",
+      "Integration with major AI code tools (Bolt, Cursor, Replit)",
+      "VIBE Agency uses it for all client discovery calls"
+    ]
+  },
+
+  "dogfooding_architecture": {
+    "reused_components": [
+      {
+        "source": "agency_os/01_planning_framework/knowledge/NFR_CATALOG.yaml",
+        "destination": "vibe_spec/knowledge/nfr_catalog.yaml",
+        "usage": "F007 (NFR Triage Module) imports directly",
+        "benefit": "Proven ISO 25010-based NFR categories, no reinvention"
+      },
+      {
+        "source": "agency_os/01_planning_framework/knowledge/FAE_constraints.yaml",
+        "destination": "vibe_spec/knowledge/fae_constraints.yaml",
+        "usage": "F008 (Constraint Checker) imports directly",
+        "benefit": "Battle-tested anti-pattern detection, saves weeks of work"
+      },
+      {
+        "source": "agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR",
+        "destination": "vibe_spec/templates/lean_canvas.yaml",
+        "usage": "Template for business model validation projects",
+        "benefit": "Proven question flow for business planning"
+      },
+      {
+        "source": "agency_os/01_planning_framework (VIBE_ALIGNER 4-phase structure)",
+        "destination": "vibe_spec/templates/software_project.yaml",
+        "usage": "Template for software development projects",
+        "benefit": "Proven workflow for software specs"
+      }
+    ],
+    "meta_validation": {
+      "test_name": "Inception Test",
+      "description": "Use VIBE Coding Framework to generate spec for VIBE Coding Framework v2.0",
+      "expected_result": "Framework generates high-quality spec for itself, proving usability and completeness",
+      "value": "Ultimate dogfooding - if framework can't spec itself, it's not good enough"
+    }
+  }
+}

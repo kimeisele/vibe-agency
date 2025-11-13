@@ -1,0 +1,269 @@
+{
+  "phase": "02_feature_extraction",
+  "framework_version": "1.1.0",
+  "project_type": "commercial",
+  "abstraction_level": "META",
+  "websearch_enabled": true,
+  "research_sources": [
+    "WebSearch: Conversational UI design patterns (tree structures, parameter chains)"
+  ],
+
+  "features": [
+    {
+      "id": "F001",
+      "name": "Conversational Interview Engine",
+      "description": "Tree-based question flow that guides users from vague idea to structured specification",
+      "user_story_ids": ["US001", "US005"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 21,
+      "acceptance_criteria": [
+        "Decision tree architecture supports branching based on user answers",
+        "Non-linear flow allows backtracking and refinement",
+        "Parameter chain pattern prevents redundant questions",
+        "Context-aware questions (adapts based on previous answers)",
+        "Plain language input (no technical jargon required)"
+      ],
+      "technical_notes": "Research: Tree hierarchy structures, Guide pattern, parameter chain pattern",
+      "inspiration": "Google Assistant conversation design, chatbot flows"
+    },
+    {
+      "id": "F002",
+      "name": "Template Library System",
+      "description": "Pre-built question flows for common software patterns (web app, mobile app, API, etc.)",
+      "user_story_ids": ["US002"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "5-10 starter templates (web app, mobile app, REST API, data pipeline, admin dashboard)",
+        "Each template has domain-specific questions",
+        "Templates are customizable (add/remove/modify questions)",
+        "Template metadata (description, use cases, example output)",
+        "Easy template selection (category-based browsing)"
+      ],
+      "technical_notes": "Templates are YAML/JSON-based question trees"
+    },
+    {
+      "id": "F003",
+      "name": "Specification Output Generator",
+      "description": "Transform captured answers into structured specifications in multiple formats",
+      "user_story_ids": ["US001", "US002", "US003", "US004"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Export to Markdown (human-readable PRD)",
+        "Export to JSON (machine-readable for AI code tools)",
+        "Includes: Functional requirements, NFRs, constraints, acceptance criteria",
+        "Traceability: Links features to problems and user stories",
+        "Developer-friendly format (answers common dev questions)"
+      ],
+      "technical_notes": "Output must be compatible with Bolt, Cursor, Replit input formats"
+    },
+    {
+      "id": "F004",
+      "name": "Iterative Refinement System",
+      "description": "Edit and improve existing specifications without starting over (refactorable requirement)",
+      "user_story_ids": ["US001"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Load existing specification",
+        "Re-run specific sections (e.g., just NFRs, just features)",
+        "Diff view (show what changed)",
+        "Version history (track iterations)",
+        "Merge changes intelligently (don't lose previous work)"
+      ],
+      "technical_notes": "This is the 'dynamic' part of user requirement"
+    },
+    {
+      "id": "F005",
+      "name": "Context Extraction & Question Generation",
+      "description": "AI-powered analysis of user's vague input to generate relevant follow-up questions",
+      "user_story_ids": ["US001", "US005"],
+      "priority": "SHOULD_HAVE",
+      "estimated_complexity": 21,
+      "acceptance_criteria": [
+        "Analyze initial user description (e.g., 'I want to build a social app')",
+        "Generate 3-5 clarifying questions specific to their domain",
+        "Avoid redundant questions (check what's already known)",
+        "Adaptive depth (ask more questions if answers are vague)",
+        "LLM-powered (use Claude/GPT for question generation)"
+      ],
+      "technical_notes": "This is what makes it 'robust' - intelligently adapts to user"
+    },
+    {
+      "id": "F006",
+      "name": "Plain Language Parser",
+      "description": "Extract structured data from non-technical user answers",
+      "user_story_ids": ["US001"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Parse natural language answers (e.g., 'users should be able to login') → feature: Authentication",
+        "Detect implicit requirements (e.g., 'handle payments' → need: PCI compliance)",
+        "Extract entities (users, roles, actions, data)",
+        "Normalize to technical terminology (for spec output)",
+        "Handle ambiguity (ask clarifying questions)"
+      ],
+      "technical_notes": "LLM-powered NLP, possibly fine-tuned for requirement extraction"
+    },
+    {
+      "id": "F007",
+      "name": "NFR Triage Module",
+      "description": "Systematic capture of non-functional requirements (similar to our Planning Framework Phase 4)",
+      "user_story_ids": ["US003", "US004"],
+      "priority": "SHOULD_HAVE",
+      "estimated_complexity": 8,
+      "acceptance_criteria": [
+        "Ask about performance, security, reliability, scalability",
+        "ISO 25010-based categories (reuse our NFR_CATALOG.yaml)",
+        "Detect NFR conflicts (e.g., high performance + low cost)",
+        "Prioritize NFRs (critical, high, medium, low)",
+        "Include in spec output"
+      ],
+      "technical_notes": "Dogfooding: Reuse our own NFR Triage system from Planning Framework"
+    },
+    {
+      "id": "F008",
+      "name": "Constraint & Feasibility Checker",
+      "description": "Warn users about impossible/complex requirements (similar to our FAE system)",
+      "user_story_ids": ["US004"],
+      "priority": "SHOULD_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Detect anti-patterns (e.g., 'real-time video streaming' in MVP)",
+        "Warn about scope creep (e.g., 'This adds 6 months to timeline')",
+        "Suggest alternatives (e.g., '3rd-party instead of self-hosted')",
+        "Reference FAE constraint database",
+        "Optional enforcement (warn vs. block)"
+      ],
+      "technical_notes": "Dogfooding: Reuse our FAE_constraints.yaml from Planning Framework"
+    },
+    {
+      "id": "F009",
+      "name": "Export Integration Layer",
+      "description": "Export specifications to AI code tools and project management platforms",
+      "user_story_ids": ["US002"],
+      "priority": "COULD_HAVE",
+      "estimated_complexity": 8,
+      "acceptance_criteria": [
+        "Export to Bolt.new (StackBlitz format)",
+        "Export to Cursor (project instructions format)",
+        "Export to Replit (bounty format)",
+        "Export to Jira (epic + user stories)",
+        "Export to Linear (issues + projects)"
+      ],
+      "technical_notes": "Phase 4 feature, but define interface now"
+    },
+    {
+      "id": "F010",
+      "name": "CLI & Web UI Interfaces",
+      "description": "Multiple interaction modes (CLI for developers, web UI for non-technical users)",
+      "user_story_ids": ["US001", "US002", "US005"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "CLI mode: Interactive terminal-based interview (like our Planning Framework)",
+        "Web UI: Browser-based conversational interface",
+        "Both modes share same engine (DRY principle)",
+        "CLI is default for MVP (faster to build)",
+        "Web UI for Phase 2"
+      ],
+      "technical_notes": "CLI: Python Click + Rich, Web: Next.js + shadcn/ui (future)"
+    },
+    {
+      "id": "F011",
+      "name": "Specification Quality Analyzer",
+      "description": "AI-powered analysis of generated specifications to ensure completeness",
+      "user_story_ids": ["US004"],
+      "priority": "COULD_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Check for missing sections (e.g., no NFRs defined)",
+        "Detect ambiguous requirements",
+        "Suggest improvements (e.g., 'Add acceptance criteria for Feature X')",
+        "Quality score (1-10 based on completeness)",
+        "Comparison to best practices"
+      ],
+      "technical_notes": "Phase 5 feature - AI-powered quality analysis"
+    }
+  ],
+
+  "feature_dependencies": {
+    "critical_path": [
+      "F001 (Interview Engine) → F002 (Templates) → F003 (Output Generator)",
+      "F006 (Plain Language Parser) → F001 (Interview Engine)",
+      "F004 (Refinement) depends on F003 (Output)"
+    ],
+    "parallel_workstreams": [
+      "Stream 1 (Core): F001 → F002 → F003 → F004",
+      "Stream 2 (Intelligence): F005 (Question Gen) + F006 (Parser)",
+      "Stream 3 (Quality): F007 (NFR Triage) + F008 (Feasibility)",
+      "Stream 4 (Interface): F010 (CLI/Web)",
+      "Stream 5 (Future): F009 (Integrations) + F011 (Quality Analyzer)"
+    ]
+  },
+
+  "mvp_scope": {
+    "must_have": ["F001", "F002", "F003", "F004", "F006", "F010"],
+    "should_have": ["F005", "F007", "F008"],
+    "could_have": ["F009", "F011"],
+    "total_complexity_must_have": 86,
+    "total_complexity_should_have": 42,
+    "total_complexity_all": 149
+  },
+
+  "technology_research": {
+    "conversation_design": {
+      "patterns_identified": [
+        "Tree hierarchy structures for flow organization",
+        "Guide pattern for directed conversations",
+        "Parameter chain pattern for multi-parameter handling",
+        "Local/global navigation for context management"
+      ],
+      "recommendation": "Implement decision tree with parameter chaining, support non-linear flow"
+    },
+    "question_flow": {
+      "linear_vs_nonlinear": "Use non-linear flow to allow backtracking and refinement",
+      "branching_logic": "Decision trees branch based on user responses",
+      "redundancy_prevention": "Parameter chain checks if data already available"
+    }
+  },
+
+  "dogfooding_opportunities": {
+    "reuse_from_planning_framework": [
+      {
+        "component": "NFR_CATALOG.yaml",
+        "reuse_in": "F007 (NFR Triage Module)",
+        "benefit": "Proven ISO 25010-based NFR categories"
+      },
+      {
+        "component": "FAE_constraints.yaml",
+        "reuse_in": "F008 (Constraint Checker)",
+        "benefit": "Tested anti-pattern detection"
+      },
+      {
+        "component": "LEAN_CANVAS_VALIDATOR interview flow",
+        "reuse_in": "F001 (Interview Engine) templates",
+        "benefit": "Proven question patterns for business validation"
+      },
+      {
+        "component": "VIBE_ALIGNER phase structure",
+        "reuse_in": "F002 (Template Library) - 'Software Project' template",
+        "benefit": "4-phase structure works well for software specs"
+      }
+    ]
+  },
+
+  "meta_observations": {
+    "abstraction_challenges": [
+      "CHALLENGE: Defining 'features' for a framework is more abstract than app features",
+      "CHALLENGE: Feature complexity hard to estimate for meta/recursive requirements",
+      "CHALLENGE: Dogfooding creates circular dependencies (using framework to design itself)"
+    ],
+    "framework_test_insights": [
+      "INSIGHT: WebSearch was crucial for conversation design patterns research",
+      "INSIGHT: Hybrid mode (commercial + vague) worked well - got research + full planning",
+      "INSIGHT: Meta-projects benefit from 'abstraction_level' field in manifest"
+    ]
+  }
+}
