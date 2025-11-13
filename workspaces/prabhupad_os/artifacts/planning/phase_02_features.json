@@ -1,0 +1,177 @@
+{
+  "phase": "02_feature_extraction",
+  "framework_version": "1.1.0",
+  "project_type": "nonprofit",
+  "websearch_enabled": true,
+  "research_sources": [
+    "WebSearch: Monorepo tools 2024 best practices",
+    "WebSearch: EPUB parser libraries Rust Python Sanskrit Unicode"
+  ],
+
+  "features": [
+    {
+      "id": "F001",
+      "name": "CLI E-Book Reader Core",
+      "description": "Terminal-based book reader with navigation (chapters, search, bookmarks)",
+      "user_story_ids": ["US001"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 8,
+      "acceptance_criteria": [
+        "Read EPUB files from local path",
+        "Navigate chapters (next/prev/jump)",
+        "Search within book text",
+        "Bookmark support (save/load position)",
+        "Display in terminal with proper formatting"
+      ],
+      "technical_notes": "Consider Rust for performance + Python for rapid prototyping"
+    },
+    {
+      "id": "F002",
+      "name": "EPUB Parser with Sanskrit Support",
+      "description": "Parse EPUB files while preserving Sanskrit diacritical marks (IAST/Devanagari Unicode)",
+      "user_story_ids": ["US001", "US002", "US004"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Extract text from EPUB2/EPUB3 formats",
+        "Preserve Sanskrit Unicode characters (U+0900–U+097F Devanagari, U+0100–U+017F Latin Extended-A for IAST)",
+        "Parse to verse-level granularity with IDs",
+        "Extract metadata (title, author, chapter structure)",
+        "Handle embedded fonts correctly"
+      ],
+      "technical_notes": "Python EbookLib recommended for EPUB2/EPUB3 support; Rust epub-rs as alternative"
+    },
+    {
+      "id": "F003",
+      "name": "Text Authenticity Verification System",
+      "description": "Checksum-based verification that texts are unmodified originals",
+      "user_story_ids": ["US002"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 5,
+      "acceptance_criteria": [
+        "Generate SHA-256 checksums for each book",
+        "CLI command to verify book integrity",
+        "Display verification status (VERIFIED | MODIFIED | UNKNOWN)",
+        "Store reference checksums in version-controlled manifest",
+        "Cite original BBT sources in manifest"
+      ],
+      "technical_notes": "Simple implementation; critical for nonprofit trust"
+    },
+    {
+      "id": "F004",
+      "name": "Plugin Architecture Foundation",
+      "description": "Extensible plugin system for third-party devotional apps",
+      "user_story_ids": ["US003"],
+      "priority": "SHOULD_HAVE",
+      "estimated_complexity": 21,
+      "acceptance_criteria": [
+        "Plugin API specification documented",
+        "Plugin discovery mechanism (plugins/ directory)",
+        "Plugin lifecycle hooks (init, activate, deactivate)",
+        "Sample plugin provided (e.g., simple verse-of-the-day)",
+        "Plugins can access parsed book data via API"
+      ],
+      "technical_notes": "Research WebAssembly for language-agnostic plugins; start simple with native modules"
+    },
+    {
+      "id": "F005",
+      "name": "Monorepo Build System",
+      "description": "Turborepo/Nx-based monorepo for Reader, Parser, Plugin SDK components",
+      "user_story_ids": ["US003"],
+      "priority": "SHOULD_HAVE",
+      "estimated_complexity": 8,
+      "acceptance_criteria": [
+        "Separate packages: @prabhupad-os/reader, @prabhupad-os/parser, @prabhupad-os/plugin-sdk",
+        "Shared build configuration",
+        "Incremental builds (only rebuild changed packages)",
+        "Workspace-wide testing command",
+        "Documented package dependencies"
+      ],
+      "technical_notes": "Turborepo (Rust-based, fast) recommended; pnpm workspaces as simpler alternative"
+    },
+    {
+      "id": "F006",
+      "name": "Git-Based Distribution System",
+      "description": "Distribute PrabhupadaOS via Git repository with books as Git LFS",
+      "user_story_ids": ["US001", "US002"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 3,
+      "acceptance_criteria": [
+        "Repository structure documented",
+        "Books stored in books/ directory with Git LFS",
+        "Installation script (install.sh / install.ps1)",
+        "Update mechanism (git pull)",
+        "README with quick start guide"
+      ],
+      "technical_notes": "Git LFS for large EPUB files; consider submodules for book collections"
+    },
+    {
+      "id": "F007",
+      "name": "Translation Data Export (Future)",
+      "description": "Export parsed book data to translation-ready format (JSON/XLIFF)",
+      "user_story_ids": ["US004"],
+      "priority": "COULD_HAVE",
+      "estimated_complexity": 13,
+      "acceptance_criteria": [
+        "Export verses to JSON with IDs",
+        "XLIFF format support for CAT tools",
+        "Preserve verse cross-references",
+        "Export includes metadata for context"
+      ],
+      "technical_notes": "Explicitly future phase per user requirements; include in design but defer implementation"
+    },
+    {
+      "id": "F008",
+      "name": "Offline-First Data Storage",
+      "description": "Local-only storage for bookmarks, notes, reading progress (no cloud dependency)",
+      "user_story_ids": ["US001"],
+      "priority": "MUST_HAVE",
+      "estimated_complexity": 5,
+      "acceptance_criteria": [
+        "SQLite database for user data",
+        "Store bookmarks with verse IDs",
+        "Store reading progress per book",
+        "CLI commands to backup/restore user data",
+        "XDG Base Directory compliance (Linux) / proper paths (macOS/Windows)"
+      ],
+      "technical_notes": "SQLite recommended; simple schema"
+    }
+  ],
+
+  "feature_dependencies": {
+    "critical_path": [
+      "F002 (EPUB Parser) → F001 (Reader Core) → F008 (Offline Storage)",
+      "F005 (Monorepo) → F004 (Plugin Architecture)",
+      "F002 (Parser) → F003 (Verification)"
+    ],
+    "parallel_workstreams": [
+      "Stream 1: F002 → F001 → F008",
+      "Stream 2: F005 → F004",
+      "Stream 3: F003, F006 (independent)",
+      "Stream 4: F007 (future phase, deferred)"
+    ]
+  },
+
+  "technology_research": {
+    "monorepo_tools": {
+      "recommendation": "Turborepo or pnpm workspaces",
+      "rationale": "Turborepo is Rust-based (fast), pnpm is simpler for smaller teams"
+    },
+    "epub_parser": {
+      "recommendation": "Python EbookLib for MVP, Rust epub-rs for performance optimization",
+      "rationale": "EbookLib supports EPUB2/EPUB3, comprehensive API, Sanskrit Unicode should work via standard HTML Unicode support"
+    },
+    "cli_framework": {
+      "recommendation": "Research needed: Python Click vs Rust clap",
+      "rationale": "Python for rapid prototyping, Rust for production performance"
+    }
+  },
+
+  "mvp_scope": {
+    "must_have": ["F001", "F002", "F003", "F006", "F008"],
+    "should_have": ["F004", "F005"],
+    "could_have": ["F007"],
+    "total_complexity_must_have": 34,
+    "total_complexity_all": 76
+  }
+}

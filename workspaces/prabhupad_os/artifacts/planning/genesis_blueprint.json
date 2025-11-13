@@ -1,0 +1,469 @@
+{
+  "blueprint_version": "1.0",
+  "project_id": "prabhupad_os_001",
+  "project_name": "PrabhupadaOS",
+  "project_type": "nonprofit",
+  "framework_version": "1.1.0",
+  "generated_at": "2025-11-13T00:00:00Z",
+
+  "executive_summary": {
+    "vision": "Modular CLI platform delivering 100% authentic Srila Prabhupada texts with verified EPUB parsing, extensible for devotional tools, prioritizing text integrity over convenience",
+    "mission": "Preserve and distribute original Prabhupada books with absolute authenticity, enabling global Hare Krishna community to study sacred texts on any platform",
+    "target_users": "Hare Krishna devotees, ISKCON communities, spiritual seekers, translators, scholars",
+    "core_differentiator": "Only platform with cryptographic text verification + modular plugin architecture for community-driven devotional tools",
+    "mvp_timeline": "8-12 weeks (single developer)",
+    "technology_stack": "Python 3.10+, Click CLI, EbookLib, SQLite, Poetry monorepo"
+  },
+
+  "system_architecture": {
+    "architectural_style": "Modular Monolith with Plugin Architecture",
+    "deployment_model": "Standalone CLI (local installation via Git)",
+    "data_storage": "Offline-first (SQLite + local EPUB files)",
+
+    "architecture_diagram_ascii": "
+┌─────────────────────────────────────────────────────────────────┐
+│                        PrabhupadaOS CLI                         │
+│                    (prabhupad-os command)                       │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌──────────────┐   ┌──────────────────┐
+│  Reader Core  │   │ EPUB Parser  │   │  Plugin Manager  │
+│  (CLI UX)     │   │ (Text Ext.)  │   │  (Extensions)    │
+└───────┬───────┘   └──────┬───────┘   └────────┬─────────┘
+        │                  │                     │
+        │                  │                     │
+        ▼                  ▼                     ▼
+┌─────────────────────────────────────────────────────────┐
+│            Shared Data Layer (SQLite)                   │
+│  - books_metadata (title, author, checksum)             │
+│  - user_bookmarks (book_id, verse_id, position)         │
+│  - reading_progress (book_id, last_chapter)             │
+│  - fts5_search (full-text search index)                 │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│              File System (Local Storage)                │
+│  - books/ (EPUB files from Git LFS)                     │
+│  - books_manifest.yaml (SHA-256 checksums + BBT sources)│
+│  - plugins/ (community extensions)                      │
+└─────────────────────────────────────────────────────────┘
+    ",
+
+    "component_breakdown": [
+      {
+        "package_name": "@prabhupad-os/reader",
+        "responsibility": "CLI interface, user interaction, command routing",
+        "technologies": ["Python Click", "Rich (terminal styling)"],
+        "key_classes": [
+          "ReaderCLI (main entry point)",
+          "BookNavigator (chapter navigation, search)",
+          "BookmarkManager (save/restore position)",
+          "DisplayEngine (Unicode-safe terminal rendering)"
+        ],
+        "dependencies": ["@prabhupad-os/parser", "@prabhupad-os/storage"]
+      },
+      {
+        "package_name": "@prabhupad-os/parser",
+        "responsibility": "EPUB parsing, Sanskrit Unicode handling, text extraction",
+        "technologies": ["EbookLib", "BeautifulSoup4 (HTML parsing)"],
+        "key_classes": [
+          "EPUBParser (main parsing logic)",
+          "SanskritUnicodeHandler (font/encoding handling)",
+          "VerseExtractor (verse-level granularity)",
+          "ChecksumVerifier (SHA-256 validation)"
+        ],
+        "dependencies": ["EbookLib", "hashlib (stdlib)"]
+      },
+      {
+        "package_name": "@prabhupad-os/storage",
+        "responsibility": "SQLite database, user data persistence, full-text search",
+        "technologies": ["SQLite3 (stdlib)", "SQLAlchemy (ORM)"],
+        "key_classes": [
+          "Database (connection manager)",
+          "BookMetadataRepo (CRUD for books)",
+          "BookmarkRepo (CRUD for bookmarks)",
+          "SearchEngine (FTS5 queries)"
+        ],
+        "dependencies": ["SQLAlchemy"]
+      },
+      {
+        "package_name": "@prabhupad-os/plugin-sdk",
+        "responsibility": "Plugin API, discovery, lifecycle management",
+        "technologies": ["Python importlib (dynamic imports)"],
+        "key_classes": [
+          "PluginManager (discovery, loading)",
+          "PluginAPI (base class for plugins)",
+          "PluginHooks (event system: on_book_open, on_verse_display)"
+        ],
+        "dependencies": ["@prabhupad-os/parser", "@prabhupad-os/storage"]
+      },
+      {
+        "package_name": "@prabhupad-os/cli",
+        "responsibility": "Main CLI entry point, orchestration",
+        "technologies": ["Python Click"],
+        "key_classes": [
+          "main() (CLI entry point)",
+          "CommandDispatcher (routes commands to components)"
+        ],
+        "dependencies": ["All other packages"]
+      }
+    ]
+  },
+
+  "data_model": {
+    "sqlite_schema": {
+      "books_metadata": {
+        "columns": [
+          "id INTEGER PRIMARY KEY",
+          "title TEXT NOT NULL",
+          "author TEXT DEFAULT 'A.C. Bhaktivedanta Swami Prabhupada'",
+          "epub_path TEXT NOT NULL",
+          "checksum_sha256 TEXT NOT NULL",
+          "bbt_source_url TEXT",
+          "verified BOOLEAN DEFAULT 0",
+          "total_chapters INTEGER",
+          "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        ],
+        "indexes": ["CREATE INDEX idx_books_title ON books_metadata(title)"]
+      },
+      "user_bookmarks": {
+        "columns": [
+          "id INTEGER PRIMARY KEY",
+          "book_id INTEGER REFERENCES books_metadata(id)",
+          "verse_id TEXT",
+          "chapter_number INTEGER",
+          "position_percent REAL",
+          "note TEXT",
+          "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        ],
+        "indexes": ["CREATE INDEX idx_bookmarks_book ON user_bookmarks(book_id)"]
+      },
+      "reading_progress": {
+        "columns": [
+          "book_id INTEGER PRIMARY KEY REFERENCES books_metadata(id)",
+          "last_chapter INTEGER",
+          "last_position_percent REAL",
+          "last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        ]
+      },
+      "fts5_search": {
+        "type": "FTS5 Virtual Table",
+        "columns": [
+          "book_id INTEGER",
+          "chapter_number INTEGER",
+          "verse_id TEXT",
+          "content TEXT"
+        ],
+        "notes": "Full-text search powered by SQLite FTS5 extension"
+      }
+    },
+    "file_system_structure": {
+      "prabhupad-os/": {
+        "books/": "EPUB files (managed by Git LFS)",
+        "books_manifest.yaml": "SHA-256 checksums + BBT source URLs",
+        "data/": {
+          "prabhupad_os.db": "SQLite database (user bookmarks, progress)"
+        },
+        "plugins/": {
+          "verse_of_the_day/": "Example plugin (shows random verse)"
+        },
+        "packages/": {
+          "reader/": "Reader package source",
+          "parser/": "Parser package source",
+          "storage/": "Storage package source",
+          "plugin-sdk/": "Plugin SDK source",
+          "cli/": "CLI entry point"
+        },
+        "pyproject.toml": "Poetry workspace config",
+        "install.sh": "Installation script",
+        "README.md": "Documentation"
+      }
+    }
+  },
+
+  "api_contracts": {
+    "plugin_api": {
+      "base_class": "PluginAPI",
+      "required_methods": [
+        {
+          "name": "on_init",
+          "signature": "def on_init(self, config: dict) -> None",
+          "description": "Called when plugin is loaded"
+        },
+        {
+          "name": "get_metadata",
+          "signature": "def get_metadata(self) -> dict",
+          "description": "Returns plugin name, version, description"
+        }
+      ],
+      "optional_hooks": [
+        {
+          "name": "on_book_open",
+          "signature": "def on_book_open(self, book: Book) -> None",
+          "description": "Called when user opens a book"
+        },
+        {
+          "name": "on_verse_display",
+          "signature": "def on_verse_display(self, verse: Verse) -> str",
+          "description": "Can modify verse display (e.g., add annotations)"
+        },
+        {
+          "name": "on_bookmark_create",
+          "signature": "def on_bookmark_create(self, bookmark: Bookmark) -> None",
+          "description": "Called when user creates bookmark"
+        }
+      ],
+      "example_plugin": "
+from prabhupad_os.plugin_sdk import PluginAPI
+
+class VerseOfTheDayPlugin(PluginAPI):
+    def get_metadata(self):
+        return {
+            'name': 'Verse of the Day',
+            'version': '1.0.0',
+            'author': 'Community'
+        }
+
+    def on_init(self, config):
+        self.db = config['db']
+
+    def on_book_open(self, book):
+        verse = self._get_random_verse(book)
+        print(f'📖 Verse of the Day: {verse.text}')
+      "
+    },
+    "cli_commands": {
+      "prabhupad-os list": "List all available books",
+      "prabhupad-os read <book_name>": "Open book in interactive reader",
+      "prabhupad-os search <query>": "Search across all books",
+      "prabhupad-os verify [book_name]": "Verify text authenticity (checksums)",
+      "prabhupad-os bookmarks": "List all bookmarks",
+      "prabhupad-os plugins": "List installed plugins",
+      "prabhupad-os --help": "Show help and examples"
+    }
+  },
+
+  "non_functional_requirements_implementation": {
+    "performance": {
+      "requirement": "Book loading < 2s, navigation < 100ms, search < 3s",
+      "implementation": [
+        "Cache parsed EPUB data in SQLite after first load",
+        "SQLite FTS5 for fast full-text search",
+        "Rich terminal library for efficient rendering"
+      ]
+    },
+    "security": {
+      "requirement": "Cryptographic text verification (SEC-AUTHENTICITY)",
+      "implementation": [
+        "books_manifest.yaml with SHA-256 checksums",
+        "Auto-verify on first run, warn if modified",
+        "CLI command 'verify' for manual verification"
+      ]
+    },
+    "reliability": {
+      "requirement": "100% offline availability (REL-AVAILABILITY)",
+      "implementation": [
+        "No network requests in core functionality",
+        "All books stored locally (Git LFS)",
+        "SQLite for local storage (no cloud DB)"
+      ]
+    },
+    "maintainability": {
+      "requirement": "Plugin architecture (MAIN-MODULARITY)",
+      "implementation": [
+        "Plugin SDK with stable API",
+        "Directory-based plugin discovery (plugins/)",
+        "Sample plugin provided in repo",
+        "API documentation for third-party developers"
+      ]
+    },
+    "portability": {
+      "requirement": "Cross-platform + Sanskrit Unicode (PORT-PLATFORM, PORT-UNICODE)",
+      "implementation": [
+        "Python 3.10+ (runs on Linux/macOS/Windows)",
+        "Rich library for Unicode-safe terminal output",
+        "Test suite includes Sanskrit text fixtures",
+        "Document recommended terminals in README"
+      ]
+    },
+    "usability": {
+      "requirement": "5-minute onboarding (USAB-LEARNABILITY)",
+      "implementation": [
+        "One-command installation: ./install.sh",
+        "Interactive reader mode (TUI-style)",
+        "Excellent help text with examples",
+        "Quick start in README: 3 steps (install, list, read)"
+      ]
+    }
+  },
+
+  "implementation_roadmap": {
+    "phase_1_mvp": {
+      "duration": "8-12 weeks",
+      "features": ["F001", "F002", "F003", "F006", "F008"],
+      "deliverables": [
+        "CLI E-Book Reader with chapter navigation",
+        "EPUB Parser with Sanskrit Unicode support",
+        "Text authenticity verification (SHA-256)",
+        "Git-based distribution (install.sh)",
+        "SQLite bookmarks/progress storage",
+        "70%+ test coverage"
+      ],
+      "milestones": [
+        {
+          "week": "1-2",
+          "task": "Setup monorepo (Poetry), SQLite schema, basic CLI structure"
+        },
+        {
+          "week": "3-5",
+          "task": "EPUB Parser + Sanskrit Unicode handling + tests"
+        },
+        {
+          "week": "6-8",
+          "task": "Reader Core (navigation, search, bookmarks) + Rich TUI"
+        },
+        {
+          "week": "9-10",
+          "task": "Checksum verification system + books_manifest.yaml"
+        },
+        {
+          "week": "11-12",
+          "task": "Install script, documentation, final testing"
+        }
+      ]
+    },
+    "phase_2_plugins": {
+      "duration": "5-7 weeks",
+      "features": ["F004", "F005"],
+      "deliverables": [
+        "Plugin SDK with stable API",
+        "Plugin discovery and lifecycle management",
+        "Sample plugins (verse-of-the-day, annotations)",
+        "Developer documentation",
+        "Improved monorepo structure (Poetry workspaces)"
+      ]
+    },
+    "future_phases": {
+      "phase_3_translation": {
+        "features": ["F007"],
+        "notes": "Translation framework explicitly deferred per user request ('später soll auch geplant sein')"
+      },
+      "phase_4_rust_rewrite": {
+        "rationale": "Single-binary distribution for non-technical users",
+        "notes": "Optional performance optimization once requirements stabilize"
+      }
+    }
+  },
+
+  "testing_strategy": {
+    "unit_tests": {
+      "coverage_target": "70%+",
+      "focus_areas": [
+        "EPUB Parser (all book structures, Sanskrit Unicode)",
+        "Checksum Verifier (valid/invalid checksums)",
+        "BookNavigator (chapter navigation edge cases)",
+        "SearchEngine (FTS5 queries, Sanskrit terms)"
+      ],
+      "tools": "pytest, coverage.py"
+    },
+    "integration_tests": {
+      "scenarios": [
+        "End-to-end: Install → List books → Read chapter → Bookmark → Exit",
+        "Verification: Load book → Verify checksum → Detect modification",
+        "Search: Index book → Search Sanskrit term → Display results"
+      ]
+    },
+    "platform_tests": {
+      "platforms": ["Ubuntu 22.04", "macOS 13+", "Windows 10+"],
+      "terminals": ["gnome-terminal", "iTerm2", "Windows Terminal"],
+      "unicode_validation": "Test Sanskrit rendering on all platforms"
+    }
+  },
+
+  "deployment_and_distribution": {
+    "installation_method": "Git clone + install script",
+    "installation_steps": [
+      "git clone https://github.com/prabhupad-os/prabhupad-os.git",
+      "cd prabhupad-os",
+      "./install.sh",
+      "prabhupad-os --help"
+    ],
+    "install_script_responsibilities": [
+      "Check Python 3.10+ installed",
+      "Install Poetry if missing",
+      "Run poetry install (all dependencies)",
+      "Setup Git LFS and fetch books",
+      "Initialize SQLite database",
+      "Run auto-verification of books",
+      "Add prabhupad-os to PATH"
+    ],
+    "update_mechanism": {
+      "command": "prabhupad-os update",
+      "implementation": "git pull origin main && poetry install"
+    },
+    "distribution_channels": [
+      "GitHub repository (primary)",
+      "ISKCON community forums (announcement)",
+      "BBT (Bhaktivedanta Book Trust) coordination for book permissions"
+    ]
+  },
+
+  "risk_mitigation": {
+    "technical_risks": [
+      {
+        "risk": "Sanskrit Unicode rendering varies across terminals",
+        "mitigation": "Document recommended terminals, provide fallback instructions, test on major platforms",
+        "probability": "MEDIUM",
+        "impact": "MEDIUM"
+      },
+      {
+        "risk": "Plugin system complexity delays MVP",
+        "mitigation": "Defer plugins to Phase 2, focus on core reader first",
+        "probability": "LOW",
+        "impact": "LOW"
+      },
+      {
+        "risk": "EbookLib doesn't handle all Prabhupada book EPUB variations",
+        "mitigation": "Test with all BBT books early, have fallback parser (epub-rs in Rust) ready",
+        "probability": "LOW",
+        "impact": "HIGH"
+      }
+    ],
+    "organizational_risks": [
+      {
+        "risk": "BBT copyright concerns for distribution",
+        "mitigation": "Coordinate with BBT early, cite sources in manifest, respect distribution terms",
+        "probability": "MEDIUM",
+        "impact": "CRITICAL"
+      },
+      {
+        "risk": "CLI intimidates non-technical devotees",
+        "mitigation": "Excellent onboarding (install.sh), interactive TUI mode, video tutorials",
+        "probability": "HIGH",
+        "impact": "HIGH"
+      }
+    ]
+  },
+
+  "success_metrics": {
+    "mvp_success_criteria": [
+      "10 devotees can install and read first book within 5 minutes (usability goal)",
+      "All original BBT books verified with checksums (authenticity goal)",
+      "70%+ test coverage (quality goal)",
+      "Works on Linux/macOS/Windows (portability goal)"
+    ],
+    "phase_2_success_criteria": [
+      "3+ community-developed plugins published (modularity goal)",
+      "Developer documentation rated 4/5+ by plugin developers (maintainability goal)"
+    ],
+    "long_term_vision_metrics": [
+      "1000+ active users in Hare Krishna community",
+      "Books translated to 10+ languages via translation framework",
+      "PrabhupadaOS referenced by BBT as official CLI tool"
+    ]
+  }
+}

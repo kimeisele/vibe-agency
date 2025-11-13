@@ -1,0 +1,265 @@
+{
+  "phase": "04_nfr_triage",
+  "framework_version": "1.1.0",
+  "project_type": "nonprofit",
+  "nfr_catalog_version": "1.0",
+  "timestamp": "2025-11-13T00:00:00Z",
+
+  "nfr_requirements": [
+    {
+      "category_id": "NFR-PERF",
+      "category_name": "Performance Efficiency",
+      "requirements": [
+        {
+          "id": "PERF-LATENCY",
+          "name": "Time-Behavior (Latenz)",
+          "response": "Book loading < 2 seconds, chapter navigation < 100ms, search results < 3 seconds",
+          "priority": "HIGH",
+          "rationale": "CLI users expect instant responsiveness. Sacred text reading is contemplative - fast navigation critical for flow.",
+          "acceptance_criteria": [
+            "Cold start: Load book from disk in < 2s",
+            "Hot navigation: Next/prev chapter < 100ms",
+            "Full-text search: Return results in < 3s for average book (500 pages)"
+          ],
+          "impact_on_architecture": "Requires caching of parsed EPUB data, indexed search (SQLite FTS5)"
+        },
+        {
+          "id": "PERF-CAPACITY",
+          "name": "Capacity (Kapazität)",
+          "response": "Single-user CLI application. No concurrent user requirement.",
+          "priority": "LOW",
+          "rationale": "CLI is inherently single-user, single-process. No scalability concerns.",
+          "acceptance_criteria": [
+            "Support library of 100+ books without performance degradation"
+          ],
+          "impact_on_architecture": "Minimal - standard file I/O sufficient"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-SEC",
+      "category_name": "Security",
+      "requirements": [
+        {
+          "id": "SEC-CONFIDENTIALITY",
+          "name": "Confidentiality (Vertraulichkeit)",
+          "response": "No PII/sensitive data. Public domain religious texts only.",
+          "priority": "LOW",
+          "rationale": "All content is public domain (Prabhupada books). No user data collected beyond local bookmarks.",
+          "acceptance_criteria": [
+            "No network requests (offline-first)",
+            "User bookmarks stored locally only (SQLite)",
+            "No telemetry or analytics"
+          ],
+          "impact_on_architecture": "Simplified - no encryption, no auth, no cloud sync"
+        },
+        {
+          "id": "SEC-AUTHENTICITY",
+          "name": "Authenticity (Authentizität)",
+          "response": "TEXT AUTHENTICITY is critical - checksum verification required. No user authentication needed.",
+          "priority": "CRITICAL",
+          "rationale": "Core mission: preserve original texts without modification. User explicitly stated 'keinerlei Erinnerungen der Originaltexte'.",
+          "acceptance_criteria": [
+            "SHA-256 checksum for each book in manifest",
+            "CLI command: prabhupad-os verify <book> shows VERIFIED/MODIFIED/UNKNOWN",
+            "Reject books with failed checksums (warn user, refuse to load)",
+            "Manifest cites BBT (Bhaktivedanta Book Trust) source"
+          ],
+          "impact_on_architecture": "Requires checksum manifest (books_manifest.yaml), verification layer in parser"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-REL",
+      "category_name": "Reliability",
+      "requirements": [
+        {
+          "id": "REL-AVAILABILITY",
+          "name": "Availability (Verfügbarkeit)",
+          "response": "100% offline availability (no network dependency)",
+          "priority": "CRITICAL",
+          "rationale": "Devotees may read in temples, retreats, or areas with limited internet. Sacred text reading cannot depend on cloud services.",
+          "acceptance_criteria": [
+            "All features work without internet connection",
+            "Books stored locally (Git LFS or bundled)",
+            "No cloud APIs required for core functionality"
+          ],
+          "impact_on_architecture": "Offline-first design: SQLite for storage, local files, no REST APIs"
+        },
+        {
+          "id": "REL-FAULT-TOLERANCE",
+          "name": "Fault Tolerance (Fehlertoleranz)",
+          "response": "Graceful degradation: Corrupted book detected → warn user, continue with other books",
+          "priority": "MEDIUM",
+          "rationale": "Single corrupted EPUB shouldn't crash entire application.",
+          "acceptance_criteria": [
+            "Parser errors → log error, skip book, continue",
+            "Missing bookmarks DB → create new DB, don't crash",
+            "Clear error messages (not stack traces) for users"
+          ],
+          "impact_on_architecture": "Robust error handling, validation layers"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-MAIN",
+      "category_name": "Maintainability",
+      "requirements": [
+        {
+          "id": "MAIN-MODULARITY",
+          "name": "Modularity (Modularität)",
+          "response": "CRITICAL - Plugin architecture for community contributions (devotional apps, trackers, calendars)",
+          "priority": "CRITICAL",
+          "rationale": "User explicitly stated: 'das Ziel ist eben das Modular zu gestalten, dass man beliebige Anwendungen ich sag mal mit einbringen kann'",
+          "acceptance_criteria": [
+            "Clear separation: @prabhupad-os/parser, @prabhupad-os/reader, @prabhupad-os/plugin-sdk",
+            "Plugin API documented with examples",
+            "Sample plugin provided (e.g., verse-of-the-day)",
+            "Third-party developers can build plugins without modifying core"
+          ],
+          "impact_on_architecture": "Monorepo structure, plugin discovery system, stable API contracts"
+        },
+        {
+          "id": "MAIN-TESTABILITY",
+          "name": "Testability (Testbarkeit)",
+          "response": "70%+ unit test coverage for parser and core reader logic",
+          "priority": "HIGH",
+          "rationale": "Text parsing is complex (Sanskrit Unicode). High test coverage prevents regressions when adding plugins.",
+          "acceptance_criteria": [
+            "Unit tests for EPUB parser (all book structures)",
+            "Integration tests for reader commands",
+            "Test fixtures with sample Sanskrit text",
+            "CI/CD pipeline runs tests on every commit"
+          ],
+          "impact_on_architecture": "TDD approach, dependency injection for testability"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-PORT",
+      "category_name": "Portability",
+      "requirements": [
+        {
+          "id": "PORT-PLATFORM",
+          "name": "Cross-Platform Support",
+          "response": "Must run on Linux, macOS, Windows (major platforms)",
+          "priority": "HIGH",
+          "rationale": "Global Hare Krishna community uses diverse platforms. Cannot exclude devotees based on OS.",
+          "acceptance_criteria": [
+            "Single codebase for all platforms",
+            "Installation tested on Ubuntu, macOS, Windows 10+",
+            "Terminal rendering works correctly on common terminals (gnome-terminal, iTerm2, PowerShell)"
+          ],
+          "impact_on_architecture": "Python recommended (cross-platform by default) OR Rust with platform testing"
+        },
+        {
+          "id": "PORT-UNICODE",
+          "name": "Unicode/Locale Support",
+          "response": "Full Sanskrit Unicode support (Devanagari U+0900–U+097F, IAST Latin Extended-A)",
+          "priority": "CRITICAL",
+          "rationale": "Prabhupada books contain Sanskrit verses. Incorrect rendering destroys authenticity.",
+          "acceptance_criteria": [
+            "Devanagari characters render correctly",
+            "IAST diacritical marks (ā, ī, ū, ṛ, ṃ, ḥ) render correctly",
+            "Font fallback documented for users",
+            "Test on major terminal emulators"
+          ],
+          "impact_on_architecture": "EPUB parser must preserve Unicode, terminal output must handle multi-byte characters"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-USAB",
+      "category_name": "Usability",
+      "requirements": [
+        {
+          "id": "USAB-LEARNABILITY",
+          "name": "Learnability (Erlernbarkeit)",
+          "response": "Non-technical devotees should complete first read within 5 minutes of installation",
+          "priority": "HIGH",
+          "rationale": "CLI may intimidate non-technical users. Must have excellent onboarding.",
+          "acceptance_criteria": [
+            "install.sh script handles all setup (one command)",
+            "prabhupad-os --help shows clear usage examples",
+            "README includes quick start: install → list books → read first chapter (< 5 steps)",
+            "Interactive mode guides users through navigation"
+          ],
+          "impact_on_architecture": "Excellent CLI UX (help text, examples), interactive TUI mode consideration"
+        }
+      ]
+    }
+  ],
+
+  "nfr_conflicts_identified": [
+    {
+      "conflict_id": "NFR-CONFLICT-001",
+      "nfr_a": "SEC-AUTHENTICITY (checksums required)",
+      "nfr_b": "USAB-LEARNABILITY (simple installation)",
+      "description": "Checksum verification adds installation step complexity",
+      "resolution": "Auto-verify on first run. User sees: '✓ All books verified (authentic BBT texts)' - transparency without friction",
+      "status": "RESOLVED"
+    }
+  ],
+
+  "architecture_implications": {
+    "required_patterns": [
+      "Offline-first architecture (SQLite, local files)",
+      "Modular monorepo (separate packages for parser/reader/SDK)",
+      "Plugin discovery system (directory-based, simple)",
+      "Checksum verification layer (manifest + SHA-256)",
+      "Robust error handling (graceful degradation)",
+      "Cross-platform compatibility (Python or Rust)"
+    ],
+    "technology_recommendations": [
+      {
+        "component": "Language",
+        "recommendation": "Python 3.10+",
+        "rationale": "Cross-platform by default, excellent CLI libraries (Click, Rich), EbookLib for EPUB"
+      },
+      {
+        "component": "CLI Framework",
+        "recommendation": "Click + Rich (for styled terminal output)",
+        "rationale": "Click is industry standard, Rich provides beautiful Unicode-safe terminal rendering"
+      },
+      {
+        "component": "EPUB Parser",
+        "recommendation": "EbookLib (Python)",
+        "rationale": "Mature EPUB2/EPUB3 support, active maintenance, handles Unicode correctly"
+      },
+      {
+        "component": "Storage",
+        "recommendation": "SQLite 3 with FTS5",
+        "rationale": "Offline-first, full-text search built-in, zero-config, cross-platform"
+      },
+      {
+        "component": "Monorepo Tool",
+        "recommendation": "Python Poetry with workspace feature",
+        "rationale": "Native Python monorepo support, simpler than pnpm for Python projects"
+      },
+      {
+        "component": "Testing",
+        "recommendation": "pytest + coverage",
+        "rationale": "Standard Python testing stack, excellent coverage reporting"
+      }
+    ]
+  },
+
+  "critical_nfrs_summary": {
+    "mission_critical": [
+      "SEC-AUTHENTICITY (text integrity verification)",
+      "REL-AVAILABILITY (100% offline)",
+      "MAIN-MODULARITY (plugin architecture)",
+      "PORT-UNICODE (Sanskrit support)"
+    ],
+    "high_priority": [
+      "PERF-LATENCY (responsive navigation)",
+      "MAIN-TESTABILITY (70%+ coverage)",
+      "PORT-PLATFORM (Linux/macOS/Windows)",
+      "USAB-LEARNABILITY (5-min onboarding)"
+    ],
+    "low_priority": [
+      "PERF-CAPACITY (single-user, no concern)",
+      "SEC-CONFIDENTIALITY (public texts, no PII)"
+    ]
+  }
+}
