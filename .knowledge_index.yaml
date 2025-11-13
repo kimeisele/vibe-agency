@@ -12,7 +12,7 @@ kind: "KnowledgeIndex"
 metadata:
   description: "Central index for Agency OS knowledge base navigation"
   lastUpdated: "2025-11-13"
-  totalKnowledgeFiles: 28
+  totalKnowledgeFiles: 30
   totalPromptFiles: 8
 
 # =================================================================
@@ -228,6 +228,41 @@ categories:
           - "handoff"
           - "artifact_generation"
         lineCount: ~150
+
+  # NEW in v1.2: Project Types and Abstraction Levels
+  - id: "planning_project_types"
+    intent:
+      - "project type classification"
+      - "abstraction level taxonomy"
+      - "framework vs library vs platform"
+      - "complexity multipliers"
+      - "NFR priority boosting"
+    description: "Project classification system for adaptive planning (v1.2)"
+    files:
+      - path: "agency_os/01_planning_framework/knowledge/ABSTRACTION_LEVEL_GUIDE.md"
+        type: guide
+        contains: ["abstraction_levels", "complexity_multipliers", "fae_filtering", "nfr_boosting"]
+        keyTopics:
+          - "CONCRETE (apps) - 1.0x multiplier"
+          - "LIBRARY (SDKs) - 1.2x multiplier"
+          - "FRAMEWORK (meta-tools) - 1.5x multiplier"
+          - "PLATFORM (multi-tenant) - 2.0x multiplier"
+          - "FAE rule applicability matrix"
+          - "NFR priority boosting by abstraction level"
+          - "Migration guide v1.0 → v1.2"
+        lineCount: 327
+        version: "1.2.0"
+
+      - path: "agency_os/01_planning_framework/knowledge/planning_project_manifest.schema.json"
+        type: schema
+        contains: ["project_manifest", "abstraction_level", "project_type", "metadata"]
+        keyTopics:
+          - "abstraction_level enum (CONCRETE|LIBRARY|FRAMEWORK|PLATFORM)"
+          - "Complexity multipliers per level"
+          - "NFR priority boost definitions"
+          - "FAE filter strategies"
+        lineCount: 90
+        version: "1.2.0"
 
 # =================================================================
 # CATEGORY: Code Generation

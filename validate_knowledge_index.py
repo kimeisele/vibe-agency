@@ -154,11 +154,17 @@ def validate_hardcoded_paths() -> bool:
             matches = re.findall(r'agency_os/[^\s\'"`,;)]+', line)
             paths.update(matches)
 
-        # Validate each path
+        # Validate each path (skip wildcards - they're documentation examples)
         missing_paths = []
         valid_paths = []
+        skipped_wildcards = []
 
         for path in sorted(paths):
+            # Skip wildcard paths (e.g., "agency_os/*/knowledge/") - these are documentation examples
+            if '*' in path or '...' in path:
+                skipped_wildcards.append(path)
+                continue
+
             full_path = repo_root / path
             if full_path.exists():
                 valid_paths.append(path)
@@ -170,6 +176,8 @@ def validate_hardcoded_paths() -> bool:
         print(f"\n📊 Hardcoded paths: {len(paths)} found")
         print(f"   Valid: {len(valid_paths)} ✅")
         print(f"   Missing: {len(missing_paths)} ❌")
+        if skipped_wildcards:
+            print(f"   Skipped (wildcards): {len(skipped_wildcards)} ⏭️")
 
         if missing_paths:
             print("\n❌ BROKEN HARDCODED PATHS:")
