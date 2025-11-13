@@ -58,6 +58,9 @@ def main():
         ("VIBE_ALIGNER", "03_feasibility_validation"),
         ("GENESIS_BLUEPRINT", "01_select_core_modules"),
         ("GENESIS_BLUEPRINT", "02_design_extensions"),
+        ("GENESIS_BLUEPRINT", "03_generate_config_schema"),
+        ("GENESIS_BLUEPRINT", "04_validate_architecture"),
+        ("GENESIS_BLUEPRINT", "05_handoff"),
     ]
 
     results = []

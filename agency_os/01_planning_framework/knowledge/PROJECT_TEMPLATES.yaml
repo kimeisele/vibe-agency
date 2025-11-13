@@ -1,0 +1,341 @@
+version: "1.0"
+knowledge_type: "PROJECT_TEMPLATES"
+purpose: "Pre-defined project templates to speed up feature extraction for common project types"
+
+# Templates help VIBE_ALIGNER quickly identify standard features
+# Instead of asking user about every detail, agent can say:
+# "This sounds like a 'Web App with User Auth' - here are typical features"
+
+templates:
+  # ========================================
+  # WEB APPLICATIONS
+  # ========================================
+  - template_id: "web_app_basic"
+    name: "Basic Web Application"
+    category: "web"
+    scale: "small"
+    typical_features:
+      - id: "user_registration"
+        name: "User Registration"
+        priority: "HIGH"
+        complexity: 15
+        description: "Users can create accounts with email/password"
+
+      - id: "user_login"
+        name: "User Login/Logout"
+        priority: "HIGH"
+        complexity: 10
+        description: "Users can authenticate and maintain sessions"
+
+      - id: "user_profile"
+        name: "User Profile Management"
+        priority: "MEDIUM"
+        complexity: 8
+        description: "Users can view/edit their profile information"
+
+      - id: "password_reset"
+        name: "Password Reset"
+        priority: "MEDIUM"
+        complexity: 12
+        description: "Users can reset forgotten passwords via email"
+
+    typical_dependencies:
+      - "User authentication library (e.g., NextAuth, Passport)"
+      - "Database (PostgreSQL, MySQL, MongoDB)"
+      - "Email service (SendGrid, Mailgun)"
+      - "Session management"
+
+    estimated_total_complexity: 45
+    typical_timeline: "2-3 weeks"
+
+  # ========================================
+  - template_id: "booking_system"
+    name: "Booking/Appointment System"
+    category: "scheduling"
+    scale: "medium"
+    typical_features:
+      - id: "calendar_view"
+        name: "Calendar View"
+        priority: "HIGH"
+        complexity: 20
+        description: "Display available time slots in calendar format"
+
+      - id: "booking_creation"
+        name: "Create Booking"
+        priority: "HIGH"
+        complexity: 18
+        description: "Users can select slot and book appointment"
+
+      - id: "booking_cancellation"
+        name: "Cancel Booking"
+        priority: "HIGH"
+        complexity: 10
+        description: "Users can cancel their bookings"
+
+      - id: "email_notifications"
+        name: "Email Confirmations"
+        priority: "HIGH"
+        complexity: 12
+        description: "Send booking confirmation/cancellation emails"
+
+      - id: "payment_integration"
+        name: "Payment Processing"
+        priority: "MEDIUM"
+        complexity: 25
+        description: "Optional: Collect payment for bookings"
+
+    typical_dependencies:
+      - "Calendar library (FullCalendar, react-big-calendar)"
+      - "Database with booking tables"
+      - "Email service"
+      - "Payment gateway (optional: Stripe, PayPal)"
+
+    estimated_total_complexity: 85
+    typical_timeline: "4-6 weeks"
+
+  # ========================================
+  - template_id: "ecommerce_basic"
+    name: "E-Commerce Store (Basic)"
+    category: "ecommerce"
+    scale: "medium"
+    typical_features:
+      - id: "product_catalog"
+        name: "Product Catalog"
+        priority: "HIGH"
+        complexity: 15
+        description: "Display products with images, descriptions, prices"
+
+      - id: "shopping_cart"
+        name: "Shopping Cart"
+        priority: "HIGH"
+        complexity: 20
+        description: "Add/remove items, update quantities"
+
+      - id: "checkout"
+        name: "Checkout Process"
+        priority: "HIGH"
+        complexity: 25
+        description: "Collect shipping info, payment, order confirmation"
+
+      - id: "order_management"
+        name: "Order Management"
+        priority: "HIGH"
+        complexity: 18
+        description: "View order history, track status"
+
+      - id: "admin_panel"
+        name: "Admin Panel"
+        priority: "MEDIUM"
+        complexity: 30
+        description: "Manage products, orders, customers"
+
+    typical_dependencies:
+      - "Database (products, orders, customers)"
+      - "Payment gateway (Stripe)"
+      - "Image storage (S3, Cloudinary)"
+      - "Shipping API (optional)"
+      - "Email notifications"
+
+    estimated_total_complexity: 108
+    typical_timeline: "6-8 weeks"
+
+  # ========================================
+  # MOBILE APPLICATIONS
+  # ========================================
+  - template_id: "mobile_app_basic"
+    name: "Basic Mobile App"
+    category: "mobile"
+    scale: "medium"
+    typical_features:
+      - id: "splash_screen"
+        name: "Splash/Onboarding Screen"
+        priority: "LOW"
+        complexity: 5
+        description: "Welcome screen on first launch"
+
+      - id: "home_screen"
+        name: "Home/Dashboard Screen"
+        priority: "HIGH"
+        complexity: 15
+        description: "Main screen with navigation"
+
+      - id: "user_auth_mobile"
+        name: "User Authentication"
+        priority: "HIGH"
+        complexity: 18
+        description: "Login/register with mobile-optimized UI"
+
+      - id: "push_notifications"
+        name: "Push Notifications"
+        priority: "MEDIUM"
+        complexity: 20
+        description: "Send notifications to users"
+
+      - id: "offline_mode"
+        name: "Offline Mode"
+        priority: "MEDIUM"
+        complexity: 25
+        description: "Basic functionality without internet"
+
+    typical_dependencies:
+      - "React Native / Flutter"
+      - "Firebase (auth, notifications, DB)"
+      - "AsyncStorage (offline data)"
+      - "Push notification service"
+
+    estimated_total_complexity: 83
+    typical_timeline: "5-7 weeks"
+
+  # ========================================
+  # CLI TOOLS
+  # ========================================
+  - template_id: "cli_tool"
+    name: "Command-Line Tool"
+    category: "cli"
+    scale: "small"
+    typical_features:
+      - id: "argument_parsing"
+        name: "Command-Line Arguments"
+        priority: "HIGH"
+        complexity: 10
+        description: "Parse flags, options, sub-commands"
+
+      - id: "config_file"
+        name: "Configuration File"
+        priority: "MEDIUM"
+        complexity: 8
+        description: "Load settings from YAML/JSON config"
+
+      - id: "error_handling"
+        name: "Error Messages"
+        priority: "HIGH"
+        complexity: 5
+        description: "User-friendly error messages"
+
+      - id: "help_documentation"
+        name: "Help Text"
+        priority: "HIGH"
+        complexity: 5
+        description: "Auto-generated help docs"
+
+    typical_dependencies:
+      - "argparse (Python) / commander (Node.js)"
+      - "PyYAML / js-yaml"
+      - "colorama / chalk (colored output)"
+
+    estimated_total_complexity: 28
+    typical_timeline: "1-2 weeks"
+
+  # ========================================
+  # DASHBOARDS
+  # ========================================
+  - template_id: "admin_dashboard"
+    name: "Admin Dashboard"
+    category: "dashboard"
+    scale: "medium"
+    typical_features:
+      - id: "dashboard_overview"
+        name: "Overview Dashboard"
+        priority: "HIGH"
+        complexity: 20
+        description: "Charts, stats, key metrics"
+
+      - id: "data_tables"
+        name: "Data Tables"
+        priority: "HIGH"
+        complexity: 15
+        description: "List/view/edit records"
+
+      - id: "search_filter"
+        name: "Search & Filter"
+        priority: "MEDIUM"
+        complexity: 12
+        description: "Find records by criteria"
+
+      - id: "export_data"
+        name: "Export to CSV/Excel"
+        priority: "MEDIUM"
+        complexity: 10
+        description: "Download data as spreadsheet"
+
+      - id: "user_permissions"
+        name: "Role-Based Access"
+        priority: "HIGH"
+        complexity: 22
+        description: "Different permissions for admin/user/viewer"
+
+    typical_dependencies:
+      - "Charting library (Chart.js, Recharts)"
+      - "Data table (ag-Grid, react-table)"
+      - "Database queries"
+      - "CSV export library"
+      - "Auth & permissions system"
+
+    estimated_total_complexity: 79
+    typical_timeline: "4-5 weeks"
+
+# ========================================
+# USAGE NOTES
+# ========================================
+usage_notes: |
+  When VIBE_ALIGNER detects keywords matching a template:
+
+  1. Suggest the template:
+     "This sounds like a '{template_name}'. Typical features include: {...}"
+
+  2. Let user confirm/modify:
+     "Do these features match your vision? Any you want to add/remove?"
+
+  3. Use as starting point:
+     - Start with template features
+     - User can customize (add/remove/modify)
+     - Still validate with FAE/FDG/APCE
+
+  Templates are SHORTCUTS, not rigid constraints.
+  User can always deviate if needed.
+
+# ========================================
+# MATCHING RULES
+# ========================================
+matching_rules:
+  web_app_basic:
+    keywords: ["web app", "website", "user registration", "login system"]
+    indicators:
+      - "mentions user accounts"
+      - "web-based interface"
+      - "no complex features"
+
+  booking_system:
+    keywords: ["booking", "appointment", "scheduling", "calendar", "reservation"]
+    indicators:
+      - "time-based slots"
+      - "availability management"
+      - "confirmation emails"
+
+  ecommerce_basic:
+    keywords: ["store", "shop", "ecommerce", "products", "cart", "checkout"]
+    indicators:
+      - "selling products"
+      - "payment processing"
+      - "inventory management"
+
+  mobile_app_basic:
+    keywords: ["mobile app", "ios", "android", "react native", "flutter"]
+    indicators:
+      - "mentions mobile platform"
+      - "push notifications"
+      - "offline mode"
+
+  cli_tool:
+    keywords: ["command line", "cli tool", "terminal", "script"]
+    indicators:
+      - "no UI"
+      - "command-line arguments"
+      - "automation/batch processing"
+
+  admin_dashboard:
+    keywords: ["dashboard", "admin panel", "analytics", "reporting", "metrics"]
+    indicators:
+      - "data visualization"
+      - "manage records"
+      - "different user roles"
