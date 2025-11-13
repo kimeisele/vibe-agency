@@ -1,0 +1,41 @@
+# YAMLlint configuration for Vibe Agency
+# Documentation: https://yamllint.readthedocs.io/
+
+extends: default
+
+rules:
+  # Line length
+  line-length:
+    max: 120
+    level: warning
+
+  # Indentation (2 spaces)
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Comments
+  comments:
+    min-spaces-from-content: 1
+
+  # Document start (---)
+  document-start:
+    present: false  # Not required for knowledge bases
+
+  # Trailing spaces
+  trailing-spaces: enable
+
+  # Empty lines
+  empty-lines:
+    max: 1
+
+  # Truthy values (yes/no vs true/false)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false
+
+ignore: |
+  .git/
+  **/.venv/
+  **/node_modules/
+  **/__pycache__/

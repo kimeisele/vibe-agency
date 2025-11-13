@@ -12,13 +12,54 @@ Usage:
         task_id="select_core_modules",
         context={...}
     )
+
+Error Handling:
+    - AgentNotFoundError: Unknown agent_id
+    - TaskNotFoundError: Unknown task_id
+    - MalformedYAMLError: Invalid YAML syntax
+    - CompositionError: Failed to compose prompt
 """
 
 import yaml
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+
+
+# Custom Exceptions
+class PromptRuntimeError(Exception):
+    """Base exception for all PromptRuntime errors"""
+    pass
+
+
+class AgentNotFoundError(PromptRuntimeError):
+    """Raised when agent_id not found in AGENT_REGISTRY"""
+    pass
+
+
+class TaskNotFoundError(PromptRuntimeError):
+    """Raised when task files not found"""
+    pass
+
+
+class MalformedYAMLError(PromptRuntimeError):
+    """Raised when YAML parsing fails"""
+    pass
+
+
+class CompositionError(PromptRuntimeError):
+    """Raised when prompt composition fails"""
+    pass
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -70,51 +111,118 @@ class PromptRuntime:
 
         Returns:
             Composed prompt string ready for LLM execution
+
+        Raises:
+            AgentNotFoundError: If agent_id not found
+            TaskNotFoundError: If task files not found
+            MalformedYAMLError: If YAML parsing fails
+            CompositionError: If prompt composition fails
         """
-        print(f"\n{'='*60}")
-        print(f"Executing: {agent_id}.{task_id}")
-        print(f"{'='*60}\n")
+        try:
+            print(f"\n{'='*60}")
+            print(f"Executing: {agent_id}.{task_id}")
+            print(f"{'='*60}\n")
+            logger.info(f"Starting composition: {agent_id}.{task_id}")
 
-        # 1. Load composition spec
-        comp_spec = self._load_composition_spec(agent_id)
-        print(f"✓ Loaded composition spec (v{comp_spec.composition_version})")
+            # 1. Load composition spec
+            comp_spec = self._load_composition_spec(agent_id)
+            print(f"✓ Loaded composition spec (v{comp_spec.composition_version})")
+            logger.debug(f"Composition spec loaded: version {comp_spec.composition_version}")
 
-        # 2. Load task metadata
-        task_meta = self._load_task_metadata(agent_id, task_id)
-        print(f"✓ Loaded task metadata (phase {task_meta.phase})")
+            # 2. Load task metadata
+            task_meta = self._load_task_metadata(agent_id, task_id)
+            print(f"✓ Loaded task metadata (phase {task_meta.phase})")
+            logger.debug(f"Task metadata loaded: phase {task_meta.phase}")
 
-        # 3. Resolve knowledge dependencies
-        knowledge_files = self._resolve_knowledge_deps(agent_id, task_meta)
-        print(f"✓ Resolved {len(knowledge_files)} knowledge dependencies")
+            # 3. Resolve knowledge dependencies
+            knowledge_files = self._resolve_knowledge_deps(agent_id, task_meta)
+            print(f"✓ Resolved {len(knowledge_files)} knowledge dependencies")
+            logger.debug(f"Knowledge dependencies resolved: {len(knowledge_files)} files")
 
-        # 4. Compose final prompt
-        final_prompt = self._compose_prompt(
-            agent_id=agent_id,
-            composition_spec=comp_spec,
-            task_id=task_id,
-            task_meta=task_meta,
-            knowledge_files=knowledge_files,
-            runtime_context=context
-        )
-        print(f"✓ Composed final prompt ({len(final_prompt)} chars)")
+            # 4. Compose final prompt
+            final_prompt = self._compose_prompt(
+                agent_id=agent_id,
+                composition_spec=comp_spec,
+                task_id=task_id,
+                task_meta=task_meta,
+                knowledge_files=knowledge_files,
+                runtime_context=context
+            )
 
-        # 5. Validation gates (dry-run)
-        if task_meta.validation_gates:
-            print(f"✓ Validation gates loaded: {', '.join(task_meta.validation_gates)}")
+            # Validate prompt size
+            prompt_size = len(final_prompt)
+            print(f"✓ Composed final prompt ({prompt_size:,} chars)")
 
-        print(f"\n{'='*60}")
-        print(f"COMPOSITION COMPLETE")
-        print(f"{'='*60}\n")
+            if prompt_size > 200000:
+                logger.warning(
+                    f"Prompt size ({prompt_size:,} chars) exceeds recommended limit (200,000 chars). "
+                    "This may cause LLM context window issues."
+                )
 
-        return final_prompt
+            # 5. Validation gates (dry-run)
+            if task_meta.validation_gates:
+                print(f"✓ Validation gates loaded: {', '.join(task_meta.validation_gates)}")
+                logger.debug(f"Validation gates: {task_meta.validation_gates}")
+
+            print(f"\n{'='*60}")
+            print(f"COMPOSITION COMPLETE")
+            print(f"{'='*60}\n")
+
+            logger.info(f"Composition successful: {agent_id}.{task_id} ({prompt_size:,} chars)")
+            return final_prompt
+
+        except (AgentNotFoundError, TaskNotFoundError, MalformedYAMLError) as e:
+            logger.error(f"Composition failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during composition: {e}", exc_info=True)
+            raise CompositionError(
+                f"Failed to compose prompt for {agent_id}.{task_id}: {e}"
+            ) from e
 
     def _load_composition_spec(self, agent_id: str) -> CompositionSpec:
-        """Load and parse _composition.yaml"""
+        """
+        Load and parse _composition.yaml
+
+        Args:
+            agent_id: Agent identifier
+
+        Returns:
+            CompositionSpec object
+
+        Raises:
+            AgentNotFoundError: If agent_id invalid
+            FileNotFoundError: If _composition.yaml missing
+            MalformedYAMLError: If YAML parsing fails
+        """
         agent_path = self._get_agent_path(agent_id)
         comp_file = agent_path / "_composition.yaml"
 
-        with open(comp_file) as f:
-            data = yaml.safe_load(f)
+        if not comp_file.exists():
+            raise FileNotFoundError(
+                f"Composition file not found: {comp_file}\n"
+                f"Expected location: {agent_path}/_composition.yaml\n"
+                f"Fix: Ensure agent '{agent_id}' has _composition.yaml file"
+            )
+
+        try:
+            with open(comp_file) as f:
+                data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise MalformedYAMLError(
+                f"Invalid YAML syntax in {comp_file}\n"
+                f"Error: {e}\n"
+                f"Fix: Check YAML syntax at line {e.problem_mark.line if hasattr(e, 'problem_mark') else 'unknown'}"
+            ) from e
+
+        # Validate required fields
+        required_fields = ["composition_version", "agent_id", "agent_version", "composition_order"]
+        missing = [field for field in required_fields if field not in data]
+        if missing:
+            raise MalformedYAMLError(
+                f"Missing required fields in {comp_file}: {', '.join(missing)}\n"
+                f"Fix: Add missing fields to _composition.yaml"
+            )
 
         return CompositionSpec(
             composition_version=data["composition_version"],
@@ -127,15 +235,64 @@ class PromptRuntime:
         )
 
     def _load_task_metadata(self, agent_id: str, task_id: str) -> TaskMetadata:
-        """Load and parse task_*.meta.yaml"""
+        """
+        Load and parse task_*.meta.yaml
+
+        Args:
+            agent_id: Agent identifier
+            task_id: Task identifier
+
+        Returns:
+            TaskMetadata object
+
+        Raises:
+            TaskNotFoundError: If task files not found
+            MalformedYAMLError: If YAML parsing fails
+        """
         agent_path = self._get_agent_path(agent_id)
+
         # Try with task_ prefix first, fall back to bare task_id
         meta_file = agent_path / "tasks" / f"task_{task_id}.meta.yaml"
         if not meta_file.exists():
             meta_file = agent_path / "tasks" / f"{task_id}.meta.yaml"
 
-        with open(meta_file) as f:
-            data = yaml.safe_load(f)
+        if not meta_file.exists():
+            # Provide helpful error with available tasks
+            tasks_dir = agent_path / "tasks"
+            available_tasks = []
+            if tasks_dir.exists():
+                available_tasks = [
+                    f.stem.replace("task_", "").replace(".meta", "")
+                    for f in tasks_dir.glob("task_*.meta.yaml")
+                ]
+
+            raise TaskNotFoundError(
+                f"Task metadata not found: {task_id}\n"
+                f"Agent: {agent_id}\n"
+                f"Searched:\n"
+                f"  - {agent_path}/tasks/task_{task_id}.meta.yaml\n"
+                f"  - {agent_path}/tasks/{task_id}.meta.yaml\n"
+                f"Available tasks: {', '.join(available_tasks) if available_tasks else 'none'}\n"
+                f"Fix: Check task_id spelling or create task metadata file"
+            )
+
+        try:
+            with open(meta_file) as f:
+                data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise MalformedYAMLError(
+                f"Invalid YAML syntax in {meta_file}\n"
+                f"Error: {e}\n"
+                f"Fix: Check YAML syntax"
+            ) from e
+
+        # Validate required fields
+        if "task_id" not in data or "phase" not in data:
+            raise MalformedYAMLError(
+                f"Missing required fields in {meta_file}\n"
+                f"Required: task_id, phase\n"
+                f"Fix: Add missing fields to task metadata"
+            )
 
         return TaskMetadata(
             task_id=data["task_id"],
@@ -269,7 +426,18 @@ class PromptRuntime:
         return "\n".join(lines)
 
     def _get_agent_path(self, agent_id: str) -> Path:
-        """Get the path to an agent's directory"""
+        """
+        Get the path to an agent's directory
+
+        Args:
+            agent_id: Agent identifier
+
+        Returns:
+            Path to agent directory
+
+        Raises:
+            AgentNotFoundError: If agent_id not in registry
+        """
         # Dynamic agent registry - supports all 11 agents
         AGENT_REGISTRY = {
             "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
@@ -286,12 +454,25 @@ class PromptRuntime:
         }
 
         if agent_id not in AGENT_REGISTRY:
-            raise ValueError(
-                f"Unknown agent_id: {agent_id}. "
-                f"Available agents: {', '.join(AGENT_REGISTRY.keys())}"
+            available = '\n  - '.join(sorted(AGENT_REGISTRY.keys()))
+            raise AgentNotFoundError(
+                f"Agent not found: '{agent_id}'\n\n"
+                f"Available agents:\n  - {available}\n\n"
+                f"Fix: Check agent_id spelling or add to AGENT_REGISTRY in prompt_runtime.py"
             )
 
-        return self.base_path / AGENT_REGISTRY[agent_id]
+        agent_path = self.base_path / AGENT_REGISTRY[agent_id]
+
+        # Verify agent directory exists
+        if not agent_path.exists():
+            raise AgentNotFoundError(
+                f"Agent directory not found: {agent_path}\n"
+                f"Agent ID: {agent_id}\n"
+                f"Expected path: {agent_path}\n"
+                f"Fix: Ensure agent directory exists or update AGENT_REGISTRY"
+            )
+
+        return agent_path
 
     def _load_file(self, path: Path) -> str:
         """Load a file's contents"""

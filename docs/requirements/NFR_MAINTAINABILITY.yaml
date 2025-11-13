@@ -1,0 +1,466 @@
+# Non-Functional Requirements: Maintainability
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+maintainability_requirements:
+  code_standards:
+    python:
+      style_guide: "PEP 8"
+      reference: "https://pep8.org/"
+
+      formatter:
+        tool: "black"
+        line_length: 100
+        command: "black --line-length 100 agency_os/"
+
+      linter:
+        tool: "flake8"
+        config: ".flake8"
+        command: "flake8 agency_os/ tests/"
+        ignore: "E501 (line length, handled by black)"
+
+      type_hints:
+        required: "All public functions"
+        tool: "mypy (future)"
+        rationale: "Improve IDE support, catch type errors"
+
+      max_complexity:
+        cyclomatic: 10
+        rationale: "Functions > 10 are hard to test"
+        tool: "radon (complexity checker)"
+
+      max_line_length: 100
+      max_function_length: 50
+      max_file_length: 500
+
+    yaml:
+      validator: "yamllint"
+      config: ".yamllint"
+      command: "yamllint agency_os/"
+
+      style_rules:
+        indentation: 2
+        max_line_length: 120
+        trailing_spaces: false
+        empty_lines: 1
+
+      validation:
+        syntax: "yaml.safe_load() must pass"
+        schema: "Follow knowledge base schema"
+
+    markdown:
+      linter: "markdownlint"
+      style: "GitHub Flavored Markdown"
+
+      rules:
+        - "Line length: 120 chars (soft limit)"
+        - "Headings: ATX style (# Heading)"
+        - "Lists: Consistent bullet style (- item)"
+        - "Code blocks: Always specify language"
+
+  documentation_requirements:
+    code_documentation:
+      docstrings:
+        required_for:
+          - "All public functions"
+          - "All classes"
+          - "All modules (module-level docstring)"
+
+        format: "Google style"
+        example: |
+          def execute_task(agent_id: str, task_id: str, context: Dict) -> str:
+              """
+              Compose and execute an atomized task.
+
+              Args:
+                  agent_id: Agent identifier (e.g., "GENESIS_BLUEPRINT")
+                  task_id: Task identifier (e.g., "select_core_modules")
+                  context: Runtime context (project_id, artifacts, etc.)
+
+              Returns:
+                  Composed prompt string ready for LLM execution
+
+              Raises:
+                  ValueError: If agent_id not found in AGENT_REGISTRY
+                  FileNotFoundError: If required files missing
+              """
+
+        validation: "pydocstyle (future)"
+
+      inline_comments:
+        required_for:
+          - "Complex logic (> 5 lines)"
+          - "Non-obvious algorithms"
+          - "Workarounds and hacks"
+
+        style: "Explain WHY, not WHAT"
+        example: |
+          # Good: Explain rationale
+          # Use safe_load to prevent arbitrary code execution (CVE-2020-14343)
+          data = yaml.safe_load(f)
+
+          # Bad: Repeat code
+          # Load YAML file
+          data = yaml.safe_load(f)
+
+    architecture_documentation:
+      update_trigger: "Any breaking change to composition pattern"
+      location: "docs/architecture/"
+      format: "Markdown with diagrams (Mermaid)"
+
+      required_docs:
+        - file: "00_system_overview.md"
+          purpose: "High-level architecture"
+
+        - file: "01_planning_framework.md"
+          purpose: "Planning agents, workflows"
+
+        - file: "02_prompt_composition.md"
+          purpose: "How prompts are assembled"
+
+        - file: "03_knowledge_bases.md"
+          purpose: "Knowledge base schemas, patterns"
+
+        - file: "04_data_contracts.md"
+          purpose: "Artifact schemas, versioning"
+
+    knowledge_base_documentation:
+      inline_documentation:
+        requirement: "Every YAML must have header comment"
+        example: |
+          # FAE_constraints.yaml
+          # Purpose: Feasibility Analysis Engine constraints
+          # Version: 1.0
+          # Last Updated: 2025-11-13
+          # Maintainer: vibe-agency team
+
+      examples_required: true
+      rationale: "Knowledge bases are data, need context"
+
+    user_documentation:
+      required_docs:
+        - file: "README.md"
+          purpose: "Quick start, what is this"
+          audience: "New users"
+
+        - file: "docs/guides/QUICKSTART.md"
+          purpose: "First project tutorial"
+          audience: "New users"
+
+        - file: "docs/guides/DEVELOPER_GUIDE.md"
+          purpose: "How to extend system"
+          audience: "Contributors"
+
+        - file: "docs/GLOSSARY.md"
+          purpose: "Ubiquitous language"
+          audience: "All"
+
+        - file: "docs/TROUBLESHOOTING.md"
+          purpose: "Common errors, solutions"
+          audience: "Users"
+
+      update_frequency: "With every feature change"
+
+  testing_requirements:
+    unit_tests:
+      coverage: "80% minimum"
+      critical_paths: "100% coverage"
+      location: "tests/unit/"
+
+      framework: "pytest"
+      command: "pytest tests/unit/"
+
+      naming_convention: "test_<function_name>_<scenario>.py"
+      example: "test_execute_task_success.py"
+
+    integration_tests:
+      coverage: "All agent compositions"
+      current_status: "23/23 passing ✅"
+      location: "tests/integration/"
+
+      test_strategy:
+        - "Verify prompt composition for all tasks"
+        - "Validate knowledge loading"
+        - "Check gate resolution"
+
+    regression_tests:
+      strategy: "Add test for every bug fixed"
+      naming: "test_regression_issue_<number>.py"
+      purpose: "Prevent bug reintroduction"
+
+    test_data:
+      location: "tests/fixtures/"
+      format: "JSON, YAML"
+      versioning: "Git-tracked, no auto-generation"
+
+    test_execution:
+      pre_commit: "Run fast tests (< 30s)"
+      pre_push: "Run full test suite (< 5 min)"
+      ci_pipeline: "Run all tests + linting + security"
+
+  versioning:
+    semantic_versioning:
+      enabled: true
+      format: "MAJOR.MINOR.PATCH"
+
+      rules:
+        major: "Breaking changes (incompatible API changes)"
+        minor: "New features (backward-compatible)"
+        patch: "Bug fixes (backward-compatible)"
+
+      examples:
+        - "v1.0.0 → v1.0.1 (bug fix)"
+        - "v1.0.1 → v1.1.0 (new feature)"
+        - "v1.1.0 → v2.0.0 (breaking change)"
+
+    changelog:
+      file: "CHANGELOG.md"
+      format: "Keep a Changelog (keepachangelog.com)"
+
+      sections:
+        - "Added (new features)"
+        - "Changed (changes to existing)"
+        - "Deprecated (soon to be removed)"
+        - "Removed (now removed)"
+        - "Fixed (bug fixes)"
+        - "Security (vulnerability fixes)"
+
+      example: |
+        # Changelog
+
+        ## [Unreleased]
+
+        ## [1.1.0] - 2025-11-20
+        ### Added
+        - NFR documentation (Performance, Reliability, Security)
+        - GLOSSARY.md (Ubiquitous Language)
+
+        ### Fixed
+        - Error handling in prompt_runtime.py
+
+        ## [1.0.0] - 2025-11-13
+        ### Added
+        - Initial release
+        - 5 frameworks (planning, code gen, QA, deploy, maintenance)
+        - 23 verified tasks
+
+    git_workflow:
+      branching_strategy: "GitHub Flow (main + feature branches)"
+
+      branches:
+        main:
+          protection: "Require PR approval, tests passing"
+          deployment: "Stable, production-ready"
+
+        feature:
+          naming: "feature/<description>"
+          example: "feature/add-nfr-documentation"
+
+        bugfix:
+          naming: "bugfix/<issue-number>"
+          example: "bugfix/123-fix-yaml-parsing"
+
+        hotfix:
+          naming: "hotfix/<issue-number>"
+          example: "hotfix/456-critical-security"
+
+      commit_messages:
+        format: "Conventional Commits"
+        pattern: "<type>(<scope>): <description>"
+
+        types:
+          - "feat: New feature"
+          - "fix: Bug fix"
+          - "docs: Documentation only"
+          - "style: Formatting, no code change"
+          - "refactor: Code restructuring"
+          - "test: Adding tests"
+          - "chore: Maintenance"
+
+        examples:
+          - "feat(planning): Add VIBE_ALIGNER task 3"
+          - "fix(runtime): Handle missing knowledge files"
+          - "docs(nfr): Add performance requirements"
+
+    tagging:
+      pattern: "v<major>.<minor>.<patch>"
+      example: "v1.0.0"
+      command: "git tag -a v1.0.0 -m 'Release v1.0.0'"
+
+  code_quality:
+    complexity_metrics:
+      cyclomatic_complexity:
+        max: 10
+        tool: "radon cc"
+        command: "radon cc agency_os/ -a"
+
+      maintainability_index:
+        min: 60
+        tool: "radon mi"
+        command: "radon mi agency_os/"
+
+    code_review:
+      required: "All PRs"
+      reviewers: "Minimum 1, 2 for breaking changes"
+
+      checklist:
+        - "Code follows PEP 8 style"
+        - "All public functions have docstrings"
+        - "Tests added for new features"
+        - "No hardcoded secrets"
+        - "CHANGELOG.md updated"
+        - "Documentation updated"
+
+    technical_debt:
+      tracking: "GitHub Issues with 'tech-debt' label"
+      max_todo_age: "90 days"
+      quarterly_review: "Required"
+
+      todo_format: |
+        # TODO(author, date): Description
+        # Issue: https://github.com/kimeisele/vibe-agency/issues/123
+
+  refactoring:
+    when_to_refactor:
+      - "Code duplication detected (> 3 instances)"
+      - "Function complexity > 10"
+      - "File length > 500 lines"
+      - "Module coupling too high"
+
+    refactoring_principles:
+      - "Boy Scout Rule: Leave code better than you found it"
+      - "Red-Green-Refactor: Tests first, refactor after"
+      - "Small steps: One refactoring at a time"
+
+    safe_refactoring:
+      - "All tests must pass before refactoring"
+      - "Run tests after each refactoring step"
+      - "Commit frequently (easy rollback)"
+
+  dependency_management:
+    dependency_file: "requirements.txt"
+
+    format: |
+      pyyaml>=6.0.1
+      # pathlib is stdlib, no need to list
+
+    pinning_strategy:
+      production: "Pin exact versions (pyyaml==6.0.1)"
+      development: "Allow minor updates (pyyaml>=6.0.1,<7.0)"
+
+    update_policy:
+      frequency: "Monthly"
+      process: |
+        1. Check for updates (pip list --outdated)
+        2. Review changelogs
+        3. Update dependencies
+        4. Run full test suite
+        5. Commit if tests pass
+
+    vulnerability_monitoring:
+      tool: "pip-audit or safety"
+      frequency: "Weekly (automated)"
+      action: "Create issue if vulnerability found"
+
+  extensibility:
+    extension_points:
+      new_agents:
+        process: "Create directory, add to AGENT_REGISTRY"
+        documentation: "docs/guides/ADD_NEW_AGENT.md (to be created)"
+
+      new_knowledge_bases:
+        process: "Create YAML, add to .knowledge_index.yaml"
+        validation: "Run validate_knowledge_index.py"
+
+      new_tasks:
+        process: "Add task_XX_*.md + task_XX_*.meta.yaml"
+        validation: "Run integration test"
+
+    plugin_system:
+      status: "NOT IMPLEMENTED"
+      future_consideration: "Python plugins (importlib)"
+
+  monitoring_maintainability:
+    code_metrics:
+      - "Lines of code (track growth)"
+      - "Test coverage (maintain > 80%)"
+      - "Cyclomatic complexity (flag > 10)"
+      - "Duplication (flag > 5%)"
+
+    knowledge_base_metrics:
+      - "File sizes (warn if > 1 MB)"
+      - "Number of entries (track growth)"
+      - "Last updated (flag if > 6 months old)"
+
+    documentation_metrics:
+      - "Docstring coverage (target 100%)"
+      - "README freshness (update with each release)"
+      - "Broken links (check quarterly)"
+
+validation:
+  maintainability_tests:
+    - name: "Code Style Check"
+      test: "black --check && flake8"
+      expected: "No violations"
+      frequency: "Pre-commit"
+
+    - name: "Test Coverage Check"
+      test: "pytest --cov=agency_os --cov-report=term"
+      expected: "> 80% coverage"
+      frequency: "Pre-push"
+
+    - name: "Complexity Check"
+      test: "radon cc agency_os/ -a -nb"
+      expected: "No functions with complexity > 10"
+      frequency: "Weekly"
+
+    - name: "Documentation Check"
+      test: "pydocstyle agency_os/"
+      expected: "All public functions documented"
+      frequency: "Pre-push"
+
+  acceptance_criteria:
+    - "All Python code follows PEP 8"
+    - "Test coverage > 80%"
+    - "All public functions have docstrings"
+    - "CHANGELOG.md updated with each release"
+    - "No functions with cyclomatic complexity > 10"
+    - "No TODOs older than 90 days"
+
+action_items:
+  immediate:
+    - task: "Create .flake8 config"
+      priority: "HIGH"
+
+    - task: "Create .yamllint config"
+      priority: "HIGH"
+
+    - task: "Create CHANGELOG.md"
+      priority: "HIGH"
+
+    - task: "Add pre-commit hooks"
+      tools: "black, flake8, yamllint, detect-secrets"
+      priority: "HIGH"
+
+  short_term:
+    - task: "Add docstrings to all public functions"
+      scope: "prompt_runtime.py, workspace_utils.py"
+      priority: "MEDIUM"
+
+    - task: "Set up pytest-cov"
+      command: "pytest --cov=agency_os --cov-report=html"
+      priority: "MEDIUM"
+
+    - task: "Create CONTRIBUTING.md"
+      contents: "How to contribute, code standards, PR process"
+      priority: "MEDIUM"
+
+  long_term:
+    - task: "Implement mypy type checking"
+      scope: "All Python files"
+      priority: "LOW"
+
+    - task: "Set up Sphinx for API docs"
+      output: "docs/api/"
+      priority: "LOW"

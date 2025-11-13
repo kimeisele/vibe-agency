@@ -1,0 +1,434 @@
+# Non-Functional Requirements: Operations
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+operational_requirements:
+  deployment:
+    installation_method:
+      primary: "Git clone + Python setup"
+      command: |
+        git clone https://github.com/kimeisele/vibe-agency.git
+        cd vibe-agency
+        pip install -r requirements.txt  # (when created)
+
+      alternative: "Pip install (future PyPI package)"
+
+    system_requirements:
+      python_version: "3.8+"
+      rationale: "Supports dataclasses, f-strings, pathlib"
+
+      dependencies:
+        - name: "pyyaml"
+          version: ">=6.0.1"
+          purpose: "YAML parsing"
+
+        - name: "pathlib"
+          version: "stdlib"
+          purpose: "Cross-platform path handling"
+
+      optional_dependencies:
+        - name: "yamllint"
+          purpose: "Knowledge base validation"
+
+        - name: "detect-secrets"
+          purpose: "Pre-commit hook for secrets"
+
+        - name: "pip-audit"
+          purpose: "Dependency vulnerability scanning"
+
+    installation_time:
+      target: "< 5 minutes"
+      includes:
+        - "Git clone (< 1 min)"
+        - "Dependency install (< 2 min)"
+        - "Validation check (< 1 min)"
+        - "Test composition (< 1 min)"
+
+    supported_platforms:
+      - os: "Linux"
+        tested: "Ubuntu 20.04+, Debian 11+"
+        status: "SUPPORTED ✅"
+
+      - os: "macOS"
+        tested: "macOS 11+"
+        status: "SUPPORTED ✅"
+
+      - os: "Windows"
+        tested: "Windows 10+ with Git Bash"
+        status: "SUPPORTED ⚠️ (path issues may occur)"
+        recommendation: "Use WSL2 for best experience"
+
+    verification:
+      post_install_check: |
+        # Verify installation
+        python3 validate_knowledge_index.py
+        python3 agency_os/00_system/runtime/prompt_runtime.py
+
+      expected_output: |
+        ✓ Knowledge index validated
+        ✓ Composition complete
+
+  configuration:
+    configuration_files:
+      system_config:
+        file: ".vibe_agency/config.yaml (future)"
+        contents: "Log level, cache settings, LLM API endpoint"
+        default_location: "~/.vibe_agency/"
+
+      project_config:
+        file: "project_manifest.json"
+        contents: "Project metadata, artifact links, phase"
+        location: "workspaces/{client}/{project}/"
+
+    environment_variables:
+      ANTHROPIC_API_KEY:
+        required: "If LLM integration added"
+        format: "sk-ant-api03-..."
+        validation: "Must start with 'sk-ant-'"
+
+      VIBE_AGENCY_HOME:
+        optional: true
+        default: "~/.vibe_agency/"
+        purpose: "Override log/cache location"
+
+      VIBE_AGENCY_LOG_LEVEL:
+        optional: true
+        default: "INFO"
+        values: "DEBUG, INFO, WARNING, ERROR"
+
+    configuration_validation:
+      on_startup: "Validate all config files (YAML syntax)"
+      on_change: "Re-validate if config modified"
+      fail_action: "Abort with clear error message"
+
+  backup_strategy:
+    what_to_backup:
+      critical:
+        - path: "workspaces/"
+          contains: "All user project data"
+          frequency: "Daily (user responsibility)"
+
+        - path: "custom_knowledge/"
+          contains: "User-added knowledge bases"
+          frequency: "After each modification"
+
+      important:
+        - path: ".vibe_agency/config.yaml"
+          contains: "User preferences"
+          frequency: "After changes"
+
+      optional:
+        - path: ".vibe_agency/logs/"
+          contains: "System logs"
+          frequency: "Not necessary (auto-rotated)"
+
+    backup_methods:
+      manual:
+        command: |
+          # Backup workspaces
+          tar -czf vibe-agency-backup-$(date +%Y%m%d).tar.gz workspaces/
+        frequency: "Daily (cron job)"
+
+      git:
+        command: |
+          # Version control for workspaces
+          cd workspaces/
+          git init
+          git add .
+          git commit -m "Backup $(date +%Y-%m-%d)"
+        frequency: "After each significant change"
+
+      cloud_sync:
+        options: "Dropbox, Google Drive, OneDrive"
+        recommendation: "Sync workspaces/ directory"
+        warning: "Ensure encryption if syncing sensitive data"
+
+    backup_retention:
+      daily_backups: "Keep 7 days"
+      weekly_backups: "Keep 4 weeks"
+      monthly_backups: "Keep 12 months"
+
+    automated_backup:
+      status: "NOT IMPLEMENTED"
+      future_consideration: "Git auto-commit on artifact creation"
+
+  disaster_recovery:
+    rto: "N/A - local tool, no service uptime requirement"
+    rpo: "Last saved state (file system)"
+
+    recovery_scenarios:
+      1_complete_system_loss:
+        cause: "Hardware failure, theft, ransomware"
+        recovery_procedure: |
+          1. Reinstall vibe-agency (git clone)
+          2. Install dependencies (pip install -r requirements.txt)
+          3. Restore workspaces/ from backup
+          4. Verify integrity (validate_knowledge_index.py)
+          5. Test composition (run test task)
+        estimated_time: "< 30 minutes"
+        data_loss: "None (if backup current)"
+
+      2_workspace_corruption:
+        cause: "File corruption, accidental deletion"
+        recovery_procedure: |
+          1. Identify corrupted project (check error logs)
+          2. Restore from backup (tar -xzf backup.tar.gz)
+          3. Validate artifacts (JSON schema checks)
+          4. Resume work from last valid state
+        estimated_time: "< 10 minutes"
+        data_loss: "Changes since last backup"
+
+      3_knowledge_base_corruption:
+        cause: "Git merge conflict, manual edit error"
+        recovery_procedure: |
+          1. Git status (check uncommitted changes)
+          2. Git diff (review changes)
+          3. Git checkout -- <corrupted_file>
+          4. Validate (validate_knowledge_index.py)
+        estimated_time: "< 5 minutes"
+        data_loss: "Uncommitted changes only"
+
+      4_configuration_corruption:
+        cause: "Invalid YAML syntax"
+        recovery_procedure: |
+          1. Identify invalid file (error message shows path)
+          2. Restore from git (git checkout -- <file>)
+          3. Or delete and regenerate default config
+        estimated_time: "< 5 minutes"
+        data_loss: "Custom configuration (re-enter)"
+
+  monitoring:
+    health_checks:
+      applicable: false
+      rationale: "Local tool, no service to monitor"
+
+      future_consideration: "If deployed as web service"
+
+    metrics_collection:
+      system_metrics:
+        - "Prompt composition time (performance)"
+        - "Error frequency by type (reliability)"
+        - "Knowledge base file sizes (capacity)"
+        - "Workspace disk usage (capacity)"
+
+      optional: true
+      requires: "User opt-in (privacy)"
+
+    logging:
+      log_levels:
+        DEBUG: "Detailed trace (development only)"
+        INFO: "Normal operations (composition success)"
+        WARNING: "Recoverable issues (optional knowledge missing)"
+        ERROR: "Unrecoverable failures (composition aborted)"
+
+      log_location: "~/.vibe_agency/logs/"
+      log_format: "JSON (timestamp, level, message, context)"
+      log_rotation: "Daily, keep 30 days"
+
+    alerting:
+      triggers:
+        - condition: "Composition failure"
+          action: "Log error with full context"
+
+        - condition: "Disk space < 1 GB"
+          action: "Warn user to free space"
+
+        - condition: "Knowledge base > 5 MB"
+          action: "Suggest splitting file"
+
+      delivery_method: "Terminal output (no email/SMS)"
+
+  maintenance:
+    update_mechanism:
+      method: "Git pull"
+      command: |
+        cd vibe-agency
+        git pull origin main
+        pip install -r requirements.txt  # Update dependencies
+
+      frequency: "Weekly (recommended)"
+
+    breaking_changes:
+      communication: "Documented in CHANGELOG.md"
+      versioning: "Semantic versioning (major.minor.patch)"
+      migration: "Migration scripts provided for major versions"
+
+      example:
+        - version: "v1.0 → v2.0"
+          breaking_change: "Knowledge base schema updated"
+          migration: "scripts/migrate_v1_to_v2.py"
+
+    backwards_compatibility:
+      knowledge_bases:
+        requirement: "Schema versioning required"
+        strategy: "Support N-1 versions (current + previous)"
+        migration: "Auto-migrate on first load"
+
+      artifacts:
+        requirement: "JSON schema versioning"
+        strategy: "Accept old schemas, write new schemas"
+        validation: "Warn if old schema detected"
+
+    deprecation_policy:
+      warning_period: "2 releases (6 months)"
+      removal: "After warning period"
+      documentation: "Mark as deprecated in docs, log warnings"
+
+      example: |
+        v1.0: Feature X introduced
+        v1.5: Feature Y introduced (deprecates X)
+        v1.5-v2.0: Warning logged if X used
+        v2.0: Feature X removed
+
+    maintenance_windows:
+      applicable: false
+      rationale: "Local tool, no downtime"
+
+  capacity_planning:
+    single_user:
+      disk_space: "< 100 MB (system + dependencies)"
+      workspaces: "< 100 MB (10 projects)"
+      total: "< 200 MB"
+
+    power_user:
+      disk_space: "< 100 MB (system)"
+      workspaces: "< 5 GB (100 projects)"
+      total: "< 5.1 GB"
+
+    team_shared:
+      disk_space: "< 100 MB (system)"
+      workspaces: "< 50 GB (1000 projects)"
+      total: "< 50.1 GB"
+
+    growth_rate:
+      typical_project: "5 MB (artifacts + generated code)"
+      knowledge_base_growth: "10% per quarter (community contributions)"
+
+    resource_limits:
+      max_projects: 1000
+      max_project_size: "100 MB"
+      max_knowledge_base_size: "50 MB total"
+
+  support:
+    documentation:
+      user_guide: "README.md"
+      developer_guide: "docs/guides/DEVELOPER_GUIDE.md"
+      api_reference: "Code docstrings (Sphinx future)"
+      troubleshooting: "docs/TROUBLESHOOTING.md (to be created)"
+
+    issue_tracking:
+      platform: "GitHub Issues"
+      url: "https://github.com/kimeisele/vibe-agency/issues"
+
+    response_time:
+      critical_bug: "Best effort (open source)"
+      feature_request: "Triaged monthly"
+      question: "Community support (GitHub Discussions)"
+
+    support_channels:
+      github_issues: "Bug reports, feature requests"
+      github_discussions: "Questions, community support"
+      email: "Not provided (use GitHub)"
+
+  continuous_integration:
+    ci_platform: "GitHub Actions (future)"
+
+    pipeline_stages:
+      - stage: "Lint"
+        tools: "flake8, yamllint, markdownlint"
+        fail_on: "Syntax errors"
+
+      - stage: "Test"
+        tools: "pytest (integration tests)"
+        fail_on: "Test failures"
+
+      - stage: "Security Scan"
+        tools: "pip-audit, detect-secrets"
+        fail_on: "Critical vulnerabilities, secrets detected"
+
+      - stage: "Validate Knowledge"
+        tools: "validate_knowledge_index.py"
+        fail_on: "Missing files, broken references"
+
+    deployment_automation:
+      status: "NOT APPLICABLE"
+      rationale: "No deployment (users git pull)"
+
+  rollback_procedure:
+    git_based:
+      command: |
+        # Rollback to previous version
+        git log --oneline -n 10  # Find last good commit
+        git checkout <commit_hash>
+
+      validation: "Run validate_knowledge_index.py"
+
+    workspace_rollback:
+      command: |
+        # Restore workspace from backup
+        tar -xzf backup-<date>.tar.gz -C workspaces/
+
+      validation: "Check artifact JSON schemas"
+
+validation:
+  operational_tests:
+    - name: "Installation Test"
+      test: "Fresh git clone, pip install, validate"
+      expected: "Complete in < 5 minutes, no errors"
+      frequency: "Before each release"
+
+    - name: "Backup/Restore Test"
+      test: "Backup workspace, delete, restore, verify"
+      expected: "All data restored correctly"
+      frequency: "Quarterly"
+
+    - name: "Update Test"
+      test: "Git pull, validate knowledge index"
+      expected: "No breaking changes, all tests pass"
+      frequency: "Before each release"
+
+    - name: "Rollback Test"
+      test: "Checkout previous version, verify functionality"
+      expected: "System works with previous commit"
+      frequency: "Before major releases"
+
+  acceptance_criteria:
+    - "Installation completes in < 5 minutes"
+    - "Backup/restore procedures documented"
+    - "Update mechanism works without data loss"
+    - "Rollback to previous version possible"
+    - "All platforms (Linux, macOS, Windows) supported"
+
+action_items:
+  immediate:
+    - task: "Create requirements.txt"
+      contents: "pyyaml>=6.0.1"
+      priority: "HIGH"
+
+    - task: "Document backup procedure"
+      file: "docs/BACKUP_RESTORE.md"
+      priority: "HIGH"
+
+    - task: "Create CHANGELOG.md"
+      purpose: "Track breaking changes"
+      priority: "MEDIUM"
+
+  short_term:
+    - task: "Implement log rotation"
+      location: "~/.vibe_agency/logs/"
+      retention: "30 days"
+      priority: "MEDIUM"
+
+    - task: "Create troubleshooting guide"
+      file: "docs/TROUBLESHOOTING.md"
+      priority: "MEDIUM"
+
+  long_term:
+    - task: "Set up GitHub Actions CI"
+      scope: "Lint, test, security scan"
+      priority: "LOW"
+
+    - task: "Create migration scripts"
+      purpose: "Version upgrades"
+      priority: "LOW (only if breaking changes)"

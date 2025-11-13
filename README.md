@@ -8,6 +8,14 @@
 
 **Vibe Agency** is a **prompt composition system** that helps consultants and agencies plan software projects systematically. It guides you from "I have an idea..." to production-ready specifications using Claude AI.
 
+### What Makes It Special?
+
+This is **NOT a multi-agent AI system** or automation platform. It's a **structured prompt library** with:
+- 📚 **6,400+ lines of curated domain knowledge** (project templates, tech stacks, constraints)
+- 🧩 **Modular prompt templates** (personality + tasks + knowledge + validation gates)
+- 🎯 **Single-LLM workflow** (Claude processes each task manually)
+- 📂 **File-based architecture** (no databases, no external services)
+
 **What it does:**
 - ✅ Turns vague ideas into concrete feature lists
 - ✅ Validates technical feasibility (catches impossible features early)
@@ -18,8 +26,9 @@
 
 **What it's NOT:**
 - ❌ Not a code generator (it plans, doesn't code)
-- ❌ Not automation (Claude processes each step manually)
-- ❌ Not a framework you install (it's prompts + knowledge bases)
+- ❌ Not autonomous (Claude processes each step manually)
+- ❌ Not a framework you install (it's a prompt library + knowledge bases)
+- ❌ Not a multi-agent system (single LLM, no agent communication)
 
 ---
 

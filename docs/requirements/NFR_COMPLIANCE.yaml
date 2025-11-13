@@ -1,0 +1,362 @@
+# Non-Functional Requirements: Compliance
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+compliance_requirements:
+  data_privacy:
+    gdpr_applicability:
+      applies: true
+      rationale: "Users may input client data into project specifications"
+      scope: "EU users, or projects involving EU citizens' data"
+
+    gdpr_requirements:
+      right_to_access:
+        requirement: "Users must be able to export all their workspace data"
+        implementation: "Workspace is user-controlled files, already accessible"
+        status: "COMPLIANT ✅"
+
+      right_to_erasure:
+        requirement: "Users must be able to delete all their data"
+        implementation: "Delete workspace directory"
+        documentation: "Add instructions to user guide"
+        status: "COMPLIANT ✅"
+
+      right_to_portability:
+        requirement: "Data must be in machine-readable format"
+        implementation: "JSON artifacts, YAML configs (standard formats)"
+        status: "COMPLIANT ✅"
+
+      data_minimization:
+        requirement: "Only collect necessary data"
+        implementation: "No telemetry by default, only user-provided project data"
+        status: "COMPLIANT ✅"
+
+      consent:
+        requirement: "Explicit consent for data processing"
+        implementation: "User provides all data voluntarily"
+        telemetry: "If added, must require opt-in consent"
+        status: "COMPLIANT ✅"
+
+      data_breach_notification:
+        requirement: "Notify users within 72 hours if breach occurs"
+        applicability: "N/A - local tool, no central database"
+        user_responsibility: "User secures their own file system"
+
+    data_retention:
+      user_workspaces:
+        policy: "Indefinite (user-controlled)"
+        rationale: "Users own their data, decide retention"
+        deletion: "User manually deletes workspace directory"
+
+      system_logs:
+        policy: "30 days, then auto-delete"
+        location: "~/.vibe_agency/logs/"
+        rationale: "Debugging purposes, no long-term need"
+        implementation: "Log rotation with 30-day retention"
+
+      error_reports:
+        policy: "90 days, then anonymize"
+        rationale: "Long-term error analysis"
+        anonymization: "Remove project names, paths, user identifiers"
+
+      knowledge_bases:
+        policy: "Permanent (system component)"
+        rationale: "Required for system operation"
+        versioning: "Git history provides full retention"
+
+    privacy_policy:
+      required_if:
+        - "Distributed as SaaS"
+        - "Telemetry enabled"
+        - "Cloud sync added"
+
+      current_status: "NOT REQUIRED (local tool, no data collection)"
+
+      template_sections:
+        - "What data we collect (user-provided project specs)"
+        - "How we use it (prompt composition only)"
+        - "Who we share with (nobody - local processing)"
+        - "User rights (GDPR rights)"
+        - "Data retention (see above)"
+        - "Contact information"
+
+    cookie_policy:
+      required: false
+      rationale: "No web interface, no cookies"
+
+  licensing:
+    code_license:
+      current_status: "UNLICENSED (no LICENSE file)"
+      recommendation: "MIT License"
+      rationale: "Permissive, widely adopted, allows commercial use"
+
+      alternative_options:
+        - name: "Apache 2.0"
+          pros: "Patent protection, contributor agreements"
+          cons: "More complex than MIT"
+
+        - name: "GPL v3"
+          pros: "Copyleft, ensures derivatives remain open"
+          cons: "Limits commercial adoption"
+
+        - name: "Proprietary"
+          pros: "Full control, can monetize"
+          cons: "Limits community contributions"
+
+    knowledge_base_license:
+      question: "Are knowledge bases proprietary (competitive advantage)?"
+
+      option_1_open_source:
+        license: "CC BY 4.0 (Creative Commons Attribution)"
+        pros: "Community can contribute, broad adoption"
+        cons: "Competitors can use knowledge bases"
+
+      option_2_proprietary:
+        license: "All rights reserved"
+        pros: "Competitive advantage protected"
+        cons: "No community contributions, trust issues"
+
+      recommendation: "CC BY 4.0 (matches open source code)"
+
+    third_party_licenses:
+      pyyaml:
+        license: "MIT"
+        compatible_with: "MIT, Apache 2.0, GPL (all major licenses)"
+        attribution_required: true
+
+      pathlib:
+        license: "PSF (Python Software Foundation)"
+        compatible_with: "All major licenses"
+        attribution_required: true
+
+    license_compliance:
+      - "Include LICENSE file in repository root"
+      - "Add license header to all source files"
+      - "Document third-party licenses in THIRD_PARTY_LICENSES.md"
+      - "Verify license compatibility before adding dependencies"
+
+  accessibility:
+    current_state:
+      interface: "Command-line only"
+      accessibility_features: "None (terminal accessibility handled by OS)"
+
+    applicable_standards:
+      - name: "WCAG 2.1"
+        level: "Not applicable (CLI tool)"
+        future: "If web UI built, must meet WCAG 2.1 AA"
+
+      - name: "Section 508"
+        applicability: "If used by US government agencies"
+        current_status: "Not compliant (CLI limitations)"
+
+    future_considerations:
+      if_web_ui_built:
+        - "Keyboard navigation (no mouse required)"
+        - "Screen reader support (semantic HTML, ARIA labels)"
+        - "Color contrast (WCAG AA minimum 4.5:1)"
+        - "Text resizing (up to 200% without loss of function)"
+        - "Alternative text for images"
+
+      if_cli_enhanced:
+        - "Support terminal screen readers (Orca, NVDA, JAWS)"
+        - "Provide text-only output (no ASCII art)"
+        - "Clear progress indicators (for blind users)"
+
+  internationalization:
+    current_support:
+      languages: "English only"
+      encoding: "UTF-8 (supports international characters)"
+
+    i18n_readiness:
+      code: "No hardcoded strings (prompts in .md files) ✅"
+      knowledge_bases: "All English (would need translation)"
+      documentation: "All English"
+
+    future_roadmap:
+      priority_languages:
+        - "German (European market)"
+        - "Spanish (Latin America)"
+        - "French (Francophone market)"
+
+      implementation_plan:
+        - "Extract all user-facing strings to i18n files"
+        - "Translate knowledge bases (community contributions?)"
+        - "Translate documentation"
+        - "Add language selector (if web UI)"
+
+    constraint: "LLM (Claude) performs best in English - quality may degrade in other languages"
+
+  regulatory_compliance:
+    software_development:
+      iso_9001:
+        applicable: false
+        rationale: "Quality management standard, not required for open source"
+
+      cmmi:
+        applicable: false
+        rationale: "Process maturity model, enterprise-focused"
+
+      agile_manifesto:
+        status: "ALIGNED ✅"
+        principles: "Iterative development, user feedback, working software"
+
+    industry_specific:
+      healthcare_hipaa:
+        applicable: "Only if user processes PHI (Protected Health Information)"
+        user_responsibility: "User must ensure workspace encryption"
+        system_role: "Tool is HIPAA-neutral (no PHI processing by system)"
+
+      finance_pci_dss:
+        applicable: "Only if user inputs credit card data"
+        recommendation: "Never input card data into project specs"
+        system_role: "No payment processing, no PCI scope"
+
+      education_ferpa:
+        applicable: "If used in US educational institutions"
+        user_responsibility: "Protect student data in workspaces"
+
+      government_fedramp:
+        applicable: false
+        rationale: "Local tool, not cloud service"
+
+    export_control:
+      itar:
+        question: "Does system contain controlled technology?"
+        answer: "No - general-purpose planning tool"
+
+      ear:
+        question: "Export restrictions?"
+        answer: "No - software freely exportable (no encryption)"
+
+  audit_requirements:
+    internal_audits:
+      frequency: "Quarterly"
+      scope: "Review NFR compliance, security practices, dependency updates"
+
+    external_audits:
+      required: false
+      rationale: "Open source project, not regulated industry"
+      optional: "Third-party security audit before v1.0 release"
+
+    audit_trail:
+      git_history:
+        purpose: "Code changes, configuration updates"
+        retention: "Permanent (git history)"
+
+      system_logs:
+        purpose: "Runtime behavior, errors"
+        retention: "90 days (see data retention)"
+
+      access_logs:
+        applicable: false
+        rationale: "No multi-user access, no authentication"
+
+  terms_of_service:
+    required_if: "Distributed as SaaS or commercial product"
+
+    current_status: "NOT REQUIRED (local tool, no service)"
+
+    template_sections:
+      - "Acceptance of terms"
+      - "Service description"
+      - "User responsibilities"
+      - "Intellectual property"
+      - "Limitations of liability"
+      - "Termination"
+      - "Governing law"
+
+  contributor_agreement:
+    required_if: "Accepting external contributions"
+
+    recommendation: "CLA (Contributor License Agreement) or DCO (Developer Certificate of Origin)"
+
+    cla:
+      purpose: "Contributors grant rights to use their code"
+      example: "Apache CLA, Google CLA"
+      pros: "Strong legal protection"
+      cons: "Barrier to contribution (extra step)"
+
+    dco:
+      purpose: "Contributors certify they have rights to contribute"
+      implementation: "Git commit sign-off (--signoff flag)"
+      pros: "Lightweight, no paperwork"
+      cons: "Weaker legal protection than CLA"
+
+    recommendation: "DCO (via git commit --signoff)"
+
+validation:
+  compliance_checklist:
+    - name: "GDPR Compliance"
+      checks:
+        - "Data minimization (only necessary data) ✅"
+        - "User data deletion (rm -rf workspace) ✅"
+        - "Data portability (JSON/YAML formats) ✅"
+        - "No unauthorized telemetry ✅"
+      status: "COMPLIANT"
+
+    - name: "License Compliance"
+      checks:
+        - "LICENSE file present ❌"
+        - "Third-party licenses documented ❌"
+        - "License headers in source files ❌"
+      status: "NON-COMPLIANT (to be fixed)"
+
+    - name: "Accessibility"
+      checks:
+        - "CLI tool (WCAG not applicable) ✅"
+        - "Terminal screen reader compatible ⚠️ (not tested)"
+      status: "PARTIAL"
+
+    - name: "Internationalization"
+      checks:
+        - "UTF-8 encoding ✅"
+        - "Multiple languages supported ❌"
+      status: "ENGLISH ONLY (acceptable for v1.0)"
+
+  acceptance_criteria:
+    must_have:
+      - "LICENSE file added to repository"
+      - "GDPR-compliant data handling (already compliant)"
+      - "No unlicensed third-party dependencies"
+
+    should_have:
+      - "Privacy policy (if telemetry added)"
+      - "Contributor agreement (DCO)"
+      - "Accessibility testing (CLI screen readers)"
+
+    nice_to_have:
+      - "Internationalization (multiple languages)"
+      - "External security audit"
+
+action_items:
+  immediate:
+    - task: "Add MIT License to repository"
+      file: "LICENSE"
+      priority: "HIGH"
+
+    - task: "Document third-party licenses"
+      file: "THIRD_PARTY_LICENSES.md"
+      priority: "HIGH"
+
+    - task: "Add license headers to Python files"
+      pattern: "# Copyright 2025 Vibe Agency\n# Licensed under MIT"
+      priority: "MEDIUM"
+
+  short_term:
+    - task: "Implement DCO for contributions"
+      file: "CONTRIBUTING.md"
+      priority: "MEDIUM"
+
+    - task: "Test with screen readers"
+      scope: "CLI output compatibility"
+      priority: "LOW"
+
+  long_term:
+    - task: "Plan internationalization"
+      milestone: "v2.0"
+      priority: "LOW"
+
+    - task: "External security audit"
+      milestone: "v1.0 release"
+      priority: "MEDIUM"

@@ -1,0 +1,21 @@
+# Vibe Agency - Python Dependencies
+# Version: 1.0
+# Last Updated: 2025-11-13
+
+# Core dependencies
+pyyaml>=6.0.1  # YAML parsing (use safe_load only for security)
+
+# Development dependencies (optional)
+pytest>=7.4.0  # Testing framework
+pytest-cov>=4.1.0  # Test coverage
+black>=24.1.0  # Code formatter
+flake8>=7.0.0  # Linter
+isort>=5.13.0  # Import sorter
+yamllint>=1.35.0  # YAML validation
+
+# Security dependencies (optional)
+pip-audit>=2.6.0  # Dependency vulnerability scanning
+detect-secrets>=1.4.0  # Secret detection
+
+# Pre-commit hooks (optional)
+pre-commit>=3.6.0  # Git pre-commit hook framework
