@@ -1,0 +1,28 @@
+task_id: "01_canvas_interview"
+task_name: "Lean Canvas Interview"
+phase: 1
+description: "Guide user through all 9 Lean Canvas fields with structured interview"
+
+inputs:
+  - user_initial_idea: "Unstructured project idea from user"
+
+outputs:
+  - canvas_responses: "Structured responses for all 9 Lean Canvas fields"
+
+validation_gates: []
+
+estimated_time: "15-20 minutes"
+conversation_turns: "9-15 turns (one per field + clarifications)"
+
+notes: |
+  This is a purely conversational task.
+  The agent must systematically cover all 9 fields:
+  1. Problem
+  2. Customer Segments
+  3. Unique Value Proposition
+  4. Solution (MVP)
+  5. Channels
+  6. Revenue Streams
+  7. Cost Structure
+  8. Key Metrics
+  9. Unfair Advantage
