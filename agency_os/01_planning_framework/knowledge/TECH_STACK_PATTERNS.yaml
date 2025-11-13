@@ -1,0 +1,603 @@
+# TECH_STACK_PATTERNS.yaml
+# Concrete, battle-tested technology stack combinations for common project types
+# Helps GENESIS_BLUEPRINT and VIBE_ALIGNER recommend specific, proven tech stacks
+
+version: "1.0"
+purpose: "Provide concrete tech stack recommendations with rationale, not generic 'use a database' advice"
+last_updated: "2025-11-13"
+
+# ========================================
+# MODERN WEB APPLICATION STACKS
+# ========================================
+
+web_app_stacks:
+  # ========================================
+  - stack_id: "nextjs_modern"
+    name: "Next.js Modern Full-Stack"
+    category: "web_fullstack"
+    maturity: "production_ready"
+    best_for:
+      - "SaaS applications"
+      - "Content-heavy websites"
+      - "SEO-critical applications"
+      - "Teams with JavaScript/TypeScript expertise"
+
+    components:
+      frontend:
+        framework: "Next.js 14+ (App Router)"
+        language: "TypeScript"
+        styling: "Tailwind CSS"
+        ui_components: "shadcn/ui OR Radix UI"
+        state_management: "React Context OR Zustand (avoid Redux unless needed)"
+
+      backend:
+        runtime: "Next.js API Routes OR Next.js Server Actions"
+        orm: "Prisma"
+        validation: "Zod"
+        api_style: "REST OR tRPC (for type-safety)"
+
+      database:
+        primary: "PostgreSQL (via Supabase OR Neon OR Railway)"
+        alternatives: ["MySQL", "MongoDB (if document-heavy)"]
+        rationale: "PostgreSQL is most versatile, excellent for relational + JSON data"
+
+      authentication:
+        recommended: "NextAuth.js OR Clerk OR Supabase Auth"
+        rationale: "NextAuth.js for self-hosted; Clerk for fastest setup; Supabase for all-in-one"
+
+      hosting:
+        primary: "Vercel"
+        alternatives: ["Netlify", "Railway", "Fly.io"]
+        rationale: "Vercel = zero-config for Next.js, automatic preview deployments"
+
+      storage:
+        files: "Vercel Blob OR Cloudflare R2 OR S3"
+        cdn: "Built-in (Vercel CDN) OR Cloudflare"
+
+    typical_dependencies:
+      - "@prisma/client"
+      - "next-auth"
+      - "zod"
+      - "@tanstack/react-query"
+      - "tailwindcss"
+
+    estimated_setup_time: "1-2 days"
+    learning_curve: "Medium (requires understanding React Server Components)"
+    cost_baseline: "$20-100/month for small-medium apps"
+
+    common_pitfalls:
+      - "Next.js App Router has different patterns than Pages Router - don't mix"
+      - "Vercel has generous free tier, but bandwidth costs add up quickly"
+      - "Prisma migrations can be tricky in team environments (use shadow DB)"
+      - "Server Actions are new - not all libraries support them yet"
+
+    when_to_avoid:
+      - "Team has no JavaScript expertise (choose Django/Rails)"
+      - "Need heavy server-side logic (consider separate backend)"
+      - "Real-time features are core (WebSocket support is basic)"
+
+  # ========================================
+  - stack_id: "django_classic"
+    name: "Django Full-Stack (Classic)"
+    category: "web_fullstack"
+    maturity: "battle_tested"
+    best_for:
+      - "Complex business logic"
+      - "Data-heavy applications"
+      - "Teams with Python expertise"
+      - "Regulated industries (compliance, audit trails)"
+
+    components:
+      backend:
+        framework: "Django 5.x"
+        language: "Python 3.11+"
+        api: "Django REST Framework (DRF)"
+        async: "Django Channels (for WebSocket)"
+
+      frontend:
+        approach: "Hybrid - Django Templates + HTMX OR separate React/Vue"
+        rationale: "HTMX for simple interactivity; React for complex SPA"
+
+      database:
+        primary: "PostgreSQL"
+        alternatives: ["MySQL"]
+        rationale: "Django ORM works best with PostgreSQL (full-text search, JSON, etc.)"
+
+      authentication:
+        built_in: "Django Auth (excellent)"
+        extensions: "django-allauth (social auth), dj-rest-auth (API tokens)"
+
+      hosting:
+        primary: "Railway OR Render OR Fly.io"
+        alternatives: ["AWS (EC2 + RDS)", "DigitalOcean App Platform", "Heroku"]
+        rationale: "Railway = easiest; AWS = most scalable but complex"
+
+      task_queue:
+        recommended: "Celery + Redis"
+        alternatives: ["Django Q", "Huey"]
+        rationale: "Celery is standard for background jobs in Django"
+
+      storage:
+        files: "S3 (via django-storages) OR Cloudflare R2"
+        cdn: "Cloudflare OR CloudFront"
+
+    typical_dependencies:
+      - "djangorestframework"
+      - "psycopg2-binary"
+      - "celery[redis]"
+      - "django-cors-headers"
+      - "django-environ"
+      - "gunicorn"
+
+    estimated_setup_time: "2-3 days"
+    learning_curve: "Medium-High (Django is opinionated, lots to learn)"
+    cost_baseline: "$25-150/month for small-medium apps"
+
+    common_pitfalls:
+      - "Django admin is powerful but NOT client-facing (build separate UI)"
+      - "Celery setup can be complex (need Redis/RabbitMQ)"
+      - "Django templates are old-school (consider API-first approach)"
+      - "Migrations in production require careful planning (use --fake if needed)"
+
+    when_to_avoid:
+      - "Team has no Python expertise"
+      - "Need ultra-high performance (Django is slower than Node/Go)"
+      - "Want rapid prototyping (Flask or FastAPI is faster to start)"
+
+  # ========================================
+  - stack_id: "fastapi_modern"
+    name: "FastAPI Backend + React Frontend"
+    category: "api_first"
+    maturity: "production_ready"
+    best_for:
+      - "API-first architecture"
+      - "Microservices"
+      - "High performance requirements"
+      - "Teams wanting modern Python + async"
+
+    components:
+      backend:
+        framework: "FastAPI"
+        language: "Python 3.11+"
+        orm: "SQLAlchemy 2.0 OR Tortoise ORM"
+        validation: "Pydantic (built-in)"
+        async: "Native async/await"
+
+      frontend:
+        framework: "React OR Next.js (as client-only)"
+        state: "TanStack Query (React Query)"
+        rationale: "Decouple frontend from backend"
+
+      database:
+        primary: "PostgreSQL"
+        alternatives: ["MongoDB (use Beanie ODM)"]
+
+      authentication:
+        recommended: "OAuth2 with JWT (FastAPI Users library)"
+        alternatives: ["Auth0", "Clerk"]
+
+      hosting:
+        backend: "Railway OR Fly.io OR AWS ECS"
+        frontend: "Vercel OR Netlify"
+        rationale: "Separate deployments for API and frontend"
+
+      api_docs:
+        built_in: "Automatic OpenAPI (Swagger UI + ReDoc)"
+        rationale: "FastAPI generates interactive API docs for free"
+
+    typical_dependencies:
+      - "fastapi"
+      - "uvicorn[standard]"
+      - "sqlalchemy[asyncio]"
+      - "pydantic"
+      - "python-jose[cryptography]"
+      - "passlib[bcrypt]"
+
+    estimated_setup_time: "1-2 days"
+    learning_curve: "Medium (async concepts, Pydantic models)"
+    cost_baseline: "$15-80/month for small-medium APIs"
+
+    common_pitfalls:
+      - "Async all the way - mixing sync/async code causes issues"
+      - "SQLAlchemy 2.0 has different syntax than 1.x"
+      - "Need separate CORS setup for frontend-backend split"
+      - "No built-in admin panel (build your own or use FastAPI Admin)"
+
+    when_to_avoid:
+      - "Need full-stack framework (choose Django or Rails)"
+      - "Team unfamiliar with async Python"
+      - "Need mature ecosystem (Django has more libraries)"
+
+# ========================================
+# MOBILE APPLICATION STACKS
+# ========================================
+
+mobile_app_stacks:
+  # ========================================
+  - stack_id: "react_native_expo"
+    name: "React Native with Expo"
+    category: "mobile_crossplatform"
+    maturity: "production_ready"
+    best_for:
+      - "Cross-platform iOS + Android"
+      - "Teams with React expertise"
+      - "Fast iteration and prototyping"
+      - "Budget-conscious projects (one codebase)"
+
+    components:
+      framework: "React Native with Expo"
+      language: "TypeScript"
+      navigation: "React Navigation"
+      state: "Zustand OR React Context"
+      ui_library: "React Native Paper OR NativeBase"
+
+      backend_integration:
+        recommended: "REST API OR GraphQL"
+        client: "Axios OR TanStack Query"
+
+      authentication:
+        recommended: "Firebase Auth OR Auth0 OR Supabase"
+        rationale: "Expo has built-in support for these"
+
+      storage:
+        local: "AsyncStorage OR Expo SecureStore"
+        cloud: "Firebase Storage OR S3"
+
+      push_notifications:
+        recommended: "Expo Push Notifications"
+        alternatives: ["Firebase Cloud Messaging", "OneSignal"]
+
+      hosting:
+        app_distribution: "Expo EAS (build and submit to stores)"
+        backend: "Any (Vercel, Railway, etc.)"
+
+    typical_dependencies:
+      - "expo"
+      - "react-navigation"
+      - "@tanstack/react-query"
+      - "zustand"
+      - "expo-notifications"
+      - "expo-secure-store"
+
+    estimated_setup_time: "1 day"
+    learning_curve: "Low-Medium (if you know React)"
+    cost_baseline: "$19-50/month (Expo EAS Build - Starter plan $19/mo)"
+
+    common_pitfalls:
+      - "Expo Go has limitations - may need bare workflow for native modules"
+      - "iOS requires Mac for final build (or use Expo EAS)"
+      - "Performance can lag behind native for heavy apps"
+      - "Some native libraries not compatible with Expo"
+
+    when_to_avoid:
+      - "Need bleeding-edge native features (choose native)"
+      - "Heavy graphics/gaming (use Unity or native)"
+      - "Need full control over native code (use bare React Native)"
+
+  # ========================================
+  - stack_id: "flutter_firebase"
+    name: "Flutter with Firebase"
+    category: "mobile_crossplatform"
+    maturity: "production_ready"
+    best_for:
+      - "High-performance cross-platform apps"
+      - "Beautiful, custom UI requirements"
+      - "Teams wanting single codebase for iOS + Android + Web"
+      - "Real-time features"
+
+    components:
+      framework: "Flutter"
+      language: "Dart"
+      state: "Riverpod OR Bloc"
+      ui: "Material Design 3 OR Cupertino (iOS-style)"
+
+      backend:
+        primary: "Firebase (Firestore, Auth, Storage)"
+        alternatives: ["Supabase", "Custom REST API"]
+
+      authentication:
+        recommended: "Firebase Auth"
+        features: "Email, Google, Apple, Phone OTP built-in"
+
+      database:
+        primary: "Firestore (NoSQL, real-time)"
+        alternatives: ["Supabase (PostgreSQL)"]
+
+      storage:
+        local: "SharedPreferences OR Hive"
+        cloud: "Firebase Storage"
+
+      push_notifications:
+        recommended: "Firebase Cloud Messaging"
+
+    typical_dependencies:
+      - "firebase_core"
+      - "firebase_auth"
+      - "cloud_firestore"
+      - "firebase_storage"
+      - "flutter_riverpod"
+
+    estimated_setup_time: "2-3 days"
+    learning_curve: "Medium-High (Dart is different from JS/Python)"
+    cost_baseline: "Firebase free tier generous; $25-150/month for medium apps"
+
+    common_pitfalls:
+      - "Firestore queries are limited (no OR, complex joins)"
+      - "Firestore costs can escalate with reads/writes"
+      - "Dart has smaller ecosystem than JavaScript"
+      - "State management in Flutter is debated (many options)"
+
+    when_to_avoid:
+      - "Team has no Dart expertise (steeper learning curve)"
+      - "Need complex backend logic (build separate API)"
+      - "Heavily invested in non-Firebase ecosystem"
+
+# ========================================
+# REAL-TIME & COLLABORATION STACKS
+# ========================================
+
+realtime_stacks:
+  # ========================================
+  - stack_id: "socketio_stack"
+    name: "Socket.io Real-Time Stack"
+    category: "real_time"
+    maturity: "battle_tested"
+    best_for:
+      - "Chat applications"
+      - "Live notifications"
+      - "Real-time dashboards"
+      - "Collaborative features (basic)"
+
+    components:
+      backend:
+        framework: "Node.js + Express + Socket.io"
+        language: "TypeScript"
+        database: "PostgreSQL (persistent data) + Redis (presence, pub/sub)"
+
+      frontend:
+        framework: "React OR Next.js"
+        client: "socket.io-client"
+
+      scalability:
+        horizontal: "Redis Adapter (for multiple server instances)"
+        rationale: "Socket.io requires sticky sessions or Redis pub/sub"
+
+      hosting:
+        recommended: "Railway OR Fly.io (support WebSockets)"
+        avoid: "Vercel Serverless (no long-lived connections)"
+
+    typical_dependencies:
+      - "socket.io"
+      - "express"
+      - "ioredis"
+      - "@socket.io/redis-adapter"
+
+    estimated_setup_time: "2-3 days"
+    learning_curve: "Medium"
+    cost_baseline: "$20-100/month (persistent server needed)"
+
+    common_pitfalls:
+      - "Need sticky sessions OR Redis adapter for horizontal scaling"
+      - "Authentication different from REST (use socket middleware)"
+      - "Memory leaks if listeners not cleaned up"
+      - "Load testing critical (WebSockets are stateful)"
+
+    when_to_avoid:
+      - "Need complex conflict resolution (use Yjs/Automerge)"
+      - "Serverless architecture (WebSockets need persistent connections)"
+
+  # ========================================
+  - stack_id: "yjs_collaboration"
+    name: "Yjs CRDT Collaboration Stack"
+    category: "real_time_collaboration"
+    maturity: "production_ready"
+    best_for:
+      - "Notion-like collaborative editing"
+      - "Real-time document collaboration"
+      - "Conflict-free concurrent editing"
+      - "Offline-first applications"
+
+    components:
+      crdt_library: "Yjs"
+      persistence: "y-websocket (server) + y-indexeddb (client)"
+      editor_binding: "TipTap OR ProseMirror OR Monaco"
+
+      backend:
+        framework: "Node.js + y-websocket server"
+        storage: "PostgreSQL (snapshots) + y-leveldb (diffs)"
+
+      frontend:
+        framework: "React OR Next.js"
+        client: "y-websocket (client)"
+
+      hosting:
+        recommended: "Railway OR Fly.io OR Hocuspocus (managed Yjs)"
+
+    typical_dependencies:
+      - "yjs"
+      - "y-websocket"
+      - "y-indexeddb"
+      - "@tiptap/react"
+      - "y-prosemirror"
+
+    estimated_setup_time: "4-5 days (complex setup)"
+    learning_curve: "High (CRDT concepts, Yjs API)"
+    cost_baseline: "$30-200/month (persistent server + storage)"
+
+    common_pitfalls:
+      - "Yjs has steep learning curve (CRDT concepts)"
+      - "Persistence setup is complex (need to store snapshots + diffs)"
+      - "Binary data format (not JSON) - harder to debug"
+      - "Limited ecosystem compared to Socket.io"
+
+    when_to_avoid:
+      - "Simple real-time (Socket.io is simpler)"
+      - "No collaborative editing needs"
+      - "Team unfamiliar with CRDTs"
+
+# ========================================
+# BACKEND API STACKS
+# ========================================
+
+api_stacks:
+  # ========================================
+  - stack_id: "express_rest_api"
+    name: "Express.js REST API"
+    category: "backend_api"
+    maturity: "battle_tested"
+    best_for:
+      - "Simple to medium REST APIs"
+      - "Teams with JavaScript expertise"
+      - "Rapid prototyping"
+      - "Microservices"
+
+    components:
+      framework: "Express.js"
+      language: "TypeScript"
+      validation: "Joi OR Zod"
+      orm: "Prisma OR TypeORM"
+      database: "PostgreSQL"
+      authentication: "JWT (jsonwebtoken)"
+      api_docs: "Swagger (swagger-jsdoc + swagger-ui-express)"
+
+      testing:
+        unit: "Jest OR Vitest"
+        integration: "Supertest"
+
+      hosting:
+        recommended: "Railway OR Fly.io"
+        alternatives: ["AWS Lambda (serverless)", "DigitalOcean"]
+
+    typical_dependencies:
+      - "express"
+      - "prisma"
+      - "jsonwebtoken"
+      - "joi"
+      - "helmet"
+      - "cors"
+
+    estimated_setup_time: "1-2 days"
+    learning_curve: "Low (if you know JavaScript)"
+    cost_baseline: "$10-50/month"
+
+    common_pitfalls:
+      - "Express is unopinionated - need to set up everything"
+      - "Middleware order matters (auth before routes)"
+      - "Error handling not automatic (use express-async-errors)"
+      - "No automatic validation (add manually with Joi/Zod)"
+
+    when_to_avoid:
+      - "Need automatic API docs (use FastAPI)"
+      - "Want opinionated framework (use NestJS or Django)"
+
+  # ========================================
+  - stack_id: "nestjs_enterprise"
+    name: "NestJS Enterprise API"
+    category: "backend_api"
+    maturity: "production_ready"
+    best_for:
+      - "Large-scale applications"
+      - "Microservices architecture"
+      - "Teams wanting Angular-like structure"
+      - "Enterprise requirements (DI, modularity)"
+
+    components:
+      framework: "NestJS"
+      language: "TypeScript"
+      orm: "TypeORM OR Prisma"
+      validation: "class-validator (built-in)"
+      api_docs: "Swagger (built-in @nestjs/swagger)"
+      testing: "Jest (built-in)"
+
+      microservices:
+        transports: "Redis, NATS, RabbitMQ, Kafka"
+        rationale: "NestJS has excellent microservices support"
+
+      database: "PostgreSQL"
+      authentication: "Passport.js (built-in @nestjs/passport)"
+
+      hosting:
+        recommended: "AWS (ECS OR Lambda) OR Railway"
+
+    typical_dependencies:
+      - "@nestjs/core"
+      - "@nestjs/typeorm"
+      - "@nestjs/swagger"
+      - "@nestjs/passport"
+      - "class-validator"
+
+    estimated_setup_time: "3-4 days"
+    learning_curve: "High (lots of concepts: DI, decorators, modules)"
+    cost_baseline: "$20-150/month"
+
+    common_pitfalls:
+      - "Over-engineering for small projects (use Express instead)"
+      - "Steep learning curve (Angular-like architecture)"
+      - "Decorators everywhere (can be confusing)"
+      - "Heavy framework (slower cold starts in serverless)"
+
+    when_to_avoid:
+      - "Small projects (overkill)"
+      - "Team unfamiliar with TypeScript/decorators"
+      - "Need lightweight API (use Express or FastAPI)"
+
+# ========================================
+# USAGE GUIDELINES
+# ========================================
+
+usage_notes: |
+  When GENESIS_BLUEPRINT or VIBE_ALIGNER needs to recommend a tech stack:
+
+  1. **Match project type to stack category:**
+     - "Web app with SEO" → nextjs_modern OR django_classic
+     - "High-performance API" → fastapi_modern OR nestjs_enterprise
+     - "Mobile app (cross-platform)" → react_native_expo OR flutter_firebase
+     - "Real-time collaboration" → yjs_collaboration
+     - "Simple chat" → socketio_stack
+
+  2. **Consider team expertise:**
+     - JavaScript/TypeScript team → Next.js, React Native, Express
+     - Python team → Django, FastAPI
+     - Dart team → Flutter
+
+  3. **Consider budget:**
+     - Low budget (<$50/mo) → Next.js + Vercel OR FastAPI + Railway
+     - Medium budget ($50-200/mo) → Any stack
+     - High budget (>$200/mo) → AWS-based stacks with full control
+
+  4. **Consider timeline:**
+     - Fast (<2 weeks) → Next.js OR React Native Expo OR Express
+     - Medium (2-8 weeks) → Any stack
+     - Long (>8 weeks) → Django OR NestJS (time to learn)
+
+  5. **Always provide:**
+     - Primary recommendation (with rationale)
+     - 1-2 alternatives
+     - Common pitfalls
+     - When to avoid this stack
+
+decision_tree:
+  - question: "What type of application?"
+    answers:
+      - "Web application (frontend + backend)" → web_app_stacks
+      - "API only (backend)" → api_stacks
+      - "Mobile application" → mobile_app_stacks
+      - "Real-time features" → realtime_stacks
+
+  - question: "Team's primary language?"
+    answers:
+      - "JavaScript/TypeScript" → nextjs_modern, express_rest_api, react_native_expo
+      - "Python" → django_classic, fastapi_modern
+      - "Dart" → flutter_firebase
+
+  - question: "Budget constraints?"
+    answers:
+      - "Minimal (<$50/mo)" → nextjs_modern + Vercel, fastapi_modern + Railway
+      - "Medium ($50-200/mo)" → Any stack
+      - "Flexible (>$200/mo)" → Enterprise stacks (AWS, NestJS)
+
+  - question: "Timeline?"
+    answers:
+      - "MVP in 1-2 weeks" → nextjs_modern, react_native_expo, express_rest_api
+      - "Production in 1-3 months" → Any stack
+      - "Complex enterprise (3+ months)" → django_classic, nestjs_enterprise

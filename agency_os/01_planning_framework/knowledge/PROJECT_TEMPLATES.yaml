@@ -339,3 +339,902 @@ matching_rules:
       - "data visualization"
       - "manage records"
       - "different user roles"
+
+# ========================================
+# EXTENDED TEMPLATES (Agency-Focused)
+# ========================================
+
+# ========================================
+# SAAS APPLICATIONS
+# ========================================
+templates_extended:
+  - template_id: "saas_with_stripe"
+    name: "SaaS with Stripe Payments"
+    category: "saas"
+    scale: "medium-large"
+    typical_features:
+      - id: "subscription_management"
+        name: "Subscription Plans"
+        priority: "HIGH"
+        complexity: 25
+        description: "Multiple pricing tiers (Free, Pro, Enterprise)"
+
+      - id: "stripe_integration"
+        name: "Stripe Payment Integration"
+        priority: "HIGH"
+        complexity: 30
+        description: "Checkout, webhooks, subscription lifecycle"
+
+      - id: "billing_portal"
+        name: "Customer Billing Portal"
+        priority: "HIGH"
+        complexity: 20
+        description: "Update payment method, view invoices, cancel subscription"
+
+      - id: "usage_tracking"
+        name: "Usage/Quota Tracking"
+        priority: "HIGH"
+        complexity: 22
+        description: "Track API calls, storage, or feature usage per plan"
+
+      - id: "admin_analytics"
+        name: "Business Analytics"
+        priority: "MEDIUM"
+        complexity: 18
+        description: "MRR, churn rate, user growth metrics"
+
+    typical_dependencies:
+      - "Stripe SDK (@stripe/stripe-js, stripe-node)"
+      - "Database with subscription tables (PostgreSQL recommended)"
+      - "Webhook handler (secure endpoint for Stripe events)"
+      - "Email service (transactional emails for billing)"
+      - "Background jobs (handle failed payments, renewals)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Prisma + PostgreSQL + Stripe + Vercel"
+      alternatives:
+        - "Django + PostgreSQL + Stripe + AWS"
+        - "Rails + PostgreSQL + Stripe + Heroku"
+
+    common_pitfalls:
+      - "Webhook security: ALWAYS verify Stripe signatures"
+      - "Handle failed payments gracefully (retry logic, grace period)"
+      - "Tax calculation: Use Stripe Tax or handle VAT/sales tax"
+      - "PCI compliance: Never store card details, use Stripe.js"
+      - "Test with Stripe test mode before going live"
+
+    estimated_total_complexity: 115
+    typical_timeline: "6-8 weeks"
+
+  # ========================================
+  - template_id: "multi_tenant_saas"
+    name: "Multi-Tenant B2B SaaS"
+    category: "saas"
+    scale: "large"
+    typical_features:
+      - id: "tenant_isolation"
+        name: "Data Isolation per Tenant"
+        priority: "HIGH"
+        complexity: 35
+        description: "Separate data per organization (schema or row-level)"
+
+      - id: "team_management"
+        name: "Team/User Management"
+        priority: "HIGH"
+        complexity: 25
+        description: "Invite users, assign roles, manage permissions"
+
+      - id: "sso_integration"
+        name: "SSO Integration (SAML/OAuth)"
+        priority: "MEDIUM"
+        complexity: 30
+        description: "Enterprise SSO (Okta, Auth0, Azure AD)"
+
+      - id: "white_labeling"
+        name: "White-Label Branding"
+        priority: "MEDIUM"
+        complexity: 20
+        description: "Custom logos, colors, domain per tenant"
+
+      - id: "audit_logs"
+        name: "Audit Trail"
+        priority: "HIGH"
+        complexity: 18
+        description: "Track all actions for compliance/security"
+
+    typical_dependencies:
+      - "PostgreSQL with Row-Level Security (RLS) OR separate schemas"
+      - "Auth provider with SSO support (Auth0, Clerk, WorkOS)"
+      - "Redis for session/cache management"
+      - "S3 for tenant-specific file storage"
+      - "Background job processor (Sidekiq, BullMQ)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Prisma + PostgreSQL + Auth0 + AWS"
+      alternatives:
+        - "Django + PostgreSQL + django-tenant-schemas + Auth0"
+        - "Rails + PostgreSQL + apartment gem + Devise"
+
+    common_pitfalls:
+      - "Data leakage: Test tenant isolation thoroughly"
+      - "Performance: Index tenant_id on ALL tables"
+      - "Migrations: Schema changes affect all tenants"
+      - "Backup/restore: Per-tenant data recovery strategy"
+      - "Costs: Monitor per-tenant resource usage"
+
+    estimated_total_complexity: 128
+    typical_timeline: "8-12 weeks"
+
+  # ========================================
+  # API & BACKEND SERVICES
+  # ========================================
+  - template_id: "rest_api_backend"
+    name: "REST API Backend (Microservice)"
+    category: "backend"
+    scale: "small-medium"
+    typical_features:
+      - id: "api_authentication"
+        name: "API Authentication (JWT/API Keys)"
+        priority: "HIGH"
+        complexity: 15
+        description: "Secure API access with tokens"
+
+      - id: "crud_endpoints"
+        name: "CRUD Endpoints"
+        priority: "HIGH"
+        complexity: 20
+        description: "Create, Read, Update, Delete for main entities"
+
+      - id: "api_documentation"
+        name: "OpenAPI/Swagger Docs"
+        priority: "HIGH"
+        complexity: 10
+        description: "Auto-generated API documentation"
+
+      - id: "rate_limiting"
+        name: "Rate Limiting"
+        priority: "MEDIUM"
+        complexity: 12
+        description: "Prevent abuse (e.g., 1000 req/hour per user)"
+
+      - id: "api_versioning"
+        name: "API Versioning"
+        priority: "MEDIUM"
+        complexity: 8
+        description: "Support /v1, /v2 for backwards compatibility"
+
+      - id: "basic_analytics"
+        name: "Basic Analytics/Reporting Endpoints"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Aggregation queries (e.g., daily summaries, counts, trends)"
+
+      - id: "pagination"
+        name: "Pagination & Filtering"
+        priority: "MEDIUM"
+        complexity: 10
+        description: "Paginate large result sets, filter/sort endpoints"
+
+    typical_dependencies:
+      - "Express.js OR FastAPI OR Django REST Framework"
+      - "Database (PostgreSQL, MongoDB)"
+      - "Redis (rate limiting, caching)"
+      - "JWT library (jsonwebtoken, PyJWT)"
+      - "OpenAPI generator (swagger-jsdoc, fastapi auto-docs)"
+
+    tech_stack_recommendations:
+      primary: "FastAPI + PostgreSQL + Redis + Docker"
+      alternatives:
+        - "Express.js + MongoDB + Redis + Docker"
+        - "Django REST Framework + PostgreSQL + Redis"
+
+    common_pitfalls:
+      - "Versioning: Plan for breaking changes from day 1"
+      - "Security: Validate ALL inputs (SQL injection, XSS)"
+      - "Error handling: Return consistent error formats (RFC 7807)"
+      - "Testing: Write contract tests (Pact, OpenAPI validators)"
+      - "Rate limiting: Apply per-user AND per-IP"
+      - "Analytics: Pre-aggregate data, don't query raw records (performance)"
+      - "Pagination: Always paginate list endpoints (max 100 items/page)"
+
+    estimated_total_complexity: 90
+    typical_timeline: "4-5 weeks (with analytics + pagination)"
+
+    notes: "Base API (auth + CRUD + docs) = 65 complexity. Add +25 for analytics & pagination."
+
+  # ========================================
+  - template_id: "graphql_api"
+    name: "GraphQL API Backend"
+    category: "backend"
+    scale: "medium"
+    typical_features:
+      - id: "graphql_schema"
+        name: "GraphQL Schema Design"
+        priority: "HIGH"
+        complexity: 22
+        description: "Queries, mutations, subscriptions"
+
+      - id: "dataloader_optimization"
+        name: "DataLoader (N+1 Prevention)"
+        priority: "HIGH"
+        complexity: 18
+        description: "Batch database queries efficiently"
+
+      - id: "graphql_authentication"
+        name: "Auth in Resolvers"
+        priority: "HIGH"
+        complexity: 15
+        description: "Field-level permissions"
+
+      - id: "graphql_subscriptions"
+        name: "Real-time Subscriptions"
+        priority: "MEDIUM"
+        complexity: 25
+        description: "WebSocket-based real-time updates"
+
+      - id: "graphql_playground"
+        name: "GraphQL Playground"
+        priority: "LOW"
+        complexity: 5
+        description: "Interactive API explorer"
+
+    typical_dependencies:
+      - "Apollo Server OR GraphQL Yoga OR Strawberry (Python)"
+      - "DataLoader library"
+      - "Database (PostgreSQL recommended for complex queries)"
+      - "Redis (caching, subscription pub/sub)"
+      - "WebSocket support (for subscriptions)"
+
+    tech_stack_recommendations:
+      primary: "Apollo Server + TypeScript + Prisma + PostgreSQL"
+      alternatives:
+        - "GraphQL Yoga + Node.js + TypeORM + PostgreSQL"
+        - "Strawberry GraphQL + Python + SQLAlchemy"
+
+    common_pitfalls:
+      - "N+1 queries: Always use DataLoader"
+      - "Depth limits: Prevent deeply nested malicious queries"
+      - "Complexity limits: Limit query cost (GitHub-style)"
+      - "Caching: More complex than REST (use persisted queries)"
+      - "Error handling: Don't leak sensitive data in errors"
+
+    estimated_total_complexity: 85
+    typical_timeline: "4-6 weeks"
+
+  # ========================================
+  # REAL-TIME & COLLABORATION
+  # ========================================
+  - template_id: "real_time_collaboration"
+    name: "Real-Time Collaboration App (Notion/Figma-style)"
+    category: "real-time"
+    scale: "large"
+    typical_features:
+      - id: "websocket_sync"
+        name: "WebSocket Synchronization"
+        priority: "HIGH"
+        complexity: 30
+        description: "Real-time updates across all connected clients"
+
+      - id: "conflict_resolution"
+        name: "Conflict Resolution (CRDT/OT)"
+        priority: "HIGH"
+        complexity: 40
+        description: "Handle simultaneous edits without data loss"
+
+      - id: "presence_indicators"
+        name: "User Presence"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Show who's online, cursors, selections"
+
+      - id: "offline_support"
+        name: "Offline Mode + Sync"
+        priority: "HIGH"
+        complexity: 35
+        description: "Work offline, sync when reconnected"
+
+      - id: "version_history"
+        name: "Version History/Undo"
+        priority: "MEDIUM"
+        complexity: 25
+        description: "Restore previous versions, time-travel"
+
+    typical_dependencies:
+      - "WebSocket library (Socket.io, Pusher, Ably)"
+      - "CRDT library (Yjs, Automerge) OR OT (ShareDB)"
+      - "IndexedDB (offline storage)"
+      - "Redis (presence, pub/sub)"
+      - "Event sourcing database (optional: EventStore)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Yjs + WebSocket + Redis + PostgreSQL"
+      alternatives:
+        - "React + Automerge + Pusher + MongoDB"
+        - "Vue.js + ShareDB + Socket.io + PostgreSQL"
+
+    common_pitfalls:
+      - "Concurrency: Test with 100+ simultaneous users"
+      - "Network issues: Handle reconnection gracefully"
+      - "Memory leaks: Clean up WebSocket listeners"
+      - "Scaling: Need sticky sessions or Redis adapter"
+      - "Cost: WebSocket connections are expensive at scale"
+
+    estimated_total_complexity: 145
+    typical_timeline: "10-14 weeks"
+
+  # ========================================
+  - template_id: "live_chat_messaging"
+    name: "Live Chat / Messaging App"
+    category: "communication"
+    scale: "medium"
+    typical_features:
+      - id: "real_time_messaging"
+        name: "Real-Time Messages"
+        priority: "HIGH"
+        complexity: 25
+        description: "Instant message delivery via WebSocket"
+
+      - id: "chat_rooms"
+        name: "Channels/Rooms"
+        priority: "HIGH"
+        complexity: 18
+        description: "Create/join chat rooms or channels"
+
+      - id: "typing_indicators"
+        name: "Typing Indicators"
+        priority: "MEDIUM"
+        complexity: 10
+        description: "Show when someone is typing"
+
+      - id: "read_receipts"
+        name: "Read Receipts"
+        priority: "MEDIUM"
+        complexity: 12
+        description: "Track message read status"
+
+      - id: "file_uploads"
+        name: "File/Image Sharing"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Upload and share files in chat"
+
+      - id: "push_notifications"
+        name: "Push Notifications"
+        priority: "HIGH"
+        complexity: 20
+        description: "Notify users of new messages"
+
+    typical_dependencies:
+      - "WebSocket (Socket.io, Pusher, Ably)"
+      - "Database (PostgreSQL for messages, Redis for presence)"
+      - "S3 for file storage"
+      - "Push service (Firebase Cloud Messaging, OneSignal)"
+      - "Message queue (RabbitMQ, Redis) for reliability"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Socket.io + PostgreSQL + Redis + S3"
+      alternatives:
+        - "React + Pusher + MongoDB + Firebase Storage"
+        - "Vue.js + Ably + PostgreSQL + Cloudinary"
+
+    common_pitfalls:
+      - "Message ordering: Use timestamps + sequence numbers"
+      - "Scaling: Horizontal scaling needs Redis adapter"
+      - "Persistence: Store messages in DB, not just in-memory"
+      - "Security: Validate room access before sending messages"
+      - "Performance: Paginate message history (don't load all)"
+
+    estimated_total_complexity: 100
+    typical_timeline: "5-7 weeks"
+
+  # ========================================
+  # CMS & CONTENT
+  # ========================================
+  - template_id: "headless_cms"
+    name: "Headless CMS / Content Management"
+    category: "cms"
+    scale: "medium"
+    typical_features:
+      - id: "content_models"
+        name: "Flexible Content Models"
+        priority: "HIGH"
+        complexity: 25
+        description: "Define custom content types (articles, products, etc.)"
+
+      - id: "rich_text_editor"
+        name: "Rich Text Editor"
+        priority: "HIGH"
+        complexity: 18
+        description: "WYSIWYG editor with markdown support"
+
+      - id: "media_library"
+        name: "Media Library"
+        priority: "HIGH"
+        complexity: 20
+        description: "Upload/manage images, videos, files"
+
+      - id: "api_endpoints"
+        name: "REST/GraphQL API"
+        priority: "HIGH"
+        complexity: 15
+        description: "Expose content via API for frontend"
+
+      - id: "content_versioning"
+        name: "Draft/Publish Workflow"
+        priority: "MEDIUM"
+        complexity: 22
+        description: "Save drafts, schedule publishing"
+
+      - id: "localization"
+        name: "Multi-language Support"
+        priority: "MEDIUM"
+        complexity: 25
+        description: "Translate content for different locales"
+
+    typical_dependencies:
+      - "CMS framework (Strapi, Payload CMS, Sanity) OR custom build"
+      - "Database (PostgreSQL, MongoDB)"
+      - "S3 for media storage"
+      - "CDN (Cloudflare, CloudFront) for media delivery"
+      - "Rich text library (TipTap, Slate, ProseMirror)"
+
+    tech_stack_recommendations:
+      primary: "Payload CMS + Next.js + MongoDB + S3 + Vercel"
+      alternatives:
+        - "Strapi + React + PostgreSQL + Cloudinary"
+        - "Sanity.io + Next.js (SaaS CMS)"
+
+    common_pitfalls:
+      - "Performance: Cache API responses aggressively"
+      - "Media: Optimize images (use Next.js Image or Cloudinary)"
+      - "Search: Add full-text search (Algolia, Meilisearch)"
+      - "Permissions: Fine-grained access control per content type"
+      - "Migrations: Content schema changes are tricky"
+
+    estimated_total_complexity: 125
+    typical_timeline: "7-9 weeks"
+
+  # ========================================
+  # MARKETPLACES & PLATFORMS
+  # ========================================
+  - template_id: "marketplace_platform"
+    name: "Two-Sided Marketplace (Airbnb/Uber-style)"
+    category: "marketplace"
+    scale: "large"
+    typical_features:
+      - id: "dual_user_types"
+        name: "Buyer & Seller Accounts"
+        priority: "HIGH"
+        complexity: 25
+        description: "Separate dashboards for buyers and sellers"
+
+      - id: "listing_management"
+        name: "Listing Creation/Management"
+        priority: "HIGH"
+        complexity: 22
+        description: "Sellers create/edit listings (products/services)"
+
+      - id: "search_discovery"
+        name: "Search & Filtering"
+        priority: "HIGH"
+        complexity: 28
+        description: "Advanced search with filters, sorting, maps"
+
+      - id: "booking_transactions"
+        name: "Booking/Transaction Flow"
+        priority: "HIGH"
+        complexity: 30
+        description: "Request, accept, payment, confirmation"
+
+      - id: "ratings_reviews"
+        name: "Ratings & Reviews"
+        priority: "HIGH"
+        complexity: 18
+        description: "Two-way reviews (buyer rates seller, vice versa)"
+
+      - id: "payment_escrow"
+        name: "Escrow Payments"
+        priority: "HIGH"
+        complexity: 35
+        description: "Hold payment until service delivered (Stripe Connect)"
+
+      - id: "messaging_system"
+        name: "In-App Messaging"
+        priority: "MEDIUM"
+        complexity: 20
+        description: "Buyers and sellers communicate"
+
+    typical_dependencies:
+      - "Stripe Connect (marketplace payments, split payouts)"
+      - "Search engine (Algolia, Elasticsearch, Meilisearch)"
+      - "Maps API (Google Maps, Mapbox)"
+      - "Database (PostgreSQL with geospatial support)"
+      - "Background jobs (payment processing, notifications)"
+      - "Email/SMS service (transactional notifications)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Prisma + PostgreSQL + Stripe Connect + Algolia + Vercel"
+      alternatives:
+        - "Ruby on Rails + PostgreSQL + Stripe Connect + Elasticsearch"
+        - "Django + PostgreSQL + Stripe Connect + Meilisearch"
+
+    common_pitfalls:
+      - "Payments: Stripe Connect setup is complex (test thoroughly)"
+      - "Trust & Safety: Implement fraud detection, ID verification"
+      - "Search: Needs dedicated search service, not just SQL LIKE"
+      - "Scaling: Search and maps are expensive, cache aggressively"
+      - "Legal: Need Terms of Service, dispute resolution process"
+
+    estimated_total_complexity: 178
+    typical_timeline: "12-16 weeks"
+
+  # ========================================
+  # AI/ML INTEGRATION
+  # ========================================
+  - template_id: "ai_powered_app"
+    name: "AI-Powered Application (LLM Integration)"
+    category: "ai"
+    scale: "medium"
+    typical_features:
+      - id: "llm_integration"
+        name: "LLM API Integration"
+        priority: "HIGH"
+        complexity: 20
+        description: "OpenAI, Anthropic, or local model integration"
+
+      - id: "prompt_management"
+        name: "Prompt Engineering & Management"
+        priority: "HIGH"
+        complexity: 18
+        description: "Store, version, test prompts"
+
+      - id: "streaming_responses"
+        name: "Streaming LLM Responses"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Real-time token streaming to frontend"
+
+      - id: "context_management"
+        name: "Conversation Context/Memory"
+        priority: "HIGH"
+        complexity: 22
+        description: "Maintain conversation history, RAG"
+
+      - id: "cost_monitoring"
+        name: "Usage & Cost Tracking"
+        priority: "MEDIUM"
+        complexity: 12
+        description: "Monitor token usage, costs per user"
+
+      - id: "fallback_handling"
+        name: "Error & Fallback Handling"
+        priority: "HIGH"
+        complexity: 15
+        description: "Handle rate limits, API errors gracefully"
+
+    typical_dependencies:
+      - "OpenAI SDK, Anthropic SDK, or LangChain"
+      - "Vector database (Pinecone, Weaviate, pgvector) for RAG"
+      - "Redis (caching responses, rate limiting)"
+      - "Background job queue (long-running AI tasks)"
+      - "Monitoring (track costs, latency)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + OpenAI SDK + Pinecone + PostgreSQL + Vercel"
+      alternatives:
+        - "FastAPI + LangChain + Weaviate + PostgreSQL"
+        - "Django + Anthropic SDK + pgvector + PostgreSQL"
+
+    common_pitfalls:
+      - "Costs: LLM calls are expensive, implement caching & limits"
+      - "Latency: Streaming improves UX, but adds complexity"
+      - "Prompt injection: Validate/sanitize all user inputs"
+      - "Rate limits: Handle API rate limits gracefully"
+      - "Data privacy: Don't send sensitive data to external APIs"
+
+    estimated_total_complexity: 102
+    typical_timeline: "5-7 weeks"
+
+  # ========================================
+  # ANALYTICS & DATA
+  # ========================================
+  - template_id: "analytics_dashboard"
+    name: "Analytics & Reporting Dashboard"
+    category: "analytics"
+    scale: "medium-large"
+    typical_features:
+      - id: "data_ingestion"
+        name: "Data Collection Pipeline"
+        priority: "HIGH"
+        complexity: 30
+        description: "Collect events from multiple sources"
+
+      - id: "real_time_metrics"
+        name: "Real-Time Metrics"
+        priority: "HIGH"
+        complexity: 25
+        description: "Live counters, gauges, time-series charts"
+
+      - id: "custom_reports"
+        name: "Custom Report Builder"
+        priority: "MEDIUM"
+        complexity: 28
+        description: "Users create custom queries/visualizations"
+
+      - id: "scheduled_exports"
+        name: "Scheduled Reports/Exports"
+        priority: "MEDIUM"
+        complexity: 18
+        description: "Email reports, CSV exports on schedule"
+
+      - id: "data_visualization"
+        name: "Interactive Visualizations"
+        priority: "HIGH"
+        complexity: 22
+        description: "Charts, graphs, maps, drill-downs"
+
+      - id: "alerting"
+        name: "Threshold Alerts"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Notify when metrics exceed thresholds"
+
+    typical_dependencies:
+      - "Time-series database (TimescaleDB, InfluxDB, ClickHouse)"
+      - "Data processing (Apache Kafka, Redis Streams)"
+      - "Charting library (Recharts, D3.js, Chart.js)"
+      - "Background jobs (scheduled reports, data aggregation)"
+      - "Caching layer (Redis, Memcached)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + TimescaleDB + Kafka + Recharts + Vercel"
+      alternatives:
+        - "React + ClickHouse + Redis Streams + D3.js"
+        - "Vue.js + InfluxDB + RabbitMQ + Chart.js"
+
+    common_pitfalls:
+      - "Performance: Pre-aggregate data (don't query raw events)"
+      - "Scaling: Time-series data grows fast, plan retention"
+      - "Complexity: Don't build Tableau, start simple"
+      - "Real-time: Balance freshness vs. cost (update every 5s not 50ms)"
+      - "Accuracy: Ensure data consistency (exactly-once processing)"
+
+    estimated_total_complexity: 138
+    typical_timeline: "8-10 weeks"
+
+  # ========================================
+  # LEARNING & PRACTICE PROJECTS
+  # ========================================
+  - template_id: "simple_crud_learning"
+    name: "Simple CRUD App (Learning Project)"
+    category: "learning"
+    scale: "small"
+    typical_features:
+      - id: "basic_crud"
+        name: "Create, Read, Update, Delete"
+        priority: "HIGH"
+        complexity: 15
+        description: "Basic CRUD operations for a single entity (tasks, notes, etc.)"
+
+      - id: "simple_ui"
+        name: "Basic UI"
+        priority: "HIGH"
+        complexity: 10
+        description: "Simple, functional UI (not polished design)"
+
+      - id: "local_or_simple_db"
+        name: "Local Storage OR Simple Database"
+        priority: "HIGH"
+        complexity: 8
+        description: "Local storage (browser) OR simple cloud DB (Supabase free)"
+
+      - id: "basic_styling"
+        name: "Basic Styling"
+        priority: "MEDIUM"
+        complexity: 5
+        description: "Tailwind CSS or basic CSS for usable interface"
+
+    typical_dependencies:
+      - "Modern framework (Next.js, React, Vue) for learning"
+      - "Optional: Free database (Supabase, Firebase) OR local storage"
+      - "Hosting: Free tier (Vercel, Netlify)"
+      - "NO authentication required (v1 learning version)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Local Storage OR Supabase Free + Vercel"
+      alternatives:
+        - "React + Vite + Local Storage + Netlify"
+        - "Vue + Vite + Firebase + Netlify"
+
+    common_pitfalls:
+      - "Don't over-engineer: Skip auth, skip fancy features for v1"
+      - "Focus on learning core concepts first"
+      - "App Router vs Pages Router confusion (Next.js)"
+      - "Trying to learn too many things at once"
+      - "Not following official tutorials first"
+
+    learning_path:
+      week_1: "Tutorial + Framework setup + Hello World"
+      week_2: "Build basic CRUD (create/read)"
+      week_3: "Add update/delete + styling"
+      week_4: "Deploy + optional enhancements"
+
+    estimated_total_complexity: 38
+    typical_timeline: "2-4 weeks (as learning project, not production)"
+
+    project_examples:
+      - "To-Do List App"
+      - "Note-Taking App"
+      - "Simple Blog (read/write posts)"
+      - "Bookmark Manager"
+      - "Recipe Collection"
+
+    learning_resources:
+      - "Official Next.js tutorial: https://nextjs.org/learn"
+      - "React docs: https://react.dev/learn"
+      - "Tailwind CSS: https://tailwindcss.com/docs"
+
+    free_tier_options:
+      hosting: "Vercel Hobby (free) OR Netlify Free"
+      database: "Supabase Free (500MB) OR Firebase Free OR Local Storage"
+      styling: "Tailwind CSS (free)"
+      total_cost: "$0 (100% free for learning)"
+
+  # ========================================
+  # EDUCATION & LEARNING
+  # ========================================
+  - template_id: "lms_elearning"
+    name: "Learning Management System (LMS)"
+    category: "education"
+    scale: "medium-large"
+    typical_features:
+      - id: "course_management"
+        name: "Course Creation & Management"
+        priority: "HIGH"
+        complexity: 25
+        description: "Create courses with modules, lessons, quizzes"
+
+      - id: "video_streaming"
+        name: "Video Hosting & Streaming"
+        priority: "HIGH"
+        complexity: 22
+        description: "Upload, transcode, stream course videos"
+
+      - id: "progress_tracking"
+        name: "Student Progress Tracking"
+        priority: "HIGH"
+        complexity: 20
+        description: "Track completion, time spent, scores"
+
+      - id: "assessments"
+        name: "Quizzes & Assessments"
+        priority: "HIGH"
+        complexity: 18
+        description: "Multiple choice, essays, auto-grading"
+
+      - id: "certificates"
+        name: "Completion Certificates"
+        priority: "MEDIUM"
+        complexity: 15
+        description: "Generate PDF certificates upon completion"
+
+      - id: "discussion_forums"
+        name: "Discussion Forums"
+        priority: "MEDIUM"
+        complexity: 20
+        description: "Students discuss lessons, ask questions"
+
+    typical_dependencies:
+      - "Video platform (Mux, Cloudflare Stream, Vimeo API)"
+      - "Database (PostgreSQL for courses/progress)"
+      - "PDF generation (Puppeteer, PDFKit)"
+      - "Email service (course updates, certificates)"
+      - "Payment (if paid courses: Stripe)"
+
+    tech_stack_recommendations:
+      primary: "Next.js + Prisma + PostgreSQL + Mux + Stripe + Vercel"
+      alternatives:
+        - "Django + PostgreSQL + Cloudflare Stream + Stripe"
+        - "Rails + PostgreSQL + Vimeo API + Stripe"
+
+    common_pitfalls:
+      - "Video costs: Streaming is expensive, budget carefully"
+      - "DRM: Prevent video downloads if selling content"
+      - "Mobile: Ensure video player works on all devices"
+      - "Progress: Handle resume from last position"
+      - "Certificates: Secure against forgery (unique IDs, verification)"
+
+    estimated_total_complexity: 120
+    typical_timeline: "7-9 weeks"
+
+# ========================================
+# EXTENDED MATCHING RULES
+# ========================================
+matching_rules_extended:
+  saas_with_stripe:
+    keywords: ["saas", "subscription", "recurring billing", "stripe", "pricing tiers"]
+    indicators:
+      - "mentions monthly/annual billing"
+      - "different pricing plans"
+      - "payment processing"
+
+  multi_tenant_saas:
+    keywords: ["multi-tenant", "b2b", "organizations", "teams", "enterprise", "sso"]
+    indicators:
+      - "separate data per company"
+      - "team collaboration"
+      - "enterprise features"
+
+  rest_api_backend:
+    keywords: ["api", "rest", "backend", "microservice", "endpoints"]
+    indicators:
+      - "no frontend"
+      - "api documentation"
+      - "authentication with tokens"
+
+  graphql_api:
+    keywords: ["graphql", "apollo", "queries", "mutations"]
+    indicators:
+      - "flexible data fetching"
+      - "real-time subscriptions"
+      - "single endpoint"
+
+  real_time_collaboration:
+    keywords: ["collaborative", "real-time editing", "notion-like", "figma-like", "concurrent"]
+    indicators:
+      - "multiple users editing simultaneously"
+      - "see others' cursors"
+      - "conflict resolution"
+
+  live_chat_messaging:
+    keywords: ["chat", "messaging", "slack-like", "discord-like", "real-time messages"]
+    indicators:
+      - "instant messaging"
+      - "typing indicators"
+      - "read receipts"
+
+  headless_cms:
+    keywords: ["cms", "content management", "headless", "blog", "articles"]
+    indicators:
+      - "manage content via admin panel"
+      - "expose content via API"
+      - "rich text editor"
+
+  marketplace_platform:
+    keywords: ["marketplace", "two-sided", "airbnb-like", "uber-like", "platform"]
+    indicators:
+      - "buyers and sellers"
+      - "listings/inventory"
+      - "escrow or split payments"
+
+  ai_powered_app:
+    keywords: ["ai", "chatbot", "llm", "gpt", "claude", "machine learning"]
+    indicators:
+      - "uses OpenAI or similar"
+      - "conversational interface"
+      - "ai-generated content"
+
+  analytics_dashboard:
+    keywords: ["analytics", "reporting", "metrics", "data visualization", "bi"]
+    indicators:
+      - "time-series data"
+      - "charts and graphs"
+      - "custom reports"
+
+  lms_elearning:
+    keywords: ["learning", "courses", "e-learning", "lms", "training", "education"]
+    indicators:
+      - "video lessons"
+      - "quizzes/assessments"
+      - "student progress tracking"
+
+  simple_crud_learning:
+    keywords: ["learning project", "practice", "tutorial", "beginner", "simple", "basic", "crud", "to-do", "notes"]
+    indicators:
+      - "want to learn"
+      - "practice project"
+      - "hobby project"
+      - "beginner"
+      - "simple CRUD"
+      - "no authentication mentioned"
+      - "free or low budget"

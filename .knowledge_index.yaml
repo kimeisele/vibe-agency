@@ -11,8 +11,8 @@ version: "1.0.0"
 kind: "KnowledgeIndex"
 metadata:
   description: "Central index for Agency OS knowledge base navigation"
-  lastUpdated: "2025-11-12"
-  totalKnowledgeFiles: 26
+  lastUpdated: "2025-11-13"
+  totalKnowledgeFiles: 28
   totalPromptFiles: 8
 
 # =================================================================
@@ -120,6 +120,31 @@ categories:
           - "Parallel vs sequential features"
           - "Blocking relationships"
         lineCount: 2546
+
+  - id: "planning_tech_stacks"
+    intent:
+      - "technology stack recommendations"
+      - "concrete framework combinations"
+      - "tech stack patterns"
+      - "hosting and infrastructure choices"
+    description: "Battle-tested tech stack patterns for common project types"
+    files:
+      - path: "agency_os/01_planning_framework/knowledge/TECH_STACK_PATTERNS.yaml"
+        contains: ["web_stacks", "mobile_stacks", "api_stacks", "realtime_stacks", "decision_tree"]
+        keyTopics:
+          - "Next.js + Prisma + PostgreSQL + Vercel"
+          - "Django + PostgreSQL + Railway"
+          - "FastAPI + PostgreSQL + Redis"
+          - "React Native + Expo + Firebase"
+          - "Flutter + Firebase"
+          - "Socket.io + Redis real-time stack"
+          - "Yjs CRDT collaboration stack"
+          - "Express.js REST API"
+          - "NestJS Enterprise API"
+          - "Tech stack decision tree"
+          - "Common pitfalls per stack"
+          - "When to avoid each stack"
+        lineCount: 700
 
   - id: "planning_architecture"
     intent:
@@ -452,6 +477,21 @@ queryExamples:
     matchesCategory: "maintenance_triage"
     expectedFile: "agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml"
     answer: "P1_Critical severity with production impact"
+
+  - query: "What tech stack should I use for a SaaS application?"
+    matchesCategory: "planning_tech_stacks"
+    expectedFile: "agency_os/01_planning_framework/knowledge/TECH_STACK_PATTERNS.yaml"
+    answer: "Next.js + Prisma + PostgreSQL + Stripe + Vercel OR Django + PostgreSQL + Stripe + Railway"
+
+  - query: "What is the best stack for a mobile app?"
+    matchesCategory: "planning_tech_stacks"
+    expectedFile: "agency_os/01_planning_framework/knowledge/TECH_STACK_PATTERNS.yaml"
+    answer: "React Native + Expo (for JS teams) OR Flutter + Firebase (for high performance)"
+
+  - query: "How do I choose between Next.js and Django?"
+    matchesCategory: "planning_tech_stacks"
+    expectedFile: "agency_os/01_planning_framework/knowledge/TECH_STACK_PATTERNS.yaml"
+    answer: "Use decision tree based on team expertise, timeline, and project requirements"
 
 # =================================================================
 # VALIDATION METADATA
