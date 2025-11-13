@@ -8,7 +8,7 @@ Project plan must include basic security measures - no obvious security gaps tha
 ## Minimum Security Requirements
 
 ### 1. Authentication & Authorization
-- ✅ Passwords hashed (bcrypt, argon2, scrypt) - NEVER plaintext
+- ✅ Passwords hashed (bcrypt 12+ rounds, argon2, or scrypt) - NEVER plaintext
 - ✅ HTTPS enforced (no HTTP in production)
 - ✅ Session management secure (HttpOnly cookies, JWT with expiry)
 - ✅ Password reset flow secure (token-based, time-limited)
@@ -63,7 +63,7 @@ Project plan must include basic security measures - no obvious security gaps tha
 
 1. **Plaintext Passwords**
    - Never store passwords in plaintext
-   - Use bcrypt (>10 rounds), argon2, or scrypt
+   - Use bcrypt (12+ rounds recommended, minimum 10), argon2, or scrypt
    - Action: Add password hashing
 
 2. **Public Database Access**
@@ -252,7 +252,7 @@ or DDoS your service with unlimited requests.
 Required fixes:
 1. Add password hashing:
    - Install: bcrypt (npm install bcrypt)
-   - Hash on registration: bcrypt.hash(password, 10)
+   - Hash on registration: bcrypt.hash(password, 12)
    - Verify on login: bcrypt.compare(password, hash)
 
 2. Enable HTTPS:

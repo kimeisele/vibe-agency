@@ -11,9 +11,9 @@ Estimated project costs must not exceed available budget (or user must acknowled
 ```
 dev_cost = (estimated_weeks * team_size * hourly_rate * hours_per_week)
 ```
-- Junior dev: $50-80/hr
-- Mid-level dev: $80-120/hr
-- Senior dev: $120-200/hr
+- Junior dev: $25-45/hr
+- Mid-level dev: $50-85/hr
+- Senior dev: $80-180/hr
 - Agency rate: $100-250/hr (blended)
 
 ### 2. Infrastructure (Monthly)
@@ -90,10 +90,10 @@ buffer = (dev_cost + infrastructure_cost + services_cost) * 0.15-0.25
 ```
 Project: Simple booking system
 Timeline: 6 weeks
-Team: 1 mid-level dev @ $100/hr, 40hr/week
+Team: 1 mid-level dev @ $70/hr, 40hr/week
 
 Development:
-  6 weeks * 40 hrs * $100/hr = $24,000
+  6 weeks * 40 hrs * $70/hr = $16,800
 
 Infrastructure (first 6 months):
   Vercel Pro: $20/mo * 6 = $120
@@ -107,41 +107,41 @@ Services:
   Total: $15
 
 Buffer (20%):
-  ($24,000 + $360 + $15) * 0.20 = $4,875
+  ($16,800 + $360 + $15) * 0.20 = $3,435
 
-TOTAL ESTIMATE: $29,250
+TOTAL ESTIMATE: $20,610
 
-Recommended budget: $30,000-35,000
+Recommended budget: $22,000-25,000
 ```
 
 **Example 2: Mobile App with Backend**
 ```
 Project: React Native + API backend
 Timeline: 10 weeks
-Team: 1 senior dev @ $150/hr, 40hr/week
+Team: 1 senior dev @ $120/hr, 40hr/week
 
 Development:
-  10 weeks * 40 hrs * $150/hr = $60,000
+  10 weeks * 40 hrs * $120/hr = $48,000
 
 Infrastructure (first 6 months):
-  Railway: $50/mo * 6 = $300
+  Railway (backend): $30/mo * 6 = $180 (small app; can range $20-50/mo)
   PostgreSQL: $30/mo * 6 = $180
   Firebase (push): $20/mo * 6 = $120
   S3 storage: $10/mo * 6 = $60
-  Total: $660
+  Total: $540
 
 Services:
   Apple Developer: $99/year
   Google Play: $25 one-time
-  Expo EAS: $99/mo * 3 months (builds) = $297
-  Total: $421
+  Expo EAS: $19/mo * 3 months (builds) = $57
+  Total: $181
 
 Buffer (20%):
-  ($60,000 + $660 + $421) * 0.20 = $12,216
+  ($48,000 + $540 + $181) * 0.20 = $9,744
 
-TOTAL ESTIMATE: $73,297
+TOTAL ESTIMATE: $58,465
 
-Recommended budget: $75,000-85,000
+Recommended budget: $60,000-65,000
 ```
 
 ---

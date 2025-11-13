@@ -261,7 +261,7 @@ mobile_app_stacks:
 
     estimated_setup_time: "1 day"
     learning_curve: "Low-Medium (if you know React)"
-    cost_baseline: "$29-99/month (Expo EAS Build)"
+    cost_baseline: "$19-50/month (Expo EAS Build - Starter plan $19/mo)"
 
     common_pitfalls:
       - "Expo Go has limitations - may need bare workflow for native modules"
