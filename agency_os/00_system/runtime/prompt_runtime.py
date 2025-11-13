@@ -513,7 +513,7 @@ if __name__ == "__main__":
     )
 
     # Output to file for inspection
-    output_file = Path("/home/user/vibe-agency/COMPOSED_PROMPT_EXAMPLE.md")
+    output_file = runtime.base_path / "COMPOSED_PROMPT_EXAMPLE.md"
     with open(output_file, "w") as f:
         f.write(composed_prompt)
 
