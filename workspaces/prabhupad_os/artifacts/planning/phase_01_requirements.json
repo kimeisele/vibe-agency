@@ -1,0 +1,128 @@
+{
+  "phase": "01_requirements_gathering",
+  "framework_version": "1.1.0",
+  "project_type": "nonprofit",
+  "timestamp": "2025-11-13T00:00:00Z",
+
+  "project_context": {
+    "project_name": "PrabhupadaOS",
+    "project_vision": "Modular CLI platform for authentic Srila Prabhupada texts with extensible devotional tools",
+    "target_audience": "Hare Krishna devotees, ISKCON communities, spiritual seekers, scholars",
+    "core_values": [
+      "Authenticity (100% original, unmodified texts)",
+      "Modularity (plugin architecture for devotional apps)",
+      "Accessibility (CLI-first, lightweight)",
+      "Preservation (long-term digital text integrity)"
+    ]
+  },
+
+  "problem_statement": {
+    "primary_problems": [
+      {
+        "id": "P001",
+        "description": "Fragmented devotional app ecosystem lacks cohesive modular platform",
+        "evidence": "150+ standalone Hare Krishna apps without interoperability",
+        "impact": "Developers duplicate effort, users manage multiple apps"
+      },
+      {
+        "id": "P002",
+        "description": "Sanskrit diacritical marks display incorrectly across EPUB readers",
+        "evidence": "Font embedding required, some Android readers use wrong fonts",
+        "impact": "Text authenticity compromised, readability issues"
+      },
+      {
+        "id": "P003",
+        "description": "No verification system for unmodified original texts",
+        "evidence": "Digital preservation authenticity concerns for sacred texts",
+        "impact": "Trust issues, potential unauthorized edits go undetected"
+      }
+    ]
+  },
+
+  "user_stories": [
+    {
+      "id": "US001",
+      "as_a": "ISKCON devotee",
+      "i_want": "Read original Prabhupada books in CLI with correct Sanskrit characters",
+      "so_that": "I can study authentic texts on any device without GUI overhead",
+      "acceptance_criteria": [
+        "All Sanskrit diacritical marks display correctly",
+        "CLI runs on Linux/macOS/Windows",
+        "Books load in <2 seconds"
+      ]
+    },
+    {
+      "id": "US002",
+      "as_a": "Scholar/translator",
+      "i_want": "Verify text authenticity via checksums or digital signatures",
+      "so_that": "I can trust the texts are unmodified originals",
+      "acceptance_criteria": [
+        "Each book has SHA-256 checksum",
+        "Verification command shows modification status",
+        "Original BBT (Bhaktivedanta Book Trust) sources cited"
+      ]
+    },
+    {
+      "id": "US003",
+      "as_a": "Devotional app developer",
+      "i_want": "Extend PrabhupadaOS with custom plugins (calendar, tracker, etc.)",
+      "so_that": "I can build on shared infrastructure without reinventing text parsing",
+      "acceptance_criteria": [
+        "Plugin API documented",
+        "Sample plugin provided",
+        "Plugins can access parsed book data"
+      ]
+    },
+    {
+      "id": "US004",
+      "as_a": "Translation volunteer",
+      "i_want": "Access structured book data for translation pipeline",
+      "so_that": "I can translate books to all world languages systematically",
+      "acceptance_criteria": [
+        "EPUB parsed to verse-level granularity",
+        "Export to translation-ready format (JSON/XLIFF)",
+        "Preserve verse IDs for cross-reference"
+      ]
+    }
+  ],
+
+  "scope_boundaries": {
+    "in_scope_mvp": [
+      "CLI E-book Reader for Prabhupada texts",
+      "EPUB Parser with Sanskrit font support",
+      "Text authenticity verification (checksums)",
+      "Basic plugin architecture foundation",
+      "Git-based distribution"
+    ],
+    "out_of_scope_mvp": [
+      "GUI application (CLI-first approach)",
+      "Translation pipeline (future phase)",
+      "Devotional apps (calendar, tracker) - plugins only",
+      "Mobile apps (CLI targets desktop/servers)",
+      "Cloud sync (local-first design)"
+    ],
+    "future_phases": [
+      "Phase 2: Translation Framework",
+      "Phase 3: Plugin Marketplace",
+      "Phase 4: Multi-language UI support"
+    ]
+  },
+
+  "constraints": {
+    "technical": [
+      "Must preserve original text integrity (no modifications)",
+      "Must support Sanskrit Unicode (IAST/Devanagari)",
+      "Must work offline (no mandatory internet dependency)",
+      "Monorepo architecture for component reusability"
+    ],
+    "organizational": [
+      "Open-source (respects BBT copyright for distribution)",
+      "Community-driven development",
+      "Non-commercial (nonprofit mission)"
+    ],
+    "timeline": [
+      "MVP Reader + Parser in scope",
+      "Translation framework explicitly future phase"
+    ]
+  }
+}

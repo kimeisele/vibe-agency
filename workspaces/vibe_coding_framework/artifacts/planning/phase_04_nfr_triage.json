@@ -1,0 +1,379 @@
+{
+  "phase": "04_nfr_triage",
+  "framework_version": "1.1.0",
+  "project_type": "commercial",
+  "abstraction_level": "META",
+  "nfr_catalog_version": "1.0",
+  "timestamp": "2025-11-13T00:00:00Z",
+  "meta_note": "Using NFR_CATALOG.yaml to define NFRs for a framework that will reuse NFR_CATALOG.yaml - recursive dogfooding",
+
+  "nfr_requirements": [
+    {
+      "category_id": "NFR-PERF",
+      "category_name": "Performance Efficiency",
+      "requirements": [
+        {
+          "id": "PERF-LATENCY",
+          "name": "Interview Response Time",
+          "response": "LLM question generation < 3 seconds, template loading < 1 second, spec export < 2 seconds",
+          "priority": "HIGH",
+          "rationale": "Conversational flow breaks if latency is too high - users lose context",
+          "acceptance_criteria": [
+            "Question generation (F005) completes in < 3s (LLM API call)",
+            "Template selection (F002) loads in < 1s",
+            "Specification export (F003) completes in < 2s for typical project",
+            "No blocking operations during conversation"
+          ],
+          "impact_on_architecture": "Async LLM calls, caching of templates, background spec generation"
+        },
+        {
+          "id": "PERF-CAPACITY",
+          "name": "Concurrent Users (if SaaS)",
+          "response": "CLI: Single-user (no concurrency). SaaS (future): 100-500 concurrent users",
+          "priority": "LOW",
+          "rationale": "MVP is CLI (single-user). SaaS is Phase 3, then concurrency matters.",
+          "acceptance_criteria": [
+            "CLI: No concurrency requirements",
+            "Future SaaS: Handle 100-500 concurrent interviews",
+            "LLM API rate limits respected"
+          ],
+          "impact_on_architecture": "MVP: Simple sequential processing. Future: Queue system for LLM calls"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-SEC",
+      "category_name": "Security",
+      "requirements": [
+        {
+          "id": "SEC-CONFIDENTIALITY",
+          "name": "User Input Privacy",
+          "response": "User project ideas are confidential - no logging to external services without consent",
+          "priority": "CRITICAL",
+          "rationale": "Users may describe stealth startups, internal projects - privacy is essential",
+          "acceptance_criteria": [
+            "LLM API calls: User consents to Anthropic data policy",
+            "No logging of user inputs to analytics (unless explicitly opted in)",
+            "Local-first option: Run without LLM (template-only mode)",
+            "Clear privacy policy shown before first use"
+          ],
+          "impact_on_architecture": "Consent flow, optional offline mode, minimal logging"
+        },
+        {
+          "id": "SEC-AUTHENTICITY",
+          "name": "Template & Output Integrity",
+          "response": "Templates and generated specs must not be tampered with",
+          "priority": "MEDIUM",
+          "rationale": "Users trust framework to generate accurate specs - no malicious template injection",
+          "acceptance_criteria": [
+            "Template validation (schema check before loading)",
+            "Checksums for shipped templates",
+            "User-generated templates flagged as 'community' (not official)",
+            "Output validation (ensure spec is well-formed)"
+          ],
+          "impact_on_architecture": "Template validation layer, checksum verification"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-REL",
+      "category_name": "Reliability",
+      "requirements": [
+        {
+          "id": "REL-AVAILABILITY",
+          "name": "Offline Capability",
+          "response": "CLI must work offline (template mode), LLM features require internet",
+          "priority": "HIGH",
+          "rationale": "Users may work in low-connectivity environments - don't depend on 100% uptime of LLM API",
+          "acceptance_criteria": [
+            "Template-based interviews work offline (F001 + F002)",
+            "Graceful degradation if LLM API unavailable (F005 falls back to templates)",
+            "Cached LLM responses reused where possible",
+            "Clear error messages when API fails"
+          ],
+          "impact_on_architecture": "Offline mode, LLM response caching, graceful degradation"
+        },
+        {
+          "id": "REL-FAULT-TOLERANCE",
+          "name": "LLM API Failure Handling",
+          "response": "If LLM fails, fall back to template-based questions",
+          "priority": "HIGH",
+          "rationale": "LLM API may have outages, rate limits, or errors - can't block user completely",
+          "acceptance_criteria": [
+            "LLM timeout → fallback to pre-defined questions",
+            "LLM error → log error, continue with templates",
+            "Partial completion: Save progress if interrupted",
+            "Retry logic for transient failures"
+          ],
+          "impact_on_architecture": "Fallback system, progress autosave, retry mechanism"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-MAIN",
+      "category_name": "Maintainability",
+      "requirements": [
+        {
+          "id": "MAIN-MODULARITY",
+          "name": "Pluggable Components",
+          "response": "Interview engine, templates, LLM provider, output formats all swappable",
+          "priority": "CRITICAL",
+          "rationale": "User requirement: 'robust and dynamic' - architecture must support evolution",
+          "acceptance_criteria": [
+            "Interview engine abstraction (can swap tree-based with graph-based)",
+            "Template format versioned (v1, v2, etc.)",
+            "LLM provider interface (swap Claude for GPT-4, open-source LLMs)",
+            "Output format plugins (Markdown, JSON, custom)",
+            "Clear separation: Core, Templates, LLM, Outputs"
+          ],
+          "impact_on_architecture": "Plugin architecture, dependency injection, interface-driven design"
+        },
+        {
+          "id": "MAIN-TESTABILITY",
+          "name": "Test Coverage",
+          "response": "70%+ unit test coverage, integration tests for full workflows",
+          "priority": "HIGH",
+          "rationale": "Framework complexity (149 points) requires high test coverage to prevent regressions",
+          "acceptance_criteria": [
+            "Unit tests for question flow logic",
+            "Integration tests for end-to-end interview",
+            "Mock LLM for deterministic testing",
+            "Test fixtures for templates",
+            "CI/CD pipeline runs tests on every commit"
+          ],
+          "impact_on_architecture": "Testable design, mocked dependencies, CI/CD setup"
+        },
+        {
+          "id": "MAIN-REUSABILITY",
+          "name": "Dogfooding & Ecosystem Integration",
+          "response": "CRITICAL - Reuse NFR_CATALOG.yaml, FAE_constraints.yaml from Planning Framework",
+          "priority": "CRITICAL",
+          "rationale": "Proves value of VIBE ecosystem - components are reusable across frameworks",
+          "acceptance_criteria": [
+            "NFR_CATALOG.yaml imported without modification (F007)",
+            "FAE_constraints.yaml imported without modification (F008)",
+            "LEAN_CANVAS structure reused as template",
+            "VIBE_ALIGNER flow reused as 'Software Project' template",
+            "Framework can generate specs for itself (meta-test)"
+          ],
+          "impact_on_architecture": "Shared knowledge base, template inheritance, monorepo structure"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-USAB",
+      "category_name": "Usability",
+      "requirements": [
+        {
+          "id": "USAB-LEARNABILITY",
+          "name": "Non-Technical User Onboarding",
+          "response": "Non-coder should complete first spec in < 30 minutes with zero prior training",
+          "priority": "CRITICAL",
+          "rationale": "Core value proposition: Empower non-technical users - if onboarding fails, product fails",
+          "acceptance_criteria": [
+            "Interactive tutorial on first run",
+            "Clear help text for every question",
+            "Examples provided for ambiguous questions",
+            "Plain language throughout (no technical jargon)",
+            "Visual progress indicator (e.g., '3/10 questions answered')",
+            "Success metric: 80% of non-technical users complete first spec"
+          ],
+          "impact_on_architecture": "Tutorial system, help text database, progress tracking, UX polish"
+        },
+        {
+          "id": "USAB-ERROR-PREVENTION",
+          "name": "Guided Constraints",
+          "response": "Prevent impossible requirements through proactive guidance (FAE integration)",
+          "priority": "HIGH",
+          "rationale": "Users don't know what's feasible - framework must guide them away from anti-patterns",
+          "acceptance_criteria": [
+            "F008 (Constraint Checker) warns about scope creep",
+            "FAE rules trigger helpful warnings (e.g., 'Real-time video is complex for MVP')",
+            "Suggest alternatives when user wants impossible feature",
+            "Optional enforcement (warn vs. block)"
+          ],
+          "impact_on_architecture": "Constraint validation layer, warning system, alternative suggestions"
+        },
+        {
+          "id": "USAB-FLEXIBILITY",
+          "name": "Non-Linear Flow & Refinement",
+          "response": "User can backtrack, skip questions, refine answers (dynamic requirement)",
+          "priority": "HIGH",
+          "rationale": "User requirement: 'dynamic and refactorable' - rigid wizards don't work for this use case",
+          "acceptance_criteria": [
+            "Backtrack to previous questions",
+            "Skip optional questions",
+            "Change answers and see downstream effects",
+            "F004 (Refinement): Edit existing specs section-by-section",
+            "Non-linear navigation (jump to specific section)"
+          ],
+          "impact_on_architecture": "State machine with backtracking, dependency tracking, partial updates"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-PORT",
+      "category_name": "Portability",
+      "requirements": [
+        {
+          "id": "PORT-PLATFORM",
+          "name": "Cross-Platform CLI",
+          "response": "Must run on Linux, macOS, Windows",
+          "priority": "HIGH",
+          "rationale": "Target audience (PMs, entrepreneurs) use diverse platforms",
+          "acceptance_criteria": [
+            "Python 3.10+ (cross-platform by default)",
+            "CLI tested on Ubuntu, macOS, Windows 10+",
+            "Path handling (platform-independent)",
+            "Terminal rendering (Windows Terminal, iTerm2, gnome-terminal)"
+          ],
+          "impact_on_architecture": "Python for portability, pathlib for paths, Rich for terminal rendering"
+        },
+        {
+          "id": "PORT-LLM-PROVIDER",
+          "name": "LLM Provider Agnostic",
+          "response": "Should support multiple LLM providers (Claude, GPT-4, open-source)",
+          "priority": "MEDIUM",
+          "rationale": "Vendor lock-in risk - users may want different LLMs for cost/privacy",
+          "acceptance_criteria": [
+            "LLM provider abstraction interface",
+            "Default: Claude (Anthropic)",
+            "Alternative: OpenAI GPT-4",
+            "Future: Local LLMs (Llama, Mistral) for privacy",
+            "Configuration file to select provider"
+          ],
+          "impact_on_architecture": "LLM provider adapter pattern, configuration system"
+        }
+      ]
+    },
+    {
+      "category_id": "NFR-COST",
+      "category_name": "Cost Efficiency",
+      "requirements": [
+        {
+          "id": "COST-LLM-API",
+          "name": "LLM API Cost Management",
+          "response": "Minimize LLM API costs through caching and smart prompting",
+          "priority": "HIGH",
+          "rationale": "F005 (Question Gen) and F006 (Parser) use LLM extensively - costs could be prohibitive",
+          "acceptance_criteria": [
+            "Cache LLM responses (same question → same answer)",
+            "Batching where possible (multiple questions in one API call)",
+            "User budget limits (e.g., max $5/project)",
+            "Fallback to templates when budget exceeded",
+            "Cost estimation shown upfront"
+          ],
+          "impact_on_architecture": "LLM response cache, batching logic, budget tracking"
+        }
+      ]
+    }
+  ],
+
+  "nfr_conflicts_identified": [
+    {
+      "conflict_id": "NFR-CONFLICT-001",
+      "nfr_a": "SEC-CONFIDENTIALITY (no logging)",
+      "nfr_b": "USAB (helpful error messages require logs)",
+      "description": "Privacy conflicts with diagnostics",
+      "resolution": "Opt-in error reporting: Users can choose to send anonymized logs for support",
+      "status": "RESOLVED"
+    },
+    {
+      "conflict_id": "NFR-CONFLICT-002",
+      "nfr_a": "PERF-LATENCY (fast LLM responses)",
+      "nfr_b": "COST-LLM-API (minimize API calls)",
+      "description": "Speed conflicts with cost optimization",
+      "resolution": "Aggressive caching (speed + cost savings), user can choose speed vs. cost mode",
+      "status": "RESOLVED"
+    },
+    {
+      "conflict_id": "NFR-CONFLICT-003",
+      "nfr_a": "USAB-FLEXIBILITY (non-linear flow)",
+      "nfr_b": "MAIN-TESTABILITY (complex state machines harder to test)",
+      "description": "Flexibility adds testing complexity",
+      "resolution": "State machine with comprehensive test coverage, property-based testing for state transitions",
+      "status": "MITIGATED"
+    }
+  ],
+
+  "architecture_implications": {
+    "required_patterns": [
+      "Plugin architecture (MAIN-MODULARITY)",
+      "LLM provider adapter pattern (PORT-LLM-PROVIDER)",
+      "State machine with backtracking (USAB-FLEXIBILITY)",
+      "Caching layer (PERF-LATENCY, COST-LLM-API)",
+      "Graceful degradation (REL-AVAILABILITY, REL-FAULT-TOLERANCE)",
+      "Template validation (SEC-AUTHENTICITY)"
+    ],
+    "technology_recommendations": [
+      {
+        "component": "Language",
+        "recommendation": "Python 3.10+",
+        "rationale": "Cross-platform (PORT-PLATFORM), excellent LLM libraries, rapid development"
+      },
+      {
+        "component": "CLI Framework",
+        "recommendation": "Click + Rich",
+        "rationale": "Proven in our Planning Framework, beautiful terminal output, cross-platform"
+      },
+      {
+        "component": "LLM Integration",
+        "recommendation": "LangChain with provider abstraction",
+        "rationale": "Supports multiple LLM providers (PORT-LLM-PROVIDER), built-in caching"
+      },
+      {
+        "component": "State Management",
+        "recommendation": "Python-statemachine library",
+        "rationale": "Supports non-linear flows with backtracking (USAB-FLEXIBILITY)"
+      },
+      {
+        "component": "Template Engine",
+        "recommendation": "Jinja2",
+        "rationale": "Powerful templating, supports includes/inheritance, well-tested"
+      },
+      {
+        "component": "Caching",
+        "recommendation": "diskcache or Redis (if SaaS)",
+        "rationale": "Persistent cache for LLM responses (COST-LLM-API, PERF-LATENCY)"
+      }
+    ]
+  },
+
+  "critical_nfrs_summary": {
+    "mission_critical": [
+      "SEC-CONFIDENTIALITY (user privacy)",
+      "USAB-LEARNABILITY (non-technical onboarding)",
+      "MAIN-MODULARITY (robust and dynamic architecture)",
+      "MAIN-REUSABILITY (dogfooding our own components)"
+    ],
+    "high_priority": [
+      "PERF-LATENCY (conversational flow)",
+      "REL-AVAILABILITY (offline capability)",
+      "REL-FAULT-TOLERANCE (LLM fallback)",
+      "USAB-FLEXIBILITY (dynamic and refactorable)",
+      "USAB-ERROR-PREVENTION (FAE integration)",
+      "COST-LLM-API (budget management)",
+      "PORT-PLATFORM (cross-platform CLI)"
+    ],
+    "medium_priority": [
+      "SEC-AUTHENTICITY (template integrity)",
+      "PORT-LLM-PROVIDER (multi-provider support)"
+    ],
+    "low_priority": [
+      "PERF-CAPACITY (CLI is single-user)"
+    ]
+  },
+
+  "meta_observations": {
+    "dogfooding_validation": {
+      "nfr_catalog_reuse": "Successfully applied NFR_CATALOG.yaml to define NFRs for framework that will reuse it - proves modularity",
+      "circular_dependency": "Using NFR Triage to define NFRs for a framework with NFR Triage - this is meta but VALID",
+      "value_demonstrated": "MAIN-REUSABILITY NFR proves our components are truly reusable across different frameworks"
+    },
+    "framework_test_insights": {
+      "abstraction_impact": "NFR questions for frameworks are different than apps - e.g., 'Template Integrity' vs. 'Data Security'",
+      "nfr_applicability": "Most ISO 25010 categories apply, but priorities are different (MAIN-MODULARITY is CRITICAL for frameworks)",
+      "meta_nfr_discovered": "MAIN-REUSABILITY is a new NFR specific to framework/ecosystem building - not in original catalog"
+    }
+  }
+}

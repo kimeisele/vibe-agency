@@ -1,0 +1,24 @@
+task_id: "03_handoff"
+task_name: "Generate Handoff Artifact"
+phase: 3
+description: "Create lean_canvas_summary.json for VIBE_ALIGNER"
+
+inputs:
+  - canvas_responses: "All 9 fields"
+  - riskiest_assumptions: "Identified risks from task_02"
+
+outputs:
+  - lean_canvas_summary.json: "Structured artifact for downstream agents"
+
+validation_gates:
+  - gate_lean_canvas_complete.md
+
+estimated_time: "1 minute"
+conversation_turns: "1 turn (confirmation)"
+
+notes: |
+  This task generates the machine-readable artifact that
+  VIBE_ALIGNER will consume as input.
+
+  Schema is defined in:
+  agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml

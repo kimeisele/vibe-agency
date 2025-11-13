@@ -1,0 +1,311 @@
+{
+  "phase": "03_feasibility_analysis",
+  "framework_version": "1.1.0",
+  "project_type": "commercial",
+  "abstraction_level": "META",
+  "fae_version": "1.0",
+  "meta_note": "Using our own FAE system to validate feasibility of framework that will reuse FAE - recursive dogfooding",
+
+  "feature_feasibility_checks": [
+    {
+      "feature_id": "F001",
+      "feature_name": "Conversational Interview Engine",
+      "fae_rules_checked": ["FAE-013"],
+      "status": "FEASIBLE",
+      "complexity_score": 21,
+      "estimated_time": "4-5 weeks",
+      "risks": [],
+      "notes": "Tree-based question flow is proven pattern (chatbots, assistants). No FAE violations."
+    },
+    {
+      "feature_id": "F002",
+      "feature_name": "Template Library System",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE",
+      "complexity_score": 13,
+      "estimated_time": "2-3 weeks",
+      "risks": [],
+      "notes": "YAML/JSON templates are simple data structures. Low complexity."
+    },
+    {
+      "feature_id": "F003",
+      "feature_name": "Specification Output Generator",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE",
+      "complexity_score": 13,
+      "estimated_time": "2-3 weeks",
+      "risks": [],
+      "notes": "Template rendering (Markdown, JSON) is straightforward. No violations."
+    },
+    {
+      "feature_id": "F004",
+      "feature_name": "Iterative Refinement System",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE_WITH_SCOPE_REDUCTION",
+      "complexity_score": 13,
+      "estimated_time": "2-3 weeks",
+      "risks": [
+        {
+          "id": "RISK-001",
+          "description": "Version history and merge logic could add significant complexity",
+          "mitigation": "MVP: Simple 'overwrite' mode. Phase 2: Add version history and intelligent merge",
+          "severity": "MEDIUM"
+        }
+      ],
+      "scope_adjustments": [
+        {
+          "original_requirement": "Version history and intelligent merge",
+          "adjusted_requirement": "Simple edit mode (overwrite sections)",
+          "rationale": "User requirement is 'refactorable' not 'version controlled' - simpler implementation sufficient for MVP"
+        }
+      ],
+      "notes": "Defer complex merge logic to Phase 2"
+    },
+    {
+      "feature_id": "F005",
+      "feature_name": "Context Extraction & Question Generation",
+      "fae_rules_checked": ["FAE-004"],
+      "status": "FEASIBLE_WITH_DEPENDENCY",
+      "complexity_score": 21,
+      "estimated_time": "4-5 weeks",
+      "risks": [
+        {
+          "id": "RISK-002",
+          "description": "LLM API costs could be high for complex question generation",
+          "mitigation": "Cache generated questions, reuse patterns, set API budget limits",
+          "severity": "MEDIUM"
+        },
+        {
+          "id": "RISK-003",
+          "description": "LLM quality varies - may generate irrelevant questions",
+          "mitigation": "Human-curated fallback templates, quality filtering layer",
+          "severity": "MEDIUM"
+        }
+      ],
+      "notes": "FAE-004 warns about AI/ML features, but this is NOT a recommendation engine (no cold start problem). It's prompt-based LLM use, which is feasible."
+    },
+    {
+      "feature_id": "F006",
+      "feature_name": "Plain Language Parser",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE_WITH_DEPENDENCY",
+      "complexity_score": 13,
+      "estimated_time": "2-3 weeks",
+      "risks": [
+        {
+          "id": "RISK-004",
+          "description": "NLP parsing accuracy depends on LLM quality",
+          "mitigation": "Use structured prompting, provide examples, validate outputs",
+          "severity": "MEDIUM"
+        }
+      ],
+      "notes": "LLM-powered NLP is feasible with Claude API. Not building custom ML model."
+    },
+    {
+      "feature_id": "F007",
+      "feature_name": "NFR Triage Module",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE_DOGFOODING",
+      "complexity_score": 8,
+      "estimated_time": "1-2 weeks",
+      "risks": [],
+      "notes": "DOGFOODING OPPORTUNITY: Reuse our NFR_CATALOG.yaml directly. Already proven system."
+    },
+    {
+      "feature_id": "F008",
+      "feature_name": "Constraint & Feasibility Checker",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE_DOGFOODING",
+      "complexity_score": 13,
+      "estimated_time": "2-3 weeks",
+      "risks": [],
+      "notes": "DOGFOODING OPPORTUNITY: Reuse our FAE_constraints.yaml directly. Meta-validation: We're using FAE to validate a system that uses FAE!"
+    },
+    {
+      "feature_id": "F009",
+      "feature_name": "Export Integration Layer",
+      "fae_rules_checked": [],
+      "status": "DEFERRED_TO_PHASE_4",
+      "complexity_score": 8,
+      "estimated_time": "N/A (future)",
+      "risks": [],
+      "notes": "Integration with external platforms (Jira, Linear, Bolt) is Phase 4. Define interface now, implement later."
+    },
+    {
+      "feature_id": "F010",
+      "feature_name": "CLI & Web UI Interfaces",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE_PHASED",
+      "complexity_score": 13,
+      "estimated_time": "CLI: 2-3 weeks, Web: 4-6 weeks",
+      "risks": [],
+      "scope_adjustments": [
+        {
+          "original_requirement": "CLI + Web UI both in MVP",
+          "adjusted_requirement": "CLI for MVP, Web UI for Phase 2",
+          "rationale": "CLI is faster to build, sufficient for early adopters and dogfooding"
+        }
+      ],
+      "notes": "Prioritize CLI for MVP (developer-friendly, faster iteration)"
+    },
+    {
+      "feature_id": "F011",
+      "feature_name": "Specification Quality Analyzer",
+      "fae_rules_checked": ["FAE-004"],
+      "status": "DEFERRED_TO_PHASE_5",
+      "complexity_score": 13,
+      "estimated_time": "N/A (future)",
+      "risks": [],
+      "notes": "AI-powered quality analysis is Phase 5. Focus on generating good specs first, analyze quality later."
+    }
+  ],
+
+  "technical_constraints_analysis": {
+    "no_violations_found": [
+      "No real-time features (FAE-001, FAE-002 N/A)",
+      "No complex RBAC (FAE-008 N/A)",
+      "No offline-first sync (FAE-009 N/A)",
+      "No microservices (FAE-010 N/A)",
+      "No payment processing (FAE-016 N/A)"
+    ],
+    "applicable_warnings": [
+      {
+        "fae_rule": "FAE-004",
+        "feature": "F005 (AI Question Generation), F011 (Quality Analyzer)",
+        "resolution": "F005 is feasible (LLM-based, not ML training). F011 deferred to Phase 5.",
+        "note": "FAE-004 warns about recommendation engines (cold start problem), but our use case is different - we're using LLM for generation, not recommendations"
+      },
+      {
+        "fae_rule": "FAE-013",
+        "feature": "F001 (Interview Engine) - is this a 'dynamic plugin architecture'?",
+        "resolution": "NO VIOLATION - Interview engine is domain-specific, not general-purpose plugin system",
+        "note": "Template-based question flows are NOT the same as dynamic plugins. No violation."
+      }
+    ]
+  },
+
+  "technology_stack_validation": {
+    "language_recommendation": {
+      "option_1": {
+        "stack": "Python 3.10+ (Click CLI, Rich, LangChain/LlamaIndex, Jinja2 templates)",
+        "pros": [
+          "Rapid development",
+          "Excellent LLM libraries (LangChain, LlamaIndex)",
+          "Click for CLI framework (proven in our Planning Framework)",
+          "Jinja2 for template rendering",
+          "Easy integration with Claude API"
+        ],
+        "cons": [
+          "Performance overhead (but not critical for this use case)",
+          "Deployment requires Python runtime"
+        ],
+        "recommendation": "RECOMMENDED for MVP"
+      },
+      "option_2": {
+        "stack": "TypeScript/Node.js (oclif CLI, LangChain.js, Handlebars)",
+        "pros": [
+          "Single language for CLI + Web UI (future)",
+          "oclif is mature CLI framework",
+          "LangChain.js for LLM orchestration",
+          "npm ecosystem"
+        ],
+        "cons": [
+          "Slower development than Python for AI/LLM tasks",
+          "Less mature LLM libraries than Python"
+        ],
+        "recommendation": "Consider for Phase 2 when adding Web UI"
+      }
+    },
+    "llm_integration": {
+      "recommendation": "Claude API (Anthropic)",
+      "rationale": "We have expertise, excellent for instruction-following and structured output",
+      "alternatives": ["OpenAI GPT-4", "Open-source LLMs (Llama, Mistral) for self-hosted option"]
+    }
+  },
+
+  "scope_validation": {
+    "mvp_features": ["F001", "F002", "F003", "F004", "F006", "F010_CLI"],
+    "mvp_total_complexity": 73,
+    "mvp_estimated_timeline": "12-16 weeks (3-4 months, single developer)",
+    "phase_2_features": ["F005", "F007", "F008", "F010_Web"],
+    "phase_2_total_complexity": 42,
+    "phase_2_estimated_timeline": "8-10 weeks",
+    "future_features": ["F009", "F011"],
+    "total_project_complexity": 149
+  },
+
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "recommendation": "Start with Python MVP for rapid LLM experimentation",
+      "rationale": "LLM integration is core to value proposition - Python has best tooling"
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Dogfood aggressively - use framework to improve itself",
+      "rationale": "Best way to validate usability and find missing features"
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Reuse NFR_CATALOG.yaml and FAE_constraints.yaml from Planning Framework",
+      "rationale": "Proven components, saves development time, demonstrates value of our ecosystem"
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "CLI-first for MVP, Web UI in Phase 2",
+      "rationale": "Faster to market, easier to iterate, developer-friendly"
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "Simplify F004 (Refinement) to edit mode, defer version history",
+      "rationale": "User wants 'refactorable' not 'version controlled' - YAGNI principle"
+    },
+    {
+      "priority": "LOW",
+      "recommendation": "Budget for LLM API costs (F005, F006) - estimate $500-1000/month for active use",
+      "rationale": "Question generation and parsing will use significant API calls"
+    }
+  ],
+
+  "meta_observations": {
+    "dogfooding_analysis": {
+      "components_we_can_reuse": [
+        "NFR_CATALOG.yaml (F007)",
+        "FAE_constraints.yaml (F008)",
+        "LEAN_CANVAS interview structure (F002 template)",
+        "VIBE_ALIGNER phase flow (F002 template)",
+        "Question design patterns from our agents"
+      ],
+      "value_proposition": "Framework demonstrates its own value - we're using it to build itself",
+      "circular_dependency": "Using FAE to validate a framework that will include FAE - this is meta but VALID"
+    },
+    "framework_test_insights": {
+      "abstraction_challenge": "Estimating complexity for meta/framework features is harder than concrete app features",
+      "fae_applicability": "FAE rules mostly target app features, not framework features - some don't apply",
+      "hybrid_mode_success": "Commercial + vague requirements = Full Interview + Auto-Research worked well"
+    }
+  },
+
+  "critical_success_factors": [
+    {
+      "factor": "LLM quality",
+      "description": "Question generation and parsing depend on LLM performance",
+      "mitigation": "Use Claude (best instruction-following), provide extensive examples, validate outputs"
+    },
+    {
+      "factor": "Template quality",
+      "description": "Pre-built templates must cover common use cases well",
+      "mitigation": "Start with 5 battle-tested templates from VIBE Agency client projects"
+    },
+    {
+      "factor": "Developer acceptance",
+      "description": "Generated specs must be useful for actual developers",
+      "mitigation": "RA-002 validation: Test with real developers, iterate based on feedback"
+    },
+    {
+      "factor": "Non-technical usability",
+      "description": "Target users must be able to complete specs without getting stuck",
+      "mitigation": "Extensive UX testing, clear help text, fallback to human assistance"
+    }
+  ]
+}

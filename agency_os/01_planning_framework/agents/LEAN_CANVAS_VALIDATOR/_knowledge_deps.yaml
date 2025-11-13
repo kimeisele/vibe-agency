@@ -1,0 +1,37 @@
+version: "1.0"
+agent_id: LEAN_CANVAS_VALIDATOR
+agent_version: "1.0"
+
+required_knowledge: []
+
+optional_knowledge:
+  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    purpose: "Data contracts for lean_canvas_summary.json schema"
+    critical: false
+    used_in_tasks:
+      - handoff
+    description: "Defines schema for output artifact"
+
+task_specific_loading:
+  canvas_interview:
+    required: []
+    optional: []
+    notes: "Pure conversational interview - no knowledge files needed"
+
+  risk_analysis:
+    required: []
+    optional: []
+    notes: "Analysis based on collected responses - no external knowledge needed"
+
+  handoff:
+    required: []
+    optional:
+      - ORCHESTRATION_data_contracts.yaml
+    notes: "Can validate output schema if contracts are available"
+
+notes: |
+  LEAN_CANVAS_VALIDATOR is intentionally knowledge-free.
+  It relies on the Lean Canvas framework itself (9 fields) and
+  the interviewer's ability to ask probing questions.
+
+  No external knowledge bases are required for core functionality.

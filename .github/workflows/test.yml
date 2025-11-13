@@ -1,0 +1,46 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Validate YAML files
+      run: |
+        yamllint -c .yamllint agency_os/ system_steward_framework/ || true
+
+    - name: Run prompt composition tests
+      run: |
+        python3 tests/test_prompt_composition.py
+
+    - name: Test VIBE_ALIGNER composition
+      run: |
+        python3 test_vibe_aligner.py
+
+    - name: Validate knowledge index
+      run: |
+        python3 validate_knowledge_index.py

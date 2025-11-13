@@ -1,0 +1,22 @@
+task_id: "02_risk_analysis"
+task_name: "Identify Riskiest Assumptions"
+phase: 2
+description: "Analyze canvas responses to identify 'Leap of Faith' assumptions"
+
+inputs:
+  - canvas_responses: "All 9 fields from task_01"
+
+outputs:
+  - riskiest_assumptions: "Array of 2-4 critical assumptions to validate"
+
+validation_gates: []
+
+estimated_time: "5 minutes"
+conversation_turns: "1-2 turns (presentation + optional refinement)"
+
+notes: |
+  Based on Lean Startup methodology (Eric Ries).
+  Focus on identifying assumptions that:
+  1. Are critical to business model viability
+  2. Have high uncertainty
+  3. Can be tested with the MVP
