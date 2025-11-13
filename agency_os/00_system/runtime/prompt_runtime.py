@@ -166,13 +166,16 @@ class PromptRuntime:
         # Load required knowledge
         for req in deps.get("required_knowledge", []):
             # Check if this task uses this knowledge file
-            if task_meta.task_id in req.get("used_by_tasks", []):
+            # Note: YAMLs use 'used_in_tasks', not 'used_by_tasks'
+            used_tasks = req.get("used_in_tasks", req.get("used_by_tasks", []))
+            if task_meta.task_id in used_tasks:
                 content = self._load_knowledge_file(req["path"])
                 knowledge_files.append(f"# {req['purpose']}\n{content}")
 
         # Load optional knowledge (if conditions met)
         for opt in deps.get("optional_knowledge", []):
-            if task_meta.task_id in opt.get("used_by_tasks", []):
+            used_tasks = opt.get("used_in_tasks", opt.get("used_by_tasks", []))
+            if task_meta.task_id in used_tasks:
                 content = self._load_knowledge_file(opt["path"])
                 knowledge_files.append(f"# {opt['purpose']}\n{content}")
 
