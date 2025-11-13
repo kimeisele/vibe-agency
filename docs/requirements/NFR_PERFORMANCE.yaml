@@ -1,0 +1,132 @@
+# Non-Functional Requirements: Performance
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+performance_requirements:
+  prompt_composition:
+    target_latency_p50: "< 100ms"
+    target_latency_p99: "< 500ms"
+    rationale: "File I/O should be fast, no network calls"
+    measurement: "Log composition time in prompt_runtime.py"
+
+  llm_processing:
+    max_input_tokens: 100000
+    target_input_tokens: 10000
+    warning_threshold: 50000
+    rationale: "Claude Sonnet context window limit, cost optimization"
+    measurement: "Count tokens before sending to LLM"
+
+  knowledge_base_loading:
+    max_file_size: "5 MB"
+    warning_threshold: "1 MB"
+    current_largest: "FDG_dependencies.yaml (131 KB)"
+    rationale: "Large YAML files slow parsing and increase memory usage"
+    measurement: "File size check on load"
+
+  workspace_operations:
+    max_projects: 1000
+    max_artifacts_per_project: 100
+    max_workspace_size: "10 GB"
+    rationale: "File system limits, performance degradation with many files"
+    measurement: "Periodic workspace scan"
+
+resource_constraints:
+  memory:
+    max_heap_size: "512 MB"
+    target_heap_size: "128 MB"
+    rationale: "Runs on developer laptops, must be lightweight"
+    measurement: "Profile memory usage during composition"
+
+  disk:
+    max_workspace_size: "10 GB"
+    warning_threshold: "5 GB"
+    rationale: "Reasonable for local development environments"
+    measurement: "du -sh workspaces/"
+
+  cpu:
+    target_cpu_usage: "< 10% on modern laptop"
+    rationale: "YAML parsing only, no heavy computation"
+    measurement: "Profile during prompt composition"
+
+  network:
+    external_dependencies: []
+    rationale: "Fully offline-capable system by design"
+    validation: "Must work without internet connection"
+
+scalability_targets:
+  concurrent_users: 1
+  rationale: "Single-user local tool, no concurrency needed"
+
+  projects_per_user:
+    minimum: 10
+    target: 100
+    maximum: 1000
+
+  knowledge_base_growth:
+    current_size: "6,409 lines (271 KB total)"
+    target_size: "20,000 lines (< 1 MB total)"
+    max_size: "50,000 lines (< 5 MB total)"
+    strategy: "Split large files if approaching limits"
+
+response_time_targets:
+  prompt_composition:
+    simple_task: "< 50ms"
+    complex_task: "< 200ms"
+    full_workflow: "< 2s (all 23 tasks)"
+
+  workspace_initialization:
+    new_project: "< 500ms"
+    load_existing: "< 100ms"
+
+optimization_strategies:
+  knowledge_caching:
+    status: "IMPLEMENTED ✅"
+    location: "prompt_runtime.py:60 (self.knowledge_cache)"
+    impact: "Avoid re-parsing same YAML files"
+
+  lazy_loading:
+    status: "IMPLEMENTED ✅"
+    rationale: "Only load knowledge needed for current task"
+    location: "_knowledge_deps.yaml (used_in_tasks filter)"
+
+  file_size_monitoring:
+    status: "MISSING ❌"
+    recommendation: "Add pre-commit hook to warn on large files"
+
+performance_monitoring:
+  metrics_to_track:
+    - "Prompt composition time per task"
+    - "Knowledge file load time"
+    - "Memory usage during composition"
+    - "Workspace disk usage"
+
+  logging:
+    location: "~/.vibe_agency/logs/performance.log"
+    format: "JSON (timestamp, task, duration, memory, file_sizes)"
+    retention: "30 days"
+
+  alerts:
+    - condition: "Composition time > 1s"
+      action: "Log warning, investigate which file is large"
+    - condition: "Knowledge base > 1 MB"
+      action: "Consider splitting file"
+    - condition: "Workspace > 5 GB"
+      action: "Prompt user to archive old projects"
+
+validation:
+  performance_tests:
+    - "Composition benchmark (all 23 tasks < 2s)"
+    - "Large workspace test (100 projects)"
+    - "Large knowledge base test (10 MB YAML)"
+
+  acceptance_criteria:
+    - "All compositions complete in < 500ms on reference hardware"
+    - "System remains responsive with 100 projects"
+    - "No memory leaks during extended usage"
+
+reference_hardware:
+  cpu: "Intel i5 (2020) or equivalent"
+  ram: "8 GB"
+  disk: "SSD"
+  os: "Linux/macOS/Windows"

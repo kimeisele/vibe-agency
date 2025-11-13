@@ -1,0 +1,287 @@
+# Non-Functional Requirements: Reliability
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+reliability_requirements:
+  error_handling:
+    file_not_found:
+      strategy: "Fail fast with clear error message"
+      example: |
+        ValueError: Agent 'VIBE_ALIGNER' not found.
+        Available agents: VIBE_ALIGNER, GENESIS_BLUEPRINT, CODE_GENERATOR, ...
+        Check AGENT_REGISTRY in prompt_runtime.py
+      implementation: "Validate agent_id before file operations"
+
+    malformed_yaml:
+      strategy: "Validate on load, report line number and error"
+      tool: "yaml.safe_load() with exception handling"
+      example: |
+        YAMLError: Invalid YAML syntax in FDG_dependencies.yaml:142
+        Expected mapping, got scalar
+        Fix: Check indentation at line 142
+      implementation: "Wrap all YAML loads in try-except"
+
+    missing_knowledge_file:
+      strategy: "Fail with missing file path, suggest fix"
+      example: |
+        FileNotFoundError: Knowledge file not found
+        Path: agency_os/01_planning_framework/knowledge/FAE_constraints.yaml
+        Referenced in: VIBE_ALIGNER/_knowledge_deps.yaml:12
+        Fix: Check file path or remove from dependencies
+      implementation: "Validate all paths in _knowledge_deps.yaml on load"
+
+    partial_composition_failure:
+      strategy: "Abort composition, rollback to safe state"
+      example: |
+        CompositionError: Failed to load validation gates
+        Task: task_01_select_core_modules
+        Partially composed prompt discarded
+        Safe to retry
+      implementation: "Transactional composition (all-or-nothing)"
+
+    circular_dependencies:
+      strategy: "Detect and reject during composition"
+      example: |
+        DependencyError: Circular dependency detected
+        Task A depends on Task B, which depends on Task A
+        Fix: Review task dependencies in meta.yaml files
+      implementation: "Topological sort of task dependencies"
+
+  recovery_mechanisms:
+    auto_retry:
+      enabled: false
+      rationale: "Deterministic file operations, no transient failures expected"
+      exception: "Network operations (if LLM integration added)"
+
+    state_rollback:
+      applicable: false
+      rationale: "Stateless operations - each composition is independent"
+
+    graceful_degradation:
+      missing_optional_knowledge:
+        strategy: "Log warning, continue without optional knowledge"
+        example: "Optional knowledge 'APCE_rules.yaml' not found, skipping"
+
+      partial_gates:
+        strategy: "Fail - all gates must be available"
+        rationale: "Gates are critical for quality, not optional"
+
+  fault_tolerance:
+    required_files:
+      core_per_agent:
+        - "_prompt_core.md"
+        - "_composition.yaml"
+        - "_knowledge_deps.yaml"
+
+      per_task:
+        - "task_XX_*.md"
+        - "task_XX_*.meta.yaml"
+
+    strategy: "Fail fast if any required file missing"
+    rationale: "Better to fail early than produce invalid prompts"
+
+    validation_on_startup:
+      - "Check all agent directories have required files"
+      - "Validate .knowledge_index.yaml completeness"
+      - "Verify YAML syntax for all knowledge bases"
+
+  availability:
+    target_uptime: "N/A - local tool, no service"
+    offline_capability: true
+    rationale: "Fully file-based, no external dependencies"
+
+    failure_modes:
+      disk_full:
+        detection: "Check disk space before writing artifacts"
+        mitigation: "Prompt user to free space"
+
+      file_corruption:
+        detection: "YAML parse errors, schema validation failures"
+        mitigation: "User restores from backup or git"
+
+      permission_denied:
+        detection: "OS-level file permission errors"
+        mitigation: "Clear error message with fix instructions"
+
+validation_strategy:
+  startup_checks:
+    - name: "Knowledge Index Validation"
+      script: "validate_knowledge_index.py"
+      frequency: "Every run (cached if unchanged)"
+      failure_action: "Abort with error report"
+
+    - name: "Agent Structure Validation"
+      check: "All agents have required files"
+      frequency: "On first run, cached thereafter"
+      failure_action: "Abort with missing file list"
+
+    - name: "YAML Syntax Validation"
+      tool: "yaml.safe_load()"
+      scope: "All .yaml files in agency_os/"
+      frequency: "On file load (cached)"
+      failure_action: "Abort with syntax error details"
+
+  runtime_checks:
+    - name: "Composition Order Validation"
+      check: "All ${variables} resolve to valid files"
+      failure_action: "Abort composition with error"
+
+    - name: "Task Metadata Validation"
+      check: "task_id matches filename, phase is valid"
+      failure_action: "Abort with validation error"
+
+    - name: "Gate Resolution Validation"
+      check: "All validation_gates exist in gates/"
+      failure_action: "Abort with missing gate list"
+
+  post-composition_checks:
+    - name: "Prompt Size Validation"
+      check: "Final prompt < 200,000 characters"
+      rationale: "LLM context window limits"
+      failure_action: "Warning (continue anyway)"
+
+    - name: "Variable Substitution Validation"
+      check: "No unresolved ${...} in final prompt"
+      failure_action: "Abort with unresolved variables list"
+
+monitoring:
+  error_logging:
+    required: true
+    location: "~/.vibe_agency/logs/errors.log"
+    format: "JSON (timestamp, level, message, context, stacktrace)"
+    retention: "90 days"
+
+    log_levels:
+      ERROR: "Unrecoverable failures (composition aborted)"
+      WARNING: "Recoverable issues (optional knowledge missing)"
+      INFO: "Normal operations (composition success)"
+      DEBUG: "Detailed trace (for development)"
+
+  metrics:
+    required_metrics:
+      - "Composition success rate (target: 99%)"
+      - "Error frequency by type"
+      - "File not found errors (most common?)"
+      - "YAML parse errors (quality issue?)"
+
+    optional_metrics:
+      - "Average composition time"
+      - "Knowledge cache hit rate"
+      - "File sizes over time"
+
+  alerting:
+    triggers:
+      - condition: "Composition failure"
+        action: "Log error with full context"
+
+      - condition: "Missing required file"
+        action: "Email developer (if configured)"
+
+      - condition: "YAML validation failure"
+        action: "Run validate_knowledge_index.py"
+
+resilience_patterns:
+  circuit_breaker:
+    applicable: false
+    rationale: "No external services to fail"
+
+  bulkhead:
+    applicable: false
+    rationale: "Single-user, single-threaded operation"
+
+  timeout:
+    file_operations: "10s (filesystem should be fast)"
+    yaml_parsing: "30s (large files like FDG_dependencies.yaml)"
+    full_composition: "60s (abort if takes longer)"
+
+  idempotency:
+    requirement: "Composition is idempotent"
+    validation: "Same inputs always produce same output"
+    exception: "Runtime context may include timestamps"
+
+data_integrity:
+  workspace_corruption:
+    detection: "JSON schema validation on load"
+    prevention: "Atomic writes (write to temp, then move)"
+    recovery: "User restores from backup"
+
+  knowledge_base_corruption:
+    detection: "YAML syntax validation on load"
+    prevention: "Git version control (required)"
+    recovery: "Git checkout <last-good-commit>"
+
+  artifact_corruption:
+    detection: "Schema validation (project_manifest.schema.json)"
+    prevention: "Validate before write"
+    recovery: "Regenerate artifact (re-run task)"
+
+backup_strategy:
+  user_responsibility: true
+  recommendations:
+    - "Use git for vibe-agency/ directory"
+    - "Backup workspaces/ regularly (contains user data)"
+    - "Export critical artifacts to external storage"
+
+  automated_backup:
+    status: "NOT IMPLEMENTED"
+    future_consideration: "Optional git auto-commit on artifact creation"
+
+disaster_recovery:
+  rto: "N/A - local tool, no service uptime"
+  rpo: "Last saved state (file system)"
+
+  recovery_scenarios:
+    complete_data_loss:
+      procedure: |
+        1. Reinstall vibe-agency (git clone)
+        2. Restore workspaces/ from backup
+        3. Validate with validate_knowledge_index.py
+        4. Resume work
+
+    knowledge_base_corruption:
+      procedure: |
+        1. Git status (check for uncommitted changes)
+        2. Git diff (review changes)
+        3. Git checkout -- <corrupted-file>
+        4. Validate with validate_knowledge_index.py
+
+    workspace_corruption:
+      procedure: |
+        1. Identify corrupted project (error logs)
+        2. Restore project from backup
+        3. If no backup: delete and recreate project
+
+testing_requirements:
+  reliability_tests:
+    - name: "Missing File Resilience"
+      test: "Rename critical file, verify clear error"
+      expected: "Helpful error message with fix suggestion"
+
+    - name: "Malformed YAML Handling"
+      test: "Introduce syntax error, verify parse failure"
+      expected: "Line number and error details provided"
+
+    - name: "Large File Performance"
+      test: "Load 10 MB YAML file, verify no crash"
+      expected: "Warning logged, operation completes"
+
+    - name: "Circular Dependency Detection"
+      test: "Create circular task dependencies"
+      expected: "Clear error identifying cycle"
+
+  stress_tests:
+    - name: "100 Projects"
+      test: "Create 100 projects, run full workflow"
+      expected: "All succeed, no performance degradation"
+
+    - name: "1000 Compositions"
+      test: "Run same composition 1000 times"
+      expected: "No memory leaks, consistent performance"
+
+acceptance_criteria:
+  - "No silent failures (all errors logged)"
+  - "Clear error messages (actionable fix suggestions)"
+  - "99% composition success rate (on valid inputs)"
+  - "No data loss during normal operation"
+  - "Graceful handling of disk full, permission errors"

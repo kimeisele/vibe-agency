@@ -1,0 +1,329 @@
+# Non-Functional Requirements: Security
+# Version: 1.0
+# Last Updated: 2025-11-13
+# Status: DRAFT - Needs review and approval
+
+security_requirements:
+  authentication:
+    llm_api_keys:
+      storage: "Environment variables only (ANTHROPIC_API_KEY)"
+      prohibited_locations:
+        - "Source code (hardcoded)"
+        - "Git repository (committed)"
+        - "Plain text files"
+      rotation_policy: "90 days (recommended)"
+      access_control: "Restrict to runtime process only"
+      validation: "Scan codebase for hardcoded keys (pre-commit hook)"
+
+    future_consideration:
+      - "Key vault integration (if deployed as service)"
+      - "OAuth for team sharing"
+
+  authorization:
+    workspace_access:
+      model: "File system permissions (OS-level)"
+      principle: "Least privilege - read-only where possible"
+      implementation: "prompt_runtime.py reads files, workspace_utils.py writes artifacts"
+
+    file_operations:
+      read_access: "Required for all agency_os/ files"
+      write_access: "Limited to workspaces/ and logs/"
+      validation: "Never write to agency_os/ during runtime"
+
+  data_protection:
+    sensitive_data_handling:
+      api_keys:
+        - "NEVER log API keys (even partial)"
+        - "NEVER include in error messages"
+        - "NEVER write to disk (except secure .env)"
+
+      user_input:
+        - "Sanitize workspace paths in error messages"
+        - "No PII in logs (project names may contain client names)"
+        - "Prompt user before logging detailed errors"
+
+      client_data:
+        - "Assume workspaces/ contain sensitive client information"
+        - "No telemetry without explicit consent"
+        - "User controls all data (local files)"
+
+    encryption_at_rest:
+      requirement: "Not enforced by system"
+      rationale: "User's file system security responsibility"
+      recommendation: "Use OS-level encryption (FileVault, BitLocker, LUKS)"
+
+    encryption_in_transit:
+      requirement: "N/A - no network calls in v1.0"
+      future: "HTTPS for LLM API calls (if integrated)"
+
+  input_validation:
+    yaml_loading:
+      strategy: "Use yaml.safe_load() only (no yaml.load())"
+      rationale: "Prevent arbitrary code execution via YAML deserialization"
+      status: "IMPLEMENTED ✅"
+      location: "prompt_runtime.py:117 (all YAML loads)"
+      validation: "Audit all yaml.load() calls (ban in code review)"
+
+    user_context:
+      strategy: "Validate all runtime_context keys"
+      required_keys: ["project_id", "current_phase"]
+      sanitization: "Escape special chars in file paths"
+      validation: "Reject if keys missing or malformed"
+
+    file_paths:
+      strategy: "Validate all paths before file operations"
+      checks:
+        - "No path traversal (../ not allowed outside workspaces/)"
+        - "No absolute paths pointing outside vibe-agency/"
+        - "No symlink following (potential escape)"
+      implementation: "pathlib.resolve() and validate against base_path"
+
+    task_id / agent_id:
+      strategy: "Whitelist validation against AGENT_REGISTRY"
+      checks:
+        - "Only alphanumeric + underscore allowed"
+        - "No shell metacharacters (|, ;, &, $, etc.)"
+      rationale: "Prevent command injection if used in shell commands"
+
+  audit_logging:
+    required_events:
+      - event: "Prompt composition executed"
+        data: "agent_id, task_id, timestamp, user"
+
+      - event: "Knowledge files loaded"
+        data: "file_paths, sizes, load_time"
+
+      - event: "Validation gate failure"
+        data: "gate_id, task_id, reason"
+
+      - event: "Errors and exceptions"
+        data: "error_type, message, stacktrace, context"
+
+      - event: "Workspace created/modified"
+        data: "workspace_path, operation, timestamp"
+
+    log_format: "JSON (timestamp, user, event, data, ip_address)"
+    log_location: "~/.vibe_agency/logs/audit.log"
+    log_retention: "90 days (configurable)"
+    log_protection: "File permissions 600 (owner read/write only)"
+
+    excluded_from_logs:
+      - "API keys (full or partial)"
+      - "User file contents"
+      - "PII without consent"
+
+  dependency_security:
+    third_party_libraries:
+      - name: "pyyaml"
+        version: ">=6.0.1"
+        vulnerability_check: "Dependabot enabled"
+        known_issues: "CVE-2020-14343 (< 5.4) - arbitrary code execution"
+        mitigation: "Use safe_load() only"
+
+      - name: "pathlib"
+        version: "stdlib"
+        vulnerability_check: "Python security advisories"
+        known_issues: "None currently"
+
+    update_policy:
+      critical_vulnerabilities: "Patch within 7 days"
+      high_vulnerabilities: "Patch within 30 days"
+      medium_vulnerabilities: "Review and patch in next release"
+      low_vulnerabilities: "Monitor, patch opportunistically"
+
+    vulnerability_scanning:
+      tool: "pip-audit or safety"
+      frequency: "Weekly (automated CI)"
+      action: "Create GitHub issue if vulnerabilities found"
+
+  compliance:
+    owasp_top_10:
+      applicable_risks:
+        A03_injection:
+          risk: "YAML injection via malicious knowledge bases"
+          mitigation: "Use yaml.safe_load() only ✅"
+          validation: "Audit all YAML loading code"
+
+        A05_security_misconfiguration:
+          risk: "Hardcoded paths, default credentials"
+          mitigation: "Environment variables for config"
+          validation: "No hardcoded secrets in git"
+
+        A09_security_logging_failures:
+          risk: "No audit log for sensitive operations"
+          mitigation: "Implement audit logging (see above)"
+          status: "MISSING ❌"
+
+      not_applicable:
+        A01_broken_access_control:
+          rationale: "Local tool, no web interface, no multi-user"
+
+        A02_cryptographic_failures:
+          rationale: "No sensitive data at rest, user's responsibility"
+
+        A04_insecure_design:
+          rationale: "Threat model appropriate for local tool"
+
+        A06_vulnerable_components:
+          rationale: "Minimal dependencies, actively monitored"
+
+        A07_authentication_failures:
+          rationale: "No authentication layer"
+
+        A08_software_data_integrity:
+          rationale: "Git provides integrity checks"
+
+        A10_server_side_request_forgery:
+          rationale: "No network requests in v1.0"
+
+    cwe_top_25:
+      applicable:
+        CWE-79_xss:
+          risk: "Low - no web interface"
+          future: "Sanitize HTML if web UI added"
+
+        CWE-89_sql_injection:
+          risk: "Not applicable - no database"
+
+        CWE-78_os_command_injection:
+          risk: "Low - no shell commands with user input"
+          validation: "Audit all subprocess calls"
+
+        CWE-434_unrestricted_upload:
+          risk: "Not applicable - no file uploads"
+
+        CWE-732_incorrect_permissions:
+          risk: "Medium - log files may be readable by others"
+          mitigation: "Set permissions 600 on sensitive files"
+
+  threat_modeling:
+    attack_surfaces:
+      1_malicious_knowledge_bases:
+        threat: "Attacker provides malicious YAML file"
+        impact: "Code execution via unsafe YAML deserialization"
+        mitigation: "Use yaml.safe_load() ✅"
+        residual_risk: "Low"
+
+      2_path_traversal:
+        threat: "Attacker manipulates file paths to read/write outside workspaces/"
+        impact: "Information disclosure, unauthorized modification"
+        mitigation: "Validate all paths with pathlib.resolve()"
+        status: "PARTIAL ⚠️ (not fully implemented)"
+
+      3_api_key_exposure:
+        threat: "API key logged or committed to git"
+        impact: "Unauthorized LLM usage, cost"
+        mitigation: "Never log keys, scan git history"
+        status: "NEEDS VALIDATION ❌"
+
+      4_malicious_composition:
+        threat: "Crafted composition_order injects malicious content"
+        impact: "Arbitrary prompt injection to LLM"
+        mitigation: "Validate composition_order schema"
+        status: "MISSING ❌"
+
+      5_symlink_attacks:
+        threat: "Attacker creates symlinks to escape workspaces/"
+        impact: "Read/write arbitrary files"
+        mitigation: "Don't follow symlinks (pathlib)"
+        status: "NEEDS VALIDATION ❌"
+
+    trust_boundaries:
+      trusted:
+        - "agency_os/ files (version controlled)"
+        - "Official knowledge bases (curated)"
+        - "Developer environment (local machine)"
+
+      untrusted:
+        - "User input (runtime_context)"
+        - "Custom knowledge bases (user-added)"
+        - "Workspace data (may contain malicious content)"
+
+  secure_development:
+    code_review_requirements:
+      - "All PRs require security review"
+      - "Check for hardcoded secrets (automated scan)"
+      - "Validate input sanitization"
+      - "Audit YAML loading (only safe_load allowed)"
+
+    security_testing:
+      - "Input validation tests (malformed paths, YAML)"
+      - "Dependency scanning (pip-audit weekly)"
+      - "Secret scanning (pre-commit hook)"
+      - "Penetration testing (before v1.0 release)"
+
+    secrets_management:
+      pre_commit_hook:
+        tool: "detect-secrets or git-secrets"
+        action: "Reject commit if secrets detected"
+        scope: "Scan all staged files"
+
+      git_history_scan:
+        tool: "truffleHog or gitleaks"
+        frequency: "Monthly"
+        action: "Rotate exposed keys, remove from history"
+
+  incident_response:
+    security_incidents:
+      1_api_key_exposed:
+        procedure: |
+          1. Rotate API key immediately
+          2. Review API usage logs for unauthorized access
+          3. Scan git history (git log -S "ANTHROPIC_API_KEY")
+          4. Remove from history (BFG Repo-Cleaner)
+          5. Notify users if key was shared
+
+      2_vulnerability_discovered:
+        procedure: |
+          1. Assess severity (CVSS score)
+          2. Develop patch within SLA (7-30 days)
+          3. Test patch
+          4. Release security update
+          5. Notify users via GitHub Security Advisory
+
+      3_malicious_knowledge_base:
+        procedure: |
+          1. Identify affected files
+          2. Restore from git (last known good commit)
+          3. Audit other knowledge bases
+          4. Add validation to prevent recurrence
+
+    responsible_disclosure:
+      email: "security@vibe.agency (if deployed)"
+      response_time: "72 hours"
+      bounty_program: "Not applicable (open source)"
+
+validation:
+  security_tests:
+    - name: "YAML Safe Loading"
+      test: "Grep for yaml.load() (non-safe)"
+      expected: "No matches (only yaml.safe_load())"
+
+    - name: "Hardcoded Secrets"
+      test: "Run detect-secrets scan"
+      expected: "No secrets found"
+
+    - name: "Path Traversal"
+      test: "Attempt to load ../../etc/passwd"
+      expected: "Rejected with validation error"
+
+    - name: "API Key Logging"
+      test: "Search logs for 'sk-ant-api'"
+      expected: "No matches"
+
+  penetration_testing:
+    scope:
+      - "Input validation (all user-controlled inputs)"
+      - "File operations (path traversal, symlinks)"
+      - "YAML parsing (malicious payloads)"
+      - "Dependency vulnerabilities"
+
+    frequency: "Before v1.0 release, then annually"
+
+acceptance_criteria:
+  - "No hardcoded secrets in codebase (automated scan)"
+  - "All YAML loading uses safe_load() (code review)"
+  - "No path traversal vulnerabilities (validated)"
+  - "Dependencies have no known critical vulnerabilities (pip-audit)"
+  - "Audit logging implemented for sensitive operations"
+  - "Security incident response plan documented"
