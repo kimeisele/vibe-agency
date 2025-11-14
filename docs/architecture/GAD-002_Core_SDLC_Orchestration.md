@@ -11,17 +11,25 @@
 
 ## Executive Summary
 
-This document addresses **five critical architectural gaps** discovered during the GAD-001 implementation review. While GAD-001 successfully integrated the Research sub-framework into Planning, it revealed that the current `orchestrator.py` is **incomplete** - it only orchestrates the PLANNING phase, not the entire SDLC.
+This document addresses **ten critical architectural gaps** discovered during the GAD-001 implementation review. While GAD-001 successfully integrated the Research sub-framework into Planning, it revealed that the current `orchestrator.py` is **incomplete** - it only orchestrates the PLANNING phase, not the entire SDLC.
 
 **Core Problem:** We have a "Planning-Framework-Orchestrator" instead of a "Core SDLC Orchestrator."
 
-This GAD defines the architectural decisions needed to transform `orchestrator.py` into a complete **Core OS Orchestrator** that manages all 5 lifecycle phases (PLANNING → CODING → TESTING → DEPLOYMENT → MAINTENANCE) and integrates governance, validation, and multi-project capabilities.
+This GAD defines the architectural decisions needed to transform `orchestrator.py` into a complete **Core OS Orchestrator** that manages:
+- **Structural Architecture** (Decisions 1-5): Orchestration, governance, validation, scaling
+- **Runtime Architecture** (Decisions 6-10): Agent invocation, cost management, HITL, recovery, knowledge lifecycle
+
+**Update History:**
+- **v1.0 (Initial):** Decisions 1-5 (Structural Architecture)
+- **v1.1 (Addendum):** Decisions 6-10 (Runtime & Operations Architecture) - added after critical Lead Architect review
 
 ---
 
 ## Problem Statement
 
 Based on code analysis (commit `12bc9b0`), the following architectural gaps exist:
+
+### Structural Architecture Gaps (Decisions 1-5)
 
 | Priority | Gap | Impact |
 |----------|-----|--------|
@@ -31,7 +39,17 @@ Based on code analysis (commit `12bc9b0`), the following architectural gaps exis
 | **P2** | Horizontal governance undefined | No mechanism to run cross-cutting audits (e.g., prompt security) |
 | **P2** | Multi-project support unclear | Multiple workspaces exist but no concurrent execution model |
 
-**Without solving these problems, the system cannot progress beyond PLANNING.**
+### Runtime & Operations Gaps (Decisions 6-10)
+
+| Priority | Gap | Impact |
+|----------|-----|--------|
+| **P0** | Agent invocation missing | `_execute_agent_placeholder()` returns mock data; no real LLM integration |
+| **P1** | Cost management missing | No budget tracking, no rate limiting; risk of runaway costs |
+| **P1** | HITL mechanism undefined | `AWAITING_QA_APPROVAL` state exists but has no implementation |
+| **P2** | State recovery undefined | Orchestrator crashes lose partial progress; expensive re-execution |
+| **P2** | Knowledge lifecycle undefined | Knowledge bases have no versioning, freshness tracking, or update mechanism |
+
+**Without solving these problems, the system cannot execute even a single SDLC workflow end-to-end.**
 
 ---
 
@@ -716,20 +734,784 @@ await orchestrator.run_all_projects([project1, project2, project3])
 
 ---
 
-## Open Questions
+## 🔴 ADDENDUM: Runtime & Operations Architecture
+
+**Critical Discovery:** During final Lead Architect review, **5 additional architectural gaps** were identified in the **runtime and operations** domain. These gaps are equally critical but were initially missed because they focus on "how the system runs" rather than "how the system is structured."
+
+Gemini's 5 questions addressed **structural architecture** (orchestration, governance, validation).
+The following 5 questions address **runtime architecture** (execution, cost, recovery, monitoring).
+
+---
+
+## Decision 6: Agent Invocation Architecture (P0)
+
+### Problem Analysis
+
+Current state (from `orchestrator.py:478`):
+```python
+def _execute_agent_placeholder(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    PLACEHOLDER: Execute agent by loading prompt and calling LLM.
+    For Phase 2, this returns mock data.
+    Phase 3 will implement actual LLM invocation via Anthropic API.
+    """
+    print(f"   🤖 Executing {agent_name}... (mock)")
+    return {}  # ❌ MOCK DATA
+```
+
+**The Gap:**
+- `prompt_runtime.py` exists (517 lines, composes prompts from fragments)
+- `requirements.txt` lists `anthropic>=0.18.0`
+- **BUT:** No code connects `prompt_runtime.execute_task()` → Anthropic API → parse response
+
+**The Question:** How do we bridge `composed_prompt` → `agent_output`?
+
+### Solution Options
+
+#### Option A: Direct Anthropic SDK Integration
+**Description:** Call Anthropic API directly from orchestrator/handlers.
+
+```python
+from anthropic import Anthropic
+
+def _execute_agent(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    # 1. Compose prompt
+    runtime = PromptRuntime()
+    prompt = runtime.execute_task(agent_name, task_id="main", context=inputs)
+
+    # 2. Call Anthropic API
+    client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    # 3. Parse response
+    return json.loads(response.content[0].text)
+```
+
+**Pros:**
+- Simple, direct, no abstraction overhead
+- Full control over API parameters
+- Easy to debug
+
+**Cons:**
+- Tightly coupled to Anthropic (vendor lock-in)
+- No retry/backoff logic
+- No cost tracking
+- No streaming support
+
+#### Option B: LangChain Integration
+**Description:** Use LangChain as LLM abstraction layer.
+
+```python
+from langchain.llms import Anthropic
+from langchain.chains import LLMChain
+
+def _execute_agent(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    llm = Anthropic(model="claude-3-5-sonnet-20241022")
+    chain = LLMChain(llm=llm, prompt=compose_prompt(...))
+    result = chain.run(inputs)
+    return parse_result(result)
+```
+
+**Pros:**
+- Provider-agnostic (can swap Anthropic → OpenAI → Local)
+- Built-in retry, caching, logging
+- Rich ecosystem (tools, memory, agents)
+
+**Cons:**
+- Heavy dependency (100+ packages)
+- Abstraction leakage (LangChain-specific concepts)
+- Overhead for simple use cases
+- Learning curve
+
+#### Option C: Custom LLM Client (Thin Wrapper)
+**Description:** Build a lightweight `LLMClient` class with exactly what we need.
+
+```python
+class LLMClient:
+    def __init__(self, provider: str = "anthropic"):
+        self.provider = provider
+        self.client = self._init_client()
+        self.cost_tracker = CostTracker()
+
+    def invoke(self, prompt: str, model: str, max_tokens: int) -> str:
+        # Retry logic with exponential backoff
+        for attempt in range(3):
+            try:
+                response = self.client.messages.create(
+                    model=model,
+                    max_tokens=max_tokens,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+
+                # Track cost
+                self.cost_tracker.record(
+                    input_tokens=response.usage.input_tokens,
+                    output_tokens=response.usage.output_tokens,
+                    model=model
+                )
+
+                return response.content[0].text
+            except RateLimitError:
+                time.sleep(2 ** attempt)
+
+        raise LLMInvocationError("Max retries exceeded")
+```
+
+**Pros:**
+- Lightweight (no heavy dependencies)
+- Full control over behavior
+- Built-in retry, cost tracking, error handling
+- Easy to extend (add streaming, caching later)
+
+**Cons:**
+- Must implement retry/rate-limiting ourselves
+- Not provider-agnostic (but could be extended)
+
+### **🎯 RECOMMENDATION: Option C (Custom LLM Client)**
+
+**Rationale:**
+- **Pragmatic:** We need retry, cost tracking, error handling - but not LangChain's full ecosystem
+- **Control:** Full visibility into LLM invocation behavior
+- **Extensible:** Can add features as needed (streaming, caching, multi-provider)
+- **Testable:** Easy to mock for testing
+
+**Implementation:**
+```python
+# agency_os/00_system/runtime/llm_client.py
+class LLMClient:
+    """Thin wrapper around LLM providers with retry, cost tracking, and error handling"""
+
+# In core_orchestrator.py
+def _execute_agent(self, agent_name: str, task_id: str, inputs: Dict) -> Dict:
+    # Compose prompt
+    runtime = PromptRuntime()
+    prompt = runtime.execute_task(agent_name, task_id, inputs)
+
+    # Invoke LLM
+    llm = LLMClient(provider="anthropic")
+    response = llm.invoke(prompt, model="claude-3-5-sonnet-20241022", max_tokens=4096)
+
+    # Parse JSON output
+    return self._parse_agent_response(response)
+```
+
+---
+
+## Decision 7: Cost Management & Rate Limiting (P1)
+
+### Problem Analysis
+
+**Current state:**
+- Full SDLC = ~15-20 agent invocations
+- PLANNING alone = 6 agents (if RESEARCH enabled)
+- At $3/MTok input, $15/MTok output:
+  - Average prompt: ~50K tokens (input)
+  - Average response: ~5K tokens (output)
+  - **Cost per agent: ~$0.23**
+  - **Cost per full SDLC: ~$3.50**
+
+**The Gap:** No cost tracking, no budget limits, no rate limiting.
+
+**The Question:** How do we prevent runaway costs and API quota exhaustion?
+
+### Solution Options
+
+#### Option A: Post-Execution Cost Reports
+**Description:** Track costs after execution, report to user.
+
+```python
+# After workflow completes
+cost_report = {
+    'total_input_tokens': 750000,
+    'total_output_tokens': 80000,
+    'total_cost_usd': 3.45,
+    'breakdown_by_phase': {...}
+}
+manifest.artifacts['cost_report'] = cost_report
+```
+
+**Pros:**
+- Simple to implement
+- No blocking (fast execution)
+
+**Cons:**
+- Reactive (user sees cost after spending)
+- No budget enforcement
+
+#### Option B: Pre-Execution Cost Estimation + Approval
+**Description:** Estimate cost before starting workflow, ask user to approve.
+
+```python
+# Before starting SDLC
+estimated_cost = orchestrator.estimate_cost(manifest)
+print(f"Estimated cost: ${estimated_cost:.2f}")
+if not user_approves():
+    raise BudgetExceededError("User rejected estimated cost")
+```
+
+**Pros:**
+- Proactive (user approves before spending)
+- Prevents unexpected bills
+
+**Cons:**
+- Estimates may be inaccurate
+- Adds friction to workflow
+
+#### Option C: Hybrid (Budget Limits + Real-Time Tracking)
+**Description:** Set budget limits, track in real-time, stop if exceeded.
+
+```python
+# In project_manifest.json
+"budget": {
+    "max_cost_usd": 10.00,
+    "current_cost_usd": 0.00,
+    "alert_threshold": 0.80
+}
+
+# In LLMClient
+def invoke(self, prompt: str, ...) -> str:
+    # Check budget before invocation
+    if self.cost_tracker.current_cost >= self.budget.max_cost:
+        raise BudgetExceededError(f"Budget limit reached: ${self.budget.max_cost}")
+
+    # ... invoke LLM ...
+
+    # Update budget
+    self.cost_tracker.record(input_tokens, output_tokens, model)
+```
+
+**Pros:**
+- Proactive budget enforcement
+- Real-time visibility
+- Prevents runaway costs
+
+**Cons:**
+- More complex implementation
+- Requires cost estimation formulas
+
+### **🎯 RECOMMENDATION: Option C (Hybrid Budget System)**
+
+**Rationale:**
+- **Safety:** Prevents accidental $100+ bills
+- **Transparency:** User sees cost in real-time
+- **Configurable:** Different budgets for different project types (prototype: $5, production: $50)
+
+**Implementation:**
+```python
+# In project_manifest.json schema
+"budget": {
+    "max_cost_usd": 10.00,        # Hard limit
+    "alert_threshold": 0.80,      # Warn at 80%
+    "current_cost_usd": 0.00,
+    "cost_breakdown": {
+        "planning": 0.50,
+        "coding": 0.00,
+        ...
+    }
+}
+
+# Rate limiting for multi-project
+class RateLimiter:
+    """Token bucket algorithm for API rate limiting"""
+    def __init__(self, requests_per_minute: int = 50):
+        self.bucket = TokenBucket(capacity=requests_per_minute)
+
+    def acquire(self) -> None:
+        """Block until token available"""
+        self.bucket.consume(1)
+```
+
+---
+
+## Decision 8: HITL (Human-in-the-Loop) Mechanism (P1)
+
+### Problem Analysis
+
+Current state (from `ORCHESTRATION_workflow_design.yaml:54`):
+```yaml
+- name: "AWAITING_QA_APPROVAL"
+  description: "Ein langlebiger (durable) Wartezustand, der auf eine manuelle HITL-Genehmigung wartet."
+  responsible_framework: "Orchestrator (HITL)"
+```
+
+**The Gap:** This state exists in YAML but has **no implementation**. How does the orchestrator "wait" for human approval?
+
+**The Question:** Blocking wait (orchestrator blocks) or durable wait (orchestrator stops, resumes later)?
+
+### Solution Options
+
+#### Option A: Blocking Wait (CLI Prompt)
+**Description:** Orchestrator blocks until user approves via CLI.
+
+```python
+def _wait_for_qa_approval(self, manifest: ProjectManifest) -> None:
+    print("\n" + "="*60)
+    print("QA APPROVAL REQUIRED")
+    print("="*60)
+    print(f"QA Report: {manifest.artifacts['qa_report']}")
+    print("\nApprove deployment? (yes/no): ")
+
+    response = input().strip().lower()
+    if response != "yes":
+        raise QARejectError("User rejected QA approval")
+```
+
+**Pros:**
+- Simple to implement
+- No infrastructure needed
+
+**Cons:**
+- Blocks orchestrator process (can't handle other projects)
+- Not suitable for async workflows
+- User must stay at terminal
+
+#### Option B: Durable Wait (State Persistence + Resume)
+**Description:** Orchestrator saves state and exits. User approves later, orchestrator resumes.
+
+```python
+# Orchestrator exits after saving state
+manifest.current_phase = ProjectPhase.AWAITING_QA_APPROVAL
+manifest.artifacts['qa_approval_pending'] = True
+self.save_project_manifest(manifest)
+print("Waiting for QA approval. Run 'vibe-cli resume' to continue.")
+sys.exit(0)
+
+# User approves via CLI
+$ vibe-cli approve-qa --project=my-app
+
+# Orchestrator resumes
+$ vibe-cli resume --project=my-app
+manifest = self.load_project_manifest(project_id)
+if manifest.current_phase == ProjectPhase.AWAITING_QA_APPROVAL:
+    if manifest.artifacts.get('qa_approved'):
+        self.transition_to_deployment(manifest)
+```
+
+**Pros:**
+- Non-blocking (orchestrator can exit)
+- User approves at their convenience
+- Works for async workflows
+
+**Cons:**
+- More complex (requires state persistence)
+- Multiple CLI commands needed
+
+#### Option C: Event-Driven (Webhook/Notification)
+**Description:** Orchestrator registers webhook, user approves via external system (Slack, Email, Web UI).
+
+```python
+# Orchestrator registers webhook
+webhook_url = self.register_approval_webhook(manifest.project_id)
+send_notification(
+    type="qa_approval_required",
+    message=f"Approve deployment: {webhook_url}",
+    channels=["slack", "email"]
+)
+
+# External system calls webhook
+POST /api/approvals/{project_id}
+{
+  "approved": true,
+  "approver": "kimeisele"
+}
+
+# Orchestrator resumes on webhook callback
+def on_approval_webhook(project_id: str, approved: bool):
+    manifest = self.load_project_manifest(project_id)
+    if approved:
+        self.transition_to_deployment(manifest)
+```
+
+**Pros:**
+- Most flexible (approve from anywhere)
+- Best UX (Slack/Email notification)
+- Audit trail (who approved, when)
+
+**Cons:**
+- Requires infrastructure (webhook server, notification service)
+- Most complex option
+
+### **🎯 RECOMMENDATION: Option B for Phase 3, Option C for Phase 4**
+
+**Rationale:**
+- **Phase 3:** Durable wait is good enough (CLI-based approval)
+- **Phase 4:** Upgrade to event-driven (Slack/Email integration)
+- **Migration path:** B → C is straightforward (add webhook layer)
+
+**Implementation (Phase 3):**
+```python
+# core_orchestrator.py
+def handle_testing_phase(self, manifest: ProjectManifest) -> None:
+    # ... run tests ...
+
+    # Enter durable wait
+    manifest.current_phase = ProjectPhase.AWAITING_QA_APPROVAL
+    self.save_project_manifest(manifest)
+
+    print("\n🔔 QA Approval Required")
+    print(f"Review: workspaces/{manifest.project_id}/artifacts/qa/qa_report.json")
+    print(f"Approve: vibe-cli approve-qa --project={manifest.project_id}")
+    print(f"Reject:  vibe-cli reject-qa --project={manifest.project_id}")
+
+# vibe-cli.py
+@cli.command()
+def approve_qa(project: str):
+    """Approve QA and proceed to deployment"""
+    orchestrator = Orchestrator()
+    manifest = orchestrator.load_project_manifest(project)
+
+    if manifest.current_phase != ProjectPhase.AWAITING_QA_APPROVAL:
+        raise StateError("Project is not awaiting QA approval")
+
+    manifest.artifacts['qa_approved'] = True
+    manifest.artifacts['qa_approver'] = getpass.getuser()
+    orchestrator.save_project_manifest(manifest)
+
+    # Resume orchestrator
+    orchestrator.handle_deployment_phase(manifest)
+```
+
+---
+
+## Decision 9: State Recovery & Checkpointing (P2)
+
+### Problem Analysis
+
+**Current state:**
+- `orchestrator.py` saves `project_manifest.json` (tracks `current_phase`)
+- **BUT:** What if orchestrator crashes **during** agent execution?
+
+**Scenario:**
+```
+PLANNING phase starts
+├─ MARKET_RESEARCHER executes → ✅ completes
+├─ TECH_RESEARCHER executes → ⏳ in progress
+└─ ORCHESTRATOR CRASHES (power outage, OOM, etc.)
+```
+
+**On restart:** TECH_RESEARCHER must re-execute (costs $0.23, takes 30 seconds).
+
+**The Question:** Can we checkpoint partial progress?
+
+### Solution Options
+
+#### Option A: No Checkpointing (Re-Execute Everything)
+**Description:** On crash, restart entire phase from beginning.
+
+**Pros:**
+- Simple (no checkpointing logic)
+- Idempotent (same inputs → same outputs)
+
+**Cons:**
+- Expensive (re-run all agents)
+- Slow (30-60 seconds per agent)
+
+#### Option B: Agent-Level Checkpointing
+**Description:** Save each agent's output immediately after completion.
+
+```python
+def _execute_research_state(self, manifest: ProjectManifest) -> None:
+    # Try to load checkpoint
+    checkpoint = self.load_checkpoint(manifest, 'research')
+
+    if 'market_analysis' not in checkpoint:
+        market_analysis = self._execute_agent("MARKET_RESEARCHER", {})
+        checkpoint['market_analysis'] = market_analysis
+        self.save_checkpoint(manifest, 'research', checkpoint)
+
+    if 'tech_analysis' not in checkpoint:
+        tech_analysis = self._execute_agent("TECH_RESEARCHER", {})
+        checkpoint['tech_analysis'] = tech_analysis
+        self.save_checkpoint(manifest, 'research', checkpoint)
+
+    # ... continue with FACT_VALIDATOR ...
+```
+
+**Pros:**
+- Resumes from last successful agent
+- Saves cost and time
+
+**Cons:**
+- More complex (checkpoint management)
+- Disk I/O overhead
+
+#### Option C: Hybrid (Checkpoint Only Expensive Agents)
+**Description:** Only checkpoint agents that are expensive (long prompts, slow execution).
+
+```python
+CHECKPOINT_AGENTS = ["MARKET_RESEARCHER", "TECH_RESEARCHER", "CODE_GENERATOR"]
+
+def _execute_agent(self, agent_name: str, inputs: Dict) -> Dict:
+    if agent_name in CHECKPOINT_AGENTS:
+        checkpoint = self.load_checkpoint(manifest, agent_name)
+        if checkpoint:
+            return checkpoint
+
+    result = self._invoke_llm(agent_name, inputs)
+
+    if agent_name in CHECKPOINT_AGENTS:
+        self.save_checkpoint(manifest, agent_name, result)
+
+    return result
+```
+
+**Pros:**
+- Best cost/complexity tradeoff
+- Fast agents don't pay checkpoint overhead
+
+**Cons:**
+- Must maintain CHECKPOINT_AGENTS list
+
+### **🎯 RECOMMENDATION: Option B for Phase 4 (if needed)**
+
+**Rationale:**
+- **Not critical for Phase 3:** Orchestrator crashes are rare (stable Python process)
+- **Valuable for Phase 4:** When running long multi-project workflows
+- **Easy to add later:** Can implement checkpointing without breaking existing code
+
+**Implementation (Phase 4, if needed):**
+```python
+# In project workspace
+workspaces/my_app/
+└── .checkpoints/
+    └── planning_research_20251114_143022.json  # Timestamp-based checkpoints
+
+# In core_orchestrator.py
+def _execute_agent_with_checkpoint(self, agent_name: str, inputs: Dict) -> Dict:
+    checkpoint_key = f"{manifest.current_phase}_{agent_name}"
+    checkpoint = self.checkpoint_manager.load(manifest.project_id, checkpoint_key)
+
+    if checkpoint:
+        print(f"✓ Resuming {agent_name} from checkpoint")
+        return checkpoint
+
+    result = self._execute_agent(agent_name, inputs)
+
+    self.checkpoint_manager.save(manifest.project_id, checkpoint_key, result)
+    return result
+```
+
+---
+
+## Decision 10: Knowledge Base Lifecycle (P2)
+
+### Problem Analysis
+
+**Current state:**
+```
+agency_os/01_planning_framework/knowledge/research/
+├── RESEARCH_market_sizing_formulas.yaml       # When was this last updated?
+├── RESEARCH_competitor_analysis_templates.yaml
+└── RESEARCH_red_flag_taxonomy.yaml
+```
+
+**The Gap:** Knowledge bases are static files with no version tracking, no freshness indicators.
+
+**The Question:** How do we keep knowledge bases current?
+
+### Solution Options
+
+#### Option A: Manual Updates (Git Commits)
+**Description:** Knowledge bases are updated via git commits (like code).
+
+**Pros:**
+- Simple (no special tooling)
+- Git history tracks changes
+
+**Cons:**
+- No freshness metadata
+- No automated updates
+- Can become stale
+
+#### Option B: Versioned Knowledge Bases
+**Description:** Add metadata to knowledge YAML files.
+
+```yaml
+# RESEARCH_market_sizing_formulas.yaml
+metadata:
+  version: "2.1"
+  last_updated: "2025-11-14"
+  maintained_by: "MARKET_RESEARCHER"
+  freshness_policy: "quarterly_review"
+  next_review_date: "2026-02-14"
+
+formulas:
+  tam_sam_som:
+    description: "Total Addressable Market calculation"
+    formula: "TAM = (Number of potential customers) × (ARPU)"
+    ...
+```
+
+**Pros:**
+- Clear versioning
+- Freshness indicators
+- Review reminders
+
+**Cons:**
+- Must maintain metadata manually
+- No automated enforcement
+
+#### Option C: Living Knowledge Base (Agent-Updated)
+**Description:** Agents can update knowledge bases based on new learnings.
+
+```python
+# After MARKET_RESEARCHER completes
+if new_competitor_found:
+    knowledge_updater = KnowledgeBaseUpdater()
+    knowledge_updater.propose_update(
+        file="RESEARCH_competitor_analysis_templates.yaml",
+        section="common_competitors",
+        addition={"name": "NewCompetitor", "category": "SaaS"}
+    )
+    # Human reviews and approves update
+```
+
+**Pros:**
+- Knowledge bases stay current
+- Captures new learnings automatically
+
+**Cons:**
+- Complex (requires update mechanism)
+- Risk of knowledge pollution (bad updates)
+
+### **🎯 RECOMMENDATION: Option B for Phase 3, Consider Option C for Phase 5+**
+
+**Rationale:**
+- **Phase 3:** Versioned metadata is low-effort, high-value
+- **Phase 5+:** Agent-updated knowledge is powerful but requires governance
+- **Hybrid:** Agents propose updates, humans approve
+
+**Implementation (Phase 3):**
+```yaml
+# Standard metadata header for all knowledge YAML files
+metadata:
+  schema_version: "1.0"
+  knowledge_id: "RESEARCH_market_sizing_formulas"
+  version: "2.1"
+  last_updated: "2025-11-14"
+  last_updated_by: "kimeisele"
+  freshness_policy: "quarterly_review"
+  next_review_date: "2026-02-14"
+  status: "active"  # active | deprecated | draft
+  changelog:
+    - version: "2.1"
+      date: "2025-11-14"
+      changes: "Added SaaS-specific TAM formulas"
+    - version: "2.0"
+      date: "2025-08-01"
+      changes: "Restructured for AOS v0.2"
+
+# Add validation in PromptRuntime
+def _load_knowledge_file(self, path: str) -> str:
+    content = yaml.safe_load(open(path))
+
+    # Check freshness
+    next_review = content['metadata']['next_review_date']
+    if datetime.now() > datetime.fromisoformat(next_review):
+        logger.warning(f"Knowledge base {path} is past review date: {next_review}")
+
+    return content
+```
+
+---
+
+## Updated Summary of Recommendations
+
+| Decision | Problem | Recommendation | Priority |
+|----------|---------|----------------|----------|
+| 1 | SDLC Orchestrator | **Hierarchical Orchestrator** (Core + Phase Handlers) | P0 |
+| 2 | Steward Integration | **Hybrid Blocking/Async** (Critical checks block, others async) | P1 |
+| 3 | Schema Validation | **Centralized in Orchestrator** (Single enforcement point) | P1 |
+| 4 | Horizontal Governance | **Continuous Per-Phase Auditing** (Shift-left security) | P2 |
+| 5 | Multi-Project Scaling | **Single-instance now, Async later** (Option A → C) | P2 |
+| **6** | **Agent Invocation** | **Custom LLM Client** (Thin wrapper with retry, cost tracking) | **P0** |
+| **7** | **Cost Management** | **Hybrid Budget System** (Real-time tracking + limits) | **P1** |
+| **8** | **HITL Mechanism** | **Durable Wait (Phase 3) → Event-Driven (Phase 4)** | **P1** |
+| **9** | **State Recovery** | **Agent-Level Checkpointing** (Phase 4, if needed) | **P2** |
+| **10** | **Knowledge Lifecycle** | **Versioned Metadata** (Phase 3) | **P2** |
+
+---
+
+## Updated Implementation Roadmap
+
+### Phase 3: Core SDLC Orchestration (Weeks 4-6)
+
+**Goal:** Transform orchestrator into full SDLC orchestrator + Agent invocation.
+
+**Tasks:**
+1. ✅ Create `core_orchestrator.py` (state machine logic)
+2. ✅ Extract `planning_handler.py` from current `orchestrator.py`
+3. ✅ Create `coding_handler.py`, `testing_handler.py`, `deployment_handler.py`, `maintenance_handler.py`
+4. ✅ Implement schema validation in `core_orchestrator.py`
+5. ✅ **NEW: Create `llm_client.py`** (Decision 6)
+6. ✅ **NEW: Connect `prompt_runtime.py` → `llm_client.py`** (Decision 6)
+7. ✅ **NEW: Implement budget tracking in `project_manifest.json`** (Decision 7)
+8. ✅ **NEW: Implement durable wait for HITL** (Decision 8)
+9. ✅ **NEW: Add knowledge base metadata headers** (Decision 10)
+10. ✅ Update `ORCHESTRATION_workflow_design.yaml` with quality gates
+11. ✅ Test full SDLC flow: PLANNING → CODING → TESTING → DEPLOYMENT → PRODUCTION
+
+**Success Criteria:**
+- ✅ Orchestrator can execute all 5 phases (real LLM invocations, not mocks)
+- ✅ Budget limits are enforced
+- ✅ HITL approval workflow works (CLI-based)
+- ✅ Artifacts are validated against schemas
+- ✅ All existing tests pass
+
+### Phase 4: Governance Integration (Weeks 7-8)
+
+**Goal:** Integrate `system_steward_framework` + upgrade HITL to event-driven.
+
+**Tasks:**
+1. ✅ Define blocking vs. async audit rules in YAML
+2. ✅ Implement `invoke_auditor()` method in `core_orchestrator.py`
+3. ✅ Add prompt security scan (blocking) at PLANNING → CODING transition
+4. ✅ Add code security scan (blocking) at TESTING → DEPLOYMENT transition
+5. ✅ Add async audits (performance, best practices) at each phase completion
+6. ✅ Create audit report artifact schema
+7. ✅ **NEW: Upgrade HITL to event-driven (Slack/Email notifications)** (Decision 8)
+8. ✅ **NEW: Implement agent-level checkpointing (if needed)** (Decision 9)
+9. ✅ Test AUDITOR blocking behavior
+
+**Success Criteria:**
+- ✅ AUDITOR is invoked at phase transitions
+- ✅ Blocking audits can prevent progression
+- ✅ HITL approval via Slack/Email works
+- ✅ Checkpoint recovery works (if implemented)
+
+### Phase 5: Multi-Project Support (Weeks 9-10)
+
+**Goal:** Enable concurrent execution of multiple projects (async model).
+
+**Tasks:**
+1. ✅ Refactor handlers to be async (`async def execute_async(...)`)
+2. ✅ Add `run_all_projects()` method to orchestrator
+3. ✅ Implement project queue management
+4. ✅ Add rate limiting for API calls (prevent quota exhaustion)
+5. ✅ Test parallel execution of 3+ projects
+6. ✅ **NEW: Consider agent-updated knowledge bases** (Decision 10, optional)
+7. ✅ Update documentation with multi-project usage
+
+**Success Criteria:**
+- ✅ Orchestrator can run multiple projects concurrently
+- ✅ Projects don't interfere with each other (proper isolation)
+- ✅ API rate limits are respected
+- ✅ Budgets are tracked per-project
+
+---
+
+## Remaining Open Questions
+
+**Framework Integration Questions (to be addressed in GAD-003):**
 
 1. **CODING Framework API:** What does `02_code_gen_framework` expect as input? (Need to define interface)
 2. **TESTING Framework API:** What does `03_qa_framework` expect as input? (Need to define interface)
-3. **Agent Invocation:** How do we actually invoke agent prompts? (Current implementation is mock)
-   - Option A: Anthropic API directly
-   - Option B: LangChain/LlamaIndex wrapper
-   - Option C: Custom LLM abstraction layer
-4. **HITL Mechanism:** How do we implement "AWAITING_QA_APPROVAL" durable wait state?
-   - Option A: CLI prompt (blocking)
-   - Option B: Web UI approval workflow
-   - Option C: Slack/Discord integration
 
-**These questions will be addressed in subsequent GADs (GAD-003, GAD-004).**
+**Note:** The original "Open Questions" about Agent Invocation and HITL have been promoted to formal Decisions (6 and 8) in this addendum.
 
 ---
 
@@ -742,6 +1524,10 @@ Once approved, this document becomes the architectural blueprint for Phases 3-5 
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.1 (Addendum: Runtime & Operations)
 **Last Updated:** 2025-11-14
 **Next Review:** After Phase 3 implementation
+
+**Changelog:**
+- **v1.1 (2025-11-14):** Added Decisions 6-10 (Runtime & Operations Architecture) after critical Lead Architect review
+- **v1.0 (2025-11-14):** Initial version with Decisions 1-5 (Structural Architecture)
