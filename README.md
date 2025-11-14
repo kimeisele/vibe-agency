@@ -46,13 +46,26 @@ This is **NOT a multi-agent AI system** or automation platform. It's a **structu
 ```
 Say to Claude: "I want to plan a software project using Vibe Agency"
 
-Claude will load VIBE_ALIGNER and guide you through 6 phases:
-1. Education - Choose scope (MVP vs v1.0)
-2. Feature Extraction - Describe your project
-3. Feasibility Validation - Check what's possible
-4. Gap Detection - Find missing dependencies
-5. Scope Negotiation - Align scope with timeline/budget
-6. Output Generation - Get feature_spec.json
+The system follows a 2-phase planning workflow:
+
+PHASE 1: BUSINESS VALIDATION (for commercial projects)
+- Agent: LEAN_CANVAS_VALIDATOR
+- Validates your business model using Lean Canvas methodology
+- Identifies riskiest assumptions
+- Output: lean_canvas_summary.json
+
+PHASE 2: FEATURE SPECIFICATION
+- Agent: VIBE_ALIGNER
+- Uses business context from Phase 1 (if available)
+- Guides you through 6 phases:
+  1. Education - Choose scope (MVP vs v1.0)
+  2. Feature Extraction - Describe your project
+  3. Feasibility Validation - Check what's possible
+  4. Gap Detection - Find missing dependencies
+  5. Scope Negotiation - Align scope with timeline/budget
+  6. Output Generation - Get feature_spec.json
+
+For non-commercial or technical projects, Phase 1 can be skipped.
 ```
 
 **2. Example Project:**
@@ -88,8 +101,9 @@ Result: Validated specification ready for development
 ```
 vibe-agency/
 ├── agency_os/                      # Core system
-│   ├── 01_planning_framework/      # Planning agents (VIBE_ALIGNER, GENESIS_BLUEPRINT)
+│   ├── 01_planning_framework/      # Planning agents
 │   │   ├── agents/                 # Agent prompts (_prompt_core.md)
+│   │   │   ├── LEAN_CANVAS_VALIDATOR/  # Business model validation (NEW in v1.3)
 │   │   │   ├── VIBE_ALIGNER/       # Feature extraction + validation
 │   │   │   └── GENESIS_BLUEPRINT/  # Architecture generation
 │   │   └── knowledge/              # Knowledge bases (YAML)
@@ -122,22 +136,48 @@ vibe-agency/
 
 ## 🎨 How It Works
 
-### The Planning Workflow
+### The Planning Workflow (2-Phase Model)
 
 ```mermaid
-graph LR
-    A[Vague Idea] --> B[VIBE_ALIGNER]
-    B --> C{Input<br/>Clear?}
-    C -->|Too Vague| D[Ask Clarifying<br/>Questions]
-    D --> B
-    C -->|Sufficient| E[Extract Features]
-    E --> F[Validate Feasibility]
-    F --> G[Check Budget/Timeline]
-    G --> H[Security Baseline]
-    H --> I[feature_spec.json]
-    I --> J[GENESIS_BLUEPRINT]
-    J --> K[architecture.json]
+graph TB
+    Start[Project Idea] --> Check{Commercial<br/>Project?}
+
+    Check -->|Yes| Phase1[PHASE 1: BUSINESS_VALIDATION]
+    Check -->|No/Skip| Phase2[PHASE 2: FEATURE_SPECIFICATION]
+
+    Phase1 --> LCV[LEAN_CANVAS_VALIDATOR]
+    LCV --> LCV1[Validate Business Model]
+    LCV1 --> LCV2[Identify Riskiest Assumptions]
+    LCV2 --> LCS[lean_canvas_summary.json]
+
+    LCS --> Phase2
+
+    Phase2 --> VA[VIBE_ALIGNER]
+    VA --> VA1{Has Lean<br/>Canvas?}
+    VA1 -->|Yes| VA2[Use Business Context]
+    VA1 -->|No| VA3[Full Education Phase]
+    VA2 --> VA4[Extract Features]
+    VA3 --> VA4
+    VA4 --> VA5[Validate Feasibility]
+    VA5 --> VA6[Check Dependencies]
+    VA6 --> VA7[Negotiate Scope]
+    VA7 --> FS[feature_spec.json]
+
+    FS --> GB[GENESIS_BLUEPRINT]
+    GB --> Arch[architecture.json]
+
+    style Phase1 fill:#e1f5ff
+    style Phase2 fill:#fff4e1
+    style LCS fill:#90ee90
+    style FS fill:#90ee90
+    style Arch fill:#90ee90
 ```
+
+**Key Changes in v1.3:**
+- Added LEAN_CANVAS_VALIDATOR as pre-flight check for commercial projects
+- VIBE_ALIGNER now receives business context from Lean Canvas
+- Planning state split into two sub-states: BUSINESS_VALIDATION → FEATURE_SPECIFICATION
+- Backward compatible: Legacy mode (skip Lean Canvas) still supported
 
 ### What Makes It Work
 

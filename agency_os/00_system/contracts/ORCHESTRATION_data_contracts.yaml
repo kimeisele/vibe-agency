@@ -286,7 +286,7 @@ schemas:
  - name: "qa_report.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
-   description: "Output des TESTING-Zustands. Dient als "Exit-Gate" für die HITL-Genehmigung."
+   description: "Output des TESTING-Zustands. Dient als Exit-Gate für die HITL-Genehmigung."
    fields:
      - name: "schema_version"
        type: "string"
@@ -317,7 +317,7 @@ schemas:
  - name: "deploy_receipt.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
-   description: "Output des DEPLOYMENT-Zustands. Dient als "Beweis" des Deployments."
+   description: "Output des DEPLOYMENT-Zustands. Dient als Beweis des Deployments."
    fields:
      - name: "schema_version"
        type: "string"
