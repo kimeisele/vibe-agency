@@ -4,36 +4,30 @@
   "metadata": {
     "projectId": "temple-companion-001",
     "name": "Temple Companion",
-    "description": "Web application providing daily devotional support for Hare Krishna devotees - mantras, prayers, Ekadasi calendar, and festival dates based on original teachings of Srila Prabhupada",
+    "description": "Web application providing daily devotional support for Hare Krishna devotees based on original teachings of Srila Prabhupada",
     "owner": "devotee@vibe.agency",
     "createdAt": "2025-11-14T13:30:00Z",
-    "lastUpdatedAt": "2025-11-14T13:30:00Z"
+    "lastUpdatedAt": "2025-11-14T14:00:00Z"
   },
   "spec": {
     "vibe": {
       "project_type": "nonprofit",
+      "abstraction_level": "WEB_APP",
       "target_users": "Hare Krishna devotees, temple-goers, spiritual practitioners",
-      "core_features": [
-        "Daily mantras and prayers (morning, noon, evening)",
-        "Ekadasi calendar with fasting dates",
-        "Festival calendar (Vyasa Puja, Janmashtami, etc.)",
-        "Authentic teachings from Srila Prabhupada's books",
-        "Offline-first web app for temple use"
+      "core_purpose": "Daily spiritual practice support with authentic Prabhupada teachings",
+      "key_values": [
+        "Authenticity (original Prabhupada teachings only)",
+        "Accessibility (offline-first, mobile)",
+        "Simplicity (no distractions, pure devotion)"
       ],
-      "technical_requirements": [
-        "Static website (GitHub Pages compatible)",
-        "Responsive design (mobile-first)",
-        "No backend required (all data client-side)",
-        "PWA for offline access"
-      ],
-      "inspiration": "Based on original Prabhupada teachings - no modifications"
+      "delivery_model": "Static web app, free and open-source"
     },
     "genesis": {}
   },
   "status": {
     "projectPhase": "PLANNING",
-    "lastUpdate": "2025-11-14T13:30:00Z",
-    "message": "Project initialized. Ready for feature extraction."
+    "lastUpdate": "2025-11-14T14:00:00Z",
+    "message": "Project initialized. Manifest cleaned up to high-level metadata only."
   },
   "artifacts": {
     "planning": {},
