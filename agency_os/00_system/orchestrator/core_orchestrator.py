@@ -207,7 +207,8 @@ class CoreOrchestrator:
         self,
         repo_root: Path,
         workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml",
-        contracts_yaml: str = "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+        contracts_yaml: str = "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml",
+        execution_mode: str = "delegated"
     ):
         """
         Initialize core orchestrator.
@@ -216,10 +217,12 @@ class CoreOrchestrator:
             repo_root: Root directory of vibe-agency repo
             workflow_yaml: Path to workflow YAML (relative to repo_root)
             contracts_yaml: Path to contracts YAML (relative to repo_root)
+            execution_mode: Execution mode - "delegated" (default, Claude Code integration) or "autonomous" (legacy)
         """
         self.repo_root = Path(repo_root)
         self.workflow_yaml_path = self.repo_root / workflow_yaml
         self.contracts_yaml_path = self.repo_root / contracts_yaml
+        self.execution_mode = execution_mode
 
         # Load workflow design
         self.workflow = self._load_workflow()
@@ -227,7 +230,7 @@ class CoreOrchestrator:
         # Initialize schema validator
         self.validator = SchemaValidator(self.contracts_yaml_path)
 
-        # Initialize LLM client (will use NoOpClient if no API key)
+        # Initialize LLM client (only for autonomous mode)
         self.llm_client = None  # Lazy initialization per-project (to use project budget)
 
         # Initialize prompt runtime
@@ -239,7 +242,7 @@ class CoreOrchestrator:
         # Lazy-load handlers
         self._handlers = {}
 
-        logger.info("Core Orchestrator initialized")
+        logger.info(f"Core Orchestrator initialized (mode: {execution_mode})")
 
     # -------------------------------------------------------------------------
     # WORKFLOW LOADING
@@ -441,9 +444,10 @@ class CoreOrchestrator:
         manifest: ProjectManifest
     ) -> Dict[str, Any]:
         """
-        Execute agent by composing prompt and invoking LLM.
+        Execute agent by composing prompt and delegating to appropriate executor.
 
         Implements GAD-002 Decision 6: Agent Invocation Architecture
+        NEW: Supports delegated execution (Claude Code integration)
 
         Args:
             agent_name: Name of agent (e.g., "VIBE_ALIGNER")
@@ -454,47 +458,20 @@ class CoreOrchestrator:
         Returns:
             Agent output (parsed JSON)
         """
-        # Initialize LLM client with project budget
-        if not self.llm_client:
-            budget_limit = manifest.budget.get('max_cost_usd', 10.0)
-            self.llm_client = LLMClient(budget_limit=budget_limit)
-
         try:
-            # 1. Compose prompt using PromptRuntime
+            # 1. Compose prompt using PromptRuntime (ALWAYS - this is the "Arm's" job)
             logger.info(f"🤖 Executing agent: {agent_name}.{task_id}")
             prompt = self.prompt_runtime.execute_task(agent_name, task_id, inputs)
 
-            # 2. Invoke LLM
-            response = self.llm_client.invoke(
-                prompt=prompt,
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=4096
-            )
-
-            # 3. Update budget in manifest
-            cost_summary = self.llm_client.get_cost_summary()
-            manifest.budget['current_cost_usd'] = cost_summary['total_cost_usd']
-
-            # Track cost breakdown by phase
-            phase_key = manifest.current_phase.value.lower()
-            if phase_key not in manifest.budget.get('cost_breakdown', {}):
-                manifest.budget.setdefault('cost_breakdown', {})[phase_key] = 0.0
-            manifest.budget['cost_breakdown'][phase_key] = cost_summary['total_cost_usd']
-
-            # Check budget alert threshold
-            if cost_summary.get('budget_used_percent', 0) >= manifest.budget.get('alert_threshold', 0.80) * 100:
-                logger.warning(
-                    f"⚠️  Budget alert: {cost_summary['budget_used_percent']:.1f}% used "
-                    f"(${cost_summary['total_cost_usd']:.2f} / ${manifest.budget['max_cost_usd']:.2f})"
-                )
-
-            # 4. Parse JSON output
-            try:
-                return json.loads(response.content)
-            except json.JSONDecodeError:
-                # If not JSON, return as text
-                logger.warning(f"Agent {agent_name} returned non-JSON response")
-                return {"text": response.content}
+            # 2. Route based on execution mode
+            if self.execution_mode == "delegated":
+                # NEW: Request intelligence from external operator (Claude Code)
+                return self._request_intelligence(agent_name, task_id, prompt, manifest)
+            elif self.execution_mode == "autonomous":
+                # OLD: Direct LLM invocation (legacy mode for testing)
+                return self._execute_autonomous(agent_name, prompt, manifest)
+            else:
+                raise ValueError(f"Invalid execution mode: {self.execution_mode}")
 
         except BudgetExceededError as e:
             logger.error(f"❌ Budget limit reached: {e}")
@@ -502,6 +479,135 @@ class CoreOrchestrator:
         except Exception as e:
             logger.error(f"❌ Agent execution failed: {e}")
             raise
+
+    def _request_intelligence(
+        self,
+        agent_name: str,
+        task_id: str,
+        prompt: str,
+        manifest: ProjectManifest
+    ) -> Dict[str, Any]:
+        """
+        Request intelligence from external operator (Claude Code) via STDOUT/STDIN handoff.
+
+        This is the "Fließband" (conveyor belt) mechanism - the orchestrator
+        (the "Arm") composes the prompt and hands it to the "Brain" (Claude Code)
+        for execution.
+
+        Protocol:
+        1. Write INTELLIGENCE_REQUEST to STDOUT (JSON)
+        2. Wait for INTELLIGENCE_RESPONSE on STDIN (JSON)
+        3. Return parsed result
+
+        Args:
+            agent_name: Agent name
+            task_id: Task ID
+            prompt: Composed prompt (ready for LLM)
+            manifest: Project manifest
+
+        Returns:
+            Agent result (parsed from response)
+        """
+        # Build intelligence request
+        request = {
+            "type": "INTELLIGENCE_REQUEST",
+            "agent": agent_name,
+            "task_id": task_id,
+            "prompt": prompt,
+            "context": {
+                "project_id": manifest.project_id,
+                "phase": manifest.current_phase.value,
+                "sub_state": manifest.current_sub_state.value if manifest.current_sub_state else None
+            },
+            "wait_for_response": True
+        }
+
+        # Write request to STDOUT with markers (for parsing)
+        print("---INTELLIGENCE_REQUEST_START---", file=sys.stderr)
+        print(json.dumps(request, indent=2))
+        sys.stdout.flush()
+        print("---INTELLIGENCE_REQUEST_END---", file=sys.stderr)
+
+        # Wait for response on STDIN
+        logger.info(f"⏳ Waiting for intelligence response from Claude Code...")
+        response_line = sys.stdin.readline()
+
+        if not response_line:
+            raise RuntimeError("No intelligence response received (EOF on STDIN)")
+
+        # Parse response
+        try:
+            response = json.loads(response_line.strip())
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"Invalid intelligence response (not JSON): {e}")
+
+        # Validate response type
+        if response.get("type") != "INTELLIGENCE_RESPONSE":
+            raise RuntimeError(f"Invalid response type: {response.get('type')}")
+
+        # Extract result
+        result = response.get("result")
+        if result is None:
+            raise RuntimeError("Intelligence response missing 'result' field")
+
+        logger.info(f"✅ Intelligence response received from Claude Code")
+        return result
+
+    def _execute_autonomous(
+        self,
+        agent_name: str,
+        prompt: str,
+        manifest: ProjectManifest
+    ) -> Dict[str, Any]:
+        """
+        Execute agent autonomously (legacy mode) via direct LLM invocation.
+
+        This is the OLD behavior - kept for backward compatibility and testing.
+
+        Args:
+            agent_name: Agent name
+            prompt: Composed prompt
+            manifest: Project manifest
+
+        Returns:
+            Agent output (parsed JSON)
+        """
+        # Initialize LLM client with project budget
+        if not self.llm_client:
+            budget_limit = manifest.budget.get('max_cost_usd', 10.0)
+            self.llm_client = LLMClient(budget_limit=budget_limit)
+
+        # Invoke LLM
+        response = self.llm_client.invoke(
+            prompt=prompt,
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4096
+        )
+
+        # Update budget in manifest
+        cost_summary = self.llm_client.get_cost_summary()
+        manifest.budget['current_cost_usd'] = cost_summary['total_cost_usd']
+
+        # Track cost breakdown by phase
+        phase_key = manifest.current_phase.value.lower()
+        if phase_key not in manifest.budget.get('cost_breakdown', {}):
+            manifest.budget.setdefault('cost_breakdown', {})[phase_key] = 0.0
+        manifest.budget['cost_breakdown'][phase_key] = cost_summary['total_cost_usd']
+
+        # Check budget alert threshold
+        if cost_summary.get('budget_used_percent', 0) >= manifest.budget.get('alert_threshold', 0.80) * 100:
+            logger.warning(
+                f"⚠️  Budget alert: {cost_summary['budget_used_percent']:.1f}% used "
+                f"(${cost_summary['total_cost_usd']:.2f} / ${manifest.budget['max_cost_usd']:.2f})"
+            )
+
+        # Parse JSON output
+        try:
+            return json.loads(response.content)
+        except json.JSONDecodeError:
+            # If not JSON, return as text
+            logger.warning(f"Agent {agent_name} returned non-JSON response")
+            return {"text": response.content}
 
     # -------------------------------------------------------------------------
     # AUDITOR & QUALITY GATES (GAD-002 Decision 2 & 4)
@@ -887,29 +993,67 @@ class CoreOrchestrator:
 
 def main():
     """CLI interface for testing core orchestrator"""
-    import sys
+    import argparse
 
-    if len(sys.argv) < 3:
-        print("Usage: python core_orchestrator.py <repo_root> <project_id>")
-        print("\nExample:")
-        print("  python core_orchestrator.py /home/user/vibe-agency my-project-123")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Agency OS Core Orchestrator - SDLC State Machine Controller",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Delegated mode (default - for Claude Code integration)
+  python core_orchestrator.py /home/user/vibe-agency my-project-123
 
-    repo_root = Path(sys.argv[1])
-    project_id = sys.argv[2]
+  # Autonomous mode (legacy - for testing without Claude Code)
+  python core_orchestrator.py /home/user/vibe-agency my-project-123 --mode=autonomous
+
+Execution Modes:
+  delegated   - Hands off prompts to Claude Code via STDOUT/STDIN (default)
+  autonomous  - Executes prompts directly via Anthropic API (legacy)
+        """
+    )
+
+    parser.add_argument(
+        'repo_root',
+        type=Path,
+        help='Root directory of vibe-agency repository'
+    )
+    parser.add_argument(
+        'project_id',
+        type=str,
+        help='Project ID (from project_manifest.json)'
+    )
+    parser.add_argument(
+        '--mode',
+        type=str,
+        choices=['delegated', 'autonomous'],
+        default='delegated',
+        help='Execution mode (default: delegated)'
+    )
+    parser.add_argument(
+        '--log-level',
+        type=str,
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        default='INFO',
+        help='Logging level (default: INFO)'
+    )
+
+    args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, args.log_level),
         format='%(message)s'
     )
 
     # Initialize orchestrator
-    orchestrator = CoreOrchestrator(repo_root)
+    orchestrator = CoreOrchestrator(
+        repo_root=args.repo_root,
+        execution_mode=args.mode
+    )
 
     # Run full SDLC
     try:
-        orchestrator.run_full_sdlc(project_id)
+        orchestrator.run_full_sdlc(args.project_id)
     except Exception as e:
         logger.error(f"\n❌ Error: {e}")
         raise

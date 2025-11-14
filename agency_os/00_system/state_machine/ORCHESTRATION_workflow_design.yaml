@@ -56,7 +56,14 @@ states:
        responsible_agent: "VIBE_ALIGNER"
        input_artifact: "lean_canvas_summary.json"
        output_artifact: "feature_spec.json"
-   
+
+     - name: "ARCHITECTURE_DESIGN"
+       description: "Transform validated feature spec into buildable software architecture using Genesis Core pattern"
+       responsible_agent: "GENESIS_BLUEPRINT"
+       input_artifact: "feature_spec.json"
+       output_artifact: ["architecture.json", "code_gen_spec.json"]
+       optional: false
+
  - name: "CODING"
    description: "Gesteuert durch das Code-Gen-Framework. Nimmt code_gen_spec entgegen und erzeugt artifact_bundle."
    responsible_framework: "CODE_GEN "

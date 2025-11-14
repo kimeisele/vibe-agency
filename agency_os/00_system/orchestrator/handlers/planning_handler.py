@@ -67,6 +67,8 @@ class PlanningHandler:
                 self._execute_business_validation_state(manifest)
             elif substate['name'] == "FEATURE_SPECIFICATION":
                 self._execute_feature_specification_state(manifest)
+            elif substate['name'] == "ARCHITECTURE_DESIGN":
+                self._execute_architecture_design_state(manifest)
 
         # Apply quality gates before transitioning to CODING (GAD-002 Decision 2)
         from core_orchestrator import ProjectPhase
@@ -316,3 +318,88 @@ class PlanningHandler:
         manifest.artifacts['feature_spec'] = feature_spec
 
         logger.info("✅ FEATURE_SPECIFICATION complete → feature_spec.json")
+
+    # -------------------------------------------------------------------------
+    # ARCHITECTURE DESIGN STATE
+    # -------------------------------------------------------------------------
+
+    def _execute_architecture_design_state(self, manifest) -> None:
+        """
+        Execute ARCHITECTURE_DESIGN sub-state.
+
+        Flow:
+        1. Load feature_spec.json
+        2. Execute GENESIS_BLUEPRINT
+        3. Save architecture.json + code_gen_spec.json
+        """
+        logger.info("🏗️  Starting ARCHITECTURE_DESIGN sub-state...")
+
+        # Load feature spec (required)
+        feature_spec = self.orchestrator.load_artifact(
+            manifest.project_id,
+            'feature_spec.json'
+        )
+
+        if not feature_spec:
+            from core_orchestrator import ArtifactNotFoundError
+            raise ArtifactNotFoundError(
+                "feature_spec.json not found - FEATURE_SPECIFICATION must run first"
+            )
+
+        # Check if ready for architecture design
+        validation = feature_spec.get('validation', {})
+        if not validation.get('ready_for_genesis', False):
+            logger.warning(
+                "⚠️  Feature spec validation incomplete but continuing with architecture design. "
+                "GENESIS_BLUEPRINT may request additional clarifications."
+            )
+
+        # Execute GENESIS_BLUEPRINT
+        architecture_output = self.orchestrator.execute_agent(
+            agent_name="GENESIS_BLUEPRINT",
+            task_id="architecture_generation",
+            inputs={
+                'feature_spec': feature_spec,
+                'project_context': manifest.metadata
+            },
+            manifest=manifest
+        )
+
+        # GENESIS_BLUEPRINT should return both architecture.json and code_gen_spec.json
+        # (either as separate fields or as a combined output - we'll handle both)
+
+        if isinstance(architecture_output, dict) and 'architecture' in architecture_output and 'code_gen_spec' in architecture_output:
+            # Separate outputs
+            architecture = architecture_output['architecture']
+            code_gen_spec = architecture_output['code_gen_spec']
+        else:
+            # Combined output (GENESIS_BLUEPRINT returns everything in one object)
+            # Split it based on schema expectations
+            architecture = architecture_output
+            code_gen_spec = {
+                'modules': architecture_output.get('modules', []),
+                'dependencies': architecture_output.get('dependencies', []),
+                'build_config': architecture_output.get('build_config', {}),
+                'test_strategy': architecture_output.get('test_strategy', {})
+            }
+
+        # Save architecture.json
+        self.orchestrator.save_artifact(
+            manifest.project_id,
+            'architecture.json',
+            architecture,
+            validate=False  # TODO: Add schema validation in Phase 4
+        )
+
+        # Save code_gen_spec.json (CRITICAL for CODING phase!)
+        self.orchestrator.save_artifact(
+            manifest.project_id,
+            'code_gen_spec.json',
+            code_gen_spec,
+            validate=False  # TODO: Add schema validation in Phase 4
+        )
+
+        manifest.artifacts['architecture'] = architecture
+        manifest.artifacts['code_gen_spec'] = code_gen_spec
+
+        logger.info("✅ ARCHITECTURE_DESIGN complete → architecture.json + code_gen_spec.json")

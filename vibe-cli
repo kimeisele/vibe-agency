@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""
+VIBE-CLI - Agency OS Command Line Interface
+============================================
+
+This is the "Fließband" (conveyor belt) that connects Claude Code (the "Brain")
+to the orchestrator (the "Arm").
+
+Architecture:
+- Launches core_orchestrator.py in delegated mode
+- Monitors STDOUT for INTELLIGENCE_REQUESTs
+- Executes prompts via Anthropic API (or delegates to Claude Code)
+- Sends INTELLIGENCE_RESPONSEs back via STDIN
+
+Version: 1.0 (Delegated Execution Architecture)
+"""
+
+import os
+import sys
+import json
+import logging
+import subprocess
+import anthropic
+from pathlib import Path
+from typing import Optional, Dict, Any
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class VibeCLI:
+    """
+    Main CLI class that manages the orchestrator <-> Claude Code handoff.
+    """
+
+    def __init__(self, repo_root: Path, anthropic_api_key: Optional[str] = None):
+        """
+        Initialize vibe-cli.
+
+        Args:
+            repo_root: Root of vibe-agency repo
+            anthropic_api_key: Anthropic API key (optional, reads from env)
+        """
+        self.repo_root = Path(repo_root)
+        self.anthropic_api_key = anthropic_api_key or os.environ.get('ANTHROPIC_API_KEY')
+
+        if not self.anthropic_api_key:
+            logger.warning("⚠️  No ANTHROPIC_API_KEY found - intelligence requests will fail")
+
+        self.client = anthropic.Anthropic(api_key=self.anthropic_api_key) if self.anthropic_api_key else None
+
+        # Orchestrator path
+        self.orchestrator_path = self.repo_root / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+
+        if not self.orchestrator_path.exists():
+            raise FileNotFoundError(f"Orchestrator not found: {self.orchestrator_path}")
+
+    def run_project(self, project_id: str, mode: str = "delegated") -> None:
+        """
+        Run SDLC for a project with Claude Code integration.
+
+        Args:
+            project_id: Project ID
+            mode: Execution mode (delegated or autonomous)
+        """
+        logger.info(f"🚀 Starting Agency OS for project: {project_id}")
+        logger.info(f"   Execution mode: {mode}")
+        logger.info(f"   Repository: {self.repo_root}")
+
+        if mode == "delegated":
+            self._run_delegated(project_id)
+        elif mode == "autonomous":
+            self._run_autonomous(project_id)
+        else:
+            raise ValueError(f"Invalid mode: {mode}")
+
+    def _run_delegated(self, project_id: str) -> None:
+        """
+        Run orchestrator in delegated mode with STDIN/STDOUT handoff.
+
+        This method:
+        1. Launches orchestrator as subprocess
+        2. Monitors STDOUT for INTELLIGENCE_REQUESTs
+        3. Executes prompts via Anthropic API
+        4. Sends responses back via STDIN
+        """
+        logger.info("🔗 Launching orchestrator in delegated mode...")
+
+        # Launch orchestrator
+        cmd = [
+            sys.executable,
+            str(self.orchestrator_path),
+            str(self.repo_root),
+            project_id,
+            "--mode=delegated"
+        ]
+
+        logger.info(f"   Command: {' '.join(cmd)}")
+
+        # Start process with pipes
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1  # Line buffered
+        )
+
+        logger.info("✅ Orchestrator launched (PID: {})".format(process.pid))
+
+        # Monitor process output
+        self._monitor_orchestrator(process)
+
+    def _monitor_orchestrator(self, process: subprocess.Popen) -> None:
+        """
+        Monitor orchestrator STDOUT/STDERR and handle intelligence requests.
+
+        Args:
+            process: Orchestrator subprocess
+        """
+        intelligence_request_buffer = []
+        capturing_request = False
+
+        try:
+            while True:
+                # Read from STDOUT
+                line = process.stdout.readline()
+
+                if not line:
+                    # Process finished
+                    break
+
+                # Check for intelligence request markers
+                if "---INTELLIGENCE_REQUEST_START---" in line:
+                    capturing_request = True
+                    intelligence_request_buffer = []
+                    logger.info("📩 Intelligence request detected...")
+                    continue
+
+                if "---INTELLIGENCE_REQUEST_END---" in line:
+                    capturing_request = False
+                    # Parse and handle request
+                    request_json = ''.join(intelligence_request_buffer)
+                    self._handle_intelligence_request(request_json, process)
+                    continue
+
+                if capturing_request:
+                    intelligence_request_buffer.append(line)
+                else:
+                    # Regular output - print to console
+                    print(line, end='')
+
+                # Also check stderr for log messages
+                # (non-blocking read would be better, but this works for now)
+
+        except KeyboardInterrupt:
+            logger.info("\n⏸️  Interrupted by user")
+            process.terminate()
+
+        except Exception as e:
+            logger.error(f"❌ Error monitoring orchestrator: {e}")
+            process.terminate()
+            raise
+
+        finally:
+            # Wait for process to finish
+            return_code = process.wait()
+            if return_code == 0:
+                logger.info("✅ Orchestrator finished successfully")
+            else:
+                logger.error(f"❌ Orchestrator failed with code {return_code}")
+
+    def _handle_intelligence_request(self, request_json: str, process: subprocess.Popen) -> None:
+        """
+        Handle an intelligence request from orchestrator.
+
+        Args:
+            request_json: JSON string of intelligence request
+            process: Orchestrator subprocess
+        """
+        try:
+            # Parse request
+            request = json.loads(request_json)
+
+            agent = request.get('agent')
+            task_id = request.get('task_id')
+            prompt = request.get('prompt')
+            context = request.get('context', {})
+
+            logger.info(f"🤖 Intelligence Request:")
+            logger.info(f"   Agent: {agent}")
+            logger.info(f"   Task: {task_id}")
+            logger.info(f"   Context: {context}")
+            logger.info(f"   Prompt length: {len(prompt)} chars")
+
+            # Execute prompt
+            logger.info(f"⚙️  Executing prompt via Anthropic API...")
+            result = self._execute_prompt(prompt, agent, task_id)
+
+            # Build response
+            response = {
+                "type": "INTELLIGENCE_RESPONSE",
+                "agent": agent,
+                "task_id": task_id,
+                "result": result,
+                "metadata": {
+                    "executor": "vibe-cli",
+                    "model": "claude-3-5-sonnet-20241022"
+                }
+            }
+
+            # Send response to orchestrator via STDIN
+            response_json = json.dumps(response)
+            logger.info(f"📤 Sending intelligence response...")
+            process.stdin.write(response_json + "\n")
+            process.stdin.flush()
+            logger.info(f"✅ Intelligence response sent")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to handle intelligence request: {e}")
+            # Send error response
+            error_response = {
+                "type": "INTELLIGENCE_RESPONSE",
+                "result": {"error": str(e)},
+                "metadata": {"error": True}
+            }
+            process.stdin.write(json.dumps(error_response) + "\n")
+            process.stdin.flush()
+
+    def _execute_prompt(self, prompt: str, agent: str, task_id: str) -> Dict[str, Any]:
+        """
+        Execute a prompt via Anthropic API.
+
+        Args:
+            prompt: Prompt text
+            agent: Agent name
+            task_id: Task ID
+
+        Returns:
+            Parsed JSON result
+        """
+        if not self.client:
+            raise RuntimeError("Anthropic API client not initialized (no API key)")
+
+        # Call Anthropic API
+        response = self.client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4096,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
+        )
+
+        # Extract text content
+        content = response.content[0].text
+
+        # Try to parse as JSON
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            logger.warning(f"⚠️  Agent {agent} returned non-JSON response, wrapping in dict")
+            return {"text": content}
+
+    def _run_autonomous(self, project_id: str) -> None:
+        """
+        Run orchestrator in autonomous mode (direct execution, no handoff).
+
+        Args:
+            project_id: Project ID
+        """
+        logger.info("⚡ Running in autonomous mode (no Claude Code integration)")
+
+        # Launch orchestrator directly
+        cmd = [
+            sys.executable,
+            str(self.orchestrator_path),
+            str(self.repo_root),
+            project_id,
+            "--mode=autonomous"
+        ]
+
+        result = subprocess.run(cmd)
+        sys.exit(result.returncode)
+
+
+def main():
+    """CLI entry point"""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="VIBE CLI - Agency OS Command Line Interface",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Run project in delegated mode (default)
+  vibe-cli run my-project-123
+
+  # Run in autonomous mode (legacy)
+  vibe-cli run my-project-123 --mode=autonomous
+
+Environment Variables:
+  ANTHROPIC_API_KEY - API key for Claude (required for delegated mode)
+        """
+    )
+
+    parser.add_argument(
+        'command',
+        type=str,
+        choices=['run'],
+        help='Command to execute'
+    )
+    parser.add_argument(
+        'project_id',
+        type=str,
+        help='Project ID'
+    )
+    parser.add_argument(
+        '--mode',
+        type=str,
+        choices=['delegated', 'autonomous'],
+        default='delegated',
+        help='Execution mode (default: delegated)'
+    )
+    parser.add_argument(
+        '--repo-root',
+        type=Path,
+        default=Path.cwd(),
+        help='Repository root (default: current directory)'
+    )
+
+    args = parser.parse_args()
+
+    # Initialize CLI
+    cli = VibeCLI(repo_root=args.repo_root)
+
+    # Execute command
+    if args.command == 'run':
+        cli.run_project(args.project_id, mode=args.mode)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

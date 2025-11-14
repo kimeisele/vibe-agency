@@ -42,3 +42,14 @@ workspaces/*/artifacts/*/*
 
 # Local workspace state (persists active workspace selection)
 .active_workspace
+
+# Workspace artifacts (test project outputs)
+workspaces/*/artifacts/**/*.json
+workspaces/*/artifacts/**/*.md
+workspaces/*/artifacts/**/*.txt
+
+# Exclude test workspaces from version control
+workspaces/test_*/
+
+# Exception: Keep project manifests
+!workspaces/*/project_manifest.json

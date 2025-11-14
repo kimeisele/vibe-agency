@@ -26,9 +26,53 @@ This is **NOT a multi-agent AI system** or automation platform. It's a **structu
 
 **What it's NOT:**
 - ❌ Not a code generator (it plans, doesn't code)
-- ❌ Not autonomous (Claude processes each step manually)
+- ❌ Not autonomous (Claude processes each step manually)*
 - ❌ Not a framework you install (it's a prompt library + knowledge bases)
 - ❌ Not a multi-agent system (single LLM, no agent communication)
+
+_*Note: As of v1.2.1 (ADR-003), the system supports both **delegated execution** (default - Claude Code integration) and **autonomous mode** (legacy - for testing). See [Architecture](#-architecture) below._
+
+---
+
+## 🏗️ Architecture
+
+**New in v1.2.1:** Delegated Execution Architecture ([ADR-003](docs/architecture/ADR-003_Delegated_Execution_Architecture.md))
+
+Vibe Agency uses a **Brain-Arm architecture**:
+
+```
+┌──────────────────────────────────────────┐
+│  CLAUDE CODE (The Brain)                 │
+│  • All LLM calls & intelligence          │
+│  • Full visibility into workflow         │
+└──────────────────────────────────────────┘
+           │ calls        ▲ returns prompt
+           ▼              │
+┌──────────────────────────────────────────┐
+│  core_orchestrator.py (The Arm)          │
+│  • State management                      │
+│  • Prompt composition                    │
+│  • Artifact management                   │
+│  • NO direct LLM calls                   │
+└──────────────────────────────────────────┘
+```
+
+**Two execution modes:**
+
+1. **Delegated (default)** - Claude Code integration via `vibe-cli`
+   - Orchestrator composes prompts, hands them to Claude Code
+   - Claude Code executes and returns results
+   - Full transparency and human oversight
+
+2. **Autonomous (legacy)** - Direct API calls for testing
+   - Orchestrator calls Anthropic API directly
+   - No human in the loop
+   - Kept for backward compatibility
+
+**Learn more:**
+- 📖 [ADR-003: Delegated Execution Architecture](docs/architecture/ADR-003_Delegated_Execution_Architecture.md)
+- 📘 [Delegated Execution Guide](docs/guides/DELEGATED_EXECUTION_GUIDE.md)
+- 📋 [CHANGELOG.md](CHANGELOG.md) - See "Regression Fix" section
 
 ---
 
