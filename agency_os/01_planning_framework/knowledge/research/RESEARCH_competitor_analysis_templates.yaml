@@ -1,6 +1,22 @@
-version: "1.0"
-last_updated: "2025-11-14"
-description: "Templates and frameworks for MARKET_RESEARCHER to analyze competitors"
+# Knowledge Base Metadata (GAD-002 Decision 10)
+metadata:
+  schema_version: "1.0"
+  knowledge_id: "RESEARCH_competitor_analysis_templates"
+  version: "2.0"
+  last_updated: "2025-11-14"
+  last_updated_by: "claude-lead-architect"
+  maintained_by: "MARKET_RESEARCHER"
+  freshness_policy: "quarterly_review"
+  next_review_date: "2026-02-14"
+  status: "active"
+  description: "Templates and frameworks for MARKET_RESEARCHER to analyze competitors"
+  changelog:
+    - version: "2.0"
+      date: "2025-11-14"
+      changes: "Added GAD-002 metadata header for knowledge lifecycle tracking"
+    - version: "1.0"
+      date: "2025-11-14"
+      changes: "Initial version with Porter's Five Forces and Feature Comparison templates"
 
 analysis_frameworks:
   - name: "Porter's Five Forces"
