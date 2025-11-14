@@ -28,6 +28,13 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
+# Configure logging early (before any logger usage)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # CRITICAL FIX #1: Import workspace utilities
 # Add scripts directory to path to enable workspace_utils import
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -65,14 +72,6 @@ class MalformedYAMLError(PromptRuntimeError):
 class CompositionError(PromptRuntimeError):
     """Raised when prompt composition fails"""
     pass
-
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 @dataclass
