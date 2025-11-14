@@ -1,0 +1,20 @@
+{
+  "project_id": "prabhupad_os_001",
+  "project_name": "PrabhupadaOS",
+  "project_type": "nonprofit",
+  "current_state": "PLANNING",
+  "metadata": {
+    "description": "Modular CLI application for reading original Srila Prabhupada books with authentic EPUB parsing",
+    "target_users": "Devotees, spiritual seekers, Hare Krishna community",
+    "key_components": [
+      "E-Book Reader (CLI)",
+      "EPUB Parser (authentic, unmodified texts)",
+      "Modular plugin architecture",
+      "Translation framework (future)",
+      "Distribution via Git"
+    ],
+    "core_values": "Authenticity, originality, no modifications to sacred texts"
+  },
+  "created_at": "2025-11-13T00:00:00Z",
+  "framework_version": "1.1.0"
+}

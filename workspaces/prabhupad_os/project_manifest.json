@@ -1,20 +1,63 @@
 {
-  "project_id": "prabhupad_os_001",
-  "project_name": "PrabhupadaOS",
-  "project_type": "nonprofit",
-  "current_state": "PLANNING",
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
   "metadata": {
+    "projectId": "prabhupad-os-001",
+    "name": "PrabhupadaOS",
     "description": "Modular CLI application for reading original Srila Prabhupada books with authentic EPUB parsing",
-    "target_users": "Devotees, spiritual seekers, Hare Krishna community",
-    "key_components": [
-      "E-Book Reader (CLI)",
-      "EPUB Parser (authentic, unmodified texts)",
-      "Modular plugin architecture",
-      "Translation framework (future)",
-      "Distribution via Git"
-    ],
-    "core_values": "Authenticity, originality, no modifications to sacred texts"
+    "owner": "devotee@example.com",
+    "createdAt": "2025-11-13T00:00:00Z",
+    "lastUpdatedAt": "2025-11-14T13:25:00Z"
   },
-  "created_at": "2025-11-13T00:00:00Z",
-  "framework_version": "1.1.0"
+  "spec": {
+    "vibe": {
+      "project_type": "nonprofit",
+      "target_users": "Devotees, spiritual seekers, Hare Krishna community",
+      "key_components": [
+        "E-Book Reader (CLI)",
+        "EPUB Parser (authentic, unmodified texts)",
+        "Modular plugin architecture",
+        "Translation framework (future)",
+        "Distribution via Git"
+      ],
+      "core_values": "Authenticity, originality, no modifications to sacred texts"
+    },
+    "genesis": {}
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "lastUpdate": "2025-11-14T13:25:00Z",
+    "message": "Project initialized. Migrated to v1alpha1 schema."
+  },
+  "artifacts": {
+    "planning": {
+      "lean_canvas": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/lean_canvas_summary.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      },
+      "requirements": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/phase_01_requirements.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      },
+      "features": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/phase_02_features.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      },
+      "feasibility": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/phase_03_feasibility.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      },
+      "nfr_triage": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/phase_04_nfr_triage.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      },
+      "blueprint": {
+        "path": "workspaces/prabhupad_os/artifacts/planning/genesis_blueprint.json",
+        "created_at": "2025-11-13T00:00:00Z"
+      }
+    },
+    "code": {},
+    "test": {},
+    "deployment": {}
+  }
 }

@@ -1,0 +1,16 @@
+{
+  "project_id": "vibe_coding_framework_001",
+  "project_name": "VIBE Coding Framework",
+  "project_type": "commercial",
+  "abstraction_level": "FRAMEWORK",
+  "current_state": "PLANNING",
+  "metadata": {
+    "description": "Framework enabling non-technical users to create robust code specifications similar to Claude Skills but more dynamic and refactorable",
+    "target_users": "Non-technical users, product managers, business analysts, entrepreneurs without coding knowledge",
+    "core_challenge": "How to build a framework that helps non-coders create professional-grade specifications",
+    "inspiration": "Claude Skills, but more robust and dynamic",
+    "meta_note": "Meta-test: Using planning framework to build a coding framework"
+  },
+  "created_at": "2025-11-13T00:00:00Z",
+  "framework_version": "1.2.0"
+}

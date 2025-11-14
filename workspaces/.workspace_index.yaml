@@ -11,8 +11,8 @@ version: "1.0.0"
 kind: "WorkspaceRegistry"
 metadata:
   description: "Registry of all active Agency OS project workspaces"
-  lastUpdated: "2025-11-12"
-  totalWorkspaces: 1
+  lastUpdated: "2025-11-14"
+  totalWorkspaces: 6
 
 # =================================================================
 # ACTIVE WORKSPACES
@@ -29,6 +29,66 @@ workspaces:
     metadata:
       owner: "agent@vibe.agency"
       tags: ["internal", "agency-os-development"]
+
+  - id: "prabhupad-os-001"
+    name: "prabhupad_os"
+    type: "external"
+    description: "Modular CLI application for reading original Srila Prabhupada books"
+    manifestPath: "workspaces/prabhupad_os/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-13"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "devotee@example.com"
+      tags: ["client", "nonprofit", "cli-app"]
+
+  - id: "vibe-coding-framework-001"
+    name: "vibe_coding_framework"
+    type: "internal"
+    description: "Vibe Coding Framework project workspace"
+    manifestPath: "workspaces/vibe_coding_framework/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-12"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "agent@vibe.agency"
+      tags: ["internal", "framework"]
+
+  - id: "agency-toolkit-001"
+    name: "agency_toolkit"
+    type: "internal"
+    description: "Agency Toolkit project workspace"
+    manifestPath: "workspaces/agency_toolkit/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-12"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "agent@vibe.agency"
+      tags: ["internal", "toolkit"]
+
+  - id: "vibe-research-framework-001"
+    name: "vibe_research_framework"
+    type: "internal"
+    description: "Vibe Research Framework project workspace"
+    manifestPath: "workspaces/vibe_research_framework/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-14"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "agent@vibe.agency"
+      tags: ["internal", "research"]
+
+  - id: "temple-companion-001"
+    name: "temple_companion"
+    type: "external"
+    description: "Web app for Hare Krishna devotees - mantras, prayers, Ekadasi calendar"
+    manifestPath: "workspaces/temple_companion/project_manifest.json"
+    status: "active"
+    createdAt: "2025-11-14"
+    lastUpdated: "2025-11-14"
+    metadata:
+      owner: "devotee@vibe.agency"
+      tags: ["client", "nonprofit", "spiritual", "web-app"]
 
   # Example external client workspace (commented out)
   # - id: "client-a-alpha-001"

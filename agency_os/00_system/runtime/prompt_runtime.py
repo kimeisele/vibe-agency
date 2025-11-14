@@ -23,9 +23,29 @@ Error Handling:
 import yaml
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+
+# Configure logging early (before any logger usage)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# CRITICAL FIX #1: Import workspace utilities
+# Add scripts directory to path to enable workspace_utils import
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.insert(0, str(_REPO_ROOT / 'scripts'))
+
+try:
+    from workspace_utils import resolve_artifact_base_path, get_active_workspace
+    WORKSPACE_UTILS_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"workspace_utils not available: {e}")
+    WORKSPACE_UTILS_AVAILABLE = False
 
 
 # Custom Exceptions
@@ -52,14 +72,6 @@ class MalformedYAMLError(PromptRuntimeError):
 class CompositionError(PromptRuntimeError):
     """Raised when prompt composition fails"""
     pass
-
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -128,6 +140,25 @@ class PromptRuntime:
             print(f"Executing: {agent_id}.{task_id}")
             print(f"{'='*60}\n")
             logger.info(f"Starting composition: {agent_id}.{task_id}")
+
+            # CRITICAL FIX #1: Resolve workspace paths BEFORE composition
+            if WORKSPACE_UTILS_AVAILABLE:
+                workspace_name = context.get('workspace_name', get_active_workspace())
+                artifact_base = resolve_artifact_base_path(workspace_name)
+
+                # Inject resolved paths into context
+                context['_resolved_workspace'] = workspace_name
+                context['_resolved_artifact_base_path'] = str(artifact_base)
+                context['_resolved_planning_path'] = str(artifact_base / 'planning')
+                context['_resolved_coding_path'] = str(artifact_base / 'coding')
+                context['_resolved_qa_path'] = str(artifact_base / 'qa')
+                context['_resolved_deployment_path'] = str(artifact_base / 'deployment')
+
+                print(f"✓ Workspace context resolved: {workspace_name}")
+                print(f"  Artifact base: {artifact_base}")
+                logger.info(f"Workspace: {workspace_name}, Artifacts: {artifact_base}")
+            else:
+                logger.warning("Workspace utilities not available - paths NOT resolved")
 
             # 1. Load composition spec
             comp_spec = self._load_composition_spec(agent_id)
