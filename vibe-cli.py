@@ -12,6 +12,7 @@ You can then copy/paste this into Claude Code.
 """
 
 import sys
+import os
 import argparse
 from pathlib import Path
 
@@ -24,6 +25,14 @@ spec = importlib.util.spec_from_file_location(
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 PromptRuntime = prompt_runtime.PromptRuntime
+
+# CRITICAL FIX #2: Import workspace utilities
+sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+from workspace_utils import (
+    get_workspace_by_name,
+    list_active_workspaces,
+    get_active_workspace
+)
 
 
 # Agent descriptions for CLI
@@ -140,6 +149,63 @@ def generate_prompt(agent_id: str, task_id: str, output_file: str = "COMPOSED_PR
         print()
 
 
+def set_workspace(workspace_name: str):
+    """
+    Set active workspace for this session (CRITICAL FIX #2)
+
+    This sets the $ACTIVE_WORKSPACE environment variable which is used by
+    workspace_utils.py to resolve artifact paths.
+    """
+    print("\n" + "=" * 60)
+    print(f"SETTING ACTIVE WORKSPACE: {workspace_name}")
+    print("=" * 60 + "\n")
+
+    # Validate workspace exists
+    ws = get_workspace_by_name(workspace_name)
+    if not ws:
+        print(f"❌ ERROR: Workspace '{workspace_name}' not found\n")
+        print("Available workspaces:")
+        for w in list_active_workspaces():
+            print(f"  • {w['name']} ({w['type']})")
+            print(f"    {w['description']}")
+            print()
+        return
+
+    # Set environment variable
+    os.environ['ACTIVE_WORKSPACE'] = workspace_name
+
+    print(f"✅ Active workspace set to: {workspace_name}")
+    print(f"   Type: {ws['type']}")
+    print(f"   Manifest: {ws['manifestPath']}")
+    print(f"   Artifacts: workspaces/{workspace_name}/artifacts/\n")
+    print("⚠️  Note: This environment variable is only set for this CLI session.")
+    print("   For persistent workspace context, use system-level environment setup.\n")
+
+
+def list_workspaces():
+    """List all active workspaces"""
+    print("\n" + "=" * 60)
+    print("ACTIVE WORKSPACES")
+    print("=" * 60 + "\n")
+
+    current_workspace = get_active_workspace()
+
+    workspaces = list_active_workspaces()
+    if not workspaces:
+        print("No workspaces found.\n")
+        return
+
+    for ws in workspaces:
+        prefix = "→" if ws['name'] == current_workspace else " "
+        print(f"{prefix} {ws['name']} ({ws['type']})")
+        print(f"    {ws['description']}")
+        print(f"    Manifest: {ws['manifestPath']}")
+        print()
+
+    print(f"Current workspace: {current_workspace}")
+    print("\nUse: ./vibe-cli.py workspace <NAME> to switch\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Vibe Agency CLI - Prompt Generator",
@@ -147,6 +213,8 @@ def main():
         epilog="""
 Examples:
   ./vibe-cli.py list
+  ./vibe-cli.py workspaces
+  ./vibe-cli.py workspace prabhupad_os
   ./vibe-cli.py tasks VIBE_ALIGNER
   ./vibe-cli.py generate VIBE_ALIGNER 02_feature_extraction
   ./vibe-cli.py generate GENESIS_BLUEPRINT 01_select_core_modules
@@ -157,6 +225,13 @@ Examples:
 
     # list command
     subparsers.add_parser("list", help="List all available agents")
+
+    # workspaces command (CRITICAL FIX #2)
+    subparsers.add_parser("workspaces", help="List all active workspaces")
+
+    # workspace command (CRITICAL FIX #2)
+    workspace_parser = subparsers.add_parser("workspace", help="Set active workspace")
+    workspace_parser.add_argument("workspace_name", help="Workspace to activate (e.g., prabhupad_os)")
 
     # tasks command
     tasks_parser = subparsers.add_parser("tasks", help="List tasks for an agent")
@@ -177,6 +252,10 @@ Examples:
 
     if args.command == "list":
         list_agents()
+    elif args.command == "workspaces":
+        list_workspaces()
+    elif args.command == "workspace":
+        set_workspace(args.workspace_name)
     elif args.command == "tasks":
         list_tasks(args.agent_id)
     elif args.command == "generate":
