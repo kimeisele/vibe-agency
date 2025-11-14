@@ -369,5 +369,65 @@ schemas:
        type: "boolean"
        required: true
      - name: "correlated_trace_id"
-       type: "string" # Kritisch für Observability 
+       type: "string" # Kritisch für Observability
        required: false
+
+ - name: "audit_report.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/audit_report.v1.0.0.json"
+   description: "Output of AUDITOR quality gate checks. Contains audit findings and pass/fail status."
+   added_in: "GAD-002 Phase 4"
+   fields:
+     - name: "schema_version"
+       type: "string"
+       required: true
+       default: "1.0"
+     - name: "check_type"
+       type: "string"
+       required: true
+       description: "Type of audit check performed (e.g., prompt_security_scan, code_security_scan)"
+     - name: "severity"
+       type: "enum"
+       required: true
+       values: ["critical", "high", "medium", "info"]
+       description: "Severity level of this audit check"
+     - name: "blocking"
+       type: "boolean"
+       required: true
+       description: "Whether this audit can block state transitions"
+     - name: "status"
+       type: "enum"
+       required: true
+       values: ["PASS", "FAIL", "ERROR", "UNKNOWN"]
+       description: "Audit result status"
+     - name: "findings"
+       type: "array"
+       required: false
+       items:
+         type: "object"
+         properties:
+           - { name: "check_id", type: "string", description: "Check ID from AUDIT_CHECKLIST (e.g., SM-1.1)" }
+           - { name: "severity", type: "enum", values: ["critical", "high", "medium", "low", "info"] }
+           - { name: "category", type: "string", description: "Category (e.g., State Machine, Data Contracts)" }
+           - { name: "description", type: "string", description: "Description of the finding" }
+           - { name: "evidence", type: "string", description: "Evidence/location of the issue" }
+           - { name: "recommendation", type: "string", required: false }
+     - name: "target_files"
+       type: "array"
+       required: false
+       items: "string"
+       description: "Files that were audited"
+     - name: "timestamp"
+       type: "string"
+       required: true
+       description: "ISO 8601 timestamp of when audit was performed"
+     - name: "error"
+       type: "string"
+       required: false
+       description: "Error message if audit execution failed"
+     - name: "metadata"
+       type: "object"
+       required: false
+       properties:
+         - { name: "auditor_version", type: "string" }
+         - { name: "execution_time_ms", type: "integer" }

@@ -504,6 +504,312 @@ class CoreOrchestrator:
             raise
 
     # -------------------------------------------------------------------------
+    # AUDITOR & QUALITY GATES (GAD-002 Decision 2 & 4)
+    # -------------------------------------------------------------------------
+
+    def invoke_auditor(
+        self,
+        check_type: str,
+        manifest: ProjectManifest,
+        severity: str = "info",
+        blocking: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Invoke AUDITOR agent for quality gate checks.
+
+        Implements GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
+
+        Args:
+            check_type: Type of audit check (e.g., "prompt_security_scan", "code_security_scan")
+            manifest: Project manifest
+            severity: Severity level (critical, high, info)
+            blocking: If True, raise exception on failure
+
+        Returns:
+            Audit report dict with status (PASS/FAIL) and findings
+        """
+        logger.info(f"🔍 Running {severity.upper()} audit: {check_type} (blocking={blocking})")
+
+        # Build audit context based on check type
+        audit_context = self._build_audit_context(check_type, manifest)
+
+        try:
+            # Execute AUDITOR agent
+            # Note: AUDITOR doesn't use task_id, it uses audit_mode in runtime_context
+            audit_result = self.execute_agent(
+                agent_name="AUDITOR",
+                task_id="semantic_audit",  # Default task
+                inputs=audit_context,
+                manifest=manifest
+            )
+
+            # Parse audit result
+            status = audit_result.get('status', 'UNKNOWN')
+            findings = audit_result.get('findings', [])
+
+            audit_report = {
+                'check_type': check_type,
+                'severity': severity,
+                'blocking': blocking,
+                'status': status,
+                'findings': findings,
+                'timestamp': datetime.utcnow().isoformat() + "Z"
+            }
+
+            # Log results
+            if status == "PASS":
+                logger.info(f"✅ Audit PASSED: {check_type}")
+            elif status == "FAIL":
+                logger.warning(f"❌ Audit FAILED: {check_type}")
+                if findings:
+                    for finding in findings[:3]:  # Show first 3 findings
+                        logger.warning(f"   - {finding.get('description', 'N/A')}")
+            else:
+                logger.warning(f"⚠️  Audit status UNKNOWN: {check_type}")
+
+            # If blocking and failed, raise exception
+            if blocking and status == "FAIL":
+                raise QualityGateFailure(
+                    f"Quality gate '{check_type}' FAILED (severity={severity})\n"
+                    f"Findings: {len(findings)} issues found\n"
+                    f"First issue: {findings[0].get('description', 'N/A') if findings else 'N/A'}"
+                )
+
+            return audit_report
+
+        except BudgetExceededError:
+            # Budget errors should propagate
+            raise
+        except QualityGateFailure:
+            # Quality gate failures should propagate if blocking
+            raise
+        except Exception as e:
+            # For non-blocking audits, log error and return failure report
+            logger.error(f"❌ Audit execution error: {e}")
+            if blocking:
+                raise QualityGateFailure(f"Audit execution failed: {e}")
+            else:
+                return {
+                    'check_type': check_type,
+                    'severity': severity,
+                    'blocking': blocking,
+                    'status': 'ERROR',
+                    'error': str(e),
+                    'timestamp': datetime.utcnow().isoformat() + "Z"
+                }
+
+    def _build_audit_context(self, check_type: str, manifest: ProjectManifest) -> Dict[str, Any]:
+        """
+        Build audit context for specific check type.
+
+        Maps quality gate check types to AUDITOR input format.
+        """
+        # Base context
+        context = {
+            'audit_mode': check_type,
+            'project_id': manifest.project_id,
+            'current_phase': manifest.current_phase.value,
+            'target_files': []
+        }
+
+        # Check-type specific context
+        if check_type == "prompt_security_scan":
+            # Scan all agent prompts in planning framework
+            context['target_files'] = [
+                'agency_os/01_planning_framework/agents/*/tasks/*.md',
+                'agency_os/01_planning_framework/agents/*/_prompt_core.md'
+            ]
+            context['scan_for'] = [
+                'prompt_injection_vulnerabilities',
+                'instruction_override_risks',
+                'context_pollution'
+            ]
+
+        elif check_type == "data_privacy_scan":
+            # Scan feature specs and planning artifacts for PII leaks
+            context['target_files'] = [
+                f"workspaces/{manifest.project_id}/artifacts/planning/feature_spec.json",
+                f"workspaces/{manifest.project_id}/artifacts/planning/lean_canvas_summary.json"
+            ]
+            context['scan_for'] = [
+                'pii_leaks',
+                'sensitive_data_exposure',
+                'gdpr_compliance'
+            ]
+
+        elif check_type == "code_security_scan":
+            # Scan generated code for security vulnerabilities
+            context['target_files'] = [
+                f"workspaces/{manifest.project_id}/artifacts/coding/generated_code/**/*"
+            ]
+            context['scan_for'] = [
+                'sql_injection',
+                'xss_vulnerabilities',
+                'hardcoded_secrets',
+                'insecure_dependencies'
+            ]
+
+        elif check_type == "license_compliance_scan":
+            # Scan dependencies for license compatibility
+            context['target_files'] = [
+                f"workspaces/{manifest.project_id}/artifacts/coding/code_gen_spec.json"
+            ]
+            context['scan_for'] = [
+                'incompatible_licenses',
+                'copyleft_violations',
+                'missing_attributions'
+            ]
+
+        elif check_type == "feature_spec_validation":
+            # Validate feature_spec against schema
+            context['target_files'] = [
+                f"workspaces/{manifest.project_id}/artifacts/planning/feature_spec.json"
+            ]
+            context['scan_for'] = [
+                'schema_violations',
+                'incomplete_specifications',
+                'logical_inconsistencies'
+            ]
+
+        else:
+            # Generic audit
+            logger.warning(f"Unknown audit check type: {check_type}, using generic context")
+
+        return context
+
+    def apply_quality_gates(
+        self,
+        transition_name: str,
+        manifest: ProjectManifest
+    ) -> None:
+        """
+        Apply quality gates for a state transition.
+
+        Implements GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
+
+        Args:
+            transition_name: Name of transition (e.g., "T1_StartCoding")
+            manifest: Project manifest
+
+        Raises:
+            QualityGateFailure: If blocking quality gate fails
+        """
+        # Find transition in workflow
+        transition = None
+        for t in self.workflow.get('transitions', []):
+            if t['name'] == transition_name:
+                transition = t
+                break
+
+        if not transition or 'quality_gates' not in transition:
+            # No quality gates for this transition
+            return
+
+        logger.info(f"🔒 Applying quality gates for transition: {transition_name}")
+
+        quality_gates = transition['quality_gates']
+        audit_reports = []
+
+        # Run blocking quality gates first
+        for gate in quality_gates:
+            if gate.get('blocking', False):
+                audit_report = self.invoke_auditor(
+                    check_type=gate['check'],
+                    manifest=manifest,
+                    severity=gate.get('severity', 'critical'),
+                    blocking=True
+                )
+                audit_reports.append(audit_report)
+
+        # Run async quality gates (fire and forget)
+        for gate in quality_gates:
+            if not gate.get('blocking', False):
+                try:
+                    audit_report = self.invoke_auditor(
+                        check_type=gate['check'],
+                        manifest=manifest,
+                        severity=gate.get('severity', 'info'),
+                        blocking=False
+                    )
+                    audit_reports.append(audit_report)
+                except Exception as e:
+                    logger.warning(f"Async audit failed (non-blocking): {e}")
+
+        # Store audit reports in manifest
+        if audit_reports:
+            if 'quality_gate_reports' not in manifest.artifacts:
+                manifest.artifacts['quality_gate_reports'] = {}
+            manifest.artifacts['quality_gate_reports'][transition_name] = audit_reports
+
+        logger.info(f"✅ Quality gates passed for: {transition_name}")
+
+    def run_horizontal_audits(
+        self,
+        manifest: ProjectManifest
+    ) -> List[Dict[str, Any]]:
+        """
+        Run horizontal audits for current phase.
+
+        Implements GAD-002 Decision 4: Continuous Per-Phase Auditing
+
+        Args:
+            manifest: Project manifest
+
+        Returns:
+            List of audit reports
+        """
+        # Find current phase in workflow
+        phase_name = manifest.current_phase.value
+        phase_config = None
+
+        for state in self.workflow.get('states', []):
+            if state['name'] == phase_name:
+                phase_config = state
+                break
+
+        if not phase_config or 'horizontal_audits' not in phase_config:
+            logger.info(f"No horizontal audits defined for phase: {phase_name}")
+            return []
+
+        logger.info(f"🔍 Running horizontal audits for phase: {phase_name}")
+
+        horizontal_audits = phase_config['horizontal_audits']
+        audit_results = []
+
+        for audit in horizontal_audits:
+            try:
+                audit_result = self.invoke_auditor(
+                    check_type=audit['name'],
+                    manifest=manifest,
+                    severity=audit.get('severity', 'info'),
+                    blocking=audit.get('blocking', False)
+                )
+                audit_results.append(audit_result)
+            except QualityGateFailure as e:
+                # Blocking audit failed - propagate error
+                logger.error(f"Horizontal audit BLOCKED phase completion: {e}")
+                raise
+            except Exception as e:
+                logger.warning(f"Horizontal audit failed (non-blocking): {e}")
+                audit_results.append({
+                    'check_type': audit['name'],
+                    'severity': audit.get('severity', 'info'),
+                    'blocking': False,
+                    'status': 'ERROR',
+                    'error': str(e),
+                    'timestamp': datetime.utcnow().isoformat() + "Z"
+                })
+
+        # Store horizontal audit results in manifest
+        if audit_results:
+            if 'horizontal_audits' not in manifest.artifacts:
+                manifest.artifacts['horizontal_audits'] = {}
+            manifest.artifacts['horizontal_audits'][phase_name] = audit_results
+
+        logger.info(f"✅ Horizontal audits complete for phase: {phase_name}")
+        return audit_results
+
+    # -------------------------------------------------------------------------
     # PHASE EXECUTION
     # -------------------------------------------------------------------------
 
@@ -512,6 +818,7 @@ class CoreOrchestrator:
         Execute current phase using appropriate handler.
 
         Implements GAD-002 Decision 1: Hierarchical Architecture
+        Implements GAD-002 Decision 4: Continuous Per-Phase Auditing
         """
         # Get handler for current phase
         handler = self.get_phase_handler(manifest.current_phase)
@@ -519,6 +826,15 @@ class CoreOrchestrator:
         # Execute phase
         logger.info(f"▶️  Executing phase: {manifest.current_phase.value}")
         handler.execute(manifest)
+
+        # Run horizontal audits after phase completion (GAD-002 Decision 4)
+        try:
+            self.run_horizontal_audits(manifest)
+        except QualityGateFailure as e:
+            logger.error(f"Phase {manifest.current_phase.value} BLOCKED by horizontal audit")
+            # Save manifest with audit failure
+            self.save_project_manifest(manifest)
+            raise
 
         # Save manifest after phase completion
         self.save_project_manifest(manifest)

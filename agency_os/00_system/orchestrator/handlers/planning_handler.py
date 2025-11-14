@@ -68,8 +68,20 @@ class PlanningHandler:
             elif substate['name'] == "FEATURE_SPECIFICATION":
                 self._execute_feature_specification_state(manifest)
 
-        # Transition to CODING
+        # Apply quality gates before transitioning to CODING (GAD-002 Decision 2)
         from core_orchestrator import ProjectPhase
+        logger.info("🔒 Applying quality gates for PLANNING → CODING transition...")
+
+        try:
+            self.orchestrator.apply_quality_gates(
+                transition_name="T1_StartCoding",
+                manifest=manifest
+            )
+        except Exception as e:
+            logger.error(f"❌ Quality gate BLOCKED transition to CODING: {e}")
+            raise
+
+        # Transition to CODING
         manifest.current_phase = ProjectPhase.CODING
         manifest.current_sub_state = None
 
