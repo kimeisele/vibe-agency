@@ -31,7 +31,8 @@ sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
 from workspace_utils import (
     get_workspace_by_name,
     list_active_workspaces,
-    get_active_workspace
+    get_active_workspace,
+    set_active_workspace
 )
 
 
@@ -171,15 +172,15 @@ def set_workspace(workspace_name: str):
             print()
         return
 
-    # Set environment variable
-    os.environ['ACTIVE_WORKSPACE'] = workspace_name
+    # Set workspace (persists to .active_workspace file)
+    set_active_workspace(workspace_name)
 
     print(f"✅ Active workspace set to: {workspace_name}")
     print(f"   Type: {ws['type']}")
     print(f"   Manifest: {ws['manifestPath']}")
     print(f"   Artifacts: workspaces/{workspace_name}/artifacts/\n")
-    print("⚠️  Note: This environment variable is only set for this CLI session.")
-    print("   For persistent workspace context, use system-level environment setup.\n")
+    print("✅ Workspace persisted to .active_workspace file")
+    print("   All subsequent CLI commands will use this workspace.\n")
 
 
 def list_workspaces():

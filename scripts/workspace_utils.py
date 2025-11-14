@@ -38,10 +38,12 @@ from uuid import UUID
 
 def get_active_workspace() -> str:
     """
-    Returns current workspace context from environment variable.
+    Returns current workspace context from environment variable or state file.
 
     The $ACTIVE_WORKSPACE environment variable is set by SOP_008 (Switch Workspace)
     and determines which workspace manifest all SSF operations target.
+
+    UPDATED: Now persists workspace to .active_workspace file for CLI usage.
 
     Returns:
         str: Workspace name (e.g., 'acme_corp') or 'ROOT' if not set
@@ -55,7 +57,38 @@ def get_active_workspace() -> str:
         >>> get_active_workspace()
         'ROOT'
     """
-    return os.getenv('ACTIVE_WORKSPACE', 'ROOT')
+    # Check environment variable first
+    env_workspace = os.getenv('ACTIVE_WORKSPACE')
+    if env_workspace:
+        return env_workspace
+
+    # Fall back to state file
+    state_file = Path('.active_workspace')
+    if state_file.exists():
+        try:
+            workspace = state_file.read_text().strip()
+            if workspace:
+                return workspace
+        except Exception:
+            pass
+
+    return 'ROOT'
+
+
+def set_active_workspace(workspace_name: str):
+    """
+    Persists active workspace to state file.
+
+    This allows workspace context to persist across CLI invocations.
+
+    Args:
+        workspace_name: Workspace to activate
+    """
+    state_file = Path('.active_workspace')
+    state_file.write_text(workspace_name)
+
+    # Also set environment variable for current process
+    os.environ['ACTIVE_WORKSPACE'] = workspace_name
 
 
 def resolve_manifest_path(workspace_name: Optional[str] = None) -> Path:

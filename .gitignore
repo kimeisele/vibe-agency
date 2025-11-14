@@ -38,4 +38,4 @@ build/
 # Workspaces
 # Exclude generated artifacts but keep project manifests and directory structure
 workspaces/*/artifacts/*/*
-!workspaces/*/artifacts/*/.gitkeep
+!workspaces/*/artifacts/*/.gitkeep.active_workspace
