@@ -98,9 +98,23 @@ class PlanningHandler:
 
     def _should_execute_optional_state(self, state: Dict) -> bool:
         """
-        Ask user if they want to execute optional state.
+        Determine if optional state should be executed.
+
+        In auto mode (default): Skip all optional states
+        In interactive mode: Ask user for each optional state
+
+        Control via environment variable: VIBE_AUTO_MODE=true|false
         """
+        import os
+
+        auto_mode = os.getenv('VIBE_AUTO_MODE', 'true').lower() == 'true'
+
         if state['name'] == "RESEARCH":
+            if auto_mode:
+                logger.info("⏭️  Auto-skipping optional state: RESEARCH (set VIBE_AUTO_MODE=false for interactive)")
+                return False
+
+            # Interactive mode
             print("\n" + "="*60)
             print("OPTIONAL: Research Phase")
             print("="*60)
@@ -230,9 +244,12 @@ class PlanningHandler:
         )
 
         # Execute LEAN_CANVAS_VALIDATOR
+        # NOTE: Using task 03_handoff which generates lean_canvas_summary.json
+        # For full workflow, would run: 01_canvas_interview → 02_risk_analysis → 03_handoff
+        # For testing: Jump directly to 03_handoff (stub mode)
         lean_canvas = self.orchestrator.execute_agent(
             agent_name="LEAN_CANVAS_VALIDATOR",
-            task_id="lean_canvas_creation",
+            task_id="03_handoff",
             inputs={
                 'project_context': manifest.metadata,
                 'research_brief': research_brief  # May be None
