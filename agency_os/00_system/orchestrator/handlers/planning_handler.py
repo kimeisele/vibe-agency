@@ -230,10 +230,11 @@ class PlanningHandler:
         """
         Execute BUSINESS_VALIDATION sub-state.
 
-        Flow:
+        Flow (FULL SEQUENCE - Production Ready):
         1. Load optional research_brief.json (if exists)
-        2. Execute LEAN_CANVAS_VALIDATOR (uses research if available)
-        3. Save lean_canvas_summary.json
+        2. Task 01: Canvas Interview (collect all 9 fields)
+        3. Task 02: Risk Analysis (identify riskiest assumptions)
+        4. Task 03: Handoff (generate lean_canvas_summary.json)
         """
         logger.info("💼 Starting BUSINESS_VALIDATION sub-state...")
 
@@ -243,16 +244,54 @@ class PlanningHandler:
             'research_brief.json'
         )
 
-        # Execute LEAN_CANVAS_VALIDATOR
-        # NOTE: Using task 03_handoff which generates lean_canvas_summary.json
-        # For full workflow, would run: 01_canvas_interview → 02_risk_analysis → 03_handoff
-        # For testing: Jump directly to 03_handoff (stub mode)
+        # -------------------------------------------------------------------------
+        # TASK 01: Canvas Interview
+        # -------------------------------------------------------------------------
+        logger.info("📋 Step 1/3: Canvas Interview (collecting 9 Lean Canvas fields)...")
+
+        canvas_responses = self.orchestrator.execute_agent(
+            agent_name="LEAN_CANVAS_VALIDATOR",
+            task_id="01_canvas_interview",
+            inputs={
+                'project_context': manifest.metadata,
+                'research_brief': research_brief,  # May be None
+                'user_initial_idea': manifest.metadata.get('description', 'New project')
+            },
+            manifest=manifest
+        )
+
+        logger.info("✓ Canvas interview complete")
+
+        # -------------------------------------------------------------------------
+        # TASK 02: Risk Analysis
+        # -------------------------------------------------------------------------
+        logger.info("🔍 Step 2/3: Risk Analysis (identifying riskiest assumptions)...")
+
+        risk_analysis = self.orchestrator.execute_agent(
+            agent_name="LEAN_CANVAS_VALIDATOR",
+            task_id="02_risk_analysis",
+            inputs={
+                'canvas_responses': canvas_responses,
+                'project_context': manifest.metadata
+            },
+            manifest=manifest
+        )
+
+        logger.info("✓ Risk analysis complete")
+
+        # -------------------------------------------------------------------------
+        # TASK 03: Handoff Artifact
+        # -------------------------------------------------------------------------
+        logger.info("📦 Step 3/3: Generating lean_canvas_summary.json artifact...")
+
         lean_canvas = self.orchestrator.execute_agent(
             agent_name="LEAN_CANVAS_VALIDATOR",
             task_id="03_handoff",
             inputs={
+                'canvas_responses': canvas_responses,
+                'riskiest_assumptions': risk_analysis.get('riskiest_assumptions', []),
                 'project_context': manifest.metadata,
-                'research_brief': research_brief  # May be None
+                'research_brief': research_brief
             },
             manifest=manifest
         )
@@ -276,7 +315,7 @@ class PlanningHandler:
 
         manifest.artifacts['lean_canvas_summary'] = lean_canvas
 
-        logger.info("✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json")
+        logger.info("✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json (full sequence: 01→02→03)")
 
     # -------------------------------------------------------------------------
     # FEATURE SPECIFICATION STATE

@@ -300,6 +300,14 @@ class CoreOrchestrator:
         with open(manifest_path, 'r') as f:
             data = json.load(f)
 
+        # Validate manifest against schema (CRITICAL: Do this BEFORE accessing fields)
+        try:
+            self._validate_manifest_structure(data, project_id)
+        except SchemaValidationError as e:
+            raise OrchestratorError(
+                f"Invalid project manifest for '{project_id}':\n{e}"
+            ) from e
+
         # Parse phase
         current_phase = ProjectPhase(data['status']['projectPhase'])
 
@@ -354,12 +362,83 @@ class CoreOrchestrator:
             if workspace_dir.is_dir():
                 manifest_path = workspace_dir / "project_manifest.json"
                 if manifest_path.exists():
-                    with open(manifest_path, 'r') as f:
-                        data = json.load(f)
-                        if data['metadata']['projectId'] == project_id:
-                            return manifest_path
+                    try:
+                        with open(manifest_path, 'r') as f:
+                            data = json.load(f)
+                            # Safely check for projectId (handle invalid manifests)
+                            if data.get('metadata', {}).get('projectId') == project_id:
+                                return manifest_path
+                    except (json.JSONDecodeError, KeyError) as e:
+                        # Skip invalid manifests (log warning but continue search)
+                        logger.warning(
+                            f"Skipping invalid manifest {manifest_path}: {e}"
+                        )
+                        continue
 
         raise FileNotFoundError(f"Project {project_id} not found in workspaces")
+
+    def _validate_manifest_structure(self, data: Dict[str, Any], project_id: str) -> None:
+        """
+        Validate project manifest structure against required schema.
+
+        This catches common errors (missing fields, wrong types) BEFORE
+        we try to access them, providing clear error messages instead of KeyErrors.
+
+        Args:
+            data: Manifest data (loaded JSON)
+            project_id: Project ID (for error messages)
+
+        Raises:
+            SchemaValidationError: If manifest structure is invalid
+        """
+        errors = []
+
+        # Check top-level required fields
+        required_fields = ['apiVersion', 'kind', 'metadata', 'status', 'artifacts']
+        for field in required_fields:
+            if field not in data:
+                errors.append(f"Missing required top-level field: '{field}'")
+
+        # Validate metadata structure
+        if 'metadata' in data:
+            metadata_required = ['projectId', 'name', 'owner', 'createdAt']
+            for field in metadata_required:
+                if field not in data['metadata']:
+                    errors.append(f"Missing required metadata field: 'metadata.{field}'")
+
+        # Validate status structure
+        if 'status' in data:
+            if 'projectPhase' not in data['status']:
+                errors.append("Missing required field: 'status.projectPhase'")
+            else:
+                # Validate phase value
+                valid_phases = ['PLANNING', 'CODING', 'TESTING', 'AWAITING_QA_APPROVAL', 'DEPLOYMENT', 'PRODUCTION', 'MAINTENANCE']
+                if data['status']['projectPhase'] not in valid_phases:
+                    errors.append(
+                        f"Invalid projectPhase: '{data['status']['projectPhase']}'. "
+                        f"Must be one of: {', '.join(valid_phases)}"
+                    )
+
+        # Validate apiVersion
+        if data.get('apiVersion') and data['apiVersion'] != 'agency.os/v1alpha1':
+            errors.append(
+                f"Invalid apiVersion: '{data['apiVersion']}'. "
+                f"Expected: 'agency.os/v1alpha1'"
+            )
+
+        # Validate kind
+        if data.get('kind') and data['kind'] != 'Project':
+            errors.append(
+                f"Invalid kind: '{data['kind']}'. Expected: 'Project'"
+            )
+
+        if errors:
+            raise SchemaValidationError(
+                f"Manifest validation failed for project '{project_id}':\n" +
+                "\n".join(f"  - {e}" for e in errors)
+            )
+
+        logger.debug(f"✓ Manifest structure validation passed for '{project_id}'")
 
     # -------------------------------------------------------------------------
     # ARTIFACT MANAGEMENT (with Schema Validation)
