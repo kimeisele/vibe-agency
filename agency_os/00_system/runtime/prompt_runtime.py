@@ -476,6 +476,7 @@ class PromptRuntime:
         """
         # Dynamic agent registry - supports all 11 agents
         AGENT_REGISTRY = {
+            "LEAN_CANVAS_VALIDATOR": "agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR",
             "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
             "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
             "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
