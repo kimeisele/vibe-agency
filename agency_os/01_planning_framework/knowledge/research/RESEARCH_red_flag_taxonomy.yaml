@@ -1,0 +1,122 @@
+version: "1.0"
+last_updated: "2025-11-14"
+based_on: "Audit document analysis"
+description: "Red flag taxonomy for FACT_VALIDATOR agent to detect hallucinations and unsupported claims"
+
+red_flags:
+  - type: "context-collapse"
+    description: "AI compresses distinct concepts into single misleading claim"
+    examples:
+      - "The market is growing rapidly" # no timeframe, no rate, no source
+      - "Users prefer Feature X" # which users? survey source?
+      - "This is a best practice" # according to whom?
+    detection_pattern: "Vague claim without specific numbers or attribution"
+    severity: "high"
+    required_action: "Request specific timeframe, source, and quantifiable data"
+
+  - type: "plausibly-sounding-falsehood"
+    description: "Claim sounds true but is factually incorrect or unverifiable"
+    examples:
+      - "Stripe has 99.99% uptime" # no source, possibly wrong SLA tier
+      - "React is faster than Vue" # depends on use case, no benchmark cited
+      - "Most developers prefer VS Code" # no survey data
+    detection_pattern: "Specific claim without verifiable source"
+    severity: "critical"
+    required_action: "Block output until source is provided or claim is removed"
+
+  - type: "context-free-platitude"
+    description: "Generic advice that applies to everything (and nothing)"
+    examples:
+      - "Focus on user experience"
+      - "Build a scalable architecture"
+      - "Ensure good performance"
+    detection_pattern: "Generic statement without actionable specifics"
+    severity: "medium"
+    required_action: "Request specific, measurable criteria or remove"
+
+  - type: "category-error"
+    description: "Mixing incompatible concepts or domains"
+    examples:
+      - "Use blockchain for faster database queries" # wrong tech for problem
+      - "AI will solve all customer support issues" # category error
+      - "NoSQL is always faster than SQL" # context-dependent claim
+    detection_pattern: "Tech solution doesn't match problem domain"
+    severity: "high"
+    required_action: "Flag as technical misunderstanding, request clarification"
+
+  - type: "outdated-information"
+    description: "Information that may have been true but is likely outdated"
+    examples:
+      - "Python 2 is widely used" # outdated as of 2020
+      - "jQuery is essential for web development" # outdated advice
+    detection_pattern: "Claims about technology adoption without date"
+    severity: "medium"
+    required_action: "Request verification of current status"
+
+validation_rules:
+  - rule: "all_numerical_claims_need_source"
+    description: "Any claim with numbers (pricing, market size, %) must cite source"
+    examples:
+      - bad: "Market is $5B"
+      - good: "Market is $5B (Gartner, 2024)"
+    enforcement: "mandatory"
+
+  - rule: "all_competitor_claims_need_url"
+    description: "Competitor data must link to their pricing page or docs"
+    examples:
+      - bad: "Asana costs $10/user"
+      - good: "Asana costs $10.99/user (https://asana.com/pricing)"
+    enforcement: "mandatory"
+
+  - rule: "all_technical_feasibility_claims_need_fae_reference"
+    description: "Tech constraints must cite FAE rule or docs"
+    examples:
+      - bad: "WebSockets don't work on serverless"
+      - good: "WebSockets incompatible with serverless (FAE-TECH-001)"
+    enforcement: "mandatory"
+
+  - rule: "all_market_trends_need_date"
+    description: "Market trend claims must include timeframe"
+    examples:
+      - bad: "The market is growing"
+      - good: "The market grew 15% YoY in 2023 (Statista)"
+    enforcement: "mandatory"
+
+  - rule: "comparative_claims_need_context"
+    description: "All 'faster/better/cheaper' claims need benchmarks"
+    examples:
+      - bad: "Technology X is faster"
+      - good: "Technology X is 2x faster for workload Y (benchmark: link)"
+    enforcement: "mandatory"
+
+citation_requirements:
+  critical_claims:
+    - "Market size estimates"
+    - "Competitor pricing"
+    - "Technical feasibility assessments"
+    - "API rate limits and pricing"
+    - "Library maintenance status"
+
+  acceptable_sources:
+    - "Official vendor documentation"
+    - "Peer-reviewed research"
+    - "Industry analyst reports (Gartner, Forrester, IDC)"
+    - "Official GitHub repositories"
+    - "Verified pricing pages"
+    - "Government statistics"
+
+  unacceptable_sources:
+    - "Blog posts without credentials"
+    - "Forum comments"
+    - "Social media posts"
+    - "AI-generated content"
+    - "Outdated documentation (>2 years old)"
+
+quality_scoring:
+  formula: "100 - (critical_issues * 10) - (high_severity * 5) - (medium_severity * 2)"
+  thresholds:
+    excellent: ">= 90"
+    good: "70-89"
+    acceptable: "50-69"
+    poor: "< 50"
+  blocking_threshold: "< 50 OR any critical_issues > 0"

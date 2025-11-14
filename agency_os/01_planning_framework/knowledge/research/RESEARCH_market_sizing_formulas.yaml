@@ -1,0 +1,158 @@
+version: "1.0"
+last_updated: "2025-11-14"
+description: "Market sizing formulas and estimation heuristics for MARKET_RESEARCHER agent"
+
+formulas:
+  - name: "TAM_calculation"
+    full_name: "Total Addressable Market"
+    formula: "Total potential customers × Average revenue per customer"
+    example: "100M freelancers × $120/year = $12B TAM"
+    source: "https://www.svb.com/startup-insights/market-research/tam-sam-som"
+
+  - name: "SAM_calculation"
+    full_name: "Serviceable Addressable Market"
+    formula: "TAM × percentage in your segment"
+    example: "$12B TAM × 5% (designers only) = $600M SAM"
+    source: "https://www.svb.com/startup-insights/market-research/tam-sam-som"
+
+  - name: "SOM_calculation"
+    full_name: "Serviceable Obtainable Market"
+    formula: "SAM × realistic market share (1-5% for startups)"
+    example: "$600M SAM × 2% = $12M SOM (Year 1 target)"
+    source: "https://www.svb.com/startup-insights/market-research/tam-sam-som"
+
+estimation_heuristics:
+  - heuristic: "bottom_up"
+    description: "Start with your product's pricing and count potential customers"
+    best_for: "New markets, niche products"
+    recommended: true
+    note: "PREFERRED method - requires no paid subscriptions"
+
+  - heuristic: "value_theory"
+    description: "Calculate value created for customers, estimate capture %"
+    best_for: "B2B SaaS"
+    recommended: true
+    note: "Calculate based on customer value, no paid data needed"
+
+  - heuristic: "top_down"
+    description: "Start with industry reports (Gartner, Forrester) and narrow down"
+    best_for: "Established markets"
+    recommended: false
+    note: "Requires expensive subscriptions - use bottom_up instead"
+
+data_sources:
+  # =========================================
+  # FREE DATA SOURCES (USE THESE FIRST)
+  # =========================================
+
+  - name: "Google Search"
+    url: "https://www.google.com"
+    access: "Free"
+    cost: "$0 (100 searches/day free via Custom Search API)"
+    reliability: "Medium"
+    use_case: "General market research, competitor discovery"
+    recommended: true
+    note: "Primary source for free research"
+
+  - name: "Crunchbase (Free Tier)"
+    url: "https://www.crunchbase.com"
+    access: "Free"
+    cost: "$0 (limited data)"
+    reliability: "Medium"
+    use_case: "Startup funding, competitor counts, market validation"
+    recommended: true
+    note: "Good for counting competitors and funding trends"
+
+  - name: "ProductHunt"
+    url: "https://www.producthunt.com"
+    access: "Free"
+    cost: "$0"
+    reliability: "Medium"
+    use_case: "Competitor discovery, product trends"
+    recommended: true
+    note: "Excellent for tech products and SaaS"
+
+  - name: "Y Combinator Companies"
+    url: "https://www.ycombinator.com/companies"
+    access: "Free"
+    cost: "$0"
+    reliability: "Medium"
+    use_case: "Startup market sizing, competitor analysis"
+    recommended: true
+    note: "Filter by industry for market size estimation"
+
+  - name: "GitHub Trending"
+    url: "https://github.com/trending"
+    access: "Free"
+    cost: "$0"
+    reliability: "Medium"
+    use_case: "Developer tool trends, library adoption"
+    recommended: true
+    note: "Good proxy for technology adoption"
+
+  - name: "Google Trends"
+    url: "https://trends.google.com"
+    access: "Free"
+    cost: "$0"
+    reliability: "Medium"
+    use_case: "Search volume trends, market interest over time"
+    recommended: true
+    note: "Validate market interest and growth"
+
+  - name: "Reddit (via search)"
+    url: "https://www.reddit.com"
+    access: "Free"
+    cost: "$0"
+    reliability: "Low-Medium"
+    use_case: "User pain points, community insights"
+    recommended: true
+    note: "Great for qualitative market research"
+
+  - name: "Stack Overflow Trends"
+    url: "https://insights.stackoverflow.com/trends"
+    access: "Free"
+    cost: "$0"
+    reliability: "Medium"
+    use_case: "Developer tool adoption, technology trends"
+    recommended: true
+    note: "Excellent for developer-focused products"
+
+  # =========================================
+  # PAID SOURCES (AVOID IF POSSIBLE)
+  # =========================================
+
+  - name: "Statista"
+    url: "https://www.statista.com"
+    access: "Paid"
+    cost: "$39-199/month"
+    reliability: "High"
+    use_case: "General market statistics"
+    recommended: false
+    note: "TOO EXPENSIVE for individuals - use bottom-up sizing instead"
+
+  - name: "Gartner Market Guides"
+    url: "https://www.gartner.com/en/research"
+    access: "Paid"
+    cost: "$15,000-30,000/year"
+    reliability: "High"
+    use_case: "Enterprise software market sizing"
+    recommended: false
+    note: "UNREALISTIC for individuals - only for large enterprises"
+
+  - name: "IBISWorld"
+    url: "https://www.ibisworld.com"
+    access: "Paid"
+    cost: "$1,500+ per report"
+    reliability: "High"
+    use_case: "Industry-specific market research"
+    recommended: false
+    note: "UNREALISTIC for individuals"
+
+  - name: "CB Insights"
+    url: "https://www.cbinsights.com"
+    access: "Paid"
+    cost: "$99-999/month"
+    reliability: "High"
+    use_case: "Market trends and competitive intelligence"
+    recommended: false
+    note: "Expensive - use free alternatives"

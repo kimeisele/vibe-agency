@@ -1,0 +1,31 @@
+task_id: task_01_knowledge_base_audit
+task_name: "Knowledge Base Audit"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required: []
+  optional: []
+
+inputs:
+  - market_analysis.json
+  - tech_analysis.json
+
+outputs:
+  - name: claims_inventory.json
+    type: json
+    description: "Inventory of all claims requiring verification"
+
+validation_gates: []
+
+estimated_effort: "30 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_red_flag_taxonomy.yaml
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All claims extracted from market_analysis and tech_analysis"
+  - "Claims categorized correctly"
+  - "Source requirements identified for each claim"

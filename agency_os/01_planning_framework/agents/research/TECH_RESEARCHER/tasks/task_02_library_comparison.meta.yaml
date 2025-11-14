@@ -1,0 +1,29 @@
+task_id: task_02_library_comparison
+task_name: "Library Comparison"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_api_evaluation
+  optional: []
+
+outputs:
+  - name: library_comparison.json
+    type: json
+    description: "Compared libraries with maintenance status and recommendations"
+
+validation_gates:
+  - gate_library_maintenance_checked
+
+estimated_effort: "60 minutes"
+complexity_score: 5
+
+knowledge_required:
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All libraries have GitHub URLs"
+  - "Maintenance status verified (last commit date)"
+  - "Licenses documented"
+  - "At least 2 alternatives per category compared"

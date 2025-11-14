@@ -1,0 +1,27 @@
+task_id: task_03_stack_recommendation
+task_name: "Stack Recommendation"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_api_evaluation
+    - task_02_library_comparison
+
+outputs:
+  - name: stack_recommendation.json
+    type: json
+    description: "Full stack recommendation with rationale"
+
+validation_gates: []
+
+estimated_effort: "45 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All stack components recommended"
+  - "Rationale provided for each choice"
+  - "Alternatives considered documented"

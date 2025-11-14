@@ -1,0 +1,33 @@
+task_id: task_05_correction_recommendations
+task_name: "Correction Recommendations"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required:
+    - task_01_knowledge_base_audit
+    - task_02_claim_verification
+    - task_03_red_flag_detection
+    - task_04_citation_enforcement
+
+inputs:
+  - flagged_hallucinations.json
+  - citation_index.json
+
+outputs:
+  - name: correction_recommendations.json
+    type: json
+    description: "Actionable recommendations for fixing issues"
+
+validation_gates: []
+
+estimated_effort: "20 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - RESEARCH_red_flag_taxonomy.yaml
+
+success_criteria:
+  - "All issues have recommendations"
+  - "Recommendations are specific and actionable"
+  - "Prioritized by severity"

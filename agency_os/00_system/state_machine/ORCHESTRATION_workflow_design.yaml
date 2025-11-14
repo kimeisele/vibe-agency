@@ -11,13 +11,26 @@ kind: SDLCStateMachine
 # Jeder state entspricht einem Kern-Framework.
 states:
  - name: "PLANNING"
-   description: "Projektplanung und Anforderungsanalyse. Besteht aus zwei Phasen."
+   description: "Projektplanung und Anforderungsanalyse. Besteht aus drei Phasen (Research ist optional)."
    responsible_framework: "ProjectManagement"
    output_artifact: "project_manifest.json"
    sub_states:
+     - name: "RESEARCH"
+       description: "Optional: Fact-based market, technical, and user research before business planning"
+       responsible_agents:
+         - "MARKET_RESEARCHER"
+         - "TECH_RESEARCHER"
+         - "FACT_VALIDATOR"
+         - "USER_RESEARCHER"
+       output_artifact: "research_brief.json"
+       optional: true
+       state_machine_ref: "01_planning_framework/state_machine/RESEARCH_workflow_design.yaml"
+
      - name: "BUSINESS_VALIDATION"
        description: "Validierung des Geschäftsmodells durch Lean Canvas"
        responsible_agent: "LEAN_CANVAS_VALIDATOR"
+       input_artifact: "research_brief.json"  # Optional input
+       input_artifact_optional: true
        output_artifact: "lean_canvas_summary.json"
 
      - name: "FEATURE_SPECIFICATION"
@@ -65,6 +78,22 @@ states:
 
 # 2. Definition der Workflow-Übergänge (Transitions)
 transitions:
+ # Research Phase Transitions (NEW)
+ - name: "T0a_ResearchToBusiness"
+   from_state: "PLANNING.RESEARCH"
+   to_state: "PLANNING.BUSINESS_VALIDATION"
+   trigger: "research_brief.json created AND research_brief.handoff_to_lean_canvas.status == 'READY'"
+   type: "Automated"
+   description: "Research phase completed successfully, proceed to business validation with research insights"
+
+ - name: "T0b_SkipResearchStartBusiness"
+   from_state: "PLANNING"
+   to_state: "PLANNING.BUSINESS_VALIDATION"
+   trigger: "User opts to skip RESEARCH phase OR research not requested"
+   type: "User-Choice"
+   description: "Skip research phase and start directly with business validation"
+
+ # Existing Planning Transitions
  - name: "T0_BusinessToFeatures"
    from_state: "PLANNING.BUSINESS_VALIDATION"
    to_state: "PLANNING.FEATURE_SPECIFICATION"

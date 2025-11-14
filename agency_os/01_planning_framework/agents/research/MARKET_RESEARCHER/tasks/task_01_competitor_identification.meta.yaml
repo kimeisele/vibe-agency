@@ -1,0 +1,29 @@
+task_id: task_01_competitor_identification
+task_name: "Competitor Identification"
+version: "1.0"
+agent: MARKET_RESEARCHER
+
+dependencies:
+  required: []
+  optional: []
+
+outputs:
+  - name: competitor_list.json
+    type: json
+    description: "List of identified competitors with sources"
+
+validation_gates:
+  - gate_all_competitors_cited
+
+estimated_effort: "30-45 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - RESEARCH_competitor_analysis_templates.yaml
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "At least 3 competitors identified"
+  - "All competitors have source URLs"
+  - "Mix of direct and indirect competitors"
+  - "All URLs tested and working"

@@ -1,0 +1,28 @@
+task_id: task_01_api_evaluation
+task_name: "API Evaluation"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required: []
+  optional: []
+
+outputs:
+  - name: api_evaluation.json
+    type: json
+    description: "Evaluated APIs with pricing, rate limits, and recommendations"
+
+validation_gates:
+  - gate_all_apis_have_docs
+
+estimated_effort: "45-60 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All required API categories identified"
+  - "At least 2 alternatives per category researched"
+  - "All APIs have documentation URLs"
+  - "Pricing and rate limits specific and verifiable"

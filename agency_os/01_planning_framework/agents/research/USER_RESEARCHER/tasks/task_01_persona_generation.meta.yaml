@@ -1,0 +1,32 @@
+task_id: task_01_persona_generation
+task_name: "Persona Generation"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required: []
+  optional: []
+
+inputs:
+  - user_vision
+  - market_analysis
+
+outputs:
+  - name: personas.json
+    type: json
+    description: "2-3 user personas following industry standard format"
+
+validation_gates:
+  - gate_personas_industry_standard
+
+estimated_effort: "45 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_persona_templates.yaml (CRITICAL)
+
+success_criteria:
+  - "2-3 personas generated"
+  - "Follow industry-standard format"
+  - "No anti-patterns"
+  - "Based on market analysis insights"

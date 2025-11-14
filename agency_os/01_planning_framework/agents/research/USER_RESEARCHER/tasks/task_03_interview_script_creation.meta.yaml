@@ -1,0 +1,34 @@
+task_id: task_03_interview_script_creation
+task_name: "Interview Script Creation"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_persona_generation
+    - task_02_pain_point_identification
+
+inputs:
+  - personas.json
+  - pain_points.json
+
+outputs:
+  - name: interview_script.json
+    type: json
+    description: "Interview script with 5-phase structure"
+
+validation_gates:
+  - gate_interview_questions_actionable
+
+estimated_effort: "45 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_interview_question_bank.yaml (CRITICAL)
+
+success_criteria:
+  - "5-phase structure followed"
+  - "All questions open-ended"
+  - "Questions focus on past behavior"
+  - "No leading or yes/no questions"
+  - "Customized for personas"

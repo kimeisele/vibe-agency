@@ -1,0 +1,34 @@
+version: "1.0"
+agent_id: FACT_VALIDATOR
+knowledge_dependencies:
+  required:
+    - path: "../../knowledge/RESEARCH_red_flag_taxonomy.yaml"
+      purpose: "Red flag detection patterns and validation rules"
+      load_priority: 1
+
+    - path: "../../knowledge/RESEARCH_constraints.yaml"
+      purpose: "Citation requirements and quality thresholds"
+      load_priority: 2
+
+  optional: []
+
+validation_rules:
+  - rule: "All numerical claims require sources"
+    source: "RESEARCH_red_flag_taxonomy.yaml"
+    enforcement: "mandatory"
+    blocking: true
+
+  - rule: "All competitor claims require URLs"
+    source: "RESEARCH_red_flag_taxonomy.yaml"
+    enforcement: "mandatory"
+    blocking: true
+
+  - rule: "Quality score must be >= 50"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+    blocking: true
+
+  - rule: "Critical issues must be 0"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+    blocking: true

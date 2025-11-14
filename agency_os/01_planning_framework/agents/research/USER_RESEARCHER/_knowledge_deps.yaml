@@ -1,0 +1,30 @@
+version: "1.0"
+agent_id: USER_RESEARCHER
+knowledge_dependencies:
+  required:
+    - path: "../../knowledge/RESEARCH_persona_templates.yaml"
+      purpose: "Industry-standard persona templates and frameworks"
+      load_priority: 1
+
+    - path: "../../knowledge/RESEARCH_interview_question_bank.yaml"
+      purpose: "Question frameworks and interview best practices"
+      load_priority: 2
+
+    - path: "../../knowledge/RESEARCH_constraints.yaml"
+      purpose: "Quality standards and validation rules"
+      load_priority: 3
+
+  optional: []
+
+validation_rules:
+  - rule: "Personas must follow industry-standard format"
+    source: "RESEARCH_persona_templates.yaml"
+    enforcement: "mandatory"
+
+  - rule: "Interview questions must be open-ended and actionable"
+    source: "RESEARCH_interview_question_bank.yaml"
+    enforcement: "mandatory"
+
+  - rule: "Avoid anti-patterns (too generic, unrealistic combinations)"
+    source: "RESEARCH_persona_templates.yaml"
+    enforcement: "mandatory"

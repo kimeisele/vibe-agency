@@ -1,0 +1,31 @@
+task_id: task_02_pain_point_identification
+task_name: "Pain Point Identification"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_persona_generation
+
+inputs:
+  - personas.json
+  - user_vision
+
+outputs:
+  - name: pain_points.json
+    type: json
+    description: "Consolidated pain points with severity and frequency"
+
+validation_gates: []
+
+estimated_effort: "30 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - RESEARCH_persona_templates.yaml
+
+success_criteria:
+  - "All persona pain points extracted"
+  - "Pain points consolidated and prioritized"
+  - "Severity and frequency assigned"
+  - "Specific, not vague"

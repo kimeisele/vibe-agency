@@ -1,0 +1,30 @@
+task_id: task_04_constraint_identification
+task_name: "Constraint Identification"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_api_evaluation
+    - task_02_library_comparison
+    - task_03_stack_recommendation
+
+outputs:
+  - name: constraint_identification.json
+    type: json
+    description: "Technical constraints and FAE violations"
+
+validation_gates:
+  - gate_fae_violations_cited
+
+estimated_effort: "45 minutes"
+complexity_score: 5
+
+knowledge_required:
+  - FAE_constraints.yaml (CRITICAL)
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All FAE violations reference existing rule IDs"
+  - "All constraints documented"
+  - "Recommendations provided for each constraint"

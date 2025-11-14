@@ -1,0 +1,173 @@
+version: "1.0"
+last_updated: "2025-11-14"
+description: "User persona templates and frameworks for USER_RESEARCHER agent"
+
+persona_template:
+  sections:
+    - section: "Demographics"
+      fields:
+        - name: "Persona name"
+          type: "string"
+          example: "Marketing Mary"
+          note: "Memorable, descriptive name"
+
+        - name: "Age range"
+          type: "string"
+          example: "28-35"
+
+        - name: "Job title"
+          type: "string"
+          example: "Marketing Manager"
+
+        - name: "Company size"
+          type: "string"
+          example: "50-200 employees"
+
+        - name: "Industry"
+          type: "string"
+          example: "B2B SaaS"
+
+        - name: "Location"
+          type: "string"
+          example: "Urban, US/Europe"
+
+    - section: "Psychographics"
+      fields:
+        - name: "Goals"
+          type: "array"
+          example:
+            - "Increase lead generation by 30%"
+            - "Reduce manual work in campaign management"
+            - "Prove ROI to leadership"
+
+        - name: "Pain points"
+          type: "array"
+          example:
+            - "Too many disconnected tools"
+            - "Can't track attribution accurately"
+            - "Limited budget, need to justify spend"
+
+        - name: "Motivations"
+          type: "array"
+          example:
+            - "Career advancement"
+            - "Learning new skills"
+            - "Making data-driven decisions"
+
+        - name: "Frustrations"
+          type: "array"
+          example:
+            - "Tools are too complex"
+            - "Poor customer support"
+            - "Slow onboarding"
+
+    - section: "Behavioral"
+      fields:
+        - name: "Tools currently used"
+          type: "array"
+          example:
+            - "HubSpot"
+            - "Google Analytics"
+            - "Mailchimp"
+
+        - name: "Information sources"
+          type: "array"
+          example:
+            - "Marketing blogs (MarketingProfs, Moz)"
+            - "LinkedIn"
+            - "Industry conferences"
+
+        - name: "Decision criteria"
+          type: "array"
+          example:
+            - "Ease of use"
+            - "Integration with existing tools"
+            - "Price"
+            - "Customer support quality"
+
+        - name: "Tech savviness"
+          type: "enum"
+          values: ["Low", "Medium", "High"]
+          example: "Medium"
+
+    - section: "Quote"
+      description: "A representative quote that captures their mindset"
+      example: "I need tools that help me work smarter, not add more complexity to my day."
+
+persona_archetypes:
+  b2b_saas:
+    - archetype: "The Decision Maker"
+      characteristics:
+        - "C-level or VP"
+        - "Budget authority"
+        - "Cares about ROI, risk, strategic fit"
+        - "Limited time for product evaluation"
+
+    - archetype: "The Champion"
+      characteristics:
+        - "Manager or team lead"
+        - "Evaluates and recommends tools"
+        - "Cares about team productivity and ease of use"
+        - "Needs to build internal business case"
+
+    - archetype: "The End User"
+      characteristics:
+        - "Individual contributor"
+        - "Daily product user"
+        - "Cares about usability and efficiency"
+        - "Limited input on purchasing decision"
+
+  consumer:
+    - archetype: "The Early Adopter"
+      characteristics:
+        - "Loves trying new products"
+        - "Willing to tolerate bugs for cutting-edge features"
+        - "Influences others through social media"
+
+    - archetype: "The Mainstream User"
+      characteristics:
+        - "Needs proven, reliable solutions"
+        - "Values simplicity and support"
+        - "Follows recommendations from trusted sources"
+
+    - archetype: "The Laggard"
+      characteristics:
+        - "Resistant to change"
+        - "Only adopts when forced or when benefits are overwhelming"
+        - "Needs extensive hand-holding"
+
+persona_validation_checklist:
+  - item: "Based on real data (interviews, surveys, analytics)"
+    required: true
+
+  - item: "Specific enough to guide product decisions"
+    required: true
+
+  - item: "Includes measurable goals and pain points"
+    required: true
+
+  - item: "Describes current tools and workflows"
+    required: true
+
+  - item: "Includes decision criteria"
+    required: true
+
+  - item: "Not so narrow that it excludes viable customers"
+    required: false
+
+anti_patterns:
+  - pattern: "Too generic"
+    example: "Our persona is anyone who wants to be more productive"
+    why_bad: "Doesn't provide actionable insights"
+
+  - pattern: "Unrealistic combination"
+    example: "Tech-savvy enterprise executive who codes daily"
+    why_bad: "Conflates multiple distinct personas"
+
+  - pattern: "All positive traits"
+    example: "Our user is smart, motivated, and well-funded"
+    why_bad: "Doesn't identify real constraints or pain points"
+
+  - pattern: "Demographic-only"
+    example: "Female, 25-34, lives in cities"
+    why_bad: "Demographics don't predict behavior or needs"

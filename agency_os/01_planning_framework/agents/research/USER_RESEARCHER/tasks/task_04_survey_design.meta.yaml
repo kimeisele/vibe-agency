@@ -1,0 +1,32 @@
+task_id: task_04_survey_design
+task_name: "Survey Design"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_persona_generation
+    - task_02_pain_point_identification
+
+inputs:
+  - personas.json
+  - pain_points.json
+
+outputs:
+  - name: survey_template.json
+    type: json
+    description: "Survey template with screener, core, and demographic questions"
+
+validation_gates: []
+
+estimated_effort: "30 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - RESEARCH_interview_question_bank.yaml
+
+success_criteria:
+  - "Survey structure (screener, core, demographics)"
+  - "Question types appropriate"
+  - "Estimated time 5-10 minutes"
+  - "Best practices applied"

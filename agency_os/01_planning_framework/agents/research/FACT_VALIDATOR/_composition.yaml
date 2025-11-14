@@ -1,0 +1,46 @@
+composition_version: "2.0"
+agent_id: FACT_VALIDATOR
+agent_version: "1.0"
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Core personality: Senior Fact-Checker & Research Auditor"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "Red flag taxonomy, citation requirements"
+
+  - source: ${task_prompt}
+    type: task
+    required: true
+    path_pattern: tasks/${task_id}.md
+    description: "Specific validation task"
+
+  - source: ${gate_prompts}
+    type: validation
+    required: false
+    resolve_from: tasks/${task_id}.meta.yaml#validation_gates
+    description: "Quality gates"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "Research outputs from MARKET_RESEARCHER and TECH_RESEARCHER"
+
+variables:
+  market_analysis: ${runtime_context.market_analysis}
+  tech_analysis: ${runtime_context.tech_analysis}
+
+conflict_resolution:
+  strategy: strict_merge
+  exceptions: []
+
+notes: |
+  FACT_VALIDATOR validates outputs from MARKET_RESEARCHER and TECH_RESEARCHER.
+  It's the quality gate that prevents hallucinations from reaching the final research_brief.
+  This agent has BLOCKING POWER - if quality_score < 50 or critical_issues > 0,
+  the research brief cannot proceed to LEAN_CANVAS_VALIDATOR.

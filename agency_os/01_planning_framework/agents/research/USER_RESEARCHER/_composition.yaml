@@ -1,0 +1,44 @@
+composition_version: "2.0"
+agent_id: USER_RESEARCHER
+agent_version: "1.0"
+
+composition_order:
+  - source: _prompt_core.md
+    type: base
+    required: true
+    description: "Core personality: Senior User Researcher"
+
+  - source: ${knowledge_files}
+    type: knowledge
+    required: true
+    resolve_from: _knowledge_deps.yaml
+    description: "Persona templates, interview question banks"
+
+  - source: ${task_prompt}
+    type: task
+    required: true
+    path_pattern: tasks/${task_id}.md
+    description: "Specific task (persona generation, interview scripts, etc.)"
+
+  - source: ${gate_prompts}
+    type: validation
+    required: false
+    resolve_from: tasks/${task_id}.meta.yaml#validation_gates
+    description: "Quality gates (personas industry-standard, questions actionable)"
+
+  - source: ${runtime_context}
+    type: context
+    required: true
+    description: "User vision, market analysis"
+
+variables:
+  user_vision: ${runtime_context.user_vision}
+  market_analysis: ${runtime_context.market_analysis}
+
+conflict_resolution:
+  strategy: last_wins
+
+notes: |
+  USER_RESEARCHER generates user research artifacts (personas, interview scripts, surveys).
+  This agent does NOT conduct actual user research - it generates frameworks and templates
+  that the user can use to conduct their own research.

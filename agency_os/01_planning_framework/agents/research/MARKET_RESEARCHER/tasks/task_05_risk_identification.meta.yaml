@@ -1,0 +1,37 @@
+task_id: task_05_risk_identification
+task_name: "Risk Identification"
+version: "1.0"
+agent: MARKET_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_competitor_identification
+    - task_02_pricing_analysis
+    - task_03_market_size_estimation
+    - task_04_positioning_analysis
+
+inputs:
+  - competitor_list.json
+  - pricing_data.json
+  - market_size_estimate.json
+  - positioning_map.json
+
+outputs:
+  - name: risk_assessment.json
+    type: json
+    description: "Market risks and mitigation strategies"
+
+validation_gates: []
+
+estimated_effort: "30 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - RESEARCH_competitor_analysis_templates.yaml
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "At least 3 risks identified"
+  - "Severity levels assigned"
+  - "Mitigation strategies provided"
+  - "Overall recommendation given"

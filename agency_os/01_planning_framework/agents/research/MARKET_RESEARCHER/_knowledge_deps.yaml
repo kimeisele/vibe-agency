@@ -1,0 +1,33 @@
+version: "1.0"
+agent_id: MARKET_RESEARCHER
+knowledge_dependencies:
+  required:
+    - path: "../../knowledge/RESEARCH_market_sizing_formulas.yaml"
+      purpose: "TAM/SAM/SOM calculation formulas and data sources"
+      load_priority: 1
+
+    - path: "../../knowledge/RESEARCH_competitor_analysis_templates.yaml"
+      purpose: "Competitor analysis frameworks and templates"
+      load_priority: 2
+
+    - path: "../../knowledge/RESEARCH_constraints.yaml"
+      purpose: "Citation requirements and validation rules"
+      load_priority: 3
+
+  optional:
+    - path: "../../../00_system/knowledge/ORCHESTRATION_workflow_design.yaml"
+      purpose: "Understanding of overall workflow context"
+      load_priority: 10
+
+validation_rules:
+  - rule: "All numerical claims require citations"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+
+  - rule: "All competitor data requires source URLs"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+
+  - rule: "Market size estimates must include methodology"
+    source: "RESEARCH_market_sizing_formulas.yaml"
+    enforcement: "mandatory"

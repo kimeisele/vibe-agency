@@ -1,0 +1,34 @@
+task_id: task_06_output_generation
+task_name: "Output Generation"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required:
+    - task_01_knowledge_base_audit
+    - task_02_claim_verification
+    - task_03_red_flag_detection
+    - task_04_citation_enforcement
+    - task_05_correction_recommendations
+
+outputs:
+  - name: fact_validation
+    type: json
+    description: "Final fact_validation section for research_brief.json"
+    schema_ref: "research_brief.schema.json#/fact_validation"
+
+validation_gates:
+  - gate_all_claims_verified_or_flagged
+
+estimated_effort: "20 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - ORCHESTRATION_data_contracts.yaml (research_brief schema)
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "Quality score calculated"
+  - "Blocking decision made"
+  - "Conforms to research_brief.schema.json"
+  - "Ready for handoff or return to agents"

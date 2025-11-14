@@ -1,0 +1,179 @@
+version: "1.0"
+last_updated: "2025-11-14"
+description: "Research framework constraints and validation rules"
+
+framework_constraints:
+  scope_limitations:
+    - constraint: "No ML/AI generation"
+      description: "All research uses web search, templates, and structured analysis"
+      rationale: "No trained models in v1.0; keeps complexity manageable"
+
+    - constraint: "Manual user research"
+      description: "USER_RESEARCHER generates scripts and frameworks, not actual survey data"
+      rationale: "Actual user interviews must be conducted by humans"
+
+    - constraint: "Limited market data access"
+      description: "Relies on free/freemium sources (Statista, GitHub, public docs)"
+      rationale: "No paid API integrations in v1.0 (Crunchbase Pro, PitchBook)"
+
+    - constraint: "English only (v1.0)"
+      description: "All research outputs in English"
+      rationale: "Internationalization deferred to v2.0"
+
+    - constraint: "No real-time APIs"
+      description: "No integrations with Crunchbase/PitchBook APIs"
+      rationale: "v1.0 uses web search; API integrations in v2.0"
+
+  data_quality_requirements:
+    citation_rules:
+      - rule: "All numerical claims require sources"
+        severity: "critical"
+        examples:
+          - "Market size: $5B (Gartner, 2024)"
+          - "Competitor pricing: $99/mo (asana.com/pricing)"
+
+      - rule: "All competitor data requires URLs"
+        severity: "critical"
+        note: "Direct link to pricing page or product docs"
+
+      - rule: "All technical constraints require FAE reference or docs"
+        severity: "critical"
+        examples:
+          - "WebSockets incompatible with serverless (FAE-TECH-001)"
+          - "Stripe API rate limit: 100 req/s (stripe.com/docs/rate-limits)"
+
+      - rule: "All market trends require timeframe"
+        severity: "high"
+        examples:
+          - "Market grew 15% YoY in 2023 (Statista)"
+
+      - rule: "All library/API recommendations require maintenance check"
+        severity: "high"
+        note: "GitHub last commit date, active issues, release cadence"
+
+    source_credibility:
+      acceptable:
+        - "Official vendor documentation"
+        - "Peer-reviewed research"
+        - "Industry analyst reports (Gartner, Forrester, IDC)"
+        - "Official GitHub repositories"
+        - "Verified pricing pages"
+        - "Government statistics"
+
+      unacceptable:
+        - "Blog posts without credentials"
+        - "Forum comments (unless official vendor response)"
+        - "Social media posts (unless official company account)"
+        - "AI-generated content (unless cited to primary source)"
+        - "Outdated documentation (>2 years old)"
+
+  validation_gates:
+    research_brief_readiness:
+      - gate: "All critical claims cited"
+        description: "Market size, pricing, technical constraints have sources"
+        blocking: true
+
+      - gate: "No critical hallucinations"
+        description: "FACT_VALIDATOR quality score >= 50 and critical_issues == 0"
+        blocking: true
+
+      - gate: "FAE violations documented"
+        description: "All flagged features have FAE reference + recommendation"
+        blocking: false
+        note: "Warning only; allows handoff to LEAN_CANVAS_VALIDATOR"
+
+      - gate: "Research scope complete"
+        description: "All requested research types completed (market, tech, user, fact)"
+        blocking: true
+
+    backward_compatibility:
+      - requirement: "LEAN_CANVAS_VALIDATOR accepts research_brief.json as optional"
+        test: "lean_canvas_validator(research_brief=None) works"
+
+      - requirement: "Existing workflows unchanged"
+        test: "PLANNING phase can skip RESEARCH sub-state"
+
+      - requirement: "research_brief.json schema versioned"
+        test: "Version field allows future schema evolution"
+
+  orchestration_rules:
+    research_phase:
+      - rule: "Research phase is optional"
+        implementation: "ORCHESTRATOR asks user: 'Start with Research phase? (Y/N)'"
+
+      - rule: "Agent execution order"
+        sequence:
+          - "MARKET_RESEARCHER"
+          - "TECH_RESEARCHER"
+          - "FACT_VALIDATOR (validates MARKET + TECH outputs)"
+          - "USER_RESEARCHER (optional, runs in parallel)"
+
+      - rule: "Handoff to BUSINESS_VALIDATION"
+        conditions:
+          - "research_brief.handoff_to_lean_canvas.status == 'READY'"
+          - "FACT_VALIDATOR quality_score >= 50"
+          - "No blocking issues"
+
+    fae_integration:
+      - rule: "TECH_RESEARCHER references existing FAE rules"
+        note: "No duplication; FAE rules in agency_os/00_system/knowledge/FAE_constraints.yaml"
+
+      - rule: "FAE violations are warnings, not blockers"
+        rationale: "User may choose to proceed despite FAE flags"
+
+      - rule: "FAE references required in research_brief"
+        format: "flagged_features[].fae_violation = 'FAE-XXX-YYY'"
+
+  complexity_budget:
+    total_budget: 60
+    used: 37
+    utilization: "61%"
+    breakdown:
+      must_have: 32
+      should_have: 5
+      could_have: 0
+
+  quality_thresholds:
+    fact_validator_scoring:
+      formula: "100 - (critical * 10) - (high * 5) - (medium * 2)"
+      blocking_threshold: 50
+      excellent: ">= 90"
+      good: "70-89"
+      acceptable: "50-69"
+      poor: "< 50"
+
+    market_research_completeness:
+      required:
+        - "At least 3 competitors identified with sources"
+        - "Pricing data for top 3 competitors"
+        - "Market size estimate (TAM or TAM/SAM/SOM)"
+
+      optional:
+        - "Positioning map"
+        - "Risk assessment"
+
+    tech_research_completeness:
+      required:
+        - "Recommended APIs/libraries for core features"
+        - "Rate limits and pricing for APIs"
+        - "Feasibility score (high/medium/low)"
+
+      optional:
+        - "Library maintenance status"
+        - "Alternative stack recommendations"
+
+  error_handling:
+    - scenario: "No competitors found"
+      action: "Flag as potential blue ocean; request manual validation"
+
+    - scenario: "API docs not available"
+      action: "Flag as high risk; recommend alternative or manual evaluation"
+
+    - scenario: "Market size data not available"
+      action: "Use estimation heuristics with clear assumptions documented"
+
+    - scenario: "FACT_VALIDATOR blocks output"
+      action: "Return to MARKET_RESEARCHER or TECH_RESEARCHER to fix issues"
+
+    - scenario: "User skips research phase"
+      action: "Proceed directly to BUSINESS_VALIDATION (legacy mode)"

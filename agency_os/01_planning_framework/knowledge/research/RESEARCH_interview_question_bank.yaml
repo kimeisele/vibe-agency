@@ -1,0 +1,211 @@
+version: "1.0"
+last_updated: "2025-11-14"
+description: "Question bank and interview frameworks for USER_RESEARCHER agent"
+
+interview_types:
+  - type: "Problem discovery"
+    goal: "Understand user pain points and current workflows"
+    duration: "30-45 minutes"
+    best_for: "Early-stage product validation"
+
+  - type: "Solution validation"
+    goal: "Test specific product concepts or features"
+    duration: "20-30 minutes"
+    best_for: "Feature prioritization and design decisions"
+
+  - type: "Usability testing"
+    goal: "Observe users interacting with product/prototype"
+    duration: "45-60 minutes"
+    best_for: "UX improvements and bug identification"
+
+interview_structure:
+  phases:
+    - phase: "Introduction (5 min)"
+      purpose: "Build rapport and set expectations"
+      example_script: |
+        "Thanks for taking the time to speak with me today. I'm researching [problem area]
+        to understand how people currently handle [task]. There are no right or wrong
+        answers—I'm just trying to learn from your experience. This conversation will
+        take about 30 minutes. Do you have any questions before we start?"
+
+    - phase: "Background (5-10 min)"
+      purpose: "Understand context and current state"
+      question_types:
+        - "Tell me about your role..."
+        - "Walk me through a typical day..."
+        - "What tools do you currently use for..."
+
+    - phase: "Problem exploration (15-20 min)"
+      purpose: "Deep dive into pain points"
+      question_types:
+        - "Tell me about the last time you had to..."
+        - "What's the hardest part about..."
+        - "Have you tried solving this problem? What happened?"
+
+    - phase: "Future state (5-10 min)"
+      purpose: "Understand ideal solutions"
+      question_types:
+        - "If you had a magic wand..."
+        - "What would make this task easier?"
+        - "How would you prioritize these improvements?"
+
+    - phase: "Wrap-up (5 min)"
+      purpose: "Final questions and thank you"
+      question_types:
+        - "Is there anything I should have asked but didn't?"
+        - "Would you be interested in testing an early version?"
+        - "Can I follow up if I have more questions?"
+
+question_bank:
+  problem_discovery:
+    current_workflow:
+      - "Walk me through the last time you [performed task]."
+      - "What tools or processes do you use for [activity]?"
+      - "How much time do you typically spend on [task]?"
+      - "Who else is involved in this process?"
+
+    pain_points:
+      - "What's the most frustrating part of [task]?"
+      - "What mistakes or errors commonly happen?"
+      - "What would you change about your current approach if you could?"
+      - "Tell me about a time when [task] went wrong. What happened?"
+
+    workarounds:
+      - "Have you found any tricks or shortcuts for [task]?"
+      - "What do you do when [tool] doesn't work the way you need it to?"
+      - "Do you use any tools in ways they weren't intended?"
+
+    impact:
+      - "What happens if this task isn't done well?"
+      - "How does this problem affect your team/company?"
+      - "What would it be worth to solve this problem?"
+
+  solution_validation:
+    concept_testing:
+      - "If a product could [value proposition], would that be useful?"
+      - "How does this compare to [current solution]?"
+      - "What concerns would you have about using something like this?"
+      - "Would you pay for this? What would be a fair price?"
+
+    feature_prioritization:
+      - "Which of these features would be most valuable to you?"
+      - "What features are must-haves vs nice-to-haves?"
+      - "Is there anything missing from this list?"
+
+    adoption_barriers:
+      - "What would prevent you from using this?"
+      - "What would you need to see before trying this?"
+      - "How difficult would it be to switch from your current solution?"
+
+  usability_testing:
+    task_observation:
+      - "Can you show me how you would [complete task]?"
+      - "What did you expect to happen when you clicked that?"
+      - "Is there anything confusing or unclear?"
+
+    feedback:
+      - "What do you like most about this?"
+      - "What's the most confusing part?"
+      - "How does this compare to [competitor]?"
+
+b2b_specific_questions:
+  decision_process:
+    - "How do you typically evaluate new tools?"
+    - "Who else needs to be involved in the decision?"
+    - "What's your typical budget for tools like this?"
+    - "What's your procurement/approval process?"
+
+  integration:
+    - "What other tools does this need to integrate with?"
+    - "How important is [specific integration]?"
+    - "Do you have technical resources to set up integrations?"
+
+  security_compliance:
+    - "Are there any security or compliance requirements?"
+    - "Do you need SOC 2, GDPR compliance, etc.?"
+    - "Where does data need to be stored (region/country)?"
+
+consumer_specific_questions:
+  discovery:
+    - "How did you hear about [current solution]?"
+    - "What made you decide to try it?"
+    - "Do you recommend products to friends? How?"
+
+  usage_patterns:
+    - "How often do you use [product]?"
+    - "Do you use it on mobile or desktop?"
+    - "When during the day do you typically use it?"
+
+  pricing_sensitivity:
+    - "Do you currently pay for [category]?"
+    - "What's a reasonable price for something like this?"
+    - "Would you prefer subscription or one-time payment?"
+
+best_practices:
+  dos:
+    - "Ask open-ended questions ('Tell me about...')"
+    - "Follow up with 'Why?' or 'Can you tell me more?'"
+    - "Let silences happen—give them time to think"
+    - "Ask for specific examples, not generalizations"
+    - "Focus on past behavior, not hypothetical future"
+
+  donts:
+    - "Don't lead the witness ('Would you like a feature that...')"
+    - "Don't ask yes/no questions"
+    - "Don't explain your solution before understanding their problem"
+    - "Don't ask 'Would you use this?' (everyone says yes)"
+    - "Don't skip background questions (context matters)"
+
+red_flags:
+  - flag: "User keeps saying what they think you want to hear"
+    solution: "Emphasize there are no right answers; probe for negatives"
+
+  - flag: "User gives generic/vague answers"
+    solution: "Ask for specific recent examples"
+
+  - flag: "User jumps to solution ideas"
+    solution: "Acknowledge, then redirect to problem exploration"
+
+  - flag: "User hasn't experienced the problem recently"
+    solution: "May not be right persona; ask for referrals"
+
+survey_design_principles:
+  question_types:
+    - type: "Multiple choice"
+      best_for: "Quantifying preferences or behaviors"
+      example: "How often do you [activity]? Daily/Weekly/Monthly/Rarely/Never"
+
+    - type: "Rating scale (1-5 or 1-7)"
+      best_for: "Measuring satisfaction or agreement"
+      example: "How satisfied are you with [feature]? (1=Very Dissatisfied, 5=Very Satisfied)"
+
+    - type: "Open-ended"
+      best_for: "Collecting qualitative insights"
+      example: "What's the biggest challenge you face with [task]?"
+
+    - type: "Ranking"
+      best_for: "Prioritizing features or pain points"
+      example: "Rank these features in order of importance"
+
+  survey_structure:
+    - section: "Screener questions"
+      purpose: "Qualify respondents"
+      example:
+        - "Do you currently use [product category]?"
+        - "What's your role?"
+
+    - section: "Core questions"
+      purpose: "Main research objectives"
+      limit: "10-15 questions max"
+
+    - section: "Demographics"
+      purpose: "Segment analysis"
+      note: "Put at end to avoid drop-off"
+
+  best_practices:
+    - "Keep surveys short (5-10 minutes max)"
+    - "Use simple, clear language"
+    - "Avoid double-barreled questions"
+    - "Randomize answer options to avoid bias"
+    - "Test survey with 3-5 people before launch"
+    - "Offer incentive for completion"

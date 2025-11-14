@@ -1,0 +1,32 @@
+task_id: task_05_user_journey_mapping
+task_name: "User Journey Mapping"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_persona_generation
+    - task_02_pain_point_identification
+
+inputs:
+  - personas.json
+  - pain_points.json
+
+outputs:
+  - name: user_journeys.json
+    type: json
+    description: "5-stage user journey maps for each persona"
+
+validation_gates: []
+
+estimated_effort: "45 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_persona_templates.yaml
+
+success_criteria:
+  - "5-stage journey for each primary persona"
+  - "Touchpoints, actions, emotions documented per stage"
+  - "Pain points and opportunities identified"
+  - "Customized for persona context (B2B vs consumer)"

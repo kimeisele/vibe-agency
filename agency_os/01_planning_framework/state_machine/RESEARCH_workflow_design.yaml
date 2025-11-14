@@ -1,0 +1,307 @@
+version: "1.0"
+kind: "WorkflowDesign"
+workflow_id: "RESEARCH"
+description: "Research phase workflow for fact-based market, technical, and user validation"
+
+# =================================================================
+# RESEARCH PHASE WORKFLOW
+# =================================================================
+# This workflow is OPTIONAL and runs before BUSINESS_VALIDATION.
+# It provides fact-based research to inform the Lean Canvas.
+# =================================================================
+
+workflow_metadata:
+  created_at: "2025-11-14"
+  author: "VIBE_ALIGNER v3.0"
+  status: "active"
+  version: "1.0"
+
+# =================================================================
+# AGENT EXECUTION ORDER
+# =================================================================
+execution_order:
+  - agent_id: "MARKET_RESEARCHER"
+    sequence: 1
+    parallel: false
+    description: "Research competitors, pricing, market size, positioning, risks"
+    output: "market_analysis.json"
+
+  - agent_id: "TECH_RESEARCHER"
+    sequence: 2
+    parallel: false
+    description: "Evaluate APIs, libraries, stack recommendations, technical constraints"
+    output: "tech_analysis.json"
+
+  - agent_id: "FACT_VALIDATOR"
+    sequence: 3
+    parallel: false
+    description: "Validate all claims, detect hallucinations, enforce citation requirements"
+    output: "fact_validation.json"
+    blocking: true
+    blocking_conditions:
+      - "fact_validation.quality_score < 50"
+      - "fact_validation.issues_critical > 0"
+
+  - agent_id: "USER_RESEARCHER"
+    sequence: 4
+    parallel: true  # Can run in parallel with or after other agents
+    optional: true
+    description: "Generate personas, interview scripts, survey templates"
+    output: "user_insights.json"
+
+# =================================================================
+# WORKFLOW INPUTS
+# =================================================================
+inputs:
+  required:
+    - name: "user_vision"
+      type: "string"
+      description: "User's product vision and problem statement"
+      min_length: 50
+
+  optional:
+    - name: "feature_requirements"
+      type: "array"
+      description: "Specific features to research (for TECH_RESEARCHER)"
+
+# =================================================================
+# WORKFLOW OUTPUTS
+# =================================================================
+outputs:
+  - name: "research_brief.json"
+    type: "json"
+    schema_ref: "research_brief.schema.json"
+    description: "Complete research brief with market, tech, fact validation, and user insights"
+    required_sections:
+      - "market_analysis"
+      - "tech_analysis"
+      - "fact_validation"
+      - "handoff_to_lean_canvas"
+    optional_sections:
+      - "user_insights"
+
+# =================================================================
+# EXIT CONDITIONS
+# =================================================================
+exit_conditions:
+  success:
+    - condition: "research_brief.handoff_to_lean_canvas.status == 'READY'"
+      description: "Research brief is complete and ready for business validation"
+
+    - condition: "fact_validation.quality_score >= 50"
+      description: "Quality threshold met"
+
+    - condition: "fact_validation.issues_critical == 0"
+      description: "No critical hallucinations or missing citations"
+
+  failure:
+    - condition: "fact_validation.quality_score < 50"
+      action: "Return to MARKET_RESEARCHER or TECH_RESEARCHER to fix issues"
+      blocking: true
+
+    - condition: "fact_validation.issues_critical > 0"
+      action: "Return to relevant agent to fix critical issues"
+      blocking: true
+
+# =================================================================
+# AGENT INTERACTION PATTERNS
+# =================================================================
+agent_interactions:
+  - from: "MARKET_RESEARCHER"
+    to: "FACT_VALIDATOR"
+    data: "market_analysis.json"
+    validation_required: true
+
+  - from: "TECH_RESEARCHER"
+    to: "FACT_VALIDATOR"
+    data: "tech_analysis.json"
+    validation_required: true
+
+  - from: "FACT_VALIDATOR"
+    to: "ORCHESTRATOR"
+    data: "fact_validation.json"
+    decision_point: true
+    options:
+      - condition: "quality_score >= 50 AND issues_critical == 0"
+        action: "PROCEED to USER_RESEARCHER (if enabled) or finalize research_brief"
+      - condition: "quality_score < 50 OR issues_critical > 0"
+        action: "RETURN to MARKET_RESEARCHER or TECH_RESEARCHER to fix issues"
+
+  - from: "USER_RESEARCHER"
+    to: "ORCHESTRATOR"
+    data: "user_insights.json"
+    optional: true
+
+# =================================================================
+# QUALITY GATES
+# =================================================================
+quality_gates:
+  - gate_id: "gate_all_competitors_cited"
+    agent: "MARKET_RESEARCHER"
+    blocking: true
+    description: "All competitors have source URLs"
+
+  - gate_id: "gate_pricing_data_verifiable"
+    agent: "MARKET_RESEARCHER"
+    blocking: true
+    description: "All pricing claims have official URLs"
+
+  - gate_id: "gate_market_size_has_source"
+    agent: "MARKET_RESEARCHER"
+    blocking: true
+    description: "Market size includes source and methodology"
+
+  - gate_id: "gate_all_apis_have_docs"
+    agent: "TECH_RESEARCHER"
+    blocking: true
+    description: "All APIs have documentation URLs"
+
+  - gate_id: "gate_fae_violations_cited"
+    agent: "TECH_RESEARCHER"
+    blocking: false  # Warning only
+    description: "All flagged features reference FAE rule IDs"
+
+  - gate_id: "gate_library_maintenance_checked"
+    agent: "TECH_RESEARCHER"
+    blocking: true
+    description: "All libraries have maintenance status verified"
+
+  - gate_id: "gate_all_claims_verified_or_flagged"
+    agent: "FACT_VALIDATOR"
+    blocking: true
+    description: "All claims are either verified with source or flagged as issues"
+
+  - gate_id: "gate_citation_index_complete"
+    agent: "FACT_VALIDATOR"
+    blocking: true
+    description: "Citation index includes all sources used"
+
+  - gate_id: "gate_no_critical_hallucinations"
+    agent: "FACT_VALIDATOR"
+    blocking: true
+    description: "No critical hallucinations detected"
+
+  - gate_id: "gate_personas_industry_standard"
+    agent: "USER_RESEARCHER"
+    blocking: false  # Warning only
+    description: "Personas follow industry-standard format"
+
+  - gate_id: "gate_interview_questions_actionable"
+    agent: "USER_RESEARCHER"
+    blocking: false  # Warning only
+    description: "Interview questions are open-ended and actionable"
+
+# =================================================================
+# ERROR HANDLING
+# =================================================================
+error_handling:
+  - error_type: "no_competitors_found"
+    action: "Flag as potential blue ocean, request manual validation"
+    severity: "warning"
+
+  - error_type: "api_docs_not_available"
+    action: "Flag as high risk, recommend alternative or manual evaluation"
+    severity: "high"
+
+  - error_type: "market_size_data_unavailable"
+    action: "Use estimation heuristics with documented assumptions"
+    severity: "medium"
+
+  - error_type: "fact_validator_blocks_output"
+    action: "Return to MARKET_RESEARCHER or TECH_RESEARCHER"
+    severity: "critical"
+    blocking: true
+
+# =================================================================
+# ORCHESTRATION RULES
+# =================================================================
+orchestration_rules:
+  - rule_id: "research_optionality"
+    description: "ORCHESTRATOR must ask user if they want to run RESEARCH phase"
+    implementation: "Prompt: 'Start with Research phase to validate assumptions? (Y/N)'"
+    default: "N"
+
+  - rule_id: "skip_to_business_validation"
+    description: "If user skips RESEARCH, proceed directly to BUSINESS_VALIDATION"
+    condition: "user_choice == 'N'"
+
+  - rule_id: "user_researcher_optionality"
+    description: "USER_RESEARCHER is optional within RESEARCH phase"
+    implementation: "Can be skipped if user only needs market/tech research"
+
+  - rule_id: "fact_validator_blocking"
+    description: "FACT_VALIDATOR can block entire RESEARCH phase"
+    conditions:
+      - "quality_score < 50"
+      - "issues_critical > 0"
+    action: "Require fixes before proceeding"
+
+# =================================================================
+# HANDOFF TO BUSINESS_VALIDATION
+# =================================================================
+handoff:
+  target_state: "BUSINESS_VALIDATION"
+  target_agent: "LEAN_CANVAS_VALIDATOR"
+
+  data_transfer:
+    - artifact: "research_brief.json"
+      required: true
+      description: "Complete research brief"
+
+    - field: "research_brief.market_analysis"
+      maps_to: "lean_canvas.customer_segments"
+      description: "Market insights inform customer segments"
+
+    - field: "research_brief.market_analysis.positioning_opportunities"
+      maps_to: "lean_canvas.unique_value_proposition"
+      description: "Positioning opportunities inform UVP"
+
+    - field: "research_brief.tech_analysis.feasibility_score"
+      maps_to: "lean_canvas.solution"
+      description: "Technical feasibility informs solution approach"
+
+    - field: "research_brief.tech_analysis.flagged_features"
+      maps_to: "lean_canvas.riskiest_assumptions"
+      description: "Technical risks inform assumptions"
+
+    - field: "research_brief.user_insights.personas"
+      maps_to: "lean_canvas.customer_segments"
+      description: "Personas inform customer understanding"
+
+  handoff_conditions:
+    - "research_brief.handoff_to_lean_canvas.status == 'READY'"
+    - "fact_validation.quality_score >= 50"
+    - "fact_validation.issues_critical == 0"
+
+# =================================================================
+# BACKWARD COMPATIBILITY
+# =================================================================
+backward_compatibility:
+  - rule: "LEAN_CANVAS_VALIDATOR must work with OR without research_brief"
+    implementation: "research_brief is optional input parameter"
+    test: "lean_canvas_validator(research_brief=None) succeeds"
+
+  - rule: "Existing workflows unchanged"
+    implementation: "RESEARCH phase is entirely optional"
+    test: "User can skip directly to BUSINESS_VALIDATION"
+
+  - rule: "No breaking changes to existing agents"
+    implementation: "RESEARCH agents are new, existing agents unchanged"
+    test: "All v1.0 agents continue to function"
+
+# =================================================================
+# NOTES
+# =================================================================
+notes: |
+  The RESEARCH workflow is designed to be:
+  1. OPTIONAL - Users can skip if they already have research
+  2. BLOCKING - FACT_VALIDATOR can prevent bad research from proceeding
+  3. MODULAR - Each agent can be updated independently
+  4. CITATION-ENFORCED - All claims require verifiable sources
+  5. FAE-INTEGRATED - TECH_RESEARCHER references existing FAE rules
+
+  Key success factors:
+  - Citation enforcement prevents hallucinations
+  - FACT_VALIDATOR quality gate ensures research quality
+  - Backward compatibility maintains existing workflows
+  - Handoff to LEAN_CANVAS_VALIDATOR enriches business planning

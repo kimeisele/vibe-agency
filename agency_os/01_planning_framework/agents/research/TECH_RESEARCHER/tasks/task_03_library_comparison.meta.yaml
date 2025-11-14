@@ -1,0 +1,30 @@
+task_id: task_03_library_comparison
+task_name: "Library GitHub Metrics Collection (With Fallbacks)"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required:
+    - task_02_library_comparison
+  optional: []
+
+outputs:
+  - name: library_github_metrics.json
+    type: json
+    description: "GitHub metrics for libraries with multi-level API fallbacks (GitHub API → npm registry → manual check)"
+
+validation_gates: []
+
+estimated_effort: "90 minutes"
+complexity_score: 6
+
+knowledge_required:
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All libraries from task_02 have been processed"
+  - "No task crashes on API rate limit or network failures"
+  - "At least 80% success rate on GitHub API calls"
+  - "Fallback metrics present for failed requests"
+  - "Manual check placeholders are actionable"
+  - "Output JSON is valid and complete"

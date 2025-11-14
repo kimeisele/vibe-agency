@@ -1,0 +1,198 @@
+version: "1.0"
+last_updated: "2025-11-14"
+description: "Templates and frameworks for MARKET_RESEARCHER to analyze competitors"
+
+analysis_frameworks:
+  - name: "Porter's Five Forces"
+    description: "Analyze competitive intensity and attractiveness"
+    forces:
+      - threat_of_new_entrants
+      - bargaining_power_of_suppliers
+      - bargaining_power_of_buyers
+      - threat_of_substitutes
+      - competitive_rivalry
+    use_case: "Understanding market structure and competitive dynamics"
+
+  - name: "Feature Comparison Matrix"
+    description: "Side-by-side feature comparison"
+    columns:
+      - competitor_name
+      - pricing_tier
+      - key_features
+      - target_audience
+      - strengths
+      - weaknesses
+    use_case: "Identifying feature gaps and differentiation opportunities"
+
+  - name: "Positioning Map"
+    description: "Visual representation of market positioning"
+    axes_examples:
+      - ["Price", "Features"]
+      - ["Ease of Use", "Power/Flexibility"]
+      - ["Market Focus", "Product Breadth"]
+    use_case: "Identifying white space in the market"
+
+competitor_data_template:
+  required_fields:
+    - name: "Company name"
+      type: "string"
+      source_required: true
+
+    - name: "Founded year"
+      type: "integer"
+      source_required: false
+
+    - name: "Funding / Revenue"
+      type: "string"
+      source_required: true
+      note: "Use Crunchbase or verified sources"
+
+    - name: "Pricing"
+      type: "object"
+      source_required: true
+      structure:
+        - tier_name
+        - price
+        - currency
+        - billing_period
+        - key_features
+        - source_url
+
+    - name: "Target market"
+      type: "string"
+      source_required: false
+
+    - name: "Key features"
+      type: "array"
+      source_required: true
+
+    - name: "Strengths"
+      type: "array"
+      source_required: false
+      note: "Based on user reviews or public feedback"
+
+    - name: "Weaknesses"
+      type: "array"
+      source_required: false
+      note: "Based on user reviews or public feedback"
+
+    - name: "Differentiation"
+      type: "string"
+      source_required: false
+      note: "How they position themselves"
+
+pricing_analysis_template:
+  tiers:
+    - tier: "Free"
+      typical_features:
+        - "Limited usage"
+        - "Basic features"
+        - "Community support"
+
+    - tier: "Starter/Basic"
+      typical_range: "$10-50/month"
+      typical_features:
+        - "Essential features"
+        - "Email support"
+        - "Limited integrations"
+
+    - tier: "Professional"
+      typical_range: "$50-200/month"
+      typical_features:
+        - "Advanced features"
+        - "Priority support"
+        - "API access"
+        - "Integrations"
+
+    - tier: "Enterprise"
+      typical_range: "Custom pricing"
+      typical_features:
+        - "All features"
+        - "Dedicated support"
+        - "SLA guarantees"
+        - "Custom contracts"
+
+  pricing_models:
+    - model: "Per user/seat"
+      examples: "Slack, Asana, Monday.com"
+
+    - model: "Usage-based"
+      examples: "AWS, Stripe, Twilio"
+
+    - model: "Flat rate"
+      examples: "Basecamp, Netflix"
+
+    - model: "Freemium"
+      examples: "Notion, Figma, GitHub"
+
+    - model: "Value-based"
+      examples: "Salesforce, HubSpot"
+
+differentiation_opportunities:
+  strategies:
+    - strategy: "Niche focus"
+      description: "Target specific industry or use case"
+      examples:
+        - "Notion for lawyers (Clio)"
+        - "CRM for nonprofits (Bloomerang)"
+
+    - strategy: "Pricing innovation"
+      description: "Different pricing model than competitors"
+      examples:
+        - "Basecamp flat rate vs per-user pricing"
+        - "Usage-based vs seat-based"
+
+    - strategy: "User experience"
+      description: "Dramatically simpler or more powerful UX"
+      examples:
+        - "Superhuman (email UX)"
+        - "Linear (issue tracking UX)"
+
+    - strategy: "Integration focus"
+      description: "Better integrations with specific ecosystem"
+      examples:
+        - "Deep Salesforce integration"
+        - "Native mobile experience"
+
+    - strategy: "Open source alternative"
+      description: "Open source version of commercial product"
+      examples:
+        - "n8n vs Zapier"
+        - "Supabase vs Firebase"
+
+risk_identification_template:
+  risk_categories:
+    - category: "Market saturation"
+      indicators:
+        - "10+ established competitors"
+        - "Multiple well-funded startups"
+        - "Declining market growth rate"
+      severity: "high"
+
+    - category: "Dominant player"
+      indicators:
+        - "One competitor with >50% market share"
+        - "Strong network effects"
+        - "High switching costs"
+      severity: "high"
+
+    - category: "Low barriers to entry"
+      indicators:
+        - "Easy to replicate core features"
+        - "No technical moat"
+        - "Commoditized offering"
+      severity: "medium"
+
+    - category: "Technology shift"
+      indicators:
+        - "Emerging technology threatens business model"
+        - "Platform dependency risk"
+        - "Regulatory changes"
+      severity: "medium-high"
+
+    - category: "Funding requirements"
+      indicators:
+        - "Competitors are heavily funded"
+        - "Market requires significant marketing spend"
+        - "Long sales cycles"
+      severity: "medium"

@@ -1,0 +1,34 @@
+task_id: task_04_positioning_analysis
+task_name: "Positioning Analysis"
+version: "1.0"
+agent: MARKET_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_competitor_identification
+    - task_02_pricing_analysis
+    - task_03_market_size_estimation
+
+inputs:
+  - competitor_list.json
+  - pricing_data.json
+  - market_size_estimate.json
+
+outputs:
+  - name: positioning_map.json
+    type: json
+    description: "Positioning opportunities and white space analysis"
+
+validation_gates: []
+
+estimated_effort: "30-45 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_competitor_analysis_templates.yaml
+
+success_criteria:
+  - "At least 3 positioning opportunities"
+  - "Each opportunity clearly differentiated"
+  - "White space analysis completed"
+  - "Realistic opportunity assessment"

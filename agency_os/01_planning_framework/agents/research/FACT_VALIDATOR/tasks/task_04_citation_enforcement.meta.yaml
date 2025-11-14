@@ -1,0 +1,34 @@
+task_id: task_04_citation_enforcement
+task_name: "Citation Enforcement"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required:
+    - task_01_knowledge_base_audit
+    - task_02_claim_verification
+    - task_03_red_flag_detection
+
+inputs:
+  - verified_claims.json
+
+outputs:
+  - name: citation_index.json
+    type: json
+    description: "Citation index and enforcement results"
+
+validation_gates:
+  - gate_citation_index_complete
+  - gate_no_critical_hallucinations
+
+estimated_effort: "30 minutes"
+complexity_score: 5
+
+knowledge_required:
+  - RESEARCH_red_flag_taxonomy.yaml
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "Citation index complete"
+  - "All critical claims checked"
+  - "Blocking decision made"

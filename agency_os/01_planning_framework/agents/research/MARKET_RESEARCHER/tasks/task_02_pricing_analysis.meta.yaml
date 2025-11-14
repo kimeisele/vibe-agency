@@ -1,0 +1,33 @@
+task_id: task_02_pricing_analysis
+task_name: "Pricing Analysis"
+version: "1.0"
+agent: MARKET_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_competitor_identification
+  optional: []
+
+inputs:
+  - competitor_list.json
+
+outputs:
+  - name: pricing_data.json
+    type: json
+    description: "Detailed pricing data for all competitors"
+
+validation_gates:
+  - gate_pricing_data_verifiable
+
+estimated_effort: "45-60 minutes"
+complexity_score: 4
+
+knowledge_required:
+  - RESEARCH_competitor_analysis_templates.yaml
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "All competitors have pricing URLs"
+  - "Pricing is specific and current"
+  - "Pricing insights calculated (low/median/high)"
+  - "All sources verified and working"

@@ -1,0 +1,36 @@
+task_id: task_06_output_generation
+task_name: "Output Generation"
+version: "1.0"
+agent: TECH_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_api_evaluation
+    - task_02_library_comparison
+    - task_03_stack_recommendation
+    - task_04_constraint_identification
+    - task_05_feasibility_validation
+
+outputs:
+  - name: tech_analysis
+    type: json
+    description: "Final tech_analysis section for research_brief.json"
+    schema_ref: "research_brief.schema.json#/tech_analysis"
+
+validation_gates:
+  - gate_all_apis_have_docs
+  - gate_library_maintenance_checked
+  - gate_fae_violations_cited
+
+estimated_effort: "20 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - ORCHESTRATION_data_contracts.yaml (research_brief schema)
+  - RESEARCH_constraints.yaml
+
+success_criteria:
+  - "Conforms to research_brief.schema.json"
+  - "All validation gates pass"
+  - "All citations present"
+  - "Ready for FACT_VALIDATOR review"

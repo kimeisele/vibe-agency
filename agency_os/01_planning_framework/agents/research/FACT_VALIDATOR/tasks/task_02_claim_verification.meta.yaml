@@ -1,0 +1,29 @@
+task_id: task_02_claim_verification
+task_name: "Claim Verification"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required:
+    - task_01_knowledge_base_audit
+
+inputs:
+  - claims_inventory.json
+
+outputs:
+  - name: verified_claims.json
+    type: json
+    description: "Claims with verification status"
+
+validation_gates: []
+
+estimated_effort: "45 minutes"
+complexity_score: 5
+
+knowledge_required:
+  - RESEARCH_red_flag_taxonomy.yaml
+
+success_criteria:
+  - "All claims marked as VERIFIED or UNVERIFIED"
+  - "Unverified claims have issue descriptions"
+  - "Source types categorized"

@@ -1,0 +1,34 @@
+version: "1.0"
+agent_id: TECH_RESEARCHER
+knowledge_dependencies:
+  required:
+    - path: "../../../00_system/knowledge/FAE_constraints.yaml"
+      purpose: "Technical feasibility constraints and validation rules"
+      load_priority: 1
+      note: "CRITICAL - Must reference existing FAE rules, not duplicate"
+
+    - path: "../../knowledge/RESEARCH_constraints.yaml"
+      purpose: "Citation requirements and validation rules"
+      load_priority: 2
+
+  optional:
+    - path: "../../../00_system/knowledge/ORCHESTRATION_workflow_design.yaml"
+      purpose: "Understanding of overall workflow context"
+      load_priority: 10
+
+validation_rules:
+  - rule: "All API recommendations require documentation URLs"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+
+  - rule: "All library recommendations require GitHub/maintenance check"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"
+
+  - rule: "All FAE violations must reference specific FAE rule ID"
+    source: "FAE_constraints.yaml"
+    enforcement: "mandatory"
+
+  - rule: "All rate limits and pricing must be from official docs"
+    source: "RESEARCH_constraints.yaml"
+    enforcement: "mandatory"

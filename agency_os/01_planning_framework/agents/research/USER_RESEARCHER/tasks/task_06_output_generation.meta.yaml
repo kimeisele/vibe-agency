@@ -1,0 +1,33 @@
+task_id: task_06_output_generation
+task_name: "Output Generation"
+version: "1.0"
+agent: USER_RESEARCHER
+
+dependencies:
+  required:
+    - task_01_persona_generation
+    - task_02_pain_point_identification
+    - task_03_interview_script_creation
+    - task_04_survey_design
+    - task_05_user_journey_mapping
+
+outputs:
+  - name: user_insights
+    type: json
+    description: "Final user_insights section for research_brief.json"
+    schema_ref: "research_brief.schema.json#/user_insights"
+
+validation_gates:
+  - gate_personas_industry_standard
+  - gate_interview_questions_actionable
+
+estimated_effort: "20 minutes"
+complexity_score: 3
+
+knowledge_required:
+  - ORCHESTRATION_data_contracts.yaml (research_brief schema)
+
+success_criteria:
+  - "Conforms to research_brief.schema.json"
+  - "All validation gates pass"
+  - "Ready for handoff to LEAN_CANVAS_VALIDATOR"

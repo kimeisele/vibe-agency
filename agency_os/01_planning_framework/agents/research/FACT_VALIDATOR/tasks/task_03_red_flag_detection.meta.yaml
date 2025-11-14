@@ -1,0 +1,31 @@
+task_id: task_03_red_flag_detection
+task_name: "Red Flag Detection"
+version: "1.0"
+agent: FACT_VALIDATOR
+
+dependencies:
+  required:
+    - task_01_knowledge_base_audit
+    - task_02_claim_verification
+
+inputs:
+  - claims_inventory.json
+  - verified_claims.json
+
+outputs:
+  - name: flagged_hallucinations.json
+    type: json
+    description: "Detected red flags with severity and recommendations"
+
+validation_gates: []
+
+estimated_effort: "45 minutes"
+complexity_score: 6
+
+knowledge_required:
+  - RESEARCH_red_flag_taxonomy.yaml (CRITICAL)
+
+success_criteria:
+  - "All red flag patterns applied"
+  - "Severity levels assigned"
+  - "Recommendations provided for each flag"
