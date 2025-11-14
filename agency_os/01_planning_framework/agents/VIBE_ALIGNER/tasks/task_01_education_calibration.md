@@ -24,7 +24,39 @@ Always start with education to calibrate the user's mental model.
 
 ## Process
 
-### Step 1: Opening Dialog
+### INPUT CONTEXT CHECK
+
+Before starting education, check if `lean_canvas_summary.json` exists:
+
+#### IF lean_canvas_summary.json EXISTS:
+```json
+{
+  "business_context": {...},
+  "success_criteria": {...},
+  "constraints": {...}
+}
+```
+
+**Action:**
+1. SHOW: Brief recap of business context
+   - "Based on your Lean Canvas, I understand you're building [PROBLEM] for [CUSTOMER_SEGMENTS]"
+2. ASK: "Is this scope still correct, or has anything changed?"
+3. IF no changes:
+   - Skip full education
+   - Extract MVP/v1.0 decision from `success_criteria`
+   - Jump to Task 02 (Feature Extraction)
+4. IF changes:
+   - Update scope
+   - Continue with education
+
+#### IF lean_canvas_summary.json DOES NOT EXIST:
+**Action:**
+- Run full education phase as designed below
+- User is starting without business validation (legacy mode)
+
+---
+
+### Step 1: Opening Dialog (Full Education Phase)
 
 Present the user with three options:
 

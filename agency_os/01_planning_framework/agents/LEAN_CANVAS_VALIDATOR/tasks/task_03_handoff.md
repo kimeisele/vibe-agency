@@ -51,18 +51,29 @@ Create a file named `lean_canvas_summary.json` with the following structure:
 After generating the artifact, present:
 
 ```
-✅ Lean Canvas validation complete!
+✅ Business Validation Complete
+
+Your Lean Canvas is validated and saved. Here's what happens next:
 
 **Summary:**
 - Problem: [1-line summary]
 - Customer: [1-line summary]
 - Riskiest Assumptions: [count] identified
 
-I've generated `lean_canvas_summary.json` which will now be passed to the VIBE_ALIGNER agent for technical planning.
+**Next Agent:** VIBE_ALIGNER (Feature Specification)
 
-The VIBE_ALIGNER will ensure your v1.0 feature set is laser-focused on validating these assumptions.
+**What VIBE_ALIGNER will do:**
+- Use your business context to extract features
+- Validate technical feasibility
+- Create a buildable feature specification
 
-Ready to proceed to technical planning?
+**What you need to do:**
+- Describe the features you envision for v1.0
+- VIBE_ALIGNER will already know your constraints, success criteria, and business context
+
+I've generated `lean_canvas_summary.json` which will now be passed to VIBE_ALIGNER.
+
+Ready to continue? (Type 'yes' or describe your first feature)
 ```
 
 ## ARTIFACT STORAGE

@@ -176,6 +176,57 @@ schemas:
          - { name: "user_educated", type: "boolean" }
          - { name: "scope_negotiated", type: "boolean" }
 
+ - name: "lean_canvas_summary.schema.json"
+   version: "1.0.0"
+   $id: "https://api.example.com/schemas/lean_canvas_summary.v1.0.0.json"
+   description: "Output von LEAN_CANVAS_VALIDATOR, Input für VIBE_ALIGNER"
+   fields:
+     - name: "version"
+       type: "string"
+       required: true
+       default: "1.0"
+     - name: "canvas_fields"
+       type: "object"
+       required: true
+       properties:
+         - { name: "problem", type: "string", description: "Top 3 problems customer has" }
+         - { name: "customer_segments", type: "string", description: "Target customers and users" }
+         - { name: "unique_value_proposition", type: "string", description: "Single, clear, compelling message" }
+         - { name: "solution", type: "string", description: "Top 3 features" }
+         - { name: "channels", type: "string", description: "Path to customers" }
+         - { name: "revenue_streams", type: "string", description: "How will you make money" }
+         - { name: "cost_structure", type: "string", description: "Customer acquisition costs, distribution costs, etc" }
+         - { name: "key_metrics", type: "string", description: "Key activities you measure" }
+         - { name: "unfair_advantage", type: "string", description: "Something that cannot be easily copied or bought" }
+     - name: "riskiest_assumptions"
+       type: "array"
+       required: true
+       items:
+         type: "object"
+         properties:
+           - { name: "assumption", type: "string", description: "The assumption being made" }
+           - { name: "why_risky", type: "string", description: "Why this assumption is risky" }
+           - { name: "validation_method", type: "string", description: "How to validate this assumption" }
+     - name: "readiness"
+       type: "object"
+       required: true
+       properties:
+         - name: "status"
+           type: "enum"
+           required: true
+           values: ["READY", "NOT_READY"]
+           description: "Whether the business validation is complete and ready for feature specification"
+         - name: "confidence_level"
+           type: "enum"
+           required: true
+           values: ["high", "medium", "low"]
+           description: "Confidence level in the business model"
+         - name: "missing_inputs"
+           type: "array"
+           required: false
+           items: "string"
+           description: "List of missing or unclear inputs that need clarification"
+
  - name: "code_gen_spec.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/code_gen_spec.v1.0.0.json"
@@ -235,7 +286,7 @@ schemas:
  - name: "qa_report.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/qa_report.v1.0.0.json"
-   description: "Output des TESTING-Zustands. Dient als "Exit-Gate" für die HITL-Genehmigung."
+   description: "Output des TESTING-Zustands. Dient als Exit-Gate für die HITL-Genehmigung."
    fields:
      - name: "schema_version"
        type: "string"
@@ -266,7 +317,7 @@ schemas:
  - name: "deploy_receipt.schema.json"
    version: "1.0.0"
    $id: "https://api.example.com/schemas/deploy_receipt.v1.0.0.json"
-   description: "Output des DEPLOYMENT-Zustands. Dient als "Beweis" des Deployments."
+   description: "Output des DEPLOYMENT-Zustands. Dient als Beweis des Deployments."
    fields:
      - name: "schema_version"
        type: "string"
