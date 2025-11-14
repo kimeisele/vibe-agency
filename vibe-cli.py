@@ -14,7 +14,10 @@ You can then copy/paste this into Claude Code.
 import sys
 import os
 import argparse
+import json
+import getpass
 from pathlib import Path
+from datetime import datetime
 
 # Import the runtime
 import importlib.util
@@ -207,6 +210,137 @@ def list_workspaces():
     print("\nUse: ./vibe-cli.py workspace <NAME> to switch\n")
 
 
+def approve_qa(project_id: str):
+    """
+    Approve QA and proceed to deployment (HITL - Decision 8)
+
+    This implements the durable wait mechanism from GAD-002.
+    The orchestrator pauses at AWAITING_QA_APPROVAL state, and this
+    command sets qa_approved=True to allow deployment to proceed.
+    """
+    print("\n" + "=" * 60)
+    print(f"QA APPROVAL: {project_id}")
+    print("=" * 60 + "\n")
+
+    # Load project manifest
+    manifest_path = Path(f"workspaces/{project_id}/project_manifest.json")
+
+    if not manifest_path.exists():
+        print(f"❌ ERROR: Project manifest not found at {manifest_path}\n")
+        print("Make sure the project_id is correct and the orchestrator has run.\n")
+        return
+
+    with open(manifest_path, 'r') as f:
+        manifest = json.load(f)
+
+    # Validate state
+    if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
+        print(f"❌ ERROR: Project is not awaiting QA approval")
+        print(f"   Current phase: {manifest.get('current_phase')}\n")
+        return
+
+    # Load QA report to show user
+    qa_report_path = Path(f"workspaces/{project_id}/artifacts/testing/qa_report.json")
+    if qa_report_path.exists():
+        with open(qa_report_path, 'r') as f:
+            qa_report = json.load(f)
+
+        print("QA Report Summary:")
+        print(f"  Status: {qa_report.get('status', 'UNKNOWN')}")
+        print(f"  Tests Passed: {qa_report.get('tests_passed', 'N/A')}")
+        print(f"  Tests Failed: {qa_report.get('tests_failed', 'N/A')}")
+        print()
+
+    # Confirm approval
+    print("Do you approve this deployment? (yes/no): ", end="")
+    response = input().strip().lower()
+
+    if response != "yes":
+        print("\n❌ QA approval cancelled\n")
+        return
+
+    # Set approval flags
+    manifest['artifacts']['qa_approved'] = True
+    manifest['artifacts']['qa_approver'] = getpass.getuser()
+    manifest['artifacts']['qa_approved_at'] = datetime.utcnow().isoformat() + "Z"
+
+    # Save manifest
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f, indent=2)
+
+    print("\n" + "=" * 60)
+    print("✅ QA APPROVED")
+    print("=" * 60 + "\n")
+    print(f"Approver: {manifest['artifacts']['qa_approver']}")
+    print(f"Approved at: {manifest['artifacts']['qa_approved_at']}")
+    print("\nNext steps:")
+    print(f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}")
+    print("  2. Orchestrator will proceed to DEPLOYMENT phase\n")
+
+
+def reject_qa(project_id: str, reason: str = None):
+    """
+    Reject QA and return to CODING phase (HITL - Decision 8)
+
+    This implements the error loop from ORCHESTRATION_workflow_design.yaml.
+    The orchestrator will transition back to CODING to fix issues.
+    """
+    print("\n" + "=" * 60)
+    print(f"QA REJECTION: {project_id}")
+    print("=" * 60 + "\n")
+
+    # Load project manifest
+    manifest_path = Path(f"workspaces/{project_id}/project_manifest.json")
+
+    if not manifest_path.exists():
+        print(f"❌ ERROR: Project manifest not found at {manifest_path}\n")
+        return
+
+    with open(manifest_path, 'r') as f:
+        manifest = json.load(f)
+
+    # Validate state
+    if manifest.get('current_phase') != 'AWAITING_QA_APPROVAL':
+        print(f"❌ ERROR: Project is not awaiting QA approval")
+        print(f"   Current phase: {manifest.get('current_phase')}\n")
+        return
+
+    # Confirm rejection
+    if not reason:
+        print("Reason for rejection: ", end="")
+        reason = input().strip()
+
+    print(f"\nRejecting QA with reason: {reason}")
+    print("Do you want to proceed? (yes/no): ", end="")
+    response = input().strip().lower()
+
+    if response != "yes":
+        print("\n❌ QA rejection cancelled\n")
+        return
+
+    # Set rejection flags and transition back to CODING
+    manifest['artifacts']['qa_approved'] = False
+    manifest['artifacts']['qa_rejected'] = True
+    manifest['artifacts']['qa_rejection_reason'] = reason
+    manifest['artifacts']['qa_rejector'] = getpass.getuser()
+    manifest['artifacts']['qa_rejected_at'] = datetime.utcnow().isoformat() + "Z"
+    manifest['current_phase'] = 'CODING'  # Error loop: back to CODING
+
+    # Save manifest
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f, indent=2)
+
+    print("\n" + "=" * 60)
+    print("✅ QA REJECTED")
+    print("=" * 60 + "\n")
+    print(f"Rejector: {manifest['artifacts']['qa_rejector']}")
+    print(f"Reason: {reason}")
+    print(f"New phase: CODING (error loop)\n")
+    print("\nNext steps:")
+    print(f"  1. Resume orchestrator: python -m agency_os.00_system.orchestrator.core_orchestrator resume {project_id}")
+    print("  2. Orchestrator will re-execute CODING phase to fix issues\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Vibe Agency CLI - Prompt Generator",
@@ -219,6 +353,8 @@ Examples:
   ./vibe-cli.py tasks VIBE_ALIGNER
   ./vibe-cli.py generate VIBE_ALIGNER 02_feature_extraction
   ./vibe-cli.py generate GENESIS_BLUEPRINT 01_select_core_modules
+  ./vibe-cli.py approve-qa my_app
+  ./vibe-cli.py reject-qa my_app --reason "Tests failing"
         """
     )
 
@@ -245,6 +381,15 @@ Examples:
     gen_parser.add_argument("-o", "--output", default="COMPOSED_PROMPT.md",
                            help="Output file (default: COMPOSED_PROMPT.md)")
 
+    # approve-qa command (HITL - GAD-002 Decision 8)
+    approve_parser = subparsers.add_parser("approve-qa", help="Approve QA and proceed to deployment")
+    approve_parser.add_argument("project_id", help="Project ID (e.g., my_app)")
+
+    # reject-qa command (HITL - GAD-002 Decision 8)
+    reject_parser = subparsers.add_parser("reject-qa", help="Reject QA and return to CODING")
+    reject_parser.add_argument("project_id", help="Project ID (e.g., my_app)")
+    reject_parser.add_argument("-r", "--reason", help="Rejection reason")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -261,6 +406,10 @@ Examples:
         list_tasks(args.agent_id)
     elif args.command == "generate":
         generate_prompt(args.agent_id, args.task_id, args.output)
+    elif args.command == "approve-qa":
+        approve_qa(args.project_id)
+    elif args.command == "reject-qa":
+        reject_qa(args.project_id, args.reason)
 
 
 if __name__ == "__main__":

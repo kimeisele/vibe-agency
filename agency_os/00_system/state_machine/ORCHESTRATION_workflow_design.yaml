@@ -3,8 +3,13 @@
 # Defines die SDLC-statesmaschine, ihre Zustände, Übergänge
 # und Fehlerbehandlungs-Schleifen.
 # Based auf der Analyse in Teil 1 dieses Berichts.
+#
+# PHASE 3 ENHANCEMENTS (GAD-002):
+# - Added horizontal_audits to states (Decision 4: Continuous Per-Phase Auditing)
+# - Added quality_gates to transitions (Decision 2: Hybrid Blocking/Async)
+# - Implements shift-left security with blocking critical checks
 # =================================================================
-version: 1.0.0
+version: 2.0.0
 kind: SDLCStateMachine
 
 # 1. Definition der Workflow-Zustände (States)
@@ -14,6 +19,19 @@ states:
    description: "Projektplanung und Anforderungsanalyse. Besteht aus drei Phasen (Research ist optional)."
    responsible_framework: "ProjectManagement"
    output_artifact: "project_manifest.json"
+   horizontal_audits:  # GAD-002 Decision 4: Continuous Per-Phase Auditing
+     - name: "prompt_security_scan"
+       severity: "critical"
+       blocking: true
+       description: "Scan all agent prompts for injection vulnerabilities"
+     - name: "data_privacy_scan"
+       severity: "critical"
+       blocking: true
+       description: "Check for PII leaks in feature specifications"
+     - name: "quality_best_practices"
+       severity: "info"
+       blocking: false
+       description: "Validate planning follows best practices"
    sub_states:
      - name: "RESEARCH"
        description: "Optional: Fact-based market, technical, and user research before business planning"
@@ -44,6 +62,19 @@ states:
    responsible_framework: "CODE_GEN "
    input_artifact: "code_gen_spec.json"
    output_artifact: "artifact_bundle"
+   horizontal_audits:  # GAD-002 Decision 4: Continuous Per-Phase Auditing
+     - name: "code_security_scan"
+       severity: "critical"
+       blocking: true
+       description: "Scan generated code for security vulnerabilities (SQL injection, XSS, etc.)"
+     - name: "license_compliance_scan"
+       severity: "high"
+       blocking: true
+       description: "Validate all dependencies have compatible licenses"
+     - name: "code_complexity_check"
+       severity: "info"
+       blocking: false
+       description: "Check cyclomatic complexity and maintainability"
 
  - name: "TESTING"
    description: "Gesteuert durch das QA-Framework. Führt die Testpyramide aus und erzeugt einen QA-Bericht."
@@ -105,6 +136,17 @@ transitions:
    to_state: "CODING"
    trigger: "feature_spec.json erstellt mit gültigem code_gen_spec link."
    type: "Automated"
+   quality_gates:  # GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
+     - agent: "AUDITOR"
+       check: "prompt_security_scan"
+       severity: "critical"
+       blocking: true
+       description: "Block CODING if planning prompts contain injection vulnerabilities"
+     - agent: "AUDITOR"
+       check: "feature_spec_validation"
+       severity: "high"
+       blocking: true
+       description: "Validate feature_spec.json against schema before CODING"
 
  - name: "T2_StartTesting"
    from_state: "CODING"
@@ -123,6 +165,27 @@ transitions:
    to_state: "DEPLOYMENT"
    trigger: "HITL-Ereignis: 'qa_approved_signal' empfangen UND qa_report.status == 'APPROVED'."
    type: "Human-in-the-Loop (HITL)"
+   quality_gates:  # GAD-002 Decision 2: Critical checks before production deployment
+     - agent: "AUDITOR"
+       check: "code_security_scan"
+       severity: "critical"
+       blocking: true
+       description: "MUST pass security scan before production deployment"
+     - agent: "AUDITOR"
+       check: "license_compliance_scan"
+       severity: "critical"
+       blocking: true
+       description: "MUST verify all licenses are compatible before deployment"
+     - agent: "AUDITOR"
+       check: "data_privacy_compliance"
+       severity: "critical"
+       blocking: true
+       description: "MUST verify GDPR/privacy compliance before deployment"
+     - agent: "AUDITOR"
+       check: "performance_benchmarks"
+       severity: "info"
+       blocking: false
+       description: "Optional performance checks (non-blocking)"
 
  - name: "T5_DeploymentSuccess"
    from_state: "DEPLOYMENT"

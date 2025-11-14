@@ -16,9 +16,25 @@
 # 2. CI/CD runs semantic_audit.py which validates KB consistency
 # 3. Semantic violations trigger review tasks via CODEOWNERS governance
 
-version: "1.0"
-last_updated: "2025-11-12"
-maintained_by: "@aos-knowledge-curators"
+# Knowledge Base Metadata (GAD-002 Decision 10)
+metadata:
+  schema_version: "1.0"
+  knowledge_id: "AOS_Ontology"
+  version: "2.0"
+  last_updated: "2025-11-14"
+  last_updated_by: "claude-lead-architect"
+  maintained_by: "@aos-knowledge-curators"
+  freshness_policy: "monthly_review"
+  next_review_date: "2025-12-14"
+  status: "active"
+  description: "Master data dictionary and semantic schema for all AOS knowledge bases"
+  changelog:
+    - version: "2.0"
+      date: "2025-11-14"
+      changes: "Added GAD-002 metadata header for knowledge lifecycle tracking"
+    - version: "1.0"
+      date: "2025-11-12"
+      changes: "Initial ontology with core semantic terms for feasibility, scope, and quality"
 
 # SECTION 1: Core Semantic Terms
 # These terms are used across multiple KB files and frameworks

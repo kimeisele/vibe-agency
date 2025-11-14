@@ -1,6 +1,22 @@
-version: "1.0"
-last_updated: "2025-11-14"
-description: "Market sizing formulas and estimation heuristics for MARKET_RESEARCHER agent"
+# Knowledge Base Metadata (GAD-002 Decision 10)
+metadata:
+  schema_version: "1.0"
+  knowledge_id: "RESEARCH_market_sizing_formulas"
+  version: "2.0"
+  last_updated: "2025-11-14"
+  last_updated_by: "claude-lead-architect"
+  maintained_by: "MARKET_RESEARCHER"
+  freshness_policy: "quarterly_review"
+  next_review_date: "2026-02-14"
+  status: "active"
+  description: "Market sizing formulas and estimation heuristics for MARKET_RESEARCHER agent"
+  changelog:
+    - version: "2.0"
+      date: "2025-11-14"
+      changes: "Added GAD-002 metadata header, restructured for Phase 3"
+    - version: "1.0"
+      date: "2025-11-14"
+      changes: "Initial version with TAM/SAM/SOM formulas and free data sources"
 
 formulas:
   - name: "TAM_calculation"

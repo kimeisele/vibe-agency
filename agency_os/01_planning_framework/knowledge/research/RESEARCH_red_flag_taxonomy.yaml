@@ -1,7 +1,23 @@
-version: "1.0"
-last_updated: "2025-11-14"
-based_on: "Audit document analysis"
-description: "Red flag taxonomy for FACT_VALIDATOR agent to detect hallucinations and unsupported claims"
+# Knowledge Base Metadata (GAD-002 Decision 10)
+metadata:
+  schema_version: "1.0"
+  knowledge_id: "RESEARCH_red_flag_taxonomy"
+  version: "2.0"
+  last_updated: "2025-11-14"
+  last_updated_by: "claude-lead-architect"
+  maintained_by: "FACT_VALIDATOR"
+  freshness_policy: "quarterly_review"
+  next_review_date: "2026-02-14"
+  status: "active"
+  description: "Red flag taxonomy for FACT_VALIDATOR agent to detect hallucinations and unsupported claims"
+  based_on: "Audit document analysis"
+  changelog:
+    - version: "2.0"
+      date: "2025-11-14"
+      changes: "Added GAD-002 metadata header for knowledge lifecycle tracking"
+    - version: "1.0"
+      date: "2025-11-14"
+      changes: "Initial version based on audit document analysis of AI hallucination patterns"
 
 red_flags:
   - type: "context-collapse"
