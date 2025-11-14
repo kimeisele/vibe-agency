@@ -1,0 +1,80 @@
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "research-fw-2025-11-14-001",
+    "name": "vibe-research-framework",
+    "description": "Fact-based research framework for VIBE AGENCY - adds RESEARCH sub-state to PLANNING phase with 4 validation agents",
+    "owner": "kimeisele",
+    "createdAt": "2025-11-14T08:00:00Z",
+    "lastUpdatedAt": "2025-11-14T08:00:00Z"
+  },
+  "spec": {
+    "vibe": {
+      "target_scope": "v1.0",
+      "integration_type": "framework_extension",
+      "parent_framework": "vibe-agency"
+    },
+    "genesis": {
+      "architecture_type": "modular_agent_framework",
+      "agent_count": 4,
+      "integration_points": [
+        "ORCHESTRATION_workflow_design.yaml",
+        "ORCHESTRATION_data_contracts.yaml",
+        "LEAN_CANVAS_VALIDATOR"
+      ]
+    }
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "lastUpdate": "2025-11-14T08:00:00Z",
+    "message": "Feature specs and technical blueprint generated via VIBE_ALIGNER framework execution"
+  },
+  "artifacts": {
+    "planning": {
+      "feature_spec": {
+        "path": "/artifacts/planning/VIBE_RESEARCH_FRAMEWORK_SPECS.md",
+        "status": "complete",
+        "validation": {
+          "fae_passed": true,
+          "fdg_passed": true,
+          "apce_passed": true,
+          "total_complexity": 37,
+          "budget_utilization": "61%"
+        }
+      },
+      "technical_blueprint": {
+        "path": "/artifacts/planning/TECHNICAL_BLUEPRINT.md",
+        "status": "complete",
+        "implementation_timeline": "12-13 weeks",
+        "sprint_count": 7
+      }
+    },
+    "code": {},
+    "test": {},
+    "deployment": {}
+  },
+  "roadmap": {
+    "v1.0": {
+      "features": [
+        "MARKET_RESEARCHER agent (6 tasks)",
+        "TECH_RESEARCHER agent (6 tasks)",
+        "FACT_VALIDATOR agent (6 tasks)",
+        "USER_RESEARCHER agent (6 tasks)",
+        "research_brief.json schema",
+        "LEAN_CANVAS_VALIDATOR integration"
+      ],
+      "timeline": "12-13 weeks",
+      "status": "planning_complete"
+    },
+    "v2.0": {
+      "features": [
+        "ML-based claim verification",
+        "Real-time competitor monitoring",
+        "Third-party research API integrations (Crunchbase, PitchBook)"
+      ],
+      "timeline": "TBD",
+      "status": "deferred"
+    }
+  }
+}
