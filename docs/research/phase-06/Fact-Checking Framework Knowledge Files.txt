@@ -1,0 +1,266 @@
+﻿Technischer Audit und Verifizierungsplan für das Vibe Agency Framework
+
+
+
+
+I. Eine Taxonomie technischer „Halluzinationen“: Identifizierung von Red Flags in Ihrer Wissensdatenbank
+
+
+Bevor mit der Überprüfung einzelner Behauptungen begonnen wird, muss ein systematischer Rahmen für die Identifizierung von Mustern fehlerhafter Informationen etabliert werden. Technische Ungenauigkeiten in Wissensdatenbanken sind selten völlig willkürlich; sie folgen oft Mustern, die auf verbreiteten Missverständnissen beruhen.1 Die Identifizierung dieser „Red Flags“ ist der wichtigste Schritt, um nicht nur bestehende Fehler zu korrigieren, sondern auch zukünftige Halluzinationen zu verhindern.
+
+
+A. Red Flag Typ 1: Die „Kontext-Kollaps“-Halluzination (Beispiel: „React braucht Node.js“)
+
+
+Dies ist die häufigste und heimtückischste Art von Halluzination. Sie ist keine direkte Unwahrheit, sondern eine Halbwahrheit, bei der kritischer Kontext kollabiert ist. Die Behauptung „React braucht Node.js“ 3 ist das archetypische Beispiel. Sie vermischt fälschlicherweise zwei unterschiedliche Kontexte: die Entwicklungsumgebung (Dev) und die Produktionsumgebung (Prod).
+* Evidenz (Entwicklungszeit): Die Behauptung ist für die Entwicklung korrekt. Die offizielle Dokumentation für create-react-app gibt klar an: „You'll need to have Node 14.0.0 or later version on your local development machine“.4 Node.js ist für das gesamte Entwicklungs-Tooling unerlässlich: Ausführung von npm (Node Package Manager) zur Installation von Abhängigkeiten 6 und Ausführung von Build-Skripten (wie Webpack und Babel) zum Transpilieren und Bündeln des Codes.8
+* Evidenz (Laufzeit): Die Behauptung ist für die Produktion (im Standardfall) falsch. Der npm run build-Prozess 8 erzeugt einen Ordner mit statischen HTML-, CSS- und JavaScript-Dateien.10 Diese statischen Dateien können von jedem Webserver (z. B. Nginx, Apache, S3-Bucket) bereitgestellt werden und erfordern keine Node.js-Laufzeitumgebung auf dem Server.
+Die einzige Ausnahme ist Server-Side Rendering (SSR), bei dem Node.js tatsächlich auf dem Server ausgeführt wird, um React-Komponenten serverseitig zu rendern.11 Das Versäumnis, diese Unterscheidung (CSR vs. SSR vs. Dev-Tooling) zu treffen, ist ein klassischer Kontext-Kollaps.
+Implikation: Jede Behauptung in der Wissensdatenbank, die eine technische Abhängigkeit postuliert, muss rigoros daraufhin überprüft werden, ob sie sich auf dev_dependency (zur Erstellung erforderlich) oder runtime_dependency (zur Ausführung erforderlich) bezieht. Diese Unterscheidung hat direkte Auswirkungen auf die Architektur, die Bereitstellungspipeline und die Betriebskosten.
+
+
+B. Red Flag Typ 2: Die „Plausibel klingende Unwahrheit“ (Beispiel: Serverless für Hard Real-Time)
+
+
+Diese Art von Halluzination ist eine direkte Falschaussage, die jedoch plausibel klingt, weil sie verwandte, aber unterschiedliche Konzepte vermischt. Ein typisches Beispiel wäre eine Behauptung wie: „Serverless-Architekturen (FaaS) eignen sich für Hard-Real-Time-Anwendungen aufgrund ihrer geringen Latenz und Skalierbarkeit.“
+* Evidenz: Serverless-Plattformen bieten zwar eine „reduzierte Latenz“ 12, die für Soft-Real-Time-Web-Erlebnisse (d. h. die menschliche Wahrnehmung von „sofort“) geeignet ist. Sie sind jedoch von Natur aus „Best-Effort“-Systeme.13 Die wissenschaftliche Analyse ist eindeutig: Aktuelle Serverless-Systeme „können keine Hard-Real-Time-Fristen garantieren“.13
+* Definition: Ein Hard-Real-Time-System ist eines, bei dem das Verfehlen einer Frist zu einem katastrophalen Ausfall führt (z. B. Avionik, medizinische Geräte).15 Die unvorhersehbare Natur von Kaltstarts in Serverless-Umgebungen macht sie per Definition ungeeignet für solche Garantien.16
+Implikation: Dies ist ein klassisches Beispiel für die Verwechslung von Geschwindigkeit (eine durchschnittliche Metrik) mit Garantien (eine absolute Anforderung). Jede Behauptung in den Wissensdateien, die sich auf nicht-funktionale Anforderungen (NFRs) wie Latenz, Durchsatz oder Verfügbarkeit bezieht, muss mit äußerster Präzision formuliert werden. Eine Behauptung wie „Architektur X ist schnell“ ist eine wertlose Halluzination. Eine Behauptung wie „Architektur X bietet eine garantierte P99-Latenz von < 10 ms unter Y-Bedingungen“ ist ein überprüfbarer Fakt.
+
+
+C. Red Flag Typ 3: Die „Kontextfreie Binsenweisheit“ (Beispiel: Monolith First)
+
+
+Diese Halluzination entsteht, wenn eine nuancierte Branchenweisheit aus ihrem Kontext gerissen und als absolutes, universelles Gesetz wiederholt wird. Das prominenteste Beispiel ist das „Monolith First“-Prinzip von Martin Fowler.
+* Evidenz (Die Behauptung): Die Behauptung lautet oft: „Man sollte immer mit einem Monolithen beginnen.“ Sie wird durch Beobachtungen gestützt wie: „Fast alle erfolgreichen Microservice-Stories haben mit einem Monolithen begonnen, der zu groß wurde“.17
+* Evidenz (Die Nuance): Der Grund für diesen Rat wird oft ausgelassen. Der Hauptvorteil des Monolithen besteht darin, dass es extrem schwierig ist, die Service-Grenzen von Anfang an richtig zu definieren.18 Ein Monolith ermöglicht es, diese Grenzen zuerst durch internes Refactoring zu entdecken und zu stabilisieren, bevor man die (viel teurere) Hürde der Verteilung über Netzwerkaufrufe nimmt. Es geht nicht darum, dass Monolithen besser sind, sondern darum, dass Refactoring innerhalb eines Monolithen einfacher ist als zwischen Services.
+* Evidenz (Die Gegen-Nuance): Dieser Rat ist nicht universell. Einige Teams, wie Monzo, haben erfolgreich von Grund auf mit Microservices begonnen.19 Die Entscheidung hängt von der Vertrautheit des Teams mit der Domäne, den Konsistenzanforderungen 17 und den Skalierungszielen ab.
+Implikation: Das blinde Befolgen von „Monolith First“ 20 ohne das Warum zu verstehen, ist gefährlich. Ein Team könnte einen unstrukturierten „Big Ball of Mud“ 22 bauen und die eigentliche Lektion – Modularität – komplett verpassen. Der korrekte Rat lautet: „Beginne mit einem modularen Monolithen“.22 Jede „Best Practice“-Behauptung in den Wissensdateien muss auf ihre zugrundeliegenden Prinzipien und Kompromisse (Trade-offs) überprüft werden.
+
+
+D. Red Flag Typ 4: Der „Kategorienfehler“ (Beispiel: Framework vs. Bibliothek)
+
+
+Dies ist ein fundamentaler Definitionsfehler, der zu falschen Annahmen über Aufwand, Komplexität und Kontrolle führt.
+* Evidenz: Der Kernunterschied zwischen einem Framework und einer Bibliothek ist die „Inversion of Control“ (IoC).24
+   * Eine Bibliothek (Library) wird von Ihrem Code aufgerufen. Sie behalten die Kontrolle über den Anwendungsfluss (z. B. Lodash, jQuery).27
+   * Ein Framework ruft Ihren Code auf. Das Framework stellt das Skelett und den Lebenszyklus bereit und diktiert den Fluss (z. B. Angular, Django).25
+* Der Grenzfall: React.js wird oft fälschlicherweise als Framework bezeichnet. Branchenübergreifend wird es jedoch genauer als Bibliothek 28 bezeichnet, da es sich (hauptsächlich) auf die UI-Schicht konzentriert. Es schreibt kein Routing, kein State-Management und keine Datenbeschaffung vor – all dies muss der Entwickler aus anderen Bibliotheken hinzufügen. Node.js ist weder eine Bibliothek noch ein Framework; es ist eine Laufzeitumgebung (Runtime).28
+Implikation: Wenn die FAE_constraints.yaml (Frontend Architecture) React als „Framework“ bezeichnet, führt dies zu einer massiven Unterschätzung der Komplexität. Ein Team, das ein „Framework“ erwartet, wird überrascht sein, wenn es feststellt, dass es Dutzende von Architekturentscheidungen (Routing, State, API-Client) selbst treffen und integrieren muss. Die Korrektur der Terminologie ist hier entscheidend für eine genaue Aufwandsschätzung und Projektplanung.
+________________
+
+
+II. Audit und Verifizierung: FAE_constraints.yaml (Frontend-Architektur)
+
+
+Dieser Abschnitt wendet die in Teil I definierte Taxonomie an, beginnend mit der Test-Behauptung "React needs Node.js".
+
+
+A. Analyse der Kernbehauptung
+
+
+Die Behauptung „React braucht Node.js“ dient als primärer Testfall. Wie in Abschnitt I-A dargelegt, handelt es sich um einen klassischen „Kontext-Kollaps“ (Red Flag Typ 1). Die Behauptung ist weder vollständig richtig noch vollständig falsch; sie ist NUANCED. Die Korrektur muss diese Nuance (Entwicklungszeit vs. Laufzeit, CSR vs. SSR) präzise einführen. Die maßgebliche Quelle ist die create-react-app-Dokumentation 4, die Node.js für die „lokale Entwicklungsmaschine“ vorschreibt, aber „nicht auf dem Server erforderlich“ ist.
+
+
+B. Deliverable: FAE_constraints.yaml Audit-Log
+
+
+Der folgende Block stellt die formale Auditausgabe für diese Datei im angeforderten Format dar.
+
+
+Datei
+	Behauptung
+	Audit-Ergebnis (YAML-Format)
+	FAE_constraints.yaml
+	React needs Node.js
+	yaml<br>file: FAE_constraints.yaml<br>claim: "React needs Node.js"<br>fact_check:<br> status: NUANCED<br> source: "https://github.com/facebook/create-react-app#creating-an-app"<br> analysis: ><br> The claim is a 'Context-Collapse' hallucination (Red Flag Type 1).<br> It confuses Development-Time requirements with Production-Runtime requirements.<br> Node.js is mandatory for the *development environment* (via npm/npx,<br> Create React App, bundlers like Webpack).[4, 5, 8]<br> It is *not* required for the *production server* for a standard<br> client-side-rendered (CSR) app, which only serves static files.10<br> It *is* required for Server-Side Rendering (SSR).11<br> recommendation: ><br> Replace claim with two specific constraints:<br> 1. "React (CSR) build process requires Node.js development environment."<br> 2. "React (CSR) production deployment is platform-agnostic (static files)."<br> 3. "React (SSR) architecture requires a Node.js production runtime."<br>
+	FAE_constraints.yaml
+	(Implizite Annahme) React ist ein Framework
+	yaml<br>file: FAE_constraints.yaml<br>claim: "React is a framework"<br>fact_check:<br> status: NUANCED<br> source: "https://stackoverflow.com/questions/148747/what-is-the-difference-between-a-framework-and-a-library"<br> analysis: ><br> This is a 'Category Error' (Red Flag Type 4). React.js wird in der Branche<br> überwiegend als *Bibliothek* (library) und nicht als *Framework* bezeichnet.28<br> Der Grund ist, dass es keine vollständige "Inversion of Control" [26]<br> für die gesamte Anwendung bietet, sondern sich auf die UI-Schicht konzentriert.<br> Im Gegensatz zu Frameworks (z. B. Angular) schreibt React nicht vor,<br> wie Routing oder Datenbeschaffung gehandhabt werden sollen.<br> recommendation: ><br> In all files, refer to React as a 'UI Library' to correctly set expectations<br> regarding the level of built-in functionality. This clarifies that<br> additional libraries (e.g., for routing, state management) are required dependencies.<br>
+	________________
+
+
+III. Audit und Verifizierung: FDG_dependencies.yaml (Feature Dependency Graph)
+
+
+Dieser Abschnitt prüft die komplexe Liste der Feature-Abhängigkeiten aus der Datei FDG_dependencies.yaml.29 Diese Datei ist besonders anfällig für Halluzinationen, da sie detaillierte Begründungen für Architekturentscheidungen enthält.
+
+
+A. Deep Dive: user_authentication_basic (FDG-001)
+
+
+* Behauptung (Claim): required_dependency: password_hashing_library
+* Begründung (Reason): Must securely hash and salt passwords (never store plaintext) 29
+* Analyse: Diese Behauptung ist CORRECT und stellt eine grundlegende, nicht verhandelbare Sicherheitspraxis dar.
+* Evidenz: Die maßgebliche Quelle für diese Behauptung ist das OWASP (Open Web Application Security Project) "Password Storage Cheat Sheet".30
+* Kontext und Vertiefung: Die angegebene „Begründung“ ist zwar korrekt, aber unvollständig. Sie beantwortet nicht das „Warum“.
+   1. Warum Hashing (und nicht Verschlüsselung)? Hashing ist eine Einwegfunktion (one-way); es ist rechnerisch unmöglich, das ursprüngliche Passwort aus dem Hash wiederherzustellen. Verschlüsselung ist umkehrbar (reversible).33 Wenn ein Angreifer die Datenbank und den Verschlüsselungsschlüssel stiehlt, hat er alle Passwörter im Klartext. Bei einem Hash-Diebstahl hat er nur die Hashes.
+   2. Warum Salting? Ein „Salt“ ist ein eindeutiger, zufälliger Wert, der an jedes Passwort vor dem Hashing angehängt wird. Dies verhindert Rainbow-Table-Angriffe.35 Ohne Salt würde password123 bei jedem Benutzer denselben Hash erzeugen. Ein Angreifer könnte eine Tabelle mit gängigen Passwörtern und deren Hashes vorab berechnen. Mit einem Salt wird der Hash für password123 bei jedem Benutzer einzigartig, was Rainbow-Tables unbrauchbar macht.
+* Implikation: Die Wissensdatei ist korrekt, aber ihr fehlt die Autorität. Die Empfehlung wird sein, die Behauptung nicht nur zu bestätigen, sondern die „Begründung“ (Reason) zu stärken, indem sie explizit auf „Einwegfunktion“ und „Schutz vor Rainbow-Tables“ verweist und direkt OWASP zitiert.
+
+
+B. Deep Dive: user_profile_photo_upload (FDG-005)
+
+
+* Behauptung (Claim): required_dependency: image_resizing_service
+* Begründung (Reason): Users upload large (e.g., 10MB) photos. Must create smaller... versions (e.g., 32px, 128px) for thumbnails... Application will be extremely slow, wasting bandwidth and storage... 29
+* Analyse: Diese Behauptung ist CORRECT und zeugt von einem guten Verständnis für reale Produkte. Eine naive Implementierung, die dies als optional betrachtet, würde unweigerlich zu Performance- und Kostenproblemen führen.
+* Evidenz: Die Forschung und Entwicklerberichte zeigen, dass der Versuch, dieses Problem rein clientseitig zu lösen, zwar möglich ist 36, aber erhebliche Nachteile hat.
+* Kontext und Vertiefung: Die in der Datei genannte „Begründung“ (langsame Ladezeiten) ist gültig, konzentriert sich aber nur auf das Symptom. Die eigentlichen, funktionsblockierenden Probleme sind gravierender:
+   1. Blockade des Hauptthreads: Die Komprimierung großer Bilder ist eine rechenintensive Aufgabe. Wenn sie im JavaScript-Hauptthread des Browsers ausgeführt wird, friert die Benutzeroberfläche ein („my app gets stuck“), was zu einer katastrophalen User Experience führt.38
+   2. Upload-Limits: Viele moderne Architekturen (z. B. Vercel, AWS Lambda) haben strenge Limits für die Nutzlastgröße von Anfragen (z. B. 4.5MB).38 Ein Benutzer, der ein 15-MB-Foto hochlädt, würde dieses Limit überschreiten, bevor der Server überhaupt die Möglichkeit hat, die Größe zu ändern. Der Upload der Originaldatei ist der Engpass.
+   3. Qualität: Serverseitige Bildbibliotheken (wie ImageMagick) sind den trivialen Implementierungen im Browser qualitativ weit überlegen und erzeugen bessere, schärfere Thumbnails.36
+* Implikation: Die Begründung in der Wissensdatei muss aktualisiert werden, um diese kritischeren, funktionsblockierenden Probleme (UI-Freeze, Upload-Limits) einzubeziehen. Dies stärkt das Argument, warum dies eine erforderliche Abhängigkeit und keine optionale Optimierung ist.
+
+
+C. Deliverable: FDG_dependencies.yaml Audit-Log
+
+
+Die folgende Tabelle enthält die Auditergebnisse für die beiden oben analysierten Deep Dives als Beispiele für den vollständigen Audit.
+
+
+Datei
+	Behauptung
+	Audit-Ergebnis (YAML-Format)
+	FDG_dependencies.yaml
+	FDG-001: user_authentication_basic
+
+
+dependency: password_hashing_library
+	yaml<br>file: FDG_dependencies.yaml<br>claim: "user_authentication_basic requires password_hashing_library"<br>fact_check:<br> status: CORRECT<br> source: "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"<br> analysis: ><br> This is a critical, non-negotiable security requirement. The provided 'Reason'<br> in 29 is good. It can be strengthened by explaining the 'why'.<br> Hashing is a one-way function, making it irreversible (unlike encryption).33<br> Salting is required to mitigate rainbow table attacks.35<br> This is mandated by OWASP.[30, 32]<br> recommendation: ><br> Keep as 'Required'. Update 'Reason' to:<br> "Must use a modern, slow, one-way hashing algorithm (e.g., Argon2, bcrypt)<br> with a unique salt per user. This prevents plaintext leaks [39] and<br> mitigates rainbow table attacks.35 See OWASP Password Storage Cheat Sheet."<br>
+	FDG_dependencies.yaml
+	FDG-005: user_profile_photo_upload
+
+
+dependency: image_resizing_service
+	yaml<br>file: FDG_dependencies.yaml<br>claim: "user_profile_photo_upload requires image_resizing_service"<br>fact_check:<br> status: CORRECT<br> source: "httpshttps://www.reddit.com/r/reactjs/comments/1b54m68/how-can-i_compress_and_resize_useruploaded_images/"<br> analysis: ><br> The 'Reason' in 29 (slow load times) is valid but incomplete. A more critical<br> issue is that client-side resizing of large files (e.g., 10MB+) can block the<br> main JS thread, freezing the UI.38 Furthermore, attempting to upload<br> the large original file to a serverless function for resizing may fail<br> due to payload size limits (e.g., Vercel's 4.5MB limit).38<br> A dedicated service (background job or proxy) is required for robustness.<br> recommendation: ><br> Keep as 'Required'. Update 'Reason' to:<br> "Users upload large (e.g., 10MB+) photos. Client-side resizing blocks the UI.38<br> Server-side resizing is required to prevent UI freezes and bypass<br> server payload limits. Must create optimized versions (e.g., 32px, 128px)<br> for thumbnails and avatars."<br>
+	________________
+
+
+IV. Audit und Verifizierung: APCE_rules.yaml (Automated Prioritization Engine)
+
+
+Dieser Abschnitt prüft die Behauptungen aus APCE_rules.yaml 29, die sich auf Komplexitätsschätzungen und V1 (MVP)-Empfehlungen konzentrieren. Dies sind im Wesentlichen architektonische Urteile, die als Fakten kodifiziert wurden, und müssen daher auf ihre zugrundeliegende Begründung überprüft werden.
+
+
+A. Deep Dive: product_catalog_basic
+
+
+* Behauptung (Claim): v1_recommendation: simple_products_no_variants 29
+* Analyse: Diese Behauptung ist CORRECT und stellt eine außergewöhnlich wichtige und ausgereifte technische Einschränkung dar. Sie ist ein klares Zeichen für ein Framework, das die „verborgene Komplexität“ von E-Commerce-Systemen versteht.
+* Evidenz: Die Forschung und Branchenberichte bestätigen, dass Produktvarianten (Größe, Farbe, Material) eine Quelle exponentieller Komplexität sind. Das Problem ist kombinatorisch. Wie in 40 dargelegt, wird aus einem einzigen Produkt (T-Shirt) durch das Hinzufügen von 2 Farben, 3 Größen und 2 Stoffarten plötzlich 12 einzigartige SKUs (Stock Keeping Units).
+* Kontext und Vertiefung (Der Dominoeffekt): Diese eine, scheinbar harmlose Produkteinforderung („Können wir das auch in Blau anbieten?“) löst eine Kettenreaktion aus, die sich auf jedes nachgelagerte System auswirkt:
+   1. UI/UX: Wie werden die Varianten dem Benutzer präsentiert? Als separate Dropdowns? Als Farbfelder (Swatches)?41 Was passiert, wenn eine bestimmte Kombination (z. B. Blau in XL) nicht verfügbar ist? Die Komplexität der Benutzeroberfläche explodiert.42
+   2. Bestandsverwaltung: Das System verwaltet nicht mehr den Bestand für 1 Produkt, sondern muss den Bestand für 12 separate SKUs verfolgen.43
+   3. Datenbank: Das Datenmodell ändert sich von einer einfachen products-Tabelle zu einem komplexen Schema mit products, options (z. B. „Farbe“) und variants (z. B. „Blau-XL“).45
+   4. Plattform-Limits: Die Komplexität ist so hoch, dass große E-Commerce-Plattformen harte Limits erzwingen (z. B. Shopify hat ein Limit von 100 Varianten pro Produkt) 42, was zeigt, dass dies eine bekannte Komplexitätsgrenze ist.
+* Implikation: Die Behauptung simple_products_no_variants ist eine der wichtigsten und korrektesten Einschränkungen in der gesamten Wissensbasis. Sie verhindert, dass ein V1-Projekt durch eine scheinbar harmlose Anforderung zum Scheitern verurteilt wird.
+
+
+B. Deliverable: APCE_rules.yaml Audit-Log
+
+
+Die folgende Tabelle enthält die Auditergebnisse für den oben genannten Deep Dive sowie für die ebenfalls in 29 gefundene Behauptung search_basic_sql.
+
+
+Datei
+	Behauptung
+	Audit-Ergebnis (YAML-Format)
+	APCE_rules.yaml
+	product_catalog_basic
+
+
+v1_recommendation: simple_products_no_variants
+	yaml<br>file: APCE_rules.yaml<br>claim: "v1_recommendation for product_catalog_basic is simple_products_no_variants"<br>fact_check:<br> status: CORRECT<br> source: "httpshttps://commandc.com/optimize-product-variants-to-improve-the-customer-experience/"<br> analysis: ><br> This is a critical, correct, and mature engineering constraint. Product variants<br> are a 'complexity paradox'.42 A seemingly simple request (e.g., add color)<br> creates combinatorial complexity 40 that impacts UI 41,<br> database modeling 45, and inventory management (SKUs).[44]<br> This constraint correctly identifies variants as a major complexity boundary<br> that should be deferred from V1.<br> recommendation: ><br> Keep constraint. Add a 'justification' field linking to this analysis<br> to help Product Managers understand why this is not a 'simple' feature.<br>
+	APCE_rules.yaml
+	search_basic_sql
+
+
+complexity_factors.factor: Using SQL 'LIKE %...%' query
+	yaml<br>file: APCE_rules.yaml<br>claim: "Basic search is defined by SQL 'LIKE %...%' query"<br>fact_check:<br> status: NUANCED<br> source: "N/A (General Database Performance Principles)"<br> analysis: ><br> This is a 'Context-Collapse' hallucination (Red Flag Type 1) that ignores scalability.<br> A SQL query with a *leading wildcard* ('LIKE %term%') *cannot* use a standard<br> B-tree index and will *always* result in a full table scan. This is<br> funktional inakzeptabel für mehr als einige tausend Zeilen und wird<br> eine Produktionsdatenbank lahmlegen.<br> Eine Abfrage mit einem *nachgestellten Wildcard* ('LIKE term%') *kann* einen Index verwenden.<br> recommendation: ><br> Refine the claim. 'LIKE %term%' should be classified as an anti-pattern.<br> Define 'search_basic_sql' as 'LIKE term%' (trailing wildcard only).<br> Add a constraint: "Leading wildcard 'LIKE %term%' search is prohibited<br> on non-trivial tables; use 'search_advanced_engine' (e.g., Elasticsearch,<br> PostgreSQL Full-Text Search) instead."<br>
+	________________
+
+
+V. Strategische Empfehlungen: Ein Framework für dauerhafte faktische Korrektheit
+
+
+Dieser Audit ist ein Heilungs-Prozess. Die folgenden Empfehlungen sind der Impf-Prozess, um zukünftige Infektionen durch Halluzinationen zu verhindern und die angestrebte „100%ige Sicherheit“ zu erreichen.
+
+
+A. Von der Prüfung zur Aktion: Der Governance-Prozess
+
+
+Das Kernproblem, das zu den aktuellen Bedenken geführt hat, ist nicht der Inhalt der Wissensdateien, sondern das Fehlen eines Überprüfungs-Prozesses für diesen Inhalt. Diese YAML-Dateien sind hochsensible Artefakte, die technische Architekturen und Geschäftsprioritäten direkt beeinflussen. Sie müssen mit der gleichen Strenge behandelt werden wie der Produktionscode selbst.
+Empfehlung: Erzwingen Sie „Knowledge-as-Code“-Governance.
+1. Pull Requests (PRs) erzwingen: Alle Änderungen an *.yaml-Wissensdateien müssen über einen Pull Request erfolgen, der von mindestens einem leitenden Architekten genehmigt werden muss.
+2. Pull-Request-Vorlage: Implementieren Sie eine PULL_REQUEST_TEMPLATE.md für alle Repositories, die Wissensdateien enthalten. Diese Vorlage muss vor dem Mergen ausgefüllt werden und erzwingt zwei Felder:
+   * source: Ein obligatorischer Link zu einer primären Quelle (offizielle Dokumentation, OWASP-Richtlinie, Martin-Fowler-Artikel, RFC), der die Behauptung stützt. Behauptungen ohne Quelle werden abgelehnt.
+   * red_flag_check: Eine Checkliste, die auf der Taxonomie in Teil I basiert:
+      * [ ] Geprüft auf Kontext-Kollaps (z. B. Dev vs. Prod)?
+      * [ ] Geprüft auf Plausibel klingende Unwahrheiten (z. B. NFRs)?
+      * [ ] Geprüft auf kontextfreie Binsenweisheiten (Best Practices)?
+      * [ ] Geprüft auf Kategorienfehler (Definitionen)?
+3. CODEOWNERS: Weisen Sie in den Repositories über eine CODEOWNERS-Datei leitende Architekten als obligatorische Prüfer für alle *.yaml-Dateien zu.
+
+
+B. Inokulation gegen zukünftige Halluzinationen: Team-Training
+
+
+Dieser Bericht selbst ist ein wertvolles Trainingsdokument. Die in Teil I identifizierten Red Flags sind die häufigsten Fallstricke, in die nicht nur generative KI, sondern auch Junior- und Mid-Level-Entwickler tappen.
+Empfehlung: Führen Sie ein internes „Lunch & Learn“ oder ein technisches Seminar durch.
+1. Thema: „Architektonische Red Flags: Wie man technische Halluzinationen in unseren Wissensdateien erkennt und verhindert.“
+2. Inhalt: Verwenden Sie die vier Red-Flag-Typen aus Teil I als Agenda.
+3. Beispiele: Nutzen Sie die konkreten, geprüften Beispiele aus diesem Bericht (React/Node.js, Serverless/Real-Time, Monolith/Microservices, Produktvarianten, SQL LIKE).
+4. Ergebnis: Dieser Prozess skaliert das Wissen dieses Audits auf das gesamte Team. Er „impft“ die Organisation, indem er die kritischen Denkfähigkeiten schärft und ein gemeinsames Vokabular für die Identifizierung fehlerhafter technischer Behauptungen schafft.
+
+
+C. Zusammenfassung: Der Weg zu 100%iger Sicherheit
+
+
+Die angestrebte „100%ige Sicherheit“ ist kein einmalig erreichbarer Zustand, sondern ein kontinuierlicher Prozess der Überprüfung, Verfeinerung und Governance. Dieser Audit-Plan und die ersten Ergebnisse bieten die Grundlage und die Methodik für diesen Prozess.
+Indem das Vibe Agency Framework seine Wissensdateien mit der gleichen Strenge wie seinen Produktionscode behandelt – mit Quellennachweisen, Peer Reviews und rigorosen Definitionen – wird es von einer potenziellen Quelle für Fehlinformationen zu einem echten, vertrauenswürdigen und hochwirksamen Wettbewerbsvorteil.
+Referenzen
+1. What Are AI Hallucinations? - IBM, Zugriff am November 14, 2025, https://www.ibm.com/think/topics/ai-hallucinations
+2. Hallucination (artificial intelligence) - Wikipedia, Zugriff am November 14, 2025, https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)
+3. React for Absolute Beginners: Build Your First Interactive Website Today! | by MD Abir Hossen Abdullah | Sep, 2025 | Medium, Zugriff am November 14, 2025, https://medium.com/@abir.abdullah/react-for-absolute-beginners-build-your-first-interactive-website-today-597c07395209
+4. facebook/create-react-app: Set up a modern web app by ... - GitHub, Zugriff am November 14, 2025, https://github.com/facebook/create-react-app
+5. create-react-app says "Create React App requires Node 14 or higher." Fixing node gives "npm does not support Node.js v10.19.0" - Stack Overflow, Zugriff am November 14, 2025, https://stackoverflow.com/questions/70376623/create-react-app-says-create-react-app-requires-node-14-or-higher-fixing-node
+6. How to Create React App in 10 Minutes? A Beginner's Guide - Netguru, Zugriff am November 14, 2025, https://www.netguru.com/blog/create-react-app
+7. Create a React app served by Express.js & Node.js (and add TypeScript) - Leejjon - Medium, Zugriff am November 14, 2025, https://leejjon.medium.com/create-a-react-app-served-by-express-js-node-js-and-add-typescript-33705be3ceda
+8. Do we really need node.js to build react application? : r/reactjs - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/reactjs/comments/mzcqyr/do_we_really_need_nodejs_to_build_react/
+9. why react should usually be a prod dependency and not dev-dependency - Stack Overflow, Zugriff am November 14, 2025, https://stackoverflow.com/questions/48861868/why-react-should-usually-be-a-prod-dependency-and-not-dev-dependency
+10. React Development vs. Production: Choosing the Right Tools for the Job | by Tanish Rajput, Zugriff am November 14, 2025, https://medium.com/@tanish_rajput/react-development-vs-production-choosing-the-right-tools-for-the-job-75206915ba5e
+11. [Python/React.js] Take the easy way before it gets to complex? : r/learnprogramming - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/learnprogramming/comments/4c0v2b/pythonreactjs_take_the_easy_way_before_it_gets_to/
+12. Using Serverless WebSockets to Enable Real-Time Messaging - InfoQ, Zugriff am November 14, 2025, https://www.infoq.com/articles/serverless-websockets-realtime-messaging/
+13. A Foundation for Real-time Applications on Function-as-a-Service, Zugriff am November 14, 2025, https://par.nsf.gov/servlets/purl/10495145
+14. A Review of Serverless Use Cases and their Characteristics - SPEC Research Group, Zugriff am November 14, 2025, https://research.spec.org/fileadmin/user_upload/documents/rg_cloud/endorsed_publications/SPEC_RG_2020_Serverless_Usecases.pdf
+15. What is Real-time Systems? - Crosser.io, Zugriff am November 14, 2025, https://www.crosser.io/articles/glossary/what-is-real-time-systems/
+16. A Review of Serverless Use Cases and their Characteristics arXiv:2008.11110v1 [cs.SE] 25 Aug 2020, Zugriff am November 14, 2025, https://arxiv.org/pdf/2008.11110
+17. Monolith First Approach Before Moving to Microservices | by Mehmet Ozkaya - Medium, Zugriff am November 14, 2025, https://medium.com/design-microservices-architecture-with-patterns/monolith-first-approach-before-moving-to-microservices-da969be8bf7c
+18. Monolith First - Martin Fowler, Zugriff am November 14, 2025, https://martinfowler.com/bliki/MonolithFirst.html
+19. START with a Monolith, NOT Microservices : r/dotnet - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/dotnet/comments/kn20yi/start_with_a_monolith_not_microservices/
+20. Martin Fowler: Monolith First : r/programming - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/programming/comments/6nbjah/martin_fowler_monolith_first/
+21. Monolith First (2015) - Hacker News, Zugriff am November 14, 2025, https://news.ycombinator.com/item?id=14778685
+22. can someone explain why we ditched monoliths for microservices? like... what was the reason fr? - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/SoftwareEngineering/comments/1k2ppy9/can_someone_explain_why_we_ditched_monoliths_for/
+23. Is it Time to go Back to the Monolith? - DEV Community, Zugriff am November 14, 2025, https://dev.to/codenameone/is-it-time-to-go-back-to-the-monolith-3eok
+24. Framework vs Library: Understanding the Core Difference for Better Software Development, Zugriff am November 14, 2025, https://fabbuilder.com/blogs/difference-between-framework-vs-library/
+25. Difference Between Library and Framework in 2025 – Key Comparison - Sencha.com, Zugriff am November 14, 2025, https://www.sencha.com/blog/difference-between-framework-vs-library-snc/
+26. What is the difference between a framework and a library? [closed] - Stack Overflow, Zugriff am November 14, 2025, https://stackoverflow.com/questions/148747/what-is-the-difference-between-a-framework-and-a-library
+27. Framework vs. Library: breaking down the basics - Elaniin Blog, Zugriff am November 14, 2025, https://blog.elaniin.com/framework-vs-library-breaking-down-the-basics/
+28. What exactly is the difference between a library and a framework? : r/learnjavascript - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/learnjavascript/comments/bdik2y/what_exactly_is_the_difference_between_a_library/
+29. FDG_dependencies.yaml
+30. Standard : OWASP Cheat Sheets : Password Storage Cheat Sheet - Open CRE, Zugriff am November 14, 2025, https://www.opencre.org/node/standard/OWASP%20Cheat%20Sheets/section/Password%20Storage%20Cheat%20Sheet
+31. Authentication - OWASP Cheat Sheet Series, Zugriff am November 14, 2025, https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+32. Password Storage - OWASP Cheat Sheet Series, Zugriff am November 14, 2025, https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+33. How to hash and salt passwords in different languages and why it's important to do so - SuperTokens, Zugriff am November 14, 2025, https://supertokens.com/blog/password-hashing-salting
+34. Why do we hash passwords instead of encrypting them? : r/cryptography - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/cryptography/comments/urqgin/why_do_we_hash_passwords_instead_of_encrypting/
+35. Why should I hash passwords? [duplicate] - Information Security Stack Exchange, Zugriff am November 14, 2025, https://security.stackexchange.com/questions/36833/why-should-i-hash-passwords
+36. Image resizing client-side with JavaScript before upload to the server - Stack Overflow, Zugriff am November 14, 2025, https://stackoverflow.com/questions/2434458/image-resizing-client-side-with-javascript-before-upload-to-the-server
+37. Dealing with clients with very large images : r/webdev - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/webdev/comments/1bwf8sm/dealing_with_clients_with_very_large_images/
+38. How can I compress and resize user-uploaded images on the client side? : r/reactjs - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/reactjs/comments/1b54m68/how_can_i_compress_and_resize_useruploaded_images/
+39. How to Handle Complex Product Variants in Your E-commerce Feeds - Feedance.com, Zugriff am November 14, 2025, https://www.feedance.com/article/how-to-handle-complex-product-variants-in-your-e-commerce-feeds
+40. How to Effectively Display Product Variants on Your eCommerce Store - Fast Simon, Zugriff am November 14, 2025, https://www.fastsimon.com/ecommerce-wiki/optimized-ecommerce-experience/how-to-effectively-display-product-variants-on-your-ecommerce-store/
+41. ecommerce product variant strategy for customer experience - Command C, Zugriff am November 14, 2025, https://commandc.com/optimize-product-variants-to-improve-the-customer-experience/
+42. Shopify Bundle create a variation with and without add on product, Zugriff am November 14, 2025, https://community.shopify.com/t/shopify-bundle-create-a-variation-with-and-without-add-on-product/401776
+43. Product Variants achieved when attribute is added. : r/Odoo - Reddit, Zugriff am November 14, 2025, https://www.reddit.com/r/Odoo/comments/1h09nwv/product_variants_achieved_when_attribute_is_added/
+44. Catalog - Product variants - BigCommerce Developer Portal, Zugriff am November 14, 2025, https://developer.bigcommerce.com/docs/rest-catalog/product-variants
