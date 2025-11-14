@@ -1,0 +1,25 @@
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "test-orchestrator-003",
+    "name": "Orchestrator Test - FACT_VALIDATOR Blocking",
+    "description": "Test FACT_VALIDATOR quality gate blocking",
+    "owner": "system",
+    "createdAt": "2025-11-14T15:00:00Z",
+    "lastUpdatedAt": "2025-11-14T15:00:00Z"
+  },
+  "spec": {
+    "vibe": {
+      "target_scope": "v1.0",
+      "integration_type": "test"
+    }
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "planningSubState": null,
+    "lastUpdate": "2025-11-14T15:00:00Z",
+    "message": "Ready for FACT_VALIDATOR blocking test"
+  },
+  "artifacts": {}
+}
