@@ -159,7 +159,7 @@ class VibeCLI:
         This method:
         1. Launches orchestrator as subprocess
         2. Monitors STDOUT for INTELLIGENCE_REQUESTs
-        3. Executes prompts via Anthropic API
+        3. Delegates prompts to Claude Code operator
         4. Sends responses back via STDIN
         """
         logger.info("🔗 Launching orchestrator in delegated mode...")
