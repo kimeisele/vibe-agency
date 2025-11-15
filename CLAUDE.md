@@ -200,6 +200,42 @@ BAD:  "Phase 4 TODO: Implement XYZ"
 GOOD: "XYZ not implemented: no code in expected location"
 ```
 
+### ❌ Don't Assume vibe-cli Is Autonomous
+```
+BAD:  "Run ./vibe-cli and it executes the project autonomously"
+GOOD: "Claude Code operator uses vibe-cli to get prompts, then executes tasks manually"
+```
+
+**Critical Architecture Understanding:**
+- **vibe-cli** = Prompt composition tool (returns prompts via STDOUT)
+- **Claude Code** = The OPERATOR (executes prompts, does intelligent work)
+- **NOT:** vibe-cli autonomous → delegates to Claude Code
+- **YES:** Claude Code → uses vibe-cli → gets prompts → executes tasks
+
+### ❌ Don't Write Tests Expecting Autonomous Behavior
+```
+BAD:  subprocess.run(["./vibe-cli", "run", "project"])
+      # Hangs forever waiting for operator input
+
+GOOD: orchestrator.get_next_prompt()
+      # Returns prompt for operator to execute
+      mock_llm_response(prompt)
+      # Simulate operator providing results
+      orchestrator.process_result(response)
+```
+
+### ❌ Don't Treat Claude Code as "External Service"
+```
+BAD:  "Ensure Claude Code operator is running and ready to respond"
+      # Makes no sense - if you're reading this, YOU are Claude Code
+
+GOOD: "As the Claude Code operator, you will:"
+      1. Execute vibe-cli to get prompts
+      2. Read and understand the prompt
+      3. Execute the task using your capabilities
+      4. Provide results back to the system
+```
+
 ---
 
 ## 🎯 QUICK START (For New AI Assistants)
@@ -287,12 +323,17 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 
 ---
 
-**Last Updated:** 2025-11-15 22:39 UTC
-**Updated By:** GitHub Copilot (Session: copilot/finish-next-phase-tests)
+**Last Updated:** 2025-11-15 23:30 UTC
+**Updated By:** Claude Code (Session: claude/ar-implementation-01ESSDMYJ3jTLZ7CHbgryZG5)
 **Updates:**
+- ✅ Added AI-FIRST documentation (AGENTS_START_HERE.md, README.md update)
+- ✅ Added critical anti-patterns: "vibe-cli is NOT autonomous", "Claude Code is OPERATOR"
+- ✅ Clarified architecture: vibe-cli returns prompts, doesn't execute autonomously
+- ✅ Identified PR #52 issue: Test docs had wrong mental model (treating vibe-cli as autonomous)
+
+**Previous Update:** 2025-11-15 22:39 UTC by GitHub Copilot
 - ✅ CODING Handler: Status updated to "Works (tested E2E)" - 3 tests passing
 - ✅ Research Agents: bs4 dependency confirmed installed
-- ✅ Known Issues: Removed resolved issues (bs4 missing, CODING untested)
 - ✅ Verification commands updated to use python3 -m pytest
 
 **Meta-Verification:**
