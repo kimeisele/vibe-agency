@@ -27,13 +27,16 @@ This document NOW contains the VERIFIED truth (after Sub-Agent research) about w
 - **Intelligent ("alive")**: Claude Code handles prompts, decisions, fallbacks via STDIN/STDOUT
 
 **Workflow Phases:**
-1. PLANNING (VIBE_ALIGNER, LEAN_CANVAS_VALIDATOR, optional RESEARCH)
-2. CODING (placeholder)
-3. TESTING (placeholder)
-4. DEPLOYMENT (placeholder)
-5. MAINTENANCE (placeholder)
+1. PLANNING (4 sub-states: RESEARCH, BUSINESS_VALIDATION, FEATURE_SPECIFICATION, ARCHITECTURE_DESIGN)
+   - Outputs: research_brief.json (optional), lean_canvas_summary.json, feature_spec.json, architecture.json + code_gen_spec.json
+2. CODING (fully implemented - GAD-002)
+3. TESTING (stub - Phase 4 TODO)
+4. DEPLOYMENT (stub - Phase 4 TODO)
+5. MAINTENANCE (stub - Phase 4 TODO)
 
-**Only PLANNING is fully implemented. Everything else is design-only.**
+**PLANNING and CODING phases are fully implemented and tested. Phases 3-5 are stubs with transition logic only.**
+
+**⚠️ BUG FIX (2025-11-15):** Workflow YAML had broken transition - T1_StartCoding skipped ARCHITECTURE_DESIGN entirely. Fixed by adding T0c transition and correcting T1 from_state.
 
 ---
 
@@ -41,12 +44,24 @@ This document NOW contains the VERIFIED truth (after Sub-Agent research) about w
 
 ### ✅ WHAT ACTUALLY WORKS (Tests Pass)
 
-#### 1. VIBE_ALIGNER (Planning Agent)
+#### 1. Planning Agents (3 Agents)
 - **Status:** ✅ FULLY FUNCTIONAL
-- **Evidence:** User has successfully used it for real projects
+- **Evidence:** Production-ready, tested end-to-end
+
+**LEAN_CANVAS_VALIDATOR:**
+- **Location:** `agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR/`
+- **Workflow:** 3-task business validation (Canvas Interview → Risk Analysis → Handoff)
+- **Output:** `lean_canvas_summary.json`
+
+**VIBE_ALIGNER:**
 - **Location:** `agency_os/01_planning_framework/agents/VIBE_ALIGNER/`
 - **Workflow:** 6-step feature specification (Education → Extraction → Feasibility → Gaps → Negotiation → Output)
 - **Output:** `feature_spec.json`
+
+**GENESIS_BLUEPRINT:**
+- **Location:** `agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/`
+- **Workflow:** Architecture design using Genesis Core pattern
+- **Output:** `architecture.json` + `code_gen_spec.json`
 
 #### 2. Knowledge Bases (Static YAML)
 - **Status:** ✅ COMPLETE

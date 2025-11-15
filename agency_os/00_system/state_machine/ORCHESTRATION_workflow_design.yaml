@@ -138,10 +138,17 @@ transitions:
    trigger: "lean_canvas_summary.json erstellt UND readiness.status == 'READY'"
    type: "Automated"
 
- - name: "T1_StartCoding"
+ - name: "T0c_FeaturesToArchitecture"
    from_state: "PLANNING.FEATURE_SPECIFICATION"
+   to_state: "PLANNING.ARCHITECTURE_DESIGN"
+   trigger: "feature_spec.json erstellt UND validation.ready_for_genesis == true"
+   type: "Automated"
+   description: "Feature specification complete, proceed to architecture design"
+
+ - name: "T1_StartCoding"
+   from_state: "PLANNING.ARCHITECTURE_DESIGN"
    to_state: "CODING"
-   trigger: "feature_spec.json erstellt mit gültigem code_gen_spec link."
+   trigger: "architecture.json AND code_gen_spec.json erstellt"
    type: "Automated"
    quality_gates:  # GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
      - agent: "AUDITOR"

@@ -92,7 +92,7 @@ def test_state_machine_yaml():
     print_success(f"Found {len(sub_states)} sub-states")
 
     # Validate sub-states
-    expected_substates = ['BUSINESS_VALIDATION', 'FEATURE_SPECIFICATION']
+    expected_substates = ['BUSINESS_VALIDATION', 'FEATURE_SPECIFICATION', 'ARCHITECTURE_DESIGN']
     found_substates = [s.get('name') for s in sub_states]
 
     for expected in expected_substates:
@@ -153,12 +153,36 @@ def test_transitions():
 
     print_success("T1_StartCoding exists")
 
-    # Validate T1 updated from_state
-    if t1.get('from_state') != 'PLANNING.FEATURE_SPECIFICATION':
-        print_error(f"T1 from_state incorrect (should be PLANNING.FEATURE_SPECIFICATION): {t1.get('from_state')}")
+    # Validate T1 from_state (should transition from ARCHITECTURE_DESIGN)
+    if t1.get('from_state') != 'PLANNING.ARCHITECTURE_DESIGN':
+        print_error(f"T1 from_state incorrect (should be PLANNING.ARCHITECTURE_DESIGN): {t1.get('from_state')}")
         return False
 
-    print_success("T1 from_state correctly updated to PLANNING.FEATURE_SPECIFICATION")
+    print_success("T1 from_state correctly set to PLANNING.ARCHITECTURE_DESIGN")
+
+    # Check T0c_FeaturesToArchitecture
+    t0c = None
+    for t in transitions:
+        if t.get('name') == 'T0c_FeaturesToArchitecture':
+            t0c = t
+            break
+
+    if not t0c:
+        print_error("Transition T0c_FeaturesToArchitecture not found")
+        return False
+
+    print_success("T0c_FeaturesToArchitecture exists")
+
+    # Validate T0c structure
+    if t0c.get('from_state') != 'PLANNING.FEATURE_SPECIFICATION':
+        print_error(f"T0c from_state incorrect: {t0c.get('from_state')}")
+        return False
+
+    if t0c.get('to_state') != 'PLANNING.ARCHITECTURE_DESIGN':
+        print_error(f"T0c to_state incorrect: {t0c.get('to_state')}")
+        return False
+
+    print_success("T0c from/to states are correct")
 
     return True
 
