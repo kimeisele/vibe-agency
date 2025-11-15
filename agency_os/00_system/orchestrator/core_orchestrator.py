@@ -36,6 +36,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "runtime"))
 
 from llm_client import LLMClient, BudgetExceededError
 
+# Initialize logger BEFORE using it
+logger = logging.getLogger(__name__)
+
 # GAD-003 Phase 2: Use PromptRegistry instead of PromptRuntime
 # PromptRegistry provides automatic governance injection
 try:
@@ -54,9 +57,7 @@ try:
     TOOLS_AVAILABLE = True
 except ImportError:
     TOOLS_AVAILABLE = False
-    logging.warning("ToolExecutor not available - tool execution disabled")
-
-logger = logging.getLogger(__name__)
+    logger.warning("ToolExecutor not available - tool execution disabled")
 
 
 # =============================================================================
