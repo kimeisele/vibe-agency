@@ -57,11 +57,18 @@ if google_api_key and google_engine_id:
     print(f"   Engine ID: {google_engine_id}")
     google_available = True
 else:
-    print("⚠️  Google Search API keys NOT found")
-    print("   This is OK - Claude Code has built-in web search")
-    print("   To use Google Custom Search, set:")
-    print("   - GOOGLE_SEARCH_API_KEY")
-    print("   - GOOGLE_SEARCH_ENGINE_ID")
+    print("⚠️  Google Search API keys NOT found in environment")
+    print()
+    print("   WHY: GitHub Secrets are ONLY available in GitHub Actions CI/CD,")
+    print("        NOT in local development sessions.")
+    print()
+    print("   OPTIONS:")
+    print("   1. Create .env file: cp .env.template .env (then fill in keys)")
+    print("   2. Export manually: export GOOGLE_SEARCH_API_KEY='your-key'")
+    print("   3. Use fallback: Claude Code's built-in WebSearch (already works)")
+    print("   4. Run in CI/CD: Keys auto-loaded from GitHub Secrets")
+    print()
+    print("   See: docs/testing/LOCAL_VS_CI_KEYS.md")
     google_available = False
 print()
 
