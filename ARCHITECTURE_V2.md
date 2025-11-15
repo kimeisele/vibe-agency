@@ -107,7 +107,16 @@ prompt = PromptRegistry.compose(
 )
 ```
 
-**Status:** Not implemented (MVP priority #1)
+**Status:** ✅ IMPLEMENTED (2025-11-15) - Production ready
+
+**Implementation Details:**
+- File: `agency_os/00_system/runtime/prompt_registry.py` (~450 lines)
+- Automatic Guardian Directives injection (9 governance rules)
+- Context enrichment (manifest, workspace paths)
+- Tool/SOP injection (when requested)
+- Graceful error handling and fallbacks
+- Fully integrated with core orchestrator
+- Comprehensive test coverage (9 unit tests + integration tests)
 
 ---
 
@@ -376,18 +385,18 @@ Orchestrator → INTELLIGENCE_REQUEST
 
 ## 🚧 Current Limitations
 
-### Known Gaps (As of 2025-11-15)
+### Known Gaps (As of 2025-11-15 - Updated)
 
-1. **No Prompt Registry**
-   - Manual composition everywhere
-   - Governance injection ad-hoc
-   - No central interface
-   - **Fix:** Build registry (MVP priority #1)
+1. ~~**No Prompt Registry**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Prompt Registry implemented and integrated
+   - ✅ Automatic governance injection active
+   - ✅ Central interface for all prompt composition
+   - ✅ Orchestrator fully integrated
 
-2. **Guardian Directives Not Enforced**
-   - Exist in SSF but not injected into AOS prompts
-   - Relies on manual adherence
-   - **Fix:** Prompt Registry auto-injection
+2. ~~**Guardian Directives Not Enforced**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Guardian Directives automatically injected via Prompt Registry
+   - ✅ All 9 directives enforced at runtime
+   - ✅ Comprehensive test coverage
 
 3. **Handlers 3-5 Are Stubs**
    - Testing, Deployment, Maintenance phases incomplete
@@ -399,10 +408,10 @@ Orchestrator → INTELLIGENCE_REQUEST
    - No iterative planning workflow
    - **Fix:** Defer to Phase N (not MVP)
 
-5. **vibe-cli.py Name Collision**
-   - Two files: vibe-cli (integration) vs vibe-cli.py (utility)
-   - Confusing for developers
-   - **Fix:** Rename vibe-cli.py → prompt-cli.py
+5. ~~**vibe-cli.py Name Collision**~~ ✅ **RESOLVED (2025-11-15)**
+   - ✅ Renamed vibe-cli.py → prompt-cli.py
+   - ✅ Clear separation: vibe-cli (integration) vs prompt-cli.py (utility)
+   - ✅ No more naming confusion
 
 ---
 

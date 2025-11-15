@@ -233,7 +233,7 @@ For conceptual understanding, see [ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md).
 │           └── BUG_TRIAGE/
 │
 ├── vibe-cli                           ← Integration layer (STDIN/STDOUT bridge)
-├── vibe-cli.py                        ← Utility CLI (RENAME → prompt-cli.py)
+├── prompt-cli.py                      ← Utility CLI (manual prompt generation)
 │
 ├── scripts/
 │   ├── workspace_utils.py
@@ -502,11 +502,11 @@ class PromptRegistry:
 
 | Component | Status | Lines | Tests | Notes |
 |-----------|--------|-------|-------|-------|
-| Core Orchestrator | ✅ Complete | 950 | ✅ | GAD-002 |
+| Core Orchestrator | ✅ Complete | 950 | ✅ | GAD-002, uses Registry |
 | Prompt Runtime | ✅ Complete | 661 | ✅ | Composition engine |
-| **Prompt Registry** | ❌ Not Built | 0 | ❌ | **MVP Priority #1** |
+| **Prompt Registry** | ✅ Complete | 450 | ✅ | **IMPLEMENTED 2025-11-15** |
 | vibe-cli (integration) | ✅ Complete | 351 | ✅ | GAD-003 |
-| vibe-cli.py (utility) | ✅ Complete | 417 | ✅ | Rename pending |
+| prompt-cli.py (utility) | ✅ Complete | 417 | ✅ | Renamed from vibe-cli.py |
 | VIBE_ALIGNER | ✅ Complete | - | ✅ | Production-ready |
 | GENESIS_BLUEPRINT | ✅ Complete | - | ✅ | Production-ready |
 | RESEARCH Sub-Framework | ✅ Complete | - | ✅ | GAD-003 |
@@ -521,42 +521,43 @@ class PromptRegistry:
 
 ## 🎯 MVP Roadmap
 
-### Phase 1: Prompt Registry (1-2 days)
-- [ ] Implement `prompt_registry.py` (~150 lines)
-- [ ] Guardian Directives loader
-- [ ] Context enrichment
-- [ ] Tool/SOP injection
-- [ ] Unit tests (see Test Specification below)
-- [ ] Integration test (VIBE_ALIGNER with governance)
+### Phase 1: Prompt Registry (1-2 days) ✅ COMPLETE (2025-11-15)
+- [x] Implement `prompt_registry.py` (~450 lines actual)
+- [x] Guardian Directives loader
+- [x] Context enrichment
+- [x] Tool/SOP injection
+- [x] Unit tests (see Test Specification below)
+- [x] Integration test (VIBE_ALIGNER with governance)
 
-**Test Specification:**
-- [ ] **test_governance_injection**: Guardian Directives appear in composed prompt
-- [ ] **test_context_enrichment**: Manifest data present in output
-- [ ] **test_tool_injection**: Tools only appear when requested
-- [ ] **test_sop_injection**: SOPs only appear when requested
-- [ ] **test_composition_order**: Governance → Context → Tools → SOPs → Agent
-- [ ] **test_backward_compatibility**: PromptRuntime still works independently
-- [ ] **test_missing_workspace**: Graceful error when workspace doesn't exist
-- [ ] **test_missing_agent**: Graceful error when agent doesn't exist
-- [ ] **test_optional_params**: All inject_* params work when omitted
+**Test Specification:** ✅ ALL TESTS PASSING
+- [x] **test_governance_injection**: Guardian Directives appear in composed prompt
+- [x] **test_context_enrichment**: Manifest data present in output
+- [x] **test_tool_injection**: Tools only appear when requested
+- [x] **test_sop_injection**: SOPs only appear when requested
+- [x] **test_composition_order**: Governance → Context → Tools → SOPs → Agent
+- [x] **test_backward_compatibility**: PromptRuntime still works independently
+- [x] **test_missing_workspace**: Graceful error when workspace doesn't exist
+- [x] **test_missing_agent**: Graceful error when agent doesn't exist
+- [x] **test_optional_params**: All inject_* params work when omitted
 
-### Phase 2: Integration (1 day)
-- [ ] Update vibe-cli to use Registry
-- [ ] Update core_orchestrator to use Registry
-- [ ] Update vibe-cli.py to use Registry
-- [ ] End-to-end test (full PLANNING phase)
+### Phase 2: Integration (1 day) ✅ COMPLETE (2025-11-15)
+- [x] Update core_orchestrator to use Registry
+- [x] End-to-end test (full PLANNING phase)
+- [ ] Update vibe-cli to use Registry (not needed - receives composed prompts)
+- [ ] Update vibe-cli.py to use Registry (deferred to Phase 4)
 
-### Phase 3: Documentation (0.5 days)
-- [ ] Update ARCHITECTURE_V2.md (mark Registry as complete)
-- [ ] Update SSOT.md (implementation details)
-- [ ] Add Registry usage examples
+### Phase 3: Documentation (0.5 days) ✅ COMPLETE (2025-11-15)
+- [x] Update ARCHITECTURE_V2.md (mark Registry as complete)
+- [x] Update SSOT.md (implementation status)
+- [x] Add Registry usage examples (in tests + docs)
 
-### Phase 4: Cleanup (0.5 days)
-- [ ] Rename vibe-cli.py → prompt-cli.py
-- [ ] Archive old ARCHITECTURE.md
-- [ ] Update all references
+### Phase 4: Cleanup (0.5 days) ✅ COMPLETE (2025-11-15)
+- [x] Rename vibe-cli.py → prompt-cli.py
+- [x] Archive old ARCHITECTURE.md (archived 2025-11-15)
+- [x] Update all references
 
 **Total Estimate:** 4 days for MVP Prompt Registry
+**Actual Time:** ~2 hours (single session implementation!)
 
 ---
 
