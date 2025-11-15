@@ -1,0 +1,461 @@
+{
+  "project": {
+    "name": "vibe-agency v1.0 Architecture Refactoring",
+    "category": "Internal Framework",
+    "scale": "Solo Developer",
+    "target_scope": "v1.0",
+    "core_problem": "vibe-agency has architectural inconsistencies that cause confusion for developers and AI assistants. Documentation contradictions lead to hallucination, lack of tests prevents verification of refactoring work, and unclear separation between operator mode (Claude Code) and API mode creates role confusion.",
+    "target_users": "Developers and AI assistants using vibe-agency for software project planning"
+  },
+
+  "features": [
+    {
+      "id": "arch_004",
+      "name": "Add architecture tests (pytest infrastructure)",
+      "priority": "must_have",
+      "complexity_score": 8,
+      "estimated_effort": "2-4 days",
+      "input": {
+        "format": "Python test files",
+        "example": "tests/test_orchestrator_state_machine.py, tests/test_vibe_aligner_e2e.py",
+        "constraints": "Must cover >80% of core modules (orchestrator, VIBE_ALIGNER, artifact validation)"
+      },
+      "processing": {
+        "description": "Create pytest infrastructure with state machine tests, VIBE_ALIGNER end-to-end tests, artifact schema validation tests, and GitHub Actions CI workflow for automated test execution",
+        "external_dependencies": ["pytest", "pytest-cov", "GitHub Actions"],
+        "side_effects": ["Creates .github/workflows/test.yml", "Enforces coverage requirements in CI/CD"]
+      },
+      "output": {
+        "format": "Test suite + CI/CD workflow",
+        "example": "All tests pass, coverage >80%, CI runs on every commit",
+        "success_criteria": "Test infrastructure in place, all existing functionality verified, CI/CD prevents regressions"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "pytest_framework",
+            "reason": "Test framework for writing and running architecture tests",
+            "source": "FAE-TIME-018"
+          },
+          {
+            "component": "test_orchestrator_state_transitions",
+            "reason": "Verify orchestrator correctly transitions between phases (PLANNING → CODING → etc.)",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "test_vibe_aligner_e2e",
+            "reason": "End-to-end test of VIBE_ALIGNER workflow (Task 01 → Task 06 → feature_spec.json)",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "github_actions_ci_workflow",
+            "reason": "Automated test execution on every commit/PR",
+            "source": "FAE-TIME-018"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": ["FAE-TIME-018"],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_005",
+      "name": "Fix documentation contradictions",
+      "priority": "must_have",
+      "complexity_score": 3,
+      "estimated_effort": "1-2 days",
+      "input": {
+        "format": "Documentation files (CLAUDE.md, STATUS.md, README.md, GAD docs)",
+        "example": "GAD-001/README.md claims 'Phase 1 Complete ✅' but tests fail",
+        "constraints": "All 'Complete ✅' markers must have test evidence and verification dates"
+      },
+      "processing": {
+        "description": "Remove 'Complete ✅' from failing components, add verification dates to completed items, create documentation audit script, align README claims with test results",
+        "external_dependencies": [],
+        "side_effects": ["Updates CLAUDE.md, STATUS.md, all GAD documentation", "Creates docs/audit_checklist.md"]
+      },
+      "output": {
+        "format": "Updated documentation + audit script",
+        "example": "All documentation matches test results, no false 'Complete ✅' claims",
+        "success_criteria": "Documentation accuracy verified, anti-hallucination protocol enforced"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_004",
+            "reason": "Need test results to provide evidence for 'Complete ✅' claims in documentation",
+            "source": "gap_detection"
+          },
+          {
+            "component": "documentation_audit_script",
+            "reason": "Automated script to find all 'Complete ✅' markers and verify against test results",
+            "source": "architecture_analysis"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_006",
+      "name": "Make API stub optional flag",
+      "priority": "must_have",
+      "complexity_score": 2,
+      "estimated_effort": "1 day (4-6 hours)",
+      "input": {
+        "format": "CLI arguments",
+        "example": "vibe-cli.py --mode operator (default) or vibe-cli.py --mode api (fallback)",
+        "constraints": "Default must be operator mode (Claude Code primary), API is fallback only"
+      },
+      "processing": {
+        "description": "Add --mode {operator|api} CLI argument, default to operator mode (Claude Code primary), add graceful fallback when Claude Code unavailable",
+        "external_dependencies": [],
+        "side_effects": ["Updates vibe-cli.py argument parsing", "Changes default execution mode"]
+      },
+      "output": {
+        "format": "Updated vibe-cli.py with mode flag",
+        "example": "Users can explicitly choose mode, default is operator mode, clear error messages",
+        "success_criteria": "Mode selection clear, operator mode is primary, API stub is optional fallback"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_001",
+            "reason": "vibe-cli refactoring should separate operator mode vs API mode BEFORE adding flag",
+            "source": "gap_detection"
+          },
+          {
+            "component": "mode_flag_cli_argument",
+            "reason": "Add --mode {operator|api} CLI argument to vibe-cli",
+            "source": "architecture_analysis"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_001",
+      "name": "Separate vibe-cli concerns (operator mode vs API mode)",
+      "priority": "should_have",
+      "complexity_score": 5,
+      "estimated_effort": "1-2 days",
+      "input": {
+        "format": "Current vibe-cli.py (351 lines, mixed concerns)",
+        "example": "Single file handling both operator mode (Claude Code integration) and API stub mode",
+        "constraints": "Must maintain backward compatibility, all existing tests must pass"
+      },
+      "processing": {
+        "description": "Extract operator mode (Claude Code integration) into separate class/module, extract API stub mode into separate class/module, create shared orchestrator client for common code",
+        "external_dependencies": [],
+        "side_effects": ["Restructures vibe-cli.py into modules", "May create vibe_cli/ directory with operator.py, api_stub.py, orchestrator_client.py"]
+      },
+      "output": {
+        "format": "Refactored vibe-cli with separated concerns",
+        "example": "vibe_cli/operator.py (Claude Code mode), vibe_cli/api_stub.py (API fallback), vibe_cli/shared.py (common code)",
+        "success_criteria": "Clear separation of concerns, easier to test, enables arch_006 implementation"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_004",
+            "reason": "Need test infrastructure BEFORE refactoring so we can verify correctness during code changes",
+            "source": "gap_detection"
+          },
+          {
+            "component": "vibe_cli_operator_mode_class",
+            "reason": "Extract operator mode (Claude Code integration) into separate class/module",
+            "source": "architecture_analysis"
+          },
+          {
+            "component": "shared_orchestrator_client",
+            "reason": "Both modes need shared code for launching and monitoring orchestrator subprocess",
+            "source": "architecture_analysis"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": ["FAE-TECH-007"],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_002",
+      "name": "Clarify orchestrator role (state machine ONLY, no business logic)",
+      "priority": "should_have",
+      "complexity_score": 8,
+      "estimated_effort": "2-3 days",
+      "input": {
+        "format": "Current core_orchestrator.py (mixed state machine + tool execution)",
+        "example": "Orchestrator handles both phase transitions AND tool execution (google_search, web_fetch)",
+        "constraints": "Must maintain all existing state machine functionality, phase transitions must still work"
+      },
+      "processing": {
+        "description": "Extract tool execution logic (google_search, web_fetch) from orchestrator to dedicated service, reduce orchestrator to pure state machine (phase transitions, agent routing, artifact management), create tool registry for available tools",
+        "external_dependencies": [],
+        "side_effects": ["Restructures core_orchestrator.py", "Creates tool_execution_service.py", "Creates tool_registry.py"]
+      },
+      "output": {
+        "format": "Refactored orchestrator + tool execution service",
+        "example": "Orchestrator handles ONLY state machine, tool execution is separate service",
+        "success_criteria": "Clear separation of concerns, orchestrator is pure state machine, enables cleaner arch_007 implementation"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_004",
+            "reason": "Need test infrastructure to verify orchestrator behavior during refactoring",
+            "source": "gap_detection"
+          },
+          {
+            "component": "arch_001",
+            "reason": "vibe-cli refactoring makes orchestrator boundaries clearer (tool vs state machine)",
+            "source": "gap_detection"
+          },
+          {
+            "component": "tool_execution_service",
+            "reason": "Extract tool execution logic from orchestrator to dedicated service",
+            "source": "architecture_analysis"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": ["FAE-TECH-007", "FAE-010"],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_007",
+      "name": "Complete tool use loop (Anthropic native API)",
+      "priority": "should_have",
+      "complexity_score": 5,
+      "estimated_effort": "3-4 hours",
+      "input": {
+        "format": "Anthropic API tool use protocol",
+        "example": "Multi-turn conversation: request → tool_use → execute tool → TOOL_RESULT → repeat until stop",
+        "constraints": "Must work with real Anthropic API, must handle multi-turn conversations, must format tool results correctly"
+      },
+      "processing": {
+        "description": "Implement Anthropic SDK integration, create tool use loop (API request → tool_use → execute → send TOOL_RESULT → repeat), format tool execution results into Anthropic API's expected TOOL_RESULT format, add ANTHROPIC_API_KEY management",
+        "external_dependencies": ["anthropic (Python SDK)", "ANTHROPIC_API_KEY environment variable"],
+        "side_effects": ["Adds anthropic SDK dependency", "Requires ANTHROPIC_API_KEY for operation", "Makes research agents with tools fully functional"]
+      },
+      "output": {
+        "format": "Working tool use loop + end-to-end test",
+        "example": "Research agent with google_search completes workflow end-to-end with real Anthropic API",
+        "success_criteria": "GAD-003 completed, research agents functional, end-to-end test passes with real API"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_004",
+            "reason": "Need end-to-end test infrastructure to verify tool use loop works with real API",
+            "source": "gap_detection"
+          },
+          {
+            "component": "arch_002",
+            "reason": "Tool execution service should be separate from orchestrator for cleaner implementation",
+            "source": "gap_detection"
+          },
+          {
+            "component": "anthropic_sdk",
+            "reason": "Official Anthropic Python SDK for tool use API",
+            "source": "user_choice_option_b"
+          },
+          {
+            "component": "tool_use_loop_implementation",
+            "reason": "Multi-turn conversation: API request → tool_use → execute tool → send TOOL_RESULT → repeat until stop",
+            "source": "GAD-003"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": ["FAE-TIME-002"],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_008",
+      "name": "Dogfood VIBE_ALIGNER on vibe-agency (meta)",
+      "priority": "in_progress",
+      "complexity_score": 5,
+      "estimated_effort": "2-3 hours total (Tasks 01-06)",
+      "input": {
+        "format": "vibe-agency architecture analysis + user requirements",
+        "example": "8 architecture improvements extracted from documentation contradictions and role confusion",
+        "constraints": "Must follow real VIBE_ALIGNER workflow (Tasks 01-06), must use FAE/FDG/APCE knowledge bases"
+      },
+      "processing": {
+        "description": "Execute VIBE_ALIGNER Tasks 01-06 on vibe-agency itself: (01) Education, (02) Feature Extraction, (03) Feasibility (FAE), (04) Gap Detection (FDG), (05) Scope Negotiation (APCE), (06) Output Generation (feature_spec.json)",
+        "external_dependencies": ["vibe-cli.py", "VIBE_ALIGNER agent", "FAE/FDG/APCE knowledge bases"],
+        "side_effects": ["Generates artifacts/planning/phase_*.json files", "Creates feature_spec.json for vibe-agency refactoring", "Validates VIBE_ALIGNER workflow via dogfooding"]
+      },
+      "output": {
+        "format": "feature_spec.json for vibe-agency v1.0",
+        "example": "THIS FILE - Complete specification with all 7 validated features (arch_001 to arch_007), 1 deferred (arch_003)",
+        "success_criteria": "All 6 VIBE_ALIGNER tasks complete, feature_spec.json generated, dogfooding proven successful, FAE/FDG/APCE validated as effective"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "vibe_aligner_task_01_education",
+            "reason": "Calibrate scope and expectations for v1.0 refactoring",
+            "source": "VIBE_ALIGNER workflow"
+          },
+          {
+            "component": "vibe_aligner_task_02_extraction",
+            "reason": "Extract 8 architecture improvements from user description and documentation analysis",
+            "source": "VIBE_ALIGNER workflow"
+          },
+          {
+            "component": "vibe_aligner_task_03_feasibility",
+            "reason": "Validate features against FAE constraints, blocked arch_003 (plugins) for YAGNI violation",
+            "source": "VIBE_ALIGNER workflow"
+          },
+          {
+            "component": "vibe_aligner_task_04_gap_detection",
+            "reason": "Identify missing dependencies and implementation order",
+            "source": "VIBE_ALIGNER workflow"
+          },
+          {
+            "component": "vibe_aligner_task_05_negotiation",
+            "reason": "Prioritize features by complexity (APCE), finalize v1.0 roadmap",
+            "source": "VIBE_ALIGNER workflow"
+          },
+          {
+            "component": "vibe_aligner_task_06_output",
+            "reason": "Generate feature_spec.json for vibe-agency v1.0 architecture refactoring",
+            "source": "VIBE_ALIGNER workflow"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": true,
+        "constraints_checked": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "arch_003",
+      "name": "Modularize research agents (support external plugins)",
+      "priority": "wont_have_v1",
+      "complexity_score": 21,
+      "estimated_effort": "1-2 weeks",
+      "input": {
+        "format": "Plugin architecture design",
+        "example": "Dynamic plugin loading, versioning, compatibility checking for research agents",
+        "constraints": "Would require plugin API, versioning system, backward compatibility strategy"
+      },
+      "processing": {
+        "description": "Design and implement plugin architecture for research agents: plugin API, dynamic loading, versioning, compatibility checking, plugin registry",
+        "external_dependencies": ["Plugin specification format", "Plugin validation system"],
+        "side_effects": ["Adds significant complexity", "Requires plugin maintenance overhead"]
+      },
+      "output": {
+        "format": "Plugin system for research agents",
+        "example": "External developers can create custom research agents as plugins",
+        "success_criteria": "N/A - Deferred to v2.0"
+      },
+      "dependencies": {
+        "required": [
+          {
+            "component": "arch_007",
+            "reason": "Research agents must be functional BEFORE building extensibility layer",
+            "source": "FAE-013"
+          }
+        ],
+        "optional": []
+      },
+      "fae_validation": {
+        "passed": false,
+        "constraints_checked": ["FAE-013"],
+        "issues": [
+          "FAE-013 YAGNI violation: Plugin architecture is premature optimization",
+          "Research agents not yet functional (tool use loop incomplete)",
+          "Build extensibility AFTER proving core value"
+        ]
+      }
+    }
+  ],
+
+  "scope_negotiation": {
+    "total_complexity": 36,
+    "complexity_breakdown": {
+      "must_have": 13,
+      "should_have": 18,
+      "wont_have_v1": 21
+    },
+    "timeline_estimate": "1.5-2.5 weeks (single developer)",
+    "timeline_optimistic": "1.0 weeks (with parallel work, no blockers)",
+    "timeline_pessimistic": "2.5-3.0 weeks (if test infrastructure takes longer)",
+    "v1_exclusions": [
+      "arch_003 (Modularize research agents - plugins): FAE-013 YAGNI violation. Research agents not yet functional. Build extensibility AFTER proving core value. Saves 1-2 weeks. Deferred to v2.0."
+    ],
+    "negotiation_notes": "No negotiation needed - scope already optimized by FAE in Task 03. Total complexity (36) is 60% of low end of v1.0 threshold (40-60). Scope is conservative and achievable.",
+    "implementation_order": [
+      "arch_004 (tests) - Foundation, blocks 4 features",
+      "arch_005 (docs) - Can overlap with arch_004",
+      "arch_001 (vibe-cli) - Depends on arch_004",
+      "arch_002 (orchestrator) - Depends on arch_004 + arch_001",
+      "arch_006 (API flag) - Depends on arch_001",
+      "arch_007 (tool loop) - Depends on arch_004 + arch_002"
+    ]
+  },
+
+  "validation": {
+    "fae_passed": true,
+    "fdg_passed": true,
+    "apce_passed": true,
+    "all_features_complete": true,
+    "ready_for_genesis": true,
+    "validation_notes": {
+      "fae": "Task 03 validated all features. arch_003 blocked for YAGNI (FAE-013). 7 of 8 features approved for v1.0.",
+      "fdg": "Task 04 identified implementation order and 4 critical gaps (GAP-001 to GAP-004). No circular dependencies detected.",
+      "apce": "Task 05 calculated complexity scores. Total v1.0 complexity (36) well within threshold (40-60). No negotiation needed.",
+      "dogfooding": "Using VIBE_ALIGNER on itself validates the framework. FAE caught YAGNI violation, FDG revealed critical path (arch_004), APCE confirmed scope is realistic."
+    }
+  },
+
+  "metadata": {
+    "vibe_version": "3.0",
+    "created_at": "2025-11-15T03:25:00Z",
+    "user_educated": true,
+    "scope_negotiated": true,
+    "project_type": "internal_refactoring",
+    "abstraction_level": "META",
+    "dogfooding": true,
+    "vibe_aligner_tasks_completed": {
+      "task_01_education": "2025-11-15 (commit 53aec65)",
+      "task_02_extraction": "2025-11-15 (commit c0228f7)",
+      "task_03_feasibility": "2025-11-15 (commit 12aee54)",
+      "task_04_gap_detection": "2025-11-15 (commit 13f1b6f)",
+      "task_05_scope_negotiation": "2025-11-15 (commit 13f1b6f)",
+      "task_06_output_generation": "2025-11-15 (this commit)"
+    },
+    "meta_insights": {
+      "fae_effectiveness": "Blocked 1 feature (arch_003), saved 1-2 weeks by preventing premature optimization",
+      "fdg_effectiveness": "Identified implementation order, revealed arch_004 as critical path bottleneck blocking 4 features",
+      "apce_effectiveness": "Confirmed scope is conservative (36 < 40-60), no negotiation needed after FAE optimization",
+      "workflow_validation": "VIBE_ALIGNER task order (FAE → FDG → APCE) prevents scope issues early. FAE catches infeasible features, FDG reveals dependencies, APCE validates total complexity.",
+      "dogfooding_success": "Using VIBE_ALIGNER on vibe-agency architecture proves framework works for refactoring tasks, not just user-facing features"
+    }
+  }
+}
