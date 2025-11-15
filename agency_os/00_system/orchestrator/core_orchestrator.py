@@ -35,7 +35,17 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "runtime"))
 
 from llm_client import LLMClient, BudgetExceededError
-from prompt_runtime import PromptRuntime
+
+# GAD-003 Phase 2: Use PromptRegistry instead of PromptRuntime
+# PromptRegistry provides automatic governance injection
+try:
+    from prompt_registry import PromptRegistry
+    PROMPT_REGISTRY_AVAILABLE = True
+except ImportError:
+    # Fallback to PromptRuntime if Registry not available
+    from prompt_runtime import PromptRuntime
+    PROMPT_REGISTRY_AVAILABLE = False
+    logger.warning("PromptRegistry not available, falling back to PromptRuntime")
 
 # GAD-003: Add tools to path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
@@ -246,8 +256,16 @@ class CoreOrchestrator:
         # Initialize LLM client (only for autonomous mode)
         self.llm_client = None  # Lazy initialization per-project (to use project budget)
 
-        # Initialize prompt runtime
-        self.prompt_runtime = PromptRuntime(base_path=self.repo_root)
+        # Initialize prompt composition (Registry preferred, Runtime fallback)
+        # PromptRegistry provides automatic Guardian Directives injection
+        if PROMPT_REGISTRY_AVAILABLE:
+            self.prompt_registry = PromptRegistry
+            self.use_registry = True
+            logger.info("✅ Using PromptRegistry (with governance injection)")
+        else:
+            self.prompt_runtime = PromptRuntime(base_path=self.repo_root)
+            self.use_registry = False
+            logger.warning("⚠️  Using PromptRuntime (fallback, no governance)")
 
         # Paths
         self.workspaces_dir = self.repo_root / "workspaces"
@@ -551,9 +569,24 @@ class CoreOrchestrator:
             Agent output (parsed JSON)
         """
         try:
-            # 1. Compose prompt using PromptRuntime (ALWAYS - this is the "Arm's" job)
+            # 1. Compose prompt (ALWAYS - this is the "Arm's" job)
             logger.info(f"🤖 Executing agent: {agent_name}.{task_id}")
-            prompt = self.prompt_runtime.execute_task(agent_name, task_id, inputs)
+
+            # Use PromptRegistry if available (provides governance injection)
+            if self.use_registry:
+                # PromptRegistry.compose() with automatic governance
+                prompt = self.prompt_registry.compose(
+                    agent=agent_name,
+                    task=task_id,
+                    workspace=manifest.name,  # Use manifest name as workspace
+                    inject_governance=True,   # ALWAYS inject Guardian Directives
+                    inject_tools=None,        # Tools loaded from agent's _composition.yaml
+                    inject_sops=None,         # SOPs can be added per-task if needed
+                    context=inputs            # Pass inputs as context
+                )
+            else:
+                # Fallback to PromptRuntime (no governance)
+                prompt = self.prompt_runtime.execute_task(agent_name, task_id, inputs)
 
             # 2. Route based on execution mode
             if self.execution_mode == "delegated":
