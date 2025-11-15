@@ -21,7 +21,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install beautifulsoup4 requests google-api-python-client
+        pip install -r requirements.txt
 
     - name: Run research tools validation
       env:
