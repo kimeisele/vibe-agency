@@ -1,0 +1,107 @@
+{
+  "apiVersion": "agency.os/v1alpha1",
+  "kind": "Project",
+  "metadata": {
+    "projectId": "yoga-studio-mvp-001",
+    "name": "Yoga Studio Booking Platform MVP",
+    "description": "Full-featured booking and class management platform for yoga studios with online payments, scheduling, and student management",
+    "owner": "kimeisele@example.com",
+    "createdAt": "2025-11-15T22:50:25Z",
+    "lastUpdatedAt": "2025-11-15T22:50:25Z",
+    "tags": ["saas", "booking", "fitness", "mvp", "portfolio-test"]
+  },
+  "spec": {
+    "vibe": {
+      "target_scope": "mvp",
+      "integration_type": "portfolio_test",
+      "research_enabled": true,
+      "use_real_apis": true
+    },
+    "initial_requirements": {
+      "business_goal": "Help yoga studios transition from manual booking to automated online class management with payment integration",
+      "target_users": [
+        "Yoga studio owners (administrators)",
+        "Yoga instructors (teachers)",
+        "Students (customers)"
+      ],
+      "core_features": [
+        "Class schedule management (CRUD operations)",
+        "Online booking system with capacity limits",
+        "Payment processing (Stripe integration)",
+        "Student profiles and membership management",
+        "Email notifications (class reminders, cancellations)",
+        "Admin dashboard with analytics",
+        "Mobile-responsive UI"
+      ],
+      "business_context": {
+        "market": "B2B SaaS for fitness industry",
+        "competition": "Mindbody, Momoyoga, Pike13",
+        "pricing_model": "Monthly subscription ($50-150/month per studio)",
+        "target_market_size": "35,000+ yoga studios in US alone",
+        "key_differentiator": "Simpler, more affordable than Mindbody"
+      },
+      "technical_constraints": {
+        "budget": "MVP under $25k development cost",
+        "timeline": "3-month development cycle",
+        "tech_stack_preference": "Modern web stack (React/Next.js + Python/Django or Node.js)",
+        "hosting": "Cloud-native (AWS/GCP/Vercel)",
+        "compliance": "GDPR, PCI DSS (for payments)"
+      }
+    },
+    "research_requirements": {
+      "market_research": {
+        "enabled": true,
+        "queries": [
+          "yoga studio booking software market size 2024",
+          "yoga studio management software competitors",
+          "yoga studio owner pain points scheduling",
+          "fitness class booking trends 2024"
+        ],
+        "expected_sources": 5
+      },
+      "tech_research": {
+        "enabled": true,
+        "queries": [
+          "best payment gateway for fitness subscriptions",
+          "class scheduling software architecture patterns",
+          "React booking system best practices",
+          "real-time availability sync patterns"
+        ],
+        "expected_sources": 5
+      },
+      "user_research": {
+        "enabled": true,
+        "queries": [
+          "yoga student booking behavior patterns",
+          "yoga studio software user complaints",
+          "fitness class cancellation policies best practices"
+        ],
+        "expected_sources": 3
+      }
+    }
+  },
+  "status": {
+    "projectPhase": "PLANNING",
+    "planningSubState": "BUSINESS_VALIDATION",
+    "lastUpdate": "2025-11-15T22:50:25Z",
+    "message": "Ready for full E2E portfolio test with research integration"
+  },
+  "budget": {
+    "max_cost_usd": 100.0,
+    "current_cost_usd": 0.0,
+    "alert_threshold": 0.80,
+    "cost_breakdown": {}
+  },
+  "artifacts": {
+    "planning": {},
+    "code": {},
+    "test": {},
+    "deployment": {}
+  },
+  "research_metadata": {
+    "google_api_enabled": true,
+    "websearch_fallback": true,
+    "expected_research_tasks": 4,
+    "research_agents": ["MARKET_RESEARCHER", "TECH_RESEARCHER", "USER_RESEARCHER", "FACT_VALIDATOR"]
+  }
+}
