@@ -1,0 +1,37 @@
+name: Test Google Search API
+
+on:
+  push:
+    branches:
+      - claude/fix-google-api-403-*
+  workflow_dispatch:
+
+jobs:
+  test-research-tools:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install beautifulsoup4 requests google-api-python-client
+
+    - name: Run research tools validation
+      env:
+        GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+        GOOGLE_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_SEARCH_ENGINE_ID }}
+      run: |
+        python scripts/validate_research_tools.py
+
+    - name: Success notification
+      if: success()
+      run: |
+        echo "✅ Google Search API is working!"
+        echo "✅ Research tools are ready for vibe-cli integration!"
