@@ -1,0 +1,254 @@
+{
+  "phase": "03_feasibility_analysis",
+  "framework_version": "1.1.0",
+  "project_type": "internal_refactoring",
+  "abstraction_level": "META",
+  "fae_version": "1.0",
+  "meta_note": "Dogfooding VIBE_ALIGNER on vibe-agency itself - architecture refactoring v1.0",
+
+  "feature_feasibility_checks": [
+    {
+      "feature_id": "arch_001",
+      "feature_name": "Separate vibe-cli concerns (operator mode vs API mode)",
+      "fae_rules_checked": ["FAE-TECH-007"],
+      "status": "FEASIBLE",
+      "complexity_score": 5,
+      "estimated_time": "1-2 days",
+      "risks": [],
+      "notes": "Standard code separation/refactoring task. Current vibe-cli (351 lines) mixes operator mode and API delegation. Extracting to distinct entry points with shared core is straightforward."
+    },
+    {
+      "feature_id": "arch_002",
+      "feature_name": "Clarify orchestrator role (state machine ONLY, no business logic)",
+      "fae_rules_checked": ["FAE-TECH-007", "FAE-010"],
+      "status": "FEASIBLE",
+      "complexity_score": 8,
+      "estimated_time": "2-3 days",
+      "risks": [],
+      "notes": "Aligns with MonolithFirst principle (FAE-010) - maintaining well-architected monolith. Extract tool execution to dedicated service, keep orchestrator as pure state machine."
+    },
+    {
+      "feature_id": "arch_003",
+      "feature_name": "Modularize research agents (support external plugins)",
+      "fae_rules_checked": ["FAE-013"],
+      "status": "INFEASIBLE_FOR_V1",
+      "complexity_score": 21,
+      "estimated_time": "1-2 weeks (YAGNI)",
+      "risks": [
+        {
+          "id": "RISK-001",
+          "description": "Plugin architecture is premature optimization before core functionality is proven",
+          "mitigation": "Defer to v2.0. Focus v1.0 on making existing 4 research agents functional.",
+          "severity": "HIGH"
+        }
+      ],
+      "scope_adjustments": [
+        {
+          "original_requirement": "External plugin support for research agents",
+          "adjusted_requirement": "Hard-code existing 4 research agents, complete tool use loop",
+          "rationale": "FAE-013 flags dynamic_plugin_architecture as v1.0 scope conflict. Research agents not yet functional (tool use loop incomplete). Build extensibility AFTER proving core value."
+        }
+      ],
+      "notes": "⚠️ SCOPE VIOLATION - FAE-013: 'YAGNI (You Ain't Gonna Need It). Extreme over-engineering for a v1.0. Hard-code features instead.' RECOMMENDATION: Move to v2.0."
+    },
+    {
+      "feature_id": "arch_004",
+      "feature_name": "Add architecture tests (pytest infrastructure)",
+      "fae_rules_checked": ["FAE-TIME-018"],
+      "status": "FEASIBLE",
+      "complexity_score": 8,
+      "estimated_time": "2-4 days",
+      "risks": [],
+      "notes": "Based on FAE-TIME-018 (ci_cd_pipeline_basic). CRITICAL for anti-hallucination protocol. Tests must verify REAL implementation, not just structure. >80% coverage target."
+    },
+    {
+      "feature_id": "arch_005",
+      "feature_name": "Fix documentation contradictions",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE",
+      "complexity_score": 3,
+      "estimated_time": "1-2 days",
+      "risks": [],
+      "notes": "Documentation cleanup. No technical constraints. Remove 'Complete ✅' from failing components, add verification dates, align README claims with test results."
+    },
+    {
+      "feature_id": "arch_006",
+      "feature_name": "Make API stub optional flag",
+      "fae_rules_checked": [],
+      "status": "FEASIBLE",
+      "complexity_score": 2,
+      "estimated_time": "1 day (4-6 hours)",
+      "risks": [],
+      "notes": "Simple configuration change for graceful fallback. Add --api-mode flag, default to operator mode (Claude Code primary), API becomes optional stub."
+    },
+    {
+      "feature_id": "arch_007",
+      "feature_name": "Complete tool use loop (Anthropic native API)",
+      "fae_rules_checked": ["FAE-TIME-002"],
+      "status": "FEASIBLE",
+      "complexity_score": 5,
+      "estimated_time": "3-4 hours",
+      "risks": [],
+      "notes": "User confirmed Option B (Anthropic native tool API). Simpler than custom wrapper. Uses official SDK, well-documented protocol, standard industry pattern vs. custom XML parsing."
+    },
+    {
+      "feature_id": "arch_008",
+      "feature_name": "Dogfood VIBE_ALIGNER on vibe-agency (meta)",
+      "fae_rules_checked": [],
+      "status": "IN_PROGRESS",
+      "complexity_score": 5,
+      "estimated_time": "2-3 hours total (Tasks 01-06)",
+      "risks": [],
+      "notes": "Currently executing! Task 03 of 6 complete. Remaining: Task 04 (Gap Detection - FDG), Task 05 (Scope Negotiation - APCE), Task 06 (Output Generation - feature_spec.json). Meta-validation of VIBE_ALIGNER process."
+    }
+  ],
+
+  "technical_constraints_analysis": {
+    "no_violations_found": [
+      "No real-time features (FAE-001, FAE-002 N/A)",
+      "No complex RBAC (FAE-008 N/A)",
+      "No offline-first sync (FAE-009 N/A)",
+      "No microservices (FAE-010 N/A - maintaining monolith)",
+      "No payment processing (FAE-016 N/A)"
+    ],
+    "applicable_warnings": [
+      {
+        "fae_rule": "FAE-013",
+        "feature": "arch_003 (External plugin support)",
+        "resolution": "BLOCKED - Move to v2.0. Focus v1.0 on making existing research agents functional.",
+        "note": "Dynamic plugin architecture is premature optimization. Research agents not yet proven functional (tool use loop incomplete)."
+      }
+    ],
+    "monolith_first_validation": {
+      "status": "COMPLIANT",
+      "fae_rule": "FAE-010",
+      "note": "arch_002 (clarify orchestrator) maintains well-architected monolith. No premature microservices decomposition."
+    }
+  },
+
+  "scope_validation": {
+    "v1_0_critical_features": ["arch_004", "arch_005", "arch_006"],
+    "v1_0_critical_complexity": 13,
+    "v1_0_critical_estimated_time": "4-7 days",
+    "v1_0_important_features": ["arch_001", "arch_002"],
+    "v1_0_important_complexity": 13,
+    "v1_0_important_estimated_time": "3-5 days",
+    "v1_0_total_approved": ["arch_001", "arch_002", "arch_004", "arch_005", "arch_006", "arch_007"],
+    "v1_0_total_complexity": 31,
+    "v1_0_total_estimated_time": "7-12 days (1.5-2.5 weeks, single developer)",
+    "v2_0_deferred_features": ["arch_003"],
+    "v2_0_deferred_complexity": 21,
+    "meta_in_progress": ["arch_008"],
+    "scope_health": "HEALTHY - v1.0 scope reduced from 8 to 7 features after FAE validation"
+  },
+
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "recommendation": "Move arch_003 (plugin architecture) to v2.0",
+      "rationale": "FAE-013 violation: YAGNI for v1.0. Research agents not yet functional. Build extensibility AFTER proving core value. Saves 1-2 weeks."
+    },
+    {
+      "priority": "CRITICAL",
+      "recommendation": "Prioritize arch_004 (tests), arch_005 (docs), arch_006 (optional API) first",
+      "rationale": "Anti-hallucination protocol from CLAUDE.md. Tests prevent 'Complete ✅' claims without evidence. Doc fixes prevent AI assistant hallucination."
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "arch_007 (tool use loop) becomes v2.0 after infrastructure hardening",
+      "rationale": "Complete tool loop only AFTER tests are in place to verify it works end-to-end. Test-driven development approach."
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Complete arch_008 (dogfooding) to generate feature_spec.json for this refactoring",
+      "rationale": "Currently in progress (Task 03/06). Validates VIBE_ALIGNER process while planning its own improvements."
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "arch_001 and arch_002 improve maintainability for future work",
+      "rationale": "Separation of concerns (vibe-cli) and orchestrator clarity enable easier testing and future extensions."
+    }
+  ],
+
+  "implementation_order": {
+    "phase_1_foundation": {
+      "features": ["arch_004", "arch_005", "arch_006"],
+      "timeline": "Week 1 (4-7 days)",
+      "rationale": "Test infrastructure + documentation fixes + API optional flag establish foundation for verification"
+    },
+    "phase_2_architecture_cleanup": {
+      "features": ["arch_001", "arch_002"],
+      "timeline": "Week 2 (3-5 days)",
+      "rationale": "Refactor vibe-cli and orchestrator with tests in place to verify correctness"
+    },
+    "phase_3_tool_integration": {
+      "features": ["arch_007"],
+      "timeline": "Week 2-3 (3-4 hours)",
+      "rationale": "Complete tool use loop with full test coverage, verify end-to-end with real API"
+    },
+    "future_v2_0": {
+      "features": ["arch_003"],
+      "timeline": "v2.0 (after validation)",
+      "rationale": "Build plugin architecture AFTER research agents proven functional and valuable"
+    }
+  },
+
+  "critical_success_factors": [
+    {
+      "factor": "Test-driven verification",
+      "description": "All 'Complete ✅' claims must be backed by passing tests",
+      "mitigation": "arch_004 establishes pytest infrastructure. CLAUDE.md protocol: 'No Complete ✅ without passing tests.'"
+    },
+    {
+      "factor": "Documentation accuracy",
+      "description": "Docs must reflect REAL implementation status, not design intent",
+      "mitigation": "arch_005 fixes contradictions. Add verification dates to all completion claims."
+    },
+    {
+      "factor": "Graceful API fallback",
+      "description": "System must work WITHOUT API (Claude Code as primary operator)",
+      "mitigation": "arch_006 makes API optional flag. Default to operator mode, API is stub/fallback."
+    },
+    {
+      "factor": "Scope discipline",
+      "description": "Avoid feature creep and premature optimization",
+      "mitigation": "FAE validation blocked arch_003 (YAGNI). Defer to v2.0 after proving core value."
+    }
+  ],
+
+  "meta_observations": {
+    "dogfooding_insights": {
+      "observation": "Using VIBE_ALIGNER to plan vibe-agency refactoring validates the framework",
+      "value": "FAE caught arch_003 scope violation - proves FAE system works!",
+      "recursive_validation": "Using FAE constraints to validate architecture that uses FAE - meta but VALID"
+    },
+    "fae_effectiveness": {
+      "blocked_features": 1,
+      "reason": "FAE-013 (YAGNI) prevented 1-2 weeks of premature optimization",
+      "time_saved": "1-2 weeks",
+      "scope_impact": "v1.0 timeline reduced from 3-4.5 weeks to 1.5-2.5 weeks"
+    },
+    "anti_hallucination_protocol": {
+      "status": "ENFORCED",
+      "evidence": "arch_003 blocked despite being 'designed' - FAE requires PROOF not PLANS",
+      "impact": "Prevents AI assistants from claiming completion without tests"
+    }
+  },
+
+  "validation_gate_status": {
+    "gate": "gate_fae_all_passed",
+    "status": "CONDITIONAL_PASS",
+    "must_have_features_checked": 7,
+    "must_have_features_passed": 6,
+    "must_have_features_blocked": 1,
+    "blocked_features": [
+      {
+        "feature_id": "arch_003",
+        "feature_name": "Modularize research agents (plugins)",
+        "action_taken": "Moved to v2.0 (wont_have_v1)",
+        "resolution": "Scope adjusted per FAE-013 recommendation"
+      }
+    ],
+    "gate_result": "PASS - All v1.0 must_have features feasible after scope adjustment"
+  }
+}
