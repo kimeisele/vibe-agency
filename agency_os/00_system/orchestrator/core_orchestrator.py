@@ -4,6 +4,7 @@ CORE ORCHESTRATOR - SDLC State Machine Controller
 ==================================================
 
 Implements GAD-002 Decision 1: Hierarchical Orchestrator Architecture
+Extended with GAD-003: Research Tool Integration
 
 This is the master orchestrator that manages the complete SDLC workflow:
 - PLANNING → CODING → TESTING → DEPLOYMENT → MAINTENANCE
@@ -13,14 +14,17 @@ Architecture:
 - Phase handlers (planning_handler.py, etc.): Framework-specific execution logic
 - llm_client.py: LLM invocation with retry, cost tracking
 - prompt_runtime.py: Prompt composition from fragments
+- tools/tool_executor.py: Tool execution for research agents (GAD-003)
 
-Version: 1.0 (Phase 3 - GAD-002)
+Version: 1.1 (Phase 3 - GAD-002 + GAD-003)
 """
 
 import json
 import yaml
 import logging
 import sys
+import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
@@ -32,6 +36,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "runtime"))
 
 from llm_client import LLMClient, BudgetExceededError
 from prompt_runtime import PromptRuntime
+
+# GAD-003: Add tools to path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+try:
+    from tool_executor import ToolExecutor
+    TOOLS_AVAILABLE = True
+except ImportError:
+    TOOLS_AVAILABLE = False
+    logging.warning("ToolExecutor not available - tool execution disabled")
 
 logger = logging.getLogger(__name__)
 
@@ -573,10 +586,12 @@ class CoreOrchestrator:
         (the "Arm") composes the prompt and hands it to the "Brain" (Claude Code)
         for execution.
 
-        Protocol:
+        Protocol (GAD-003 Extended):
         1. Write INTELLIGENCE_REQUEST to STDOUT (JSON)
-        2. Wait for INTELLIGENCE_RESPONSE on STDIN (JSON)
-        3. Return parsed result
+        2. Wait for response on STDIN
+        3. If response contains <tool_use>: Execute tool, send result, goto 2
+        4. If response is INTELLIGENCE_RESPONSE: Parse and return
+        5. Otherwise: Pass through to user
 
         Args:
             agent_name: Agent name
@@ -607,30 +622,125 @@ class CoreOrchestrator:
         sys.stdout.flush()
         print("---INTELLIGENCE_REQUEST_END---", file=sys.stderr)
 
-        # Wait for response on STDIN
+        # GAD-003: Initialize tool executor if available
+        tool_executor = ToolExecutor() if TOOLS_AVAILABLE else None
+
+        # GAD-003: Tool execution loop
         logger.info(f"⏳ Waiting for intelligence response from Claude Code...")
-        response_line = sys.stdin.readline()
+        while True:
+            response_line = sys.stdin.readline()
 
-        if not response_line:
-            raise RuntimeError("No intelligence response received (EOF on STDIN)")
+            if not response_line:
+                raise RuntimeError("No intelligence response received (EOF on STDIN)")
 
-        # Parse response
+            response_text = response_line.strip()
+
+            # GAD-003: Check if response contains tool use
+            tool_call = self._parse_tool_use(response_text)
+            if tool_call and tool_executor:
+                logger.info(f"🔧 Tool call detected: {tool_call['name']}")
+
+                # Execute tool
+                try:
+                    result = tool_executor.execute(tool_call['name'], tool_call['parameters'])
+                    logger.info(f"✅ Tool executed successfully: {tool_call['name']}")
+                except Exception as e:
+                    logger.error(f"❌ Tool execution failed: {e}")
+                    result = {'error': str(e)}
+
+                # Send tool result back to Claude Code
+                tool_result = {
+                    "type": "TOOL_RESULT",
+                    "tool": tool_call['name'],
+                    "result": result
+                }
+                print("---TOOL_RESULT_START---", file=sys.stderr)
+                print(json.dumps(tool_result, indent=2))
+                sys.stdout.flush()
+                print("---TOOL_RESULT_END---", file=sys.stderr)
+
+                # Continue loop (wait for next response)
+                continue
+
+            # Check if final response (INTELLIGENCE_RESPONSE)
+            try:
+                response = json.loads(response_text)
+                if response.get("type") == "INTELLIGENCE_RESPONSE":
+                    # Extract result
+                    result = response.get("result")
+                    if result is None:
+                        raise RuntimeError("Intelligence response missing 'result' field")
+
+                    logger.info(f"✅ Intelligence response received from Claude Code")
+                    return result
+            except json.JSONDecodeError:
+                # Not JSON - might be intermediate output, pass through
+                print(response_text, file=sys.stderr)
+                continue
+
+            # If we get here, something unexpected happened
+            logger.warning(f"Unexpected response format: {response_text[:100]}")
+            print(response_text, file=sys.stderr)
+
+    def _parse_tool_use(self, text: str) -> Optional[Dict[str, Any]]:
+        """
+        Parse tool use XML from agent response (GAD-003)
+
+        Expected format:
+        <tool_use name="tool_name">
+          <parameters>
+            <param_name>value</param_name>
+            ...
+          </parameters>
+        </tool_use>
+
+        Args:
+            text: Response text that might contain tool use
+
+        Returns:
+            Dict with 'name' and 'parameters' if tool use found, None otherwise
+        """
+        # Check if text contains tool_use tag
+        if '<tool_use' not in text:
+            return None
+
         try:
-            response = json.loads(response_line.strip())
-        except json.JSONDecodeError as e:
-            raise RuntimeError(f"Invalid intelligence response (not JSON): {e}")
+            # Extract tool_use XML (might be embedded in other text)
+            match = re.search(r'<tool_use[^>]*>.*?</tool_use>', text, re.DOTALL)
+            if not match:
+                return None
 
-        # Validate response type
-        if response.get("type") != "INTELLIGENCE_RESPONSE":
-            raise RuntimeError(f"Invalid response type: {response.get('type')}")
+            tool_xml = match.group(0)
 
-        # Extract result
-        result = response.get("result")
-        if result is None:
-            raise RuntimeError("Intelligence response missing 'result' field")
+            # Parse XML
+            root = ET.fromstring(tool_xml)
 
-        logger.info(f"✅ Intelligence response received from Claude Code")
-        return result
+            # Extract tool name from attribute
+            tool_name = root.get('name')
+            if not tool_name:
+                logger.warning("Tool use missing 'name' attribute")
+                return None
+
+            # Extract parameters
+            parameters = {}
+            params_elem = root.find('parameters')
+            if params_elem is not None:
+                for param in params_elem:
+                    param_name = param.tag
+                    param_value = param.text or ""
+                    parameters[param_name] = param_value
+
+            return {
+                'name': tool_name,
+                'parameters': parameters
+            }
+
+        except ET.ParseError as e:
+            logger.error(f"Failed to parse tool use XML: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error parsing tool use: {e}")
+            return None
 
     def _execute_autonomous(
         self,

@@ -2,8 +2,14 @@
 
 import json
 from typing import Dict, Any
-from .google_search_client import GoogleSearchClient
-from .web_fetch_client import WebFetchClient
+
+# Support both relative and absolute imports
+try:
+    from .google_search_client import GoogleSearchClient
+    from .web_fetch_client import WebFetchClient
+except ImportError:
+    from google_search_client import GoogleSearchClient
+    from web_fetch_client import WebFetchClient
 
 
 class ToolExecutor:
