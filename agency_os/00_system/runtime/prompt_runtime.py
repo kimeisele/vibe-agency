@@ -84,6 +84,7 @@ class CompositionSpec:
     variables: Dict[str, str]
     conflict_resolution: Dict
     metadata: Dict
+    tools: List[str] = None  # GAD-003: List of available tool names
 
 
 @dataclass
@@ -260,6 +261,9 @@ class PromptRuntime:
                 f"Fix: Add missing fields to _composition.yaml"
             )
 
+        # GAD-003: Load tool definitions if agent uses tools
+        tools_list = data.get("tools", [])
+
         return CompositionSpec(
             composition_version=data["composition_version"],
             agent_id=data["agent_id"],
@@ -267,7 +271,8 @@ class PromptRuntime:
             composition_order=data["composition_order"],
             variables=data.get("variables", {}),
             conflict_resolution=data.get("conflict_resolution", {}),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
+            tools=tools_list if tools_list else None
         )
 
     def _load_task_metadata(self, agent_id: str, task_id: str) -> TaskMetadata:
@@ -411,6 +416,16 @@ class PromptRuntime:
                 core_prompt = self._load_file(agent_path / source)
                 composed_parts.append(f"# === CORE PERSONALITY ===\n\n{core_prompt}")
 
+            # === TOOLS (GAD-003 Phase 2) ===
+            elif step_type == "tools":
+                if composition_spec.tools:
+                    tools_section = self._compose_tools_section(
+                        source=source,
+                        available_tools=composition_spec.tools,
+                        agent_path=agent_path
+                    )
+                    composed_parts.append(f"# === AVAILABLE TOOLS ===\n\n{tools_section}")
+
             # === KNOWLEDGE FILES ===
             elif source == "${knowledge_files}" and step_type == "knowledge":
                 if knowledge_files:
@@ -474,19 +489,31 @@ class PromptRuntime:
         Raises:
             AgentNotFoundError: If agent_id not in registry
         """
-        # Dynamic agent registry - supports all 11 agents
+        # Dynamic agent registry - supports all agents
         AGENT_REGISTRY = {
+            # Planning Framework
             "LEAN_CANVAS_VALIDATOR": "agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR",
             "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
             "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
             "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
+
+            # Research Agents (GAD-003)
+            "MARKET_RESEARCHER": "agency_os/01_planning_framework/agents/research/MARKET_RESEARCHER",
+            "TECH_RESEARCHER": "agency_os/01_planning_framework/agents/research/TECH_RESEARCHER",
+            "FACT_VALIDATOR": "agency_os/01_planning_framework/agents/research/FACT_VALIDATOR",
+
+            # Other Frameworks
             "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
             "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
             "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
             "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
+
+            # System Steward Framework
             "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
             "AUDITOR": "system_steward_framework/agents/AUDITOR",
             "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
+
+            # System Agents
             "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
         }
 
@@ -515,6 +542,84 @@ class PromptRuntime:
         """Load a file's contents"""
         with open(path) as f:
             return f.read()
+
+    def _compose_tools_section(self, source: str, available_tools: List[str], agent_path: Path) -> str:
+        """
+        Compose the tools section of the prompt (GAD-003 Phase 2)
+
+        Args:
+            source: Path to tool_definitions.yaml (relative to agent dir)
+            available_tools: List of tool names to include
+            agent_path: Path to agent directory (for resolving relative paths)
+
+        Returns:
+            Formatted markdown string with tool definitions
+        """
+        # Resolve the tool definitions file path
+        # source is like "../../../00_system/orchestrator/tools/tool_definitions.yaml"
+        # which is relative to the agent directory
+        if Path(source).is_absolute():
+            tool_defs_path = Path(source)
+        else:
+            tool_defs_path = (agent_path / source).resolve()
+
+        # Load tool definitions
+        try:
+            with open(tool_defs_path) as f:
+                all_tools = yaml.safe_load(f)
+        except FileNotFoundError:
+            logger.warning(f"Tool definitions file not found: {tool_defs_path}")
+            return "*(No tools available - tool_definitions.yaml not found)*"
+        except yaml.YAMLError as e:
+            logger.error(f"Invalid YAML in tool definitions: {e}")
+            return "*(Tool definitions file has invalid YAML)*"
+
+        # Filter to only requested tools
+        tools_dict = all_tools.get("tools", {})
+        filtered_tools = {name: tool for name, tool in tools_dict.items() if name in available_tools}
+
+        if not filtered_tools:
+            return "*(No tools available for this agent)*"
+
+        # Format tools as markdown
+        lines = []
+        lines.append("You have access to the following research tools:\n")
+
+        for tool_name, tool_def in filtered_tools.items():
+            lines.append(f"## Tool: `{tool_name}`\n")
+            lines.append(f"**Description:** {tool_def.get('description', 'No description')}\n")
+
+            # Parameters
+            params = tool_def.get('parameters', {})
+            if params:
+                lines.append("\n**Parameters:**")
+                for param_name, param_spec in params.items():
+                    required = " (required)" if param_spec.get('required', False) else " (optional)"
+                    param_type = param_spec.get('type', 'any')
+                    param_desc = param_spec.get('description', '')
+                    default = f", default: `{param_spec['default']}`" if 'default' in param_spec else ""
+                    lines.append(f"- `{param_name}` ({param_type}){required}: {param_desc}{default}")
+
+            # Returns
+            returns = tool_def.get('returns', {})
+            if returns:
+                lines.append(f"\n**Returns:** {returns.get('description', 'No description')}")
+
+            lines.append("\n---\n")
+
+        # Add usage instructions
+        lines.append("\n### How to use tools:\n")
+        lines.append("To call a tool, use the following XML format in your response:\n")
+        lines.append("```xml")
+        lines.append('<tool_use name="tool_name">')
+        lines.append('  <parameters>')
+        lines.append('    <param_name>value</param_name>')
+        lines.append('  </parameters>')
+        lines.append('</tool_use>')
+        lines.append("```\n")
+        lines.append("You will receive the tool result, then you can continue your analysis.\n")
+
+        return "\n".join(lines)
 
 
 # =================================================================
