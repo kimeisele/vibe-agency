@@ -3,7 +3,9 @@ name: Test Google Search API
 on:
   push:
     branches:
-      - claude/fix-google-api-403-*
+      - claude/**
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
@@ -21,7 +23,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install beautifulsoup4 requests google-api-python-client
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Run research tools validation
       env:
