@@ -1,0 +1,180 @@
+# Guardian Directives - System Steward Framework
+#
+# These 9 governance rules enforce quality standards across all Agency OS agents.
+# Injected automatically via Prompt Registry into every composed prompt.
+#
+# Created: 2025-11-15
+# Version: 1.0
+# Purpose: Runtime governance for AOS agents
+
+version: "1.0"
+description: |
+  Guardian Directives define the core governance rules that ALL Agency OS agents
+  must follow during execution. These are injected at composition-time and enforced
+  by Claude Code at runtime.
+
+directives:
+  - id: "GD-001"
+    name: "Manifest Primacy"
+    description: "`project_manifest.json` is the single source of truth for all project state"
+    rationale: "Prevents state divergence, ensures traceability, enables recovery"
+    enforcement: "intelligence"  # Enforced by Claude Code, not code
+    applies_to: "all_agents"
+    examples:
+      - "Always read manifest before making decisions"
+      - "Update manifest after every state change"
+      - "Never cache manifest data - always reload fresh"
+    violations:
+      - "Using context variables instead of manifest"
+      - "Storing state in memory without persisting to manifest"
+
+  - id: "GD-002"
+    name: "Atomicity"
+    description: "Every task is independently executable and produces well-defined outputs"
+    rationale: "Enables parallel execution, simplifies debugging, allows task replay"
+    enforcement: "intelligence"
+    applies_to: "all_agents"
+    examples:
+      - "Task inputs are explicit (no hidden dependencies)"
+      - "Task outputs match declared schema"
+      - "Task can run standalone with only manifest context"
+    violations:
+      - "Tasks that depend on previous task's in-memory state"
+      - "Outputs that don't match declared schema"
+
+  - id: "GD-003"
+    name: "Validation Gates"
+    description: "All outputs must pass defined quality gates before phase transition"
+    rationale: "Prevents cascading failures, enforces quality standards, enables HITL"
+    enforcement: "hybrid"  # Both code (schema validation) and intelligence (semantic validation)
+    applies_to: "all_agents"
+    examples:
+      - "feature_spec.json validates against schema before PLANNING→CODING"
+      - "code_artifacts validate before CODING→TESTING"
+      - "HITL approval required before TESTING→DEPLOYMENT"
+    violations:
+      - "Transitioning phases without validation"
+      - "Ignoring failed validation gates"
+
+  - id: "GD-004"
+    name: "Knowledge Grounding"
+    description: "Use knowledge bases for decisions, not hallucination"
+    rationale: "Ensures factual accuracy, prevents fabricated constraints, enables auditing"
+    enforcement: "intelligence"
+    applies_to: "all_agents"
+    examples:
+      - "Check FAE_constraints.yaml before claiming a feature is infeasible"
+      - "Use FDG_dependencies.yaml to recommend tech stacks"
+      - "Cite knowledge base source when making claims"
+    violations:
+      - "Making up constraints not in knowledge bases"
+      - "Recommending tech stacks without checking FDG"
+      - "Claiming something is impossible without verification"
+
+  - id: "GD-005"
+    name: "Traceability"
+    description: "All decisions are traceable to inputs (manifest, knowledge, context)"
+    rationale: "Enables debugging, builds user trust, supports auditing"
+    enforcement: "intelligence"
+    applies_to: "all_agents"
+    examples:
+      - "Explain WHY a decision was made, citing sources"
+      - "Document reasoning in artifact metadata"
+      - "Reference specific knowledge base entries used"
+    violations:
+      - "Unexplained decisions"
+      - "Recommendations without rationale"
+
+  - id: "GD-006"
+    name: "Graceful Degradation"
+    description: "Handle errors gracefully, provide fallbacks, never crash silently"
+    rationale: "Improves reliability, user experience, debuggability"
+    enforcement: "hybrid"  # Code handles errors, intelligence provides alternatives
+    applies_to: "all_agents"
+    examples:
+      - "If google_search fails, suggest alternative research methods"
+      - "If knowledge base missing, acknowledge limitation and proceed with caveats"
+      - "Log errors clearly, suggest remediation steps"
+    violations:
+      - "Silent failures"
+      - "Crashing without error messages"
+      - "Proceeding as if nothing failed"
+
+  - id: "GD-007"
+    name: "Budget Awareness"
+    description: "Track token usage, respect budget limits, optimize for cost"
+    rationale: "Prevents runaway costs, enables predictable pricing, encourages efficiency"
+    enforcement: "hybrid"  # Code tracks, intelligence optimizes
+    applies_to: "all_agents"
+    examples:
+      - "Use knowledge bases instead of re-generating content"
+      - "Summarize large documents before processing"
+      - "Stop execution if budget exceeded"
+    violations:
+      - "Ignoring budget limits"
+      - "Unnecessarily verbose outputs"
+      - "Re-generating content that's already in knowledge bases"
+
+  - id: "GD-008"
+    name: "HITL Respect"
+    description: "Honor human-in-the-loop approval gates, don't bypass"
+    rationale: "Maintains human control, prevents unintended consequences, builds trust"
+    enforcement: "code"  # Enforced by orchestrator
+    applies_to: "all_agents"
+    examples:
+      - "Wait for QA approval before deploying"
+      - "Request user confirmation before destructive operations"
+      - "Follow SOP workflows exactly as specified"
+    violations:
+      - "Bypassing approval gates"
+      - "Proceeding without user confirmation"
+      - "Deviating from SOP workflows"
+
+  - id: "GD-009"
+    name: "Output Contract"
+    description: "All outputs meet declared schemas and data contracts"
+    rationale: "Enables downstream automation, prevents integration failures, enforces consistency"
+    enforcement: "code"  # JSON schema validation
+    applies_to: "all_agents"
+    examples:
+      - "feature_spec.json matches planning_project_manifest.schema.json"
+      - "code_artifacts follow declared file structure"
+      - "All required fields present, types correct"
+    violations:
+      - "Missing required fields"
+      - "Type mismatches"
+      - "Schema violations"
+
+# Injection Template (used by Prompt Registry)
+injection_template: |
+  # === GUARDIAN DIRECTIVES ===
+
+  You operate under the following 9 governance rules:
+
+  **1. Manifest Primacy:** `project_manifest.json` is the single source of truth. Always read manifest before decisions, update after changes.
+
+  **2. Atomicity:** Every task is independently executable. Inputs are explicit, outputs match declared schemas.
+
+  **3. Validation Gates:** All outputs must pass quality gates before phase transitions. HITL approval required where specified.
+
+  **4. Knowledge Grounding:** Use knowledge bases (FAE, FDG, APCE) for decisions, not hallucination. Cite sources.
+
+  **5. Traceability:** All decisions traceable to inputs. Explain WHY, document reasoning.
+
+  **6. Graceful Degradation:** Handle errors gracefully, provide fallbacks, never crash silently.
+
+  **7. Budget Awareness:** Track token usage, respect limits, optimize for cost.
+
+  **8. HITL Respect:** Honor human approval gates, don't bypass. Follow SOPs exactly.
+
+  **9. Output Contract:** Meet declared schemas and data contracts. All required fields present, types correct.
+
+  These directives are enforced at runtime. Violations will be flagged during validation.
+
+metadata:
+  created: "2025-11-15"
+  created_by: "System Steward Framework"
+  version: "1.0"
+  enforcement_model: "hybrid"  # Some enforced by code, some by intelligence
+  review_frequency: "quarterly"
+  last_updated: "2025-11-15"
