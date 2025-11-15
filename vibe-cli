@@ -15,11 +15,61 @@ Architecture (MVP - DELEGATION ONLY):
 Version: 1.0 (Delegation Mode - No Direct API Calls)
 """
 
-import os
+# ============================================================================
+# LAYER 2: AUTO-DEPENDENCY INSTALLER (Graceful Degradation)
+# ============================================================================
 import sys
+import subprocess
+
+def _ensure_dependencies():
+    """
+    Auto-install missing dependencies with graceful degradation.
+
+    This prevents the 10x "ModuleNotFoundError" regression by:
+    1. Checking for required modules
+    2. Auto-installing missing packages via pip
+    3. Failing fast with clear error if auto-install fails
+
+    Layer 2 of 4-layer dependency defense strategy.
+    """
+    required_modules = [
+        ('yaml', 'pyyaml'),
+        ('bs4', 'beautifulsoup4'),
+        ('dotenv', 'python-dotenv'),
+    ]
+
+    missing = []
+    for module_name, package_name in required_modules:
+        try:
+            __import__(module_name)
+        except ImportError:
+            missing.append(package_name)
+
+    if missing:
+        print(f"⚠️  Missing dependencies: {', '.join(missing)}", file=sys.stderr)
+        print("🔧 Auto-installing...", file=sys.stderr)
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "-q"] + missing,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+            print("✅ Dependencies installed successfully", file=sys.stderr)
+        except subprocess.CalledProcessError as e:
+            print("❌ Auto-install failed. Run manually:", file=sys.stderr)
+            print(f"   pip install {' '.join(missing)}", file=sys.stderr)
+            print(f"\nOr use: ./setup.sh", file=sys.stderr)
+            sys.exit(1)
+
+# Execute dependency check BEFORE any other imports
+_ensure_dependencies()
+
+# ============================================================================
+# IMPORTS (After Dependency Check)
+# ============================================================================
+import os
 import json
 import logging
-import subprocess
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, Any, List

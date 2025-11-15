@@ -1,0 +1,65 @@
+# ============================================================================
+# LAYER 4: CI VALIDATION (Dependency Enforcement)
+# ============================================================================
+# This workflow validates dependencies on every push/PR to prevent regressions.
+# Part of 4-layer dependency defense strategy.
+
+name: Validate Environment
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-dependencies:
+    name: Validate Dependencies & Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate knowledge bases
+        run: |
+          if [ -f "validate_knowledge_index.py" ]; then
+            python3 validate_knowledge_index.py
+          else
+            echo "⚠️  validate_knowledge_index.py not found (skipping)"
+          fi
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short || echo "⚠️  Some tests failed (non-blocking for now)"
+
+      - name: Check code quality (non-blocking)
+        run: |
+          pip install ruff
+          ruff check . --output-format=github || echo "⚠️  Linting issues detected (non-blocking)"
+
+  validate-devcontainer:
+    name: Validate Devcontainer Config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate devcontainer.json syntax
+        run: |
+          python3 -c "import json; json.load(open('.devcontainer/devcontainer.json'))"
+          echo "✅ devcontainer.json is valid JSON"

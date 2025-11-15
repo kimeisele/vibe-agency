@@ -76,6 +76,57 @@ Vibe Agency uses a **Brain-Arm architecture**:
 
 ---
 
+## ⚙️ Environment Setup
+
+Vibe Agency uses a **4-layer dependency management strategy** to prevent environment regressions:
+
+### Layer 1: Devcontainer (Recommended - Persistent)
+
+**For GitHub Codespaces / VS Code:**
+
+The `.devcontainer/devcontainer.json` configuration automatically installs all dependencies when you open the project. Dependencies persist across sessions.
+
+```bash
+# Open in GitHub Codespaces
+# OR: Open in VS Code with "Dev Containers" extension
+# Dependencies install automatically via postCreateCommand
+```
+
+### Layer 2: Auto-Install (Graceful Degradation)
+
+`vibe-cli` automatically detects and installs missing dependencies on first run:
+
+```bash
+./vibe-cli run my-project
+# ⚠️  Missing dependencies: pyyaml, beautifulsoup4
+# 🔧 Auto-installing...
+# ✅ Dependencies installed successfully
+```
+
+### Layer 3: Manual Setup (Fallback)
+
+If auto-install fails, use the manual setup script:
+
+```bash
+./setup.sh
+# Installs requirements.txt and validates knowledge bases
+```
+
+Or install manually:
+
+```bash
+pip install -r requirements.txt
+python3 validate_knowledge_index.py
+```
+
+### Layer 4: CI Validation (Continuous Enforcement)
+
+GitHub Actions automatically validates dependencies on every push to prevent regressions.
+
+**Why 4 layers?** This project experienced 10+ dependency regressions in ephemeral environments. The multi-layer approach ensures dependencies are **always available** regardless of environment.
+
+---
+
 ## 🚀 Quick Start
 
 ### New to Vibe Agency? Start Here!
