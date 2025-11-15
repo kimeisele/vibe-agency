@@ -9,7 +9,9 @@ info:
     scale_type: "Modified Fibonacci (Relative Complexity)"
     scale:
       unit: "Complexity Points"
-      description: "Complexity Points are a relative measure of the work involved, not a direct translation to hours. This scale reflects the increasing uncertainty and risk inherent in more complex tasks."
+      description: >
+        Complexity Points are a relative measure of the work involved, not a direct translation to hours.
+        This scale reflects the increasing uncertainty and risk inherent in more complex tasks.
     basis:
       - "Complexity: How difficult is the logic?"
       - "Effort: How much work is it?"
@@ -17,9 +19,9 @@ info:
   multiplier_logic:
     type: "Compounding"
     formula: "Final_Score = base_complexity * multiplier_1 * multiplier_2 * ..."
-    description: "Complexity multipliers are compounding, not additive. This models the real-world scenario where risks amplify each other."
-
----
+    description: >
+      Complexity multipliers are compounding, not additive.
+      This models the real-world scenario where risks amplify each other.
 
 ## SECTION 1: Base Complexity Scores
 
@@ -65,7 +67,9 @@ feature_complexity:
   - feature_type: "user_auth_saml_sso"
     base_complexity: 13
     base_effort: "3-5 weeks"
-    description: "Enterprise-grade feature. Involves XML, certificate management, SP/IdP configuration, and complex debugging."
+    description: >
+      Enterprise-grade feature. Involves XML, certificate management,
+      SP/IdP configuration, and complex debugging.
     complexity_factors:
       - factor: "Integration with SAML 2.0 identity providers (e.g., Okta, ADFS)"
         score: 13
@@ -127,7 +131,9 @@ feature_complexity:
   - feature_type: "payment_processing_basic"
     base_complexity: 8
     base_effort: "2-3 weeks"
-    description: "High-risk feature. Involves secure API key handling, server-side payment intent creation, client-side form, and webhook handling for success/failure."
+    description: >
+      High-risk feature. Involves secure API key handling, server-side payment intent creation, form,
+      client-side and webhook handling for success/failure.
     complexity_factors:
       - factor: "Stripe/Braintree integration for one-time payments"
         score: 8
@@ -213,7 +219,9 @@ feature_complexity:
   - feature_type: "inventory_management_basic"
     base_complexity: 8
     base_effort: "2-3 weeks"
-    description: "High business-criticality. Must be accurate to prevent overselling. Involves database transactions and potential race conditions."
+    description: >
+      High business-criticality. Must be accurate to prevent overselling. Involves database transactions
+      and potential race conditions.
     complexity_factors:
       - factor: "Basic SKU tracking, decrement stock on purchase"
         score: 8
@@ -330,7 +338,9 @@ feature_complexity:
   - feature_type: "search_advanced_engine"
     base_complexity: 13
     base_effort: "3-5 weeks"
-    description: "This is a separate, distributed system. Requires data indexing, schema design, query (JSON DSL) building, and server management"
+    description: >
+      This is a separate, distributed system. Requires data indexing, schema design, query (JSON DSL)
+      building, and server management
     complexity_factors:
       - factor: "Implementing Elasticsearch or Solr"
         score: 13
@@ -474,7 +484,9 @@ feature_complexity:
   - feature_type: "api_access_key_management"
     base_complexity: 5
     base_effort: "1-2 weeks"
-    description: "Requires secure, unique token generation, storage (hashed), and revocation. A critical security feature."
+    description: >
+      Requires secure, unique token generation, storage (hashed), and revocation. A critical security
+      feature.
     complexity_factors:
       - factor: "Provide API keys to users for 3rd-party access"
         score: 5
@@ -861,7 +873,6 @@ feature_complexity:
         score: 3
     v1_recommendation: "must_have"
 
----
 
 ## SECTION 2: Value Assessment Patterns
 
@@ -986,7 +997,6 @@ value_patterns:
       - "A custom report for one sales person"
     v1_status: "wont_have_v1"
 
----
 
 ## SECTION 3: Value vs Effort Matrix Mapping
 
@@ -999,7 +1009,9 @@ quadrant_rules:
   - quadrant: "high_value_high_effort"
     moscow_category: "should_have_if_core"
     v1_inclusion: "conditional"
-    reasoning: "Big Bets. These are strategic, resource-intensive features. They are 'Must Haves' if they are the core value prop, otherwise they are 'Should Haves' for v1.0."
+    reasoning: >
+      Big Bets. These are strategic, resource-intensive features. They are 'Must Haves' if they are the
+      core value prop, otherwise they are 'Should Haves' for v1.0.
     conditions:
       - "value_pattern == 'core_value_proposition'"
       - "value_pattern == 'direct_revenue_driver'"
@@ -1008,14 +1020,17 @@ quadrant_rules:
   - quadrant: "low_value_low_effort"
     moscow_category: "could_have"
     v1_inclusion: "if_time_permits"
-    reasoning: "Fill-ins / Maybes. Nice-to-haves that can be added to v1.0 if the 'Must' and 'Should' budgets are met. Good for team morale."
+    reasoning: >
+      Fill-ins / Maybes. Nice-to-haves that can be added to v1.0 if the 'Must' and 'Should' budgets are
+      met. Good for team morale.
 
   - quadrant: "low_value_high_effort"
     moscow_category: "wont_have"
     v1_inclusion: "never"
-    reasoning: "Time Sinks / Money Pits. These features provide little return for high effort. They are clear v2.0+ candidates and should be actively avoided for v1.0."
+    reasoning: >
+      Time Sinks / Money Pits. These features provide little return for high effort. They are clear and
+      v2.0+ candidates should be actively avoided for v1.0.
 
----
 
 ## SECTION 4: Complexity Multipliers Database
 
@@ -1060,7 +1075,9 @@ multipliers:
       - type: "hipaa_compliance"
         base_multiplier: 2.5
         reasons:
-          - "Extremely high overhead for handling Protected Health Information (PHI). Affects architecture, logging, and data storage."
+          - >
+            Extremely high overhead for handling Protected Health Information (PHI). Affects architecture,
+            logging, and data storage.
         adds_requirements:
           - "Encryption at-rest and in-transit"
           - "Strict, granular access controls"
@@ -1129,7 +1146,6 @@ multipliers:
           - "Conflict_resolution_logic"
           - "Background_sync_service"
 
----
 
 ## SECTION 5: Scope Negotiation Templates
 
@@ -1243,19 +1259,22 @@ negotiation_templates:
       I've added this to our 'Could Have' list, and it's a perfect candidate to pull in if the 'Must Have' work finishes ahead of schedule.
       Otherwise, it's at the top of the list for v1.1."
 
----
 
 ## SECTION 6: Decision Rules & Heuristics
 
 decision_heuristics:
   - rule: "total_complexity_budget_v1"
-    description: "The total complexity score for all v1.0 features (Must + Should + Could) should not exceed this 'budget'."
+    description: >
+      The total complexity score for all v1.0 features (Must + Should + Could) should not exceed this
+      'budget'.
     threshold: 60
     unit: "complexity_points"
     action: "force_prioritization"
 
   - rule: "must_have_percentage_limit"
-    description: "The total effort (sum of complexity scores) of 'Must Have' features should not exceed this percentage of the total budget."
+    description: >
+      The total effort (sum of complexity scores) of 'Must Have' features should not exceed this of the
+      percentage total budget.
     threshold: 0.60
     unit: "percentage_of_total_budget"
     action: "review_must_have_classification"
@@ -1267,38 +1286,52 @@ decision_heuristics:
     action: "flag_for_manual_review_and_breakdown"
 
   - rule: "core_value_promotion"
-    description: "A feature in the 'High Value, High Effort' quadrant that is essential to the core value prop must be promoted to 'Must Have'."
+    description: >
+      A feature in the 'High Value, High Effort' quadrant that is essential to the core value prop must
+      be promoted to 'Must Have'.
     condition: "feature.quadrant == 'high_value_high_effort' AND feature.value_pattern == 'core_value_proposition'"
     action: "promote_to_must_have"
 
   - rule: "quick_wins_minimum"
-    description: "A v1.0 scope must include a minimum number of 'Quick Wins' (High Value, Low Effort) to build momentum and deliver immediate value."
+    description: >
+      A v1.0 scope must include a minimum number of 'Quick Wins' (High Value, Low Effort) to build and
+      momentum deliver immediate value.
     threshold: 3
     unit: "features"
     action: "flag_scope_as_unbalanced"
 
   - rule: "wont_have_inclusion_check"
-    description: "If any feature mapped to 'Wont_Have' is manually included in the v1.0 scope, it must be flagged for an executive-level review."
+    description: >
+      If any feature mapped to 'Wont_Have' is manually included in the v1.0 scope, it must be flagged an
+      for executive-level review.
     condition: "feature.moscow_category == 'wont_have' AND feature.in_scope == true"
     action: "flag_for_executive_review"
 
   - rule: "compliance_multiplier_propagation"
-    description: "If a global compliance multiplier (e.g., HIPAA, GDPR) is active, it must be automatically applied to all features that handle PII or related data."
+    description: >
+      If a global compliance multiplier (e.g., HIPAA, GDPR) is active, it must be automatically applied
+      to all features that handle PII or related data.
     condition: "project.multipliers.includes('hipaa_compliance') AND feature.tags.includes('phi_data')"
     action: "apply_multiplier(feature, 'hipaa_compliance')"
 
   - rule: "new_tech_multiplier_propagation"
-    description: "If a 'New Technology' multiplier is active, it must be applied to all features that depend on that technology."
+    description: >
+      If a 'New Technology' multiplier is active, it must be applied to all features that depend on that
+      technology.
     condition: "project.multipliers.includes('new_technology_for_team') AND feature.tech_stack.includes('new_tech_name')"
     action: "apply_multiplier(feature, 'new_technology_for_team')"
 
   - rule: "tech_debt_budget_minimum"
-    description: "A minimum percentage of the total complexity budget should be allocated to 'Technical Debt Repayment' value patterns."
+    description: >
+      A minimum percentage of the total complexity budget should be allocated to 'Technical Debt value
+      Repayment' patterns.
     threshold: 0.10
     unit: "percentage_of_total_budget"
     action: "flag_scope_for_review"
 
   - rule: "validate_core_before_optimization"
-    description: "Features classified as 'User Acquisition' or 'Retention' should not be 'Must Haves' if the 'Core Value Proposition' features are not yet complete."
+    description: >
+      Features classified as 'User Acquisition' or 'Retention' should not be 'Must Haves' if the 'Core
+      Value Proposition' features are not yet complete.
     condition: "feature.value_pattern == 'user_acquisition_driver' AND core_value_prop.status!= 'complete'"
     action: "demote_to_should_have"

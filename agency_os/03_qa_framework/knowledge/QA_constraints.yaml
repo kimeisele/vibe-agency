@@ -42,7 +42,7 @@ spec:
       reason: "Unrealistisch für v1.0. Erfordert eine stabile, produktionsnahe Umgebung, um valide Baselines zu messen. Tests auf instabilem v1.0-Code liefern 'unrealistische Ergebnisse'."
     - type: "Penetration Testing (DAST)"
       reason: "Unrealistisch für v1.0. Erfordert eine exakte Kopie der Produktion. Tests auf Staging führen zu 'False Positives' (Staging-spezifische Lücken) und 'False Negatives' (Produktions-spezifische Lücken werden übersehen)."
-  
+
   # explizit *nicht* zurückgestellte Sicherheitstests
   mandatory_v1_security_tests:
     - type: "Static Application Security Testing (SAST)"

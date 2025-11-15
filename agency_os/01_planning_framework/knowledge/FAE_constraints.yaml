@@ -29,7 +29,7 @@ incompatibilities:
     type: "feature_scope_conflict"
     feature: "real_time_chat_self_hosted"
     reason: >
-      Ein 'Build'-Ansatz (Eigenbau) wird aufgrund extremer technischer Komplexität 
+      Ein 'Build'-Ansatz (Eigenbau) wird aufgrund extremer technischer Komplexität
       und prohibitiv hoher 3-Jahres-TCO (Total Cost of Ownership) nicht empfohlen.
       Die geschätzte initiale Entwicklungszeit (z.B. 10.2 Personenmonate) ist trivial
       im Vergleich zu den langfristigen Kosten und Risiken für die Wartung einer

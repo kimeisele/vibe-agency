@@ -579,25 +579,25 @@ usage_notes: |
 decision_tree:
   - question: "What type of application?"
     answers:
-      - "Web application (frontend + backend)" → web_app_stacks
-      - "API only (backend)" → api_stacks
-      - "Mobile application" → mobile_app_stacks
-      - "Real-time features" → realtime_stacks
+      - "Web application (frontend + backend)": web_app_stacks
+      - "API only (backend)": api_stacks
+      - "Mobile application": mobile_app_stacks
+      - "Real-time features": realtime_stacks
 
   - question: "Team's primary language?"
     answers:
-      - "JavaScript/TypeScript" → nextjs_modern, express_rest_api, react_native_expo
-      - "Python" → django_classic, fastapi_modern
-      - "Dart" → flutter_firebase
+      - "JavaScript/TypeScript": "nextjs_modern, express_rest_api, react_native_expo"
+      - "Python": "django_classic, fastapi_modern"
+      - "Dart": "flutter_firebase"
 
   - question: "Budget constraints?"
     answers:
-      - "Minimal (<$50/mo)" → nextjs_modern + Vercel, fastapi_modern + Railway
-      - "Medium ($50-200/mo)" → Any stack
-      - "Flexible (>$200/mo)" → Enterprise stacks (AWS, NestJS)
+      - "Minimal (<$50/mo)": "nextjs_modern + Vercel, fastapi_modern + Railway"
+      - "Medium ($50-200/mo)": "Any stack"
+      - "Flexible (>$200/mo)": "Enterprise stacks (AWS, NestJS)"
 
   - question: "Timeline?"
     answers:
-      - "MVP in 1-2 weeks" → nextjs_modern, react_native_expo, express_rest_api
-      - "Production in 1-3 months" → Any stack
-      - "Complex enterprise (3+ months)" → django_classic, nestjs_enterprise
+      - "MVP in 1-2 weeks": "nextjs_modern, react_native_expo, express_rest_api"
+      - "Production in 1-3 months": "Any stack"
+      - "Complex enterprise (3+ months)": "django_classic, nestjs_enterprise"

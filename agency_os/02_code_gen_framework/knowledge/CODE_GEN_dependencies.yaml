@@ -7,36 +7,36 @@ version: 1.0
 # Jede Generierungsanforderung MUSS diese Artefakte liefern.
 # Das Fehlen führt zu einer 'TRIGGER_FAULTY_PREMISE_DETECTED'-Verletzung (siehe constraints.yaml).
 required_inputs:
- # Schicht 1: Strukturierte Spezifikation (Das "Was")
- - id: L1_ARCHITECTURE_SPEC
-   format: "json"
-   schema: "http://example.com/schemas/architecture.v1.json"
-   description: "Definiert High-Level-Komponenten, ihre Verantwortung und Schnittstellen."
-   source: "architecture.json"
+  # Schicht 1: Strukturierte Spezifikation (Das "Was")
+  - id: L1_ARCHITECTURE_SPEC
+    format: "json"
+    schema: "http://example.com/schemas/architecture.v1.json"
+    description: "Definiert High-Level-Komponenten, ihre Verantwortung und Schnittstellen."
+    source: "architecture.json"
 
- # Schicht 2: Datenbank-als-Kontext (Die "Geschäftslogik")
- - id: L2_DATABASE_SCHEMA
-   format: "sql"
-   description: "Vollständiges DDL-Schema oder logisches Schema. Definiert Geschäftslogik und Daten-Constraints."
-   source: "db_schema.sql"
-   optional: false # Kritisch für datenintensive Anwendungen.
+  # Schicht 2: Datenbank-als-Kontext (Die "Geschäftslogik")
+  - id: L2_DATABASE_SCHEMA
+    format: "sql"
+    description: "Vollständiges DDL-Schema oder logisches Schema. Definiert Geschäftslogik und Daten-Constraints."
+    source: "db_schema.sql"
+    optional: false # Kritisch für datenintensive Anwendungen.
 
- # Schicht 3: Codebase-als-Kontext (Das "Wo")
- - id: L3_TASK_CONTEXT
-   format: "yaml"
-   description: "Definiert Intent, Scope (zu ändernde/ignorierende Dateien), Constraints und Akzeptanzkriterien für die spezifische Aufgabe."
-   source: "task_context.yaml"
-   
- - id: L3_RAG_CONTEXT
-   format: "snippets"
-   description: "Automatisch abgerufene relevante Code-Snippets aus der bestehenden Codebasis (via RAG)."
-   source: "SYSTEM_INTERNAL (RAG_Engine)"
+  # Schicht 3: Codebase-als-Kontext (Das "Wo")
+  - id: L3_TASK_CONTEXT
+    format: "yaml"
+    description: "Definiert Intent, Scope (zu ändernde/ignorierende Dateien), Constraints und Akzeptanzkriterien für die spezifische Aufgabe."
+    source: "task_context.yaml"
 
- # Schicht 4: System-als-Kontext (Das "Wie")
- - id: L4_KNOWLEDGE_GRAPH
-   format: "graph_db_query"
-   description: "Zugriff auf den Repository-Wissensgraphen (z.B. Neo4j), der alle internen Abhängigkeiten, Klassen und Methoden abbildet."
-   source: "SYSTEM_INTERNAL (Knowledge_Graph_API)"
+  - id: L3_RAG_CONTEXT
+    format: "snippets"
+    description: "Automatisch abgerufene relevante Code-Snippets aus der bestehenden Codebasis (via RAG)."
+    source: "SYSTEM_INTERNAL (RAG_Engine)"
+
+  # Schicht 4: System-als-Kontext (Das "Wie")
+  - id: L4_KNOWLEDGE_GRAPH
+    format: "graph_db_query"
+    description: "Zugriff auf den Repository-Wissensgraphen (z.B. Neo4j), der alle internen Abhängigkeiten, Klassen und Methoden abbildet."
+    source: "SYSTEM_INTERNAL (Knowledge_Graph_API)"
 
 # 2. Manifest der genehmigten externen Abhängigkeiten
 # Definiert, welche Open-Source-Bibliotheken verwendet werden dürfen.
