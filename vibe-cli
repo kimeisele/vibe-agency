@@ -6,13 +6,13 @@ VIBE-CLI - Agency OS Command Line Interface
 This is the "Fließband" (conveyor belt) that connects Claude Code (the "Brain")
 to the orchestrator (the "Arm").
 
-Architecture:
+Architecture (MVP - DELEGATION ONLY):
 - Launches core_orchestrator.py in delegated mode
 - Monitors STDOUT for INTELLIGENCE_REQUESTs
-- Executes prompts via Anthropic API (or delegates to Claude Code)
-- Sends INTELLIGENCE_RESPONSEs back via STDIN
+- Delegates prompts to Claude Code operator (via STDOUT/STDIN)
+- Receives responses from Claude Code and forwards to orchestrator
 
-Version: 1.0 (Delegated Execution Architecture)
+Version: 1.0 (Delegation Mode - No Direct API Calls)
 """
 
 import os
@@ -20,7 +20,6 @@ import sys
 import json
 import logging
 import subprocess
-import anthropic
 import yaml
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -37,21 +36,18 @@ class VibeCLI:
     Main CLI class that manages the orchestrator <-> Claude Code handoff.
     """
 
-    def __init__(self, repo_root: Path, anthropic_api_key: Optional[str] = None):
+    def __init__(self, repo_root: Path):
         """
         Initialize vibe-cli.
 
         Args:
             repo_root: Root of vibe-agency repo
-            anthropic_api_key: Anthropic API key (optional, reads from env)
+
+        Note: MVP uses DELEGATION ONLY mode.
+              vibe-cli acts as a bridge between Claude Code (operator) and orchestrator.
+              No direct API calls - intelligence is delegated to Claude Code operator.
         """
         self.repo_root = Path(repo_root)
-        self.anthropic_api_key = anthropic_api_key or os.environ.get('ANTHROPIC_API_KEY')
-
-        if not self.anthropic_api_key:
-            logger.warning("⚠️  No ANTHROPIC_API_KEY found - intelligence requests will fail")
-
-        self.client = anthropic.Anthropic(api_key=self.anthropic_api_key) if self.anthropic_api_key else None
 
         # Orchestrator path
         self.orchestrator_path = self.repo_root / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
@@ -204,9 +200,9 @@ class VibeCLI:
             logger.info(f"   Context: {context}")
             logger.info(f"   Prompt length: {len(prompt)} chars")
 
-            # Execute prompt
-            logger.info(f"⚙️  Executing prompt via Anthropic API...")
-            result = self._execute_prompt(prompt, agent, task_id)
+            # Delegate to Claude Code operator (MVP - DELEGATION ONLY)
+            logger.info(f"⚙️  Delegating prompt to Claude Code operator...")
+            result = self._delegate_to_operator(prompt, agent, task_id)
 
             # Build response
             response = {
@@ -391,17 +387,19 @@ class VibeCLI:
 
         return results
 
-    def _execute_prompt(self, prompt: str, agent: str, task_id: str) -> Dict[str, Any]:
+    def _delegate_to_operator(self, prompt: str, agent: str, task_id: str) -> Dict[str, Any]:
         """
-        Execute a prompt via Anthropic API with multi-turn tool use support.
+        Delegate prompt execution to Claude Code operator (MVP - DELEGATION ONLY).
 
-        This implements the complete tool use loop:
-        1. Send initial prompt with tools
-        2. If response.stop_reason == "tool_use":
-           - Execute tools locally
-           - Send tool_result back to API
-           - Continue conversation
-        3. Return final response
+        This method DOES NOT call Anthropic API directly.
+        Instead, it delegates to Claude Code operator via structured output.
+
+        Architecture:
+        1. Print delegation request to STDOUT (JSON)
+        2. Claude Code operator reads request
+        3. Claude Code calls Anthropic API
+        4. Claude Code sends response via STDIN
+        5. Return parsed response
 
         Args:
             prompt: Prompt text
@@ -409,140 +407,49 @@ class VibeCLI:
             task_id: Task ID
 
         Returns:
-            Parsed JSON result
+            Parsed response from Claude Code operator
+
+        Note: This is the MVP architecture (DELEGATION ONLY).
+              Standalone mode (direct API calls) is deferred to v1.1.
+              See: docs/architecture/EXECUTION_MODE_STRATEGY.md
         """
-        if not self.client:
-            raise RuntimeError("Anthropic API client not initialized (no API key)")
+        from datetime import datetime
 
-        # Load tools for this agent (GAD-003)
-        tools = self._load_tools_for_agent(agent)
+        # Build delegation request
+        delegation_request = {
+            "type": "INTELLIGENCE_DELEGATION",
+            "agent": agent,
+            "task_id": task_id,
+            "prompt": prompt,
+            "timestamp": datetime.now().isoformat(),
+            "metadata": {
+                "delegator": "vibe-cli",
+                "mode": "delegation_only"
+            }
+        }
 
-        # Initialize conversation with user prompt
-        messages = [{
-            "role": "user",
-            "content": prompt
-        }]
+        # Print delegation request to STDOUT (Claude Code reads this)
+        logger.info("📤 Delegating intelligence request to Claude Code operator...")
+        print("\n---DELEGATION_REQUEST_START---")
+        print(json.dumps(delegation_request))
+        print("---DELEGATION_REQUEST_END---")
+        sys.stdout.flush()
 
-        # Multi-turn conversation loop
-        max_turns = 10  # Prevent infinite loops
-        turn = 0
+        # Read response from STDIN (Claude Code provides this)
+        logger.info("⏳ Waiting for response from Claude Code operator...")
+        response_line = sys.stdin.readline()
 
-        while turn < max_turns:
-            turn += 1
-            logger.info(f"API call turn {turn}/{max_turns}")
+        if not response_line:
+            raise RuntimeError("No response from Claude Code operator (STDIN closed)")
 
-            try:
-                # Call Anthropic API
-                if tools:
-                    response = self.client.messages.create(
-                        model="claude-3-5-sonnet-20241022",
-                        max_tokens=4096,
-                        messages=messages,
-                        tools=tools
-                    )
-                else:
-                    # No tools for this agent - simple request/response
-                    response = self.client.messages.create(
-                        model="claude-3-5-sonnet-20241022",
-                        max_tokens=4096,
-                        messages=messages
-                    )
-
-                # Check stop reason
-                if response.stop_reason == "end_turn":
-                    # Conversation complete - extract final response
-                    logger.info("API conversation complete (end_turn)")
-                    return self._extract_final_response(response, agent)
-
-                elif response.stop_reason == "tool_use":
-                    # Agent wants to use tools
-                    logger.info(f"API response contains tool use (turn {turn})")
-
-                    # Add assistant's response to conversation
-                    messages.append({
-                        "role": "assistant",
-                        "content": response.content
-                    })
-
-                    # Extract tool_use blocks
-                    tool_use_blocks = [
-                        block for block in response.content
-                        if hasattr(block, 'type') and block.type == 'tool_use'
-                    ]
-
-                    if not tool_use_blocks:
-                        logger.warning("stop_reason is tool_use but no tool_use blocks found")
-                        return self._extract_final_response(response, agent)
-
-                    # Execute tools locally
-                    logger.info(f"Executing {len(tool_use_blocks)} tool(s)...")
-                    tool_results = self._execute_tools([
-                        {
-                            "type": "tool_use",
-                            "id": block.id,
-                            "name": block.name,
-                            "input": block.input
-                        }
-                        for block in tool_use_blocks
-                    ])
-
-                    # Add tool results to conversation
-                    messages.append({
-                        "role": "user",
-                        "content": tool_results
-                    })
-
-                    # Continue loop - send tool results back to API
-                    logger.info("Sending tool results back to API...")
-                    continue
-
-                elif response.stop_reason == "max_tokens":
-                    logger.warning("API hit max_tokens limit - response may be incomplete")
-                    return self._extract_final_response(response, agent)
-
-                else:
-                    logger.warning(f"Unknown stop_reason: {response.stop_reason}")
-                    return self._extract_final_response(response, agent)
-
-            except anthropic.RateLimitError as e:
-                logger.error(f"Rate limit exceeded: {e}")
-                raise
-
-            except anthropic.APIError as e:
-                logger.error(f"API error: {e}")
-                raise
-
-            except Exception as e:
-                logger.error(f"Unexpected error in tool use loop: {e}")
-                raise
-
-        # Max turns exceeded
-        logger.error(f"Max turns ({max_turns}) exceeded - stopping conversation")
-        return {"error": f"Max conversation turns ({max_turns}) exceeded"}
-
-    def _extract_final_response(self, response, agent: str) -> Dict[str, Any]:
-        """
-        Extract final response from Anthropic API response.
-
-        Args:
-            response: Anthropic API response
-            agent: Agent name
-
-        Returns:
-            Parsed JSON result
-        """
-        # Extract text content
-        text_content = ""
-        for block in response.content:
-            if hasattr(block, 'type') and block.type == 'text':
-                text_content += block.text
-
-        # Try to parse as JSON
+        # Parse response
         try:
-            return json.loads(text_content)
-        except json.JSONDecodeError:
-            logger.warning(f"⚠️  Agent {agent} returned non-JSON response, wrapping in dict")
-            return {"text": text_content}
+            response = json.loads(response_line)
+            logger.info("✅ Received response from Claude Code operator")
+            return response.get("result", {})
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Claude Code response: {e}")
+            raise RuntimeError(f"Invalid response from Claude Code operator: {response_line}")
 
     def _run_autonomous(self, project_id: str) -> None:
         """
@@ -575,14 +482,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run project in delegated mode (default)
+  # Run project in delegated mode (default - MVP)
   vibe-cli run my-project-123
 
-  # Run in autonomous mode (legacy)
+  # Run in autonomous mode (standalone - deferred to v1.1)
   vibe-cli run my-project-123 --mode=autonomous
 
-Environment Variables:
-  ANTHROPIC_API_KEY - API key for Claude (required for delegated mode)
+Notes:
+  - MVP uses DELEGATION ONLY mode
+  - Claude Code operator provides intelligence (not vibe-cli)
+  - No API keys required (Claude Code handles authentication)
         """
     )
 
