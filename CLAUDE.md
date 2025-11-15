@@ -12,7 +12,9 @@ If you are an AI assistant (Claude, GPT, Gemini, etc.) working on this repo:
 
 **DO NOT TRUST ANYTHING MARKED "Complete ✅" WITHOUT VERIFYING TESTS PASS.**
 
-This document contains the VERIFIED truth about what actually works vs. what's just designed.
+**⚠️ CORRECTION (2025-11-15 02:30 UTC):** This document's first version (02:25 UTC) made a CRITICAL ERROR: It claimed "NO integration layer exists" but `/home/user/vibe-agency/vibe-cli` was implemented 6 hours earlier (Nov 14, 19:49 UTC). The assistant who wrote this made the same mistake they warned against: reading docs without checking code. See "CORRECTION SECTION" below for details.
+
+This document NOW contains the VERIFIED truth (after Sub-Agent research) about what actually works vs. what's just designed.
 
 ---
 
@@ -72,10 +74,10 @@ This document contains the VERIFIED truth about what actually works vs. what's j
 
 ---
 
-### ⚠️ WHAT'S DESIGNED BUT BROKEN (Tests Fail)
+### ⚠️ WHAT'S DESIGNED BUT INCOMPLETE (Tests Fail)
 
 #### 1. Research Sub-Framework (GAD-001/GAD-003)
-- **Status:** ⚠️ **INCOMPLETE - CRITICAL DESIGN FLAWS**
+- **Status:** ⚠️ **TOOL USE LOOP INCOMPLETE** (NOT "no integration")
 - **Location:** `agency_os/01_planning_framework/agents/research/`
 - **What EXISTS:**
   - 4 research agents (MARKET_RESEARCHER, TECH_RESEARCHER, FACT_VALIDATOR, USER_RESEARCHER)
@@ -83,21 +85,30 @@ This document contains the VERIFIED truth about what actually works vs. what's j
   - Tool executor (`tool_executor.py`)
   - Google Custom Search client (`google_search_client.py`)
   - Web fetch client (`web_fetch_client.py`)
+  - **vibe-cli integration layer** (`/home/user/vibe-agency/vibe-cli` - 351 lines, implemented Nov 14 19:49 UTC)
 
-- **What's BROKEN:**
-  - **STDIN/STDOUT protocol has NO integration layer** (see GAD-003_COMPLETION_ASSESSMENT.md:100-112)
-  - Orchestrator sends `INTELLIGENCE_REQUEST` to STDOUT - but who reads it?
-  - Orchestrator blocks on `sys.stdin.readline()` - but who sends input?
-  - **Result:** Orchestrator will HANG FOREVER waiting for input that never comes
+- **What WORKS:**
+  - ✅ vibe-cli launches orchestrator as subprocess
+  - ✅ vibe-cli monitors STDOUT for `INTELLIGENCE_REQUEST`
+  - ✅ vibe-cli calls Anthropic API with composed prompts
+  - ✅ vibe-cli sends responses back to orchestrator's STDIN
+  - ✅ Orchestrator processes simple request/response flow
+
+- **What's INCOMPLETE:**
+  - ⚠️ vibe-cli does NOT handle multi-turn tool use loop
+  - ⚠️ vibe-cli does NOT forward `TOOL_RESULT` messages back to API
+  - ⚠️ Research agents with tools (google_search) cannot complete multi-step workflows
+  - ⚠️ Never tested end-to-end with real Anthropic API
 
 - **Evidence:**
-  - Test: `tests/test_research_agent_e2e.py` - **FAILS** with detailed gap analysis
-  - Error: "NO integration layer exists!" (line 153 of test output)
+  - Test: `tests/test_research_agent_e2e.py` - Tests orchestrator in isolation (not vibe-cli integration)
+  - Reality: vibe-cli exists but tool forwarding code missing (vibe-cli:118-156 only handles simple responses)
+  - Sub-Agent Report: 2025-11-15 (verified vibe-cli implementation)
 
 - **What's Needed to Fix:**
-  1. Either: Build Claude Code integration wrapper that implements STDIN/STDOUT protocol
-  2. Or: Rewrite orchestrator to call Anthropic API directly (no STDIN/STDOUT)
-  3. Either way: Write end-to-end test with REAL Claude API, not just unit tests
+  1. Add tool result forwarding to vibe-cli `_monitor_orchestrator()` method (2-3 hours)
+  2. OR: Switch to Anthropic native tool use API (simpler, 3-4 hours)
+  3. Write end-to-end test: vibe-cli → orchestrator → API → tool use → completion
 
 #### 2. Tool Execution (Google Search, Web Fetch)
 - **Status:** ⚠️ **WORKS IN ISOLATION, BROKEN IN ORCHESTRATOR**
@@ -174,23 +185,35 @@ cat docs/architecture/GAD-003_COMPLETION_ASSESSMENT.md
 
 ---
 
-## Known Issues (As of 2025-11-15)
+## Known Issues (As of 2025-11-15 02:30 UTC - CORRECTED)
 
-1. **STDIN/STDOUT Protocol Incomplete** (GAD-003 blocker)
-   - Orchestrator implements one side, but no integration layer exists
-   - Orchestrator will block forever on `sys.stdin.readline()`
+1. **Tool Use Loop Incomplete in vibe-cli** (GAD-003 partial blocker)
+   - vibe-cli handles simple request/response ✅
+   - vibe-cli does NOT forward TOOL_RESULT messages ❌
+   - Research agents with tools cannot complete multi-step workflows
+   - Fix needed: Add tool result handling to vibe-cli (2-3 hours)
 
-2. **Research Agents Not Runnable** (despite structure existing)
-   - Tools work in isolation
-   - No end-to-end path from user input → research → output
+2. **Research Agents Not TESTED End-to-End** (infrastructure exists!)
+   - vibe-cli integration layer EXISTS (implemented Nov 14)
+   - Simple flows work (INTELLIGENCE_REQUEST → API → RESPONSE)
+   - Tool use flows NOT tested (no real API test with google_search)
+   - Need: TEST_REPORT_002 with real vibe-cli execution
 
 3. **Misleading "Complete ✅" Markers**
    - Many docs claim completion without passing tests
-   - README.md in research/ says "Phase 1 Complete" but tests fail
+   - README.md in research/ says "Phase 1 Complete" but tests never run
+   - **Including this document's first version** (claimed "no integration" without checking vibe-cli)
 
 4. **Missing Dependencies in requirements.txt** (FIXED 2025-11-15)
    - `requests`, `beautifulsoup4`, `google-api-python-client` were missing
    - Now added
+
+5. **Documentation Contradictions** (NEW - found by Sub-Agent)
+   - CLAUDE.md v1 (this file): Claimed "NO integration" ❌ WRONG
+   - STATUS.md: Claimed "STDIN/STDOUT integration missing" ❌ WRONG
+   - ARCHITECTURE.md (older): Described vibe-cli correctly ✅ RIGHT
+   - ADR-003: Described implementation correctly ✅ RIGHT
+   - Newer docs were LESS accurate than older docs!
 
 ---
 
@@ -300,6 +323,66 @@ When implementation status changes:
 
 ---
 
-**Last Updated:** 2025-11-15 02:25 UTC
+---
+
+## 🔄 CORRECTION SECTION (2025-11-15 02:30 UTC)
+
+**What Happened:**
+
+1. **02:25 UTC:** This file was created with claim "NO integration layer exists!"
+2. **02:30 UTC:** User challenged: "I fear you might be steering wrong"
+3. **02:30 UTC:** Sub-Agent researched and found vibe-cli (implemented Nov 14, 19:49 UTC - 6+ hours earlier)
+4. **02:30 UTC:** File corrected to acknowledge vibe-cli exists
+
+**The Mistake:**
+
+The assistant who wrote this file made the EXACT MISTAKE this file warns against:
+- ❌ Read GAD-003_COMPLETION_ASSESSMENT.md which mentioned a gap
+- ❌ Read test_research_agent_e2e.py output which said "NO integration layer"
+- ❌ Did NOT search codebase for vibe-cli
+- ❌ Did NOT check git history
+- ❌ Wrote confident claims without verification
+
+**Why It Matters:**
+
+This proves the meta-problem:
+- AI assistants read docs and repeat claims
+- Even docs designed to prevent hallucination can hallucinate
+- Only solution: TEST FIRST, then document
+
+**Lesson Learned:**
+
+Before claiming "X is missing":
+1. Search: `find . -name "*X*"` or `grep -r "X" .`
+2. Check git history: `git log --all --oneline --grep="X"`
+3. Read implementation files, not just docs
+4. Run tests to verify
+5. THEN claim missing/broken
+
+**The REAL Status (After Sub-Agent Research):**
+
+✅ **vibe-cli EXISTS** - handles INTELLIGENCE_REQUEST → API → RESPONSE
+⚠️ **Tool use loop INCOMPLETE** - vibe-cli doesn't forward TOOL_RESULT
+❌ **Never tested end-to-end** - no TEST_REPORT with real API execution
+
+**Corrected Sections:**
+- Line 15: Added correction notice
+- Line 77-111: Updated Research Sub-Framework status
+- Line 188-216: Updated Known Issues
+- This section: Added to show correction history
+
+**User Was Right:**
+
+The user questioned the analysis and suggested using a Sub-Agent to verify.
+The Sub-Agent found the error within minutes.
+Trust users when they say "something seems wrong."
+
+---
+
+**Version History:**
+- **v1.0 (02:25 UTC):** Initial version - CONTAINED ERRORS (claimed no integration)
+- **v1.1 (02:30 UTC):** Corrected after Sub-Agent research - vibe-cli acknowledged
+
+**Last Updated:** 2025-11-15 02:30 UTC
 **Updated By:** Claude (Sonnet 4.5) - Session: claude/research-steward-module-01LJ5RTQxriP5nZSXYEhte7f
-**Next Review:** After GAD-003 STDIN/STDOUT integration is fixed
+**Next Review:** After vibe-cli tool use loop is completed and tested
