@@ -1,21 +1,35 @@
 # Vibe Agency - Python Dependencies
-# Version: 1.0
-# Last Updated: 2025-11-13
+# Version: 1.1 - FIXED CRITICAL MISSING DEPENDENCIES
+# Last Updated: 2025-11-15
 
-# Core dependencies
-pyyaml>=6.0.1  # YAML parsing (use safe_load only for security)
+# === RUNTIME DEPENDENCIES (REQUIRED) ===
+# These are imported by code - missing = crash!
 
-# Development dependencies (optional)
-pytest>=7.4.0  # Testing framework
-pytest-cov>=4.1.0  # Test coverage
-black>=24.1.0  # Code formatter
-flake8>=7.0.0  # Linter
-isort>=5.13.0  # Import sorter
-yamllint>=1.35.0  # YAML validation
+pyyaml>=6.0.1           # YAML parsing (use safe_load only for security)
+anthropic>=0.7.0        # ❗ CRITICAL: llm_client.py imports this
+beautifulsoup4>=4.12.0  # ❗ CRITICAL: web_fetch_client.py imports this
+requests>=2.31.0        # ❗ CRITICAL: google_search_client.py, web_fetch_client.py
 
-# Security dependencies (optional)
-pip-audit>=2.6.0  # Dependency vulnerability scanning
-detect-secrets>=1.4.0  # Secret detection
+# === DEV DEPENDENCIES (OPTIONAL) ===
+# Testing
+pytest>=7.4.0           # Testing framework
+pytest-cov>=4.1.0       # Test coverage
+pytest-asyncio>=0.23.0  # Async test support
 
-# Pre-commit hooks (optional)
-pre-commit>=3.6.0  # Git pre-commit hook framework
+# Code Quality
+black>=24.1.0           # Code formatter
+ruff>=0.1.0             # Fast linter (replaces flake8 + isort)
+mypy>=1.7.0             # Type checking
+yamllint>=1.35.0        # YAML validation
+
+# Security
+pip-audit>=2.6.0        # Dependency vulnerability scanning
+detect-secrets>=1.4.0   # Secret detection
+
+# Git Hooks
+pre-commit>=3.6.0       # Git pre-commit hook framework
+
+# === NOTES ===
+# Install all:     pip install -r requirements.txt
+# Install runtime: pip install pyyaml anthropic beautifulsoup4 requests
+# Install dev:     pip install pytest black ruff mypy
