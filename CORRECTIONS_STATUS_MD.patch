@@ -1,0 +1,233 @@
+# Corrections for STATUS.md
+
+## Section: Executive Summary (Lines 11-16)
+
+### Current Text:
+```markdown
+**Reality Check:** Many components marked "Complete ✅" in docs are actually **incomplete or broken** when tested.
+
+**Evidence:** `tests/test_research_agent_e2e.py` exposes critical STDIN/STDOUT integration gap in GAD-003.
+```
+
+### Corrected Text:
+```markdown
+**Reality Check:** Many components marked "Complete ✅" in docs are actually **untested** (not incomplete).
+
+**Evidence:** `tests/test_research_agent_e2e.py` exposes missing end-to-end validation in GAD-003. Implementation exists (vibe-cli:394-521) but hasn't been tested with real API.
+```
+
+---
+
+## Section: GAD-001 Status (Lines 21-29)
+
+### Current Text:
+```markdown
+### GAD-001: Research Integration
+- **Docs Say:** "Phase 1 Complete ✅"
+- **Tests Say:** ⚠️ PARTIAL - vibe-cli exists, tool use loop incomplete
+- **Verdict:** Integration exists (vibe-cli), but tool forwarding missing
+- **Evidence:**
+  - vibe-cli implemented Nov 14, 19:49 UTC (commit a966752)
+  - vibe-cli handles simple request/response ✅
+  - vibe-cli does NOT handle TOOL_RESULT forwarding ❌
+  - Sub-Agent research verified implementation exists
+```
+
+### Corrected Text:
+```markdown
+### GAD-001: Research Integration
+- **Docs Say:** "Phase 1 Complete ✅"
+- **Tests Say:** ✅ IMPLEMENTED - vibe-cli exists with complete tool use loop
+- **Verdict:** Integration complete (vibe-cli:394-521), end-to-end testing missing
+- **Evidence:**
+  - vibe-cli implemented Nov 14, 19:49 UTC (628 lines)
+  - vibe-cli handles simple request/response ✅
+  - vibe-cli DOES handle TOOL_RESULT forwarding ✅ (lines 490-493)
+  - vibe-cli implements multi-turn tool loop ✅ (lines 426-521)
+  - NOT tested with real ANTHROPIC_API_KEY ❌
+  - Sub-Agent research verified implementation exists
+```
+
+---
+
+## Section: Critical Issues (Lines 70-108)
+
+### Current Text:
+```markdown
+### Issue #1: Tool Use Loop Incomplete in vibe-cli (GAD-003)
+
+**Problem:**
+```python
+# vibe-cli:118-156
+# _monitor_orchestrator() handles INTELLIGENCE_REQUEST
+# BUT: Does NOT handle TOOL_RESULT forwarding
+```
+
+**Why:** vibe-cli can do simple request/response, but NOT multi-turn tool conversations.
+
+**Impact:** Research agents with tools (google_search) cannot complete workflows.
+
+**Fix Options:**
+1. Add tool result handling to vibe-cli (2-3 hours)
+2. Switch to Anthropic native tool use API (3-4 hours, simpler)
+```
+
+### Corrected Text:
+```markdown
+### Issue #1: Research Agents Not Tested End-to-End (GAD-003)
+
+**Problem:**
+```python
+# vibe-cli:394-521
+# _execute_prompt() implements complete tool use loop
+# BUT: Never tested with real ANTHROPIC_API_KEY + GOOGLE_SEARCH_API_KEY
+```
+
+**Implementation Status:**
+- ✅ Multi-turn conversation loop (vibe-cli:426-521)
+- ✅ Tool loading for agents (vibe-cli:417-418)
+- ✅ Local tool execution (vibe-cli:478-487)
+- ✅ Tool result forwarding to API (vibe-cli:490-493)
+- ✅ Conversation continuation until end_turn (vibe-cli:452-455)
+
+**What's Missing:**
+- ❌ No test with real ANTHROPIC_API_KEY
+- ❌ No test with real GOOGLE_SEARCH_API_KEY
+- ❌ No integration test: vibe-cli → orchestrator → API → google_search → completion
+
+**Impact:** Cannot guarantee research agents work in production (untested, not unimplemented).
+
+**Fix:**
+Write TEST_REPORT_002 with real API execution (2-3 hours for testing, not implementation)
+```
+
+---
+
+## Section: Next Actions (Lines 111-127)
+
+### Current Text:
+```markdown
+### Priority 1: Complete vibe-cli Tool Use Loop
+**Why:** Research agents with tools cannot complete multi-turn workflows.
+
+**What EXISTS:**
+- ✅ vibe-cli integration (handles INTELLIGENCE_REQUEST → API → RESPONSE)
+- ✅ Orchestrator tool execution (parses `<tool_use>`, executes tools, sends TOOL_RESULT)
+
+**What's MISSING:**
+- ❌ vibe-cli tool result forwarding (doesn't handle TOOL_RESULT in multi-turn loop)
+
+**Options:**
+- **Option A:** Add tool result handling to vibe-cli `_monitor_orchestrator()` (2-3 hours)
+- **Option B:** Switch to Anthropic native tool use API (3-4 hours, simpler long-term)
+
+**Deliverable:** Research agent with google_search completes end-to-end (real API test).
+```
+
+### Corrected Text:
+```markdown
+### Priority 1: Test vibe-cli Tool Use Loop End-to-End
+**Why:** Implementation is complete but hasn't been validated with real API.
+
+**What EXISTS:**
+- ✅ vibe-cli integration (628 lines, fully implemented)
+- ✅ Multi-turn tool use loop (vibe-cli:394-521)
+- ✅ Tool loading (vibe-cli:417-418, 241-298)
+- ✅ Local tool execution (vibe-cli:340-392)
+- ✅ Tool result forwarding (vibe-cli:490-493)
+- ✅ Conversation continuation (vibe-cli:496-497)
+
+**What's MISSING:**
+- ❌ End-to-end test with real ANTHROPIC_API_KEY
+- ❌ End-to-end test with real GOOGLE_SEARCH_API_KEY
+- ❌ Integration test validating complete workflow
+- ❌ TEST_REPORT_002 documenting production behavior
+
+**Task:**
+Write and execute TEST_REPORT_002:
+1. Set up API keys (ANTHROPIC_API_KEY, GOOGLE_SEARCH_API_KEY)
+2. Run research agent with google_search tool
+3. Verify multi-turn conversation works
+4. Document actual behavior vs. expected
+5. Fix any issues found during testing
+
+**Estimate:** 2-3 hours (testing + documentation, not implementation)
+
+**Deliverable:** TEST_REPORT_002 showing successful research agent execution with real API.
+```
+
+---
+
+## Section: CORRECTION NOTICE (Lines 186-208)
+
+### Add to End:
+```markdown
+
+**Error #2 (Lines 72-87 - ALSO WRONG):**
+- **Claimed:** "vibe-cli does NOT handle TOOL_RESULT forwarding"
+- **Reality:** vibe-cli implements complete tool use loop (lines 394-521)
+- **Mistake:** Incomplete analysis of vibe-cli implementation
+
+**Pattern Identified:**
+This document made the same mistake TWICE:
+1. First: Claimed "no integration" without searching codebase
+2. Second: Claimed "tool loop incomplete" without reading full vibe-cli code
+
+**Root Cause:** Reading test failures and gap analyses without verifying against actual implementation code.
+
+**Lesson (Reinforced):** 
+- Test failures mean "behavior not verified", not "code doesn't exist"
+- Always read implementation files, not just test output
+- Distinguish between "not implemented" vs. "not tested"
+```
+
+---
+
+## New Section to Add:
+
+```markdown
+---
+
+## Terminology Clarification
+
+Going forward, use precise terminology:
+
+| Term | Meaning | Example |
+|------|---------|---------|
+| **Not Implemented** | Code doesn't exist | CODING framework (empty directory) |
+| **Implemented** | Code exists | vibe-cli tool use loop (628 lines) |
+| **Not Tested** | Code exists but no test | Research agents (no TEST_REPORT_002) |
+| **Tested** | Code exists with passing test | VIBE_ALIGNER (user has used successfully) |
+| **Broken** | Code exists, test fails | TBD (need actual failing test) |
+| **Incomplete** | Code partially exists | Use only when specific parts are missing |
+
+**This document incorrectly used:**
+- "Incomplete" to mean "Not Tested" ❌
+- "Not handle" to mean "Not Tested" ❌
+
+**Correct usage going forward:**
+- vibe-cli tool use loop: **Implemented ✅**, **Not Tested ⚠️**
+- Research agents: **Implemented ✅**, **Not Validated in Production ⚠️**
+- CODING framework: **Not Implemented ❌**
+
+---
+```
+
+---
+
+## Summary of Corrections
+
+| Section | Error Type | Correction |
+|---------|-----------|------------|
+| Executive Summary | Mischaracterization | "incomplete or broken" → "untested" |
+| GAD-001 Status | Factual Error | "tool forwarding missing" → "tool forwarding implemented" |
+| Issue #1 | Factual Error | "Tool use loop incomplete" → "Not tested end-to-end" |
+| Priority 1 | Wrong Task | "Add tool handling" → "Write test report" |
+| Correction Notice | Incomplete | Added acknowledgment of second error |
+| New Section | Missing | Added terminology clarification |
+
+**Impact:**
+- Prevents wasted development effort (rebuilding what exists)
+- Focuses effort on actual gap (testing, not implementation)
+- Establishes precise terminology for future documentation
+- Demonstrates intellectual honesty (admitting two errors, not just one)

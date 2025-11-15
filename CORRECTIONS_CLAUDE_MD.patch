@@ -1,0 +1,168 @@
+# Corrections for CLAUDE.md
+
+## Section: Research Sub-Framework Status (Lines 77-111)
+
+### Current Text (INCORRECT):
+```markdown
+#### 1. Research Sub-Framework (GAD-001/GAD-003)
+- **Status:** ⚠️ **TOOL USE LOOP INCOMPLETE** (NOT "no integration")
+- **Location:** `agency_os/01_planning_framework/agents/research/`
+- **What EXISTS:**
+  - 4 research agents (MARKET_RESEARCHER, TECH_RESEARCHER, FACT_VALIDATOR, USER_RESEARCHER)
+  - Tool definitions (`tool_definitions.yaml`)
+  - Tool executor (`tool_executor.py`)
+  - Google Custom Search client (`google_search_client.py`)
+  - Web fetch client (`web_fetch_client.py`)
+  - **vibe-cli integration layer** (`/home/user/vibe-agency/vibe-cli` - 351 lines, implemented Nov 14 19:49 UTC)
+
+- **What WORKS:**
+  - ✅ vibe-cli launches orchestrator as subprocess
+  - ✅ vibe-cli monitors STDOUT for `INTELLIGENCE_REQUEST`
+  - ✅ vibe-cli calls Anthropic API with composed prompts
+  - ✅ vibe-cli sends responses back to orchestrator's STDIN
+  - ✅ Orchestrator processes simple request/response flow
+
+- **What's INCOMPLETE:**
+  - ⚠️ vibe-cli does NOT handle multi-turn tool use loop
+  - ⚠️ vibe-cli does NOT forward `TOOL_RESULT` messages back to API
+  - ⚠️ Research agents with tools (google_search) cannot complete multi-step workflows
+```
+
+### Corrected Text:
+```markdown
+#### 1. Research Sub-Framework (GAD-001/GAD-003)
+- **Status:** ✅ **IMPLEMENTED** but ⚠️ **NOT TESTED END-TO-END**
+- **Location:** `agency_os/01_planning_framework/agents/research/`
+- **What EXISTS:**
+  - 4 research agents (MARKET_RESEARCHER, TECH_RESEARCHER, FACT_VALIDATOR, USER_RESEARCHER)
+  - Tool definitions (`tool_definitions.yaml`)
+  - Tool executor (`tool_executor.py`)
+  - Tool execution clients (google_search_client.py, web_fetch_client.py)
+  - **vibe-cli integration layer** (`/home/runner/work/vibe-agency/vibe-agency/vibe-cli` - 628 lines, implemented Nov 14 19:49 UTC)
+
+- **What WORKS (Verified by Code Analysis):**
+  - ✅ vibe-cli launches orchestrator as subprocess
+  - ✅ vibe-cli monitors STDOUT for `INTELLIGENCE_REQUEST`
+  - ✅ vibe-cli calls Anthropic API with composed prompts
+  - ✅ vibe-cli implements multi-turn conversation loop (vibe-cli:426-521)
+  - ✅ vibe-cli loads tools for research agents (vibe-cli:241-298)
+  - ✅ vibe-cli executes tools locally via tool_executor (vibe-cli:340-392)
+  - ✅ vibe-cli forwards TOOL_RESULT messages back to API (vibe-cli:490-493)
+  - ✅ vibe-cli continues conversation until end_turn (vibe-cli:452-455)
+  - ✅ Orchestrator processes simple request/response flow
+
+- **What's NOT TESTED (Missing End-to-End Validation):**
+  - ⚠️ No test with real ANTHROPIC_API_KEY
+  - ⚠️ No test with real GOOGLE_SEARCH_API_KEY
+  - ⚠️ No integration test: vibe-cli → orchestrator → API → google_search → completion
+  - ⚠️ Research agents haven't been validated in production environment
+```
+
+### Reasoning:
+The original text claimed vibe-cli "does NOT handle multi-turn tool use loop" and "does NOT forward TOOL_RESULT messages". Code analysis of vibe-cli (lines 394-521) proves this is factually incorrect. The implementation exists and is complete according to Anthropic's tool use protocol. What's actually missing is end-to-end testing with real API keys.
+
+---
+
+## Section: Known Issues (Lines 188-216)
+
+### Current Text (INCORRECT):
+```markdown
+1. **Tool Use Loop Incomplete in vibe-cli** (GAD-003 partial blocker)
+   - vibe-cli handles simple request/response ✅
+   - vibe-cli does NOT forward TOOL_RESULT messages ❌
+   - Research agents with tools cannot complete multi-step workflows
+   - Fix needed: Add tool result handling to vibe-cli (2-3 hours)
+```
+
+### Corrected Text:
+```markdown
+1. **Research Agents Not Tested End-to-End** (GAD-003 validation gap)
+   - vibe-cli handles simple request/response ✅
+   - vibe-cli implements complete tool use loop ✅ (vibe-cli:394-521)
+   - vibe-cli forwards TOOL_RESULT messages ✅ (vibe-cli:490-493)
+   - Research agents with tools NOT TESTED with real API ❌
+   - Fix needed: Write end-to-end test with real API keys (2-3 hours)
+```
+
+### Reasoning:
+The implementation is complete. What's needed is testing, not implementation.
+
+---
+
+## New Section to Add (After Line 219):
+
+```markdown
+---
+
+## Self-Verification Checklist (For Document Authors)
+
+**This document made TWO verification errors:**
+
+**Error #1 (Line 15 - Acknowledged):**
+- Claimed: "NO integration layer exists"
+- Reality: vibe-cli was implemented 6 hours earlier
+- Mistake: Didn't search codebase before claiming
+
+**Error #2 (Lines 97-100 - CURRENT ERROR):**
+- Claimed: "vibe-cli does NOT handle multi-turn tool use loop"
+- Reality: vibe-cli implements complete tool use loop (lines 394-521)
+- Mistake: Didn't fully read vibe-cli implementation before claiming
+
+**Lesson:** Even anti-hallucination docs can hallucinate if not verified.
+
+**Before claiming "X is missing" or "X doesn't work":**
+
+1. ✅ Search codebase: `grep -r "X" .` or `find . -name "*X*"`
+2. ✅ Check git history: `git log --all --oneline --grep="X"`
+3. ✅ Read implementation files (not just tests or docs)
+4. ✅ Run actual code if possible
+5. ✅ Verify with user if uncertain
+
+**Code is the ultimate source of truth, not documentation.**
+
+---
+```
+
+### Reasoning:
+The document warns against hallucination but then makes the same mistake twice. Adding a self-verification checklist with acknowledgment of its own errors demonstrates intellectual honesty and provides a practical guide for future authors.
+
+---
+
+## Update to "What to Build Next" Section (Lines 220+)
+
+### Current Text:
+```markdown
+1. **Fix GAD-003 STDIN/STDOUT Integration**
+   - Option A: Build Claude Code wrapper script
+   - Option B: Rewrite orchestrator to use Anthropic API directly
+   - Write E2E test with REAL Claude API
+```
+
+### Corrected Text:
+```markdown
+1. **Test GAD-003 Tool Use Loop End-to-End**
+   - Implementation is complete (vibe-cli:394-521) ✅
+   - What's missing: End-to-end test with real API ❌
+   - Write TEST_REPORT_002 with:
+     * Real ANTHROPIC_API_KEY
+     * Real GOOGLE_SEARCH_API_KEY
+     * Research agent execution from start to finish
+     * Document actual behavior vs. expected
+   - Estimate: 2-3 hours (not implementation - just testing!)
+```
+
+### Reasoning:
+Don't rebuild what already exists. Test what's already built.
+
+---
+
+## Summary of Changes
+
+| Section | Current Status | Corrected Status | Impact |
+|---------|---------------|------------------|---------|
+| Research Sub-Framework | "Tool use loop incomplete" ❌ | "Implemented but not tested" ✅ | Reduces perceived technical debt |
+| vibe-cli Status | "Does NOT forward TOOL_RESULT" ❌ | "Forwards TOOL_RESULT (line 490-493)" ✅ | Corrects factual error |
+| Known Issues | "Fix needed: Add tool handling" ❌ | "Fix needed: Write test" ✅ | Changes task from 3 hours dev to 2 hours testing |
+| Priority 1 Action | "Build integration" ❌ | "Test integration" ✅ | Avoids duplicate work |
+
+**Net Effect:** More accurate status, less wasted effort, faster path to production validation.
