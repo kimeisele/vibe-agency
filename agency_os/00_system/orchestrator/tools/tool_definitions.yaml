@@ -1,0 +1,37 @@
+tools:
+  google_search:
+    name: google_search
+    description: "Search Google using Custom Search API. Returns top 10 results with titles, snippets, URLs."
+    parameters:
+      query:
+        type: string
+        required: true
+        description: "Search query (e.g., 'AI startups 2024')"
+      num_results:
+        type: integer
+        required: false
+        default: 10
+        description: "Number of results (1-10)"
+    returns:
+      type: array
+      description: "List of search results"
+      schema:
+        - title: string
+          snippet: string
+          url: string
+
+  web_fetch:
+    name: web_fetch
+    description: "Fetch and extract text content from a URL. Respects robots.txt."
+    parameters:
+      url:
+        type: string
+        required: true
+        description: "Full URL to fetch (e.g., 'https://example.com/article')"
+    returns:
+      type: object
+      schema:
+        url: string
+        title: string
+        content: string  # Cleaned text content
+        error: string | null

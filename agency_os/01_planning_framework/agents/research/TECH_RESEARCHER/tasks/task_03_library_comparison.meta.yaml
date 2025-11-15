@@ -11,7 +11,9 @@ dependencies:
 outputs:
   - name: library_github_metrics.json
     type: json
-    description: "GitHub metrics for libraries with multi-level API fallbacks (GitHub API → npm registry → manual check)"
+    description: >
+      GitHub metrics for libraries with multi-level API fallbacks
+      (GitHub API → npm registry → manual check)
 
 validation_gates: []
 

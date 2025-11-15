@@ -19,7 +19,10 @@ composition_order:
     type: task
     required: true
     path_pattern: tasks/${task_id}.md
-    description: "Specific task instructions (change_analysis, feasibility_check, ripple_effect_analysis, diff_patch_generation, consistency_validation, output_generation)"
+    description: >
+      Specific task instructions (change_analysis, feasibility_check,
+      ripple_effect_analysis, diff_patch_generation,
+      consistency_validation, output_generation)
 
   - source: ${gate_prompts}
     type: validation

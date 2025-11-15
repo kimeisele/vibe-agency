@@ -10,7 +10,7 @@ info:
     scale:
       unit: "Complexity Points"
       description: "Complexity Points are a relative measure of the work involved, not a direct translation to hours. This scale reflects the increasing uncertainty and risk inherent in more complex tasks."
-    basis: 
+    basis:
       - "Complexity: How difficult is the logic?"
       - "Effort: How much work is it?"
       - "Risk & Uncertainty: How many unknowns are there?"
@@ -24,7 +24,7 @@ info:
 ## SECTION 1: Base Complexity Scores
 
 feature_complexity:
-  
+
   # ----- Core & User Management -----
   - feature_type: "crud_simple"
     base_complexity: 1
@@ -61,7 +61,7 @@ feature_complexity:
         multiplier: 1.4
         adds_effort: "+3-4 days"
     v1_recommendation: "email_password_only"
-  
+
   - feature_type: "user_auth_saml_sso"
     base_complexity: 13
     base_effort: "3-5 weeks"
@@ -145,7 +145,7 @@ feature_complexity:
         multiplier: 1.3
         adds_effort: "+3-4 days"
     v1_recommendation: "one_time_payments_only"
-  
+
   - feature_type: "product_catalog_basic"
     base_complexity: 3
     base_effort: "3-5 days"
@@ -177,7 +177,7 @@ feature_complexity:
         multiplier: 1.5
         adds_effort: "+3-5 days"
     v1_recommendation: "session_based_cart_only"
-    
+
   - feature_type: "checkout_flow_multistep"
     base_complexity: 5
     base_effort: "1-2 weeks"
@@ -225,7 +225,7 @@ feature_complexity:
         multiplier: 1.5
         adds_effort: "+1 week"
     v1_recommendation: "single_warehouse_basic_decrement"
-  
+
   # ----- Social & Content -----
   - feature_type: "user_comments_basic"
     base_complexity: 3
@@ -303,7 +303,7 @@ feature_complexity:
         multiplier: 2.0
         adds_effort: "+2-3 days"
     v1_recommendation: "client_side_widgets_only"
-    
+
   - feature_type: "cms_basic_headless"
     base_complexity: 5
     base_effort: "1-2 weeks"
@@ -438,7 +438,7 @@ feature_complexity:
         multiplier: 2.0
         adds_effort: "+1 week"
     v1_recommendation: "in_app_only"
-    
+
   - feature_type: "audit_log_basic"
     base_complexity: 5
     base_effort: "1-2 weeks"
@@ -570,7 +570,7 @@ feature_complexity:
         multiplier: 5.0
         adds_effort: "+4-6 weeks"
     v1_recommendation: "static_admin_report_only"
-    
+
   - feature_type: "webhooks_outgoing"
     base_complexity: 5
     base_effort: "1-2 weeks"

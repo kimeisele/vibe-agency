@@ -1,12 +1,23 @@
 composition_version: "2.0"
 agent_id: TECH_RESEARCHER
-agent_version: "1.0"
+agent_version: "2.0"
+
+# Tools available to this agent (GAD-003 Phase 2)
+tools:
+  - google_search
+  - web_fetch
 
 composition_order:
   - source: _prompt_core.md
     type: base
     required: true
     description: "Core personality: Senior Technical Architect"
+
+  - source: ../../../00_system/orchestrator/tools/tool_definitions.yaml
+    type: tools
+    required: true
+    filter_tools: ${tools}
+    description: "Research tools: google_search, web_fetch"
 
   - source: ${knowledge_files}
     type: knowledge
