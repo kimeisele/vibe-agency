@@ -611,6 +611,125 @@ class PromptRegistry:
 
 ---
 
+## 🔴 VERIFICATION FINDINGS (2025-11-16)
+
+### Audit Results
+
+**Overall Documentation Accuracy:** 78% (CLAUDE.md), 60% (README.md)
+
+See detailed audit reports:
+- `docs/reports/CLAUDE_MD_AUDIT_2025-11-16.md` - CLAUDE.md audit (78% accurate)
+- `docs/reports/README_AUDIT_2025-11-16.md` - README.md audit (60% honest)
+
+### Critical Findings
+
+#### 1. GAD-003 Regression: Phase 2b NOT Implemented
+
+**Status:** ❌ INCOMPLETE
+
+**Implementation Gap:**
+- Phase 1 ✅ COMPLETE: Tool infrastructure exists (tool_executor.py, google_search_client.py, web_fetch_client.py)
+- Phase 2a ✅ COMPLETE: Agent compositions reference tools (MARKET_RESEARCHER has tool definitions)
+- Phase 2b ❌ NOT IMPLEMENTED: Orchestrator integration missing (ToolExecutor never imported in core_orchestrator.py)
+
+**Impact:**
+- Research agents have tool prompts but cannot execute tools
+- Tool-Prompt Mismatch: Agents told to "use Google Search" but have NO execution capability
+- manual_planning_test.py cannot complete E2E testing
+
+**Decision Required:**
+- **Option A:** Complete Phase 2b (implement tool execution loop in orchestrator) - 6-8 hours
+- **Option B:** Revert agent compositions (remove tool references) - 2-4 hours
+- **Option C:** Document and defer (status quo, maintain regression) - 0 hours
+
+**Related Document:** `docs/architecture/GAD-003_IMPLEMENTATION_STATUS.md` (full analysis)
+
+---
+
+#### 2. Research Agents Currently Non-Functional
+
+**Status:** ⚠️ PASSIVE VALIDATORS ONLY
+
+**Current Capability:**
+- Agents are passive validators (read static YAML files)
+- NO active research capability (web search not integrated)
+- NO tool execution (ToolExecutor exists but not used)
+- NO external data sources (Google Search, APIs, etc.)
+
+**Why Non-Functional:**
+1. bs4 dependency NOT installed (despite being in pyproject.toml)
+2. ToolExecutor not integrated into orchestrator (GAD-003 Phase 2b missing)
+3. Agent prompts reference unavailable tools (false promises)
+
+**Documentation Status:**
+- README.md claims "intelligent research agents" but omits 4 research agents from docs
+- README.md does NOT mention tool-prompt mismatch
+- Audit: README 60% honest, major hallucinations on research capability
+
+**Fix Required:**
+- Option 1: Install bs4 + implement Phase 2b orchestrator integration (12-16 hours total)
+- Option 2: Update documentation to describe actual capability (passive validation only)
+
+---
+
+#### 3. bs4 Dependency Missing
+
+**Status:** ❌ NOT INSTALLED
+
+**Verification:**
+```bash
+$ python3 -c "import bs4"
+ModuleNotFoundError: No module named 'bs4'
+```
+
+**Root Cause:**
+- bs4 defined in pyproject.toml line 17
+- Base dependencies installed, but bs4 not present in venv
+- No automatic installation on `uv sync`
+
+**Impact:**
+- Web scraping tools cannot load (WebFetchClient uses bs4)
+- Research agents cannot parse HTML (needed for Crunchbase, ProductHunt, etc.)
+- Feature exists in code but is unusable
+
+**Fix:** `uv pip install beautifulsoup4>=4.12.0`
+
+---
+
+#### 4. AUDITOR Agent Missing Task Metadata
+
+**Status:** ❌ MISSING FILES
+
+**Problem:**
+- AUDITOR agent exists at `/system_steward_framework/agents/AUDITOR/`
+- NO `tasks/` directory with task metadata
+- Blocks manual_planning_test.py at quality gate stage
+
+**Impact:**
+- File-Based Delegation (GAD-003) E2E testing FAILS
+- manual_planning_test.py cannot complete
+
+**Required Fix:**
+```bash
+mkdir -p /system_steward_framework/agents/AUDITOR/tasks/semantic_audit/
+# Create task metadata files for semantic_audit task
+```
+
+**Related:** CLAUDE.md Line 62 claim "File-Based Delegation works E2E tested" is INACCURATE
+
+---
+
+#### 5. Documentation Accuracy Status
+
+| Document | Accuracy | Status | Action |
+|----------|----------|--------|--------|
+| CLAUDE.md | 78% | ✅ Good | Minor updates (line counts, AUDITOR note) |
+| README.md | 60% | ⚠️ Poor | Major rewrite needed (5 hallucinations) |
+| ARCHITECTURE_V2.md | Unknown | 🔍 Untested | Recommend audit |
+| SSOT.md | High | ✅ Accurate | Current file, implementation-based |
+
+---
+
 ## ✅ Verification Protocol
 
 ### Frequency
