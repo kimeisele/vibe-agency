@@ -886,6 +886,7 @@ class CoreOrchestrator:
         Invoke AUDITOR agent for quality gate checks.
 
         Implements GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
+        Enhanced with GAD-004 Phase 2: Duration tracking for audit trail
 
         Args:
             check_type: Type of audit check (e.g., "prompt_security_scan", "code_security_scan")
@@ -894,8 +895,11 @@ class CoreOrchestrator:
             blocking: If True, raise exception on failure
 
         Returns:
-            Audit report dict with status (PASS/FAIL) and findings
+            Audit report dict with status (PASS/FAIL), findings, duration_ms
         """
+        # Track duration (GAD-004 Phase 2)
+        start_time = time.time()
+
         logger.info(f"🔍 Running {severity.upper()} audit: {check_type} (blocking={blocking})")
 
         # Build audit context based on check type
@@ -915,6 +919,9 @@ class CoreOrchestrator:
             status = audit_result.get("status", "UNKNOWN")
             findings = audit_result.get("findings", [])
 
+            # Calculate duration (GAD-004 Phase 2)
+            duration_ms = int((time.time() - start_time) * 1000)
+
             audit_report = {
                 "check_type": check_type,
                 "severity": severity,
@@ -922,18 +929,25 @@ class CoreOrchestrator:
                 "status": status,
                 "findings": findings,
                 "timestamp": datetime.utcnow().isoformat() + "Z",
+                "duration_ms": duration_ms,  # GAD-004 Phase 2
             }
+
+            # Add optional fields from audit result (GAD-004 Phase 2)
+            if "message" in audit_result:
+                audit_report["message"] = audit_result["message"]
+            if "remediation" in audit_result:
+                audit_report["remediation"] = audit_result["remediation"]
 
             # Log results
             if status == "PASS":
-                logger.info(f"✅ Audit PASSED: {check_type}")
+                logger.info(f"✅ Audit PASSED: {check_type} ({duration_ms}ms)")
             elif status == "FAIL":
-                logger.warning(f"❌ Audit FAILED: {check_type}")
+                logger.warning(f"❌ Audit FAILED: {check_type} ({duration_ms}ms)")
                 if findings:
                     for finding in findings[:3]:  # Show first 3 findings
                         logger.warning(f"   - {finding.get('description', 'N/A')}")
             else:
-                logger.warning(f"⚠️  Audit status UNKNOWN: {check_type}")
+                logger.warning(f"⚠️  Audit status UNKNOWN: {check_type} ({duration_ms}ms)")
 
             # If blocking and failed, raise exception
             if blocking and status == "FAIL":
@@ -954,6 +968,10 @@ class CoreOrchestrator:
         except Exception as e:
             # For non-blocking audits, log error and return failure report
             logger.error(f"❌ Audit execution error: {e}")
+
+            # Calculate duration even on error (GAD-004 Phase 2)
+            duration_ms = int((time.time() - start_time) * 1000)
+
             if blocking:
                 raise QualityGateFailure(f"Audit execution failed: {e}")
             else:
@@ -964,6 +982,7 @@ class CoreOrchestrator:
                     "status": "ERROR",
                     "error": str(e),
                     "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "duration_ms": duration_ms,  # GAD-004 Phase 2
                 }
 
     def _build_audit_context(self, check_type: str, manifest: ProjectManifest) -> Dict[str, Any]:
@@ -1046,6 +1065,7 @@ class CoreOrchestrator:
         Apply quality gates for a state transition.
 
         Implements GAD-002 Decision 2: Hybrid Blocking/Async Quality Gates
+        Enhanced with GAD-004 Phase 2: Record all gate results in manifest before blocking
 
         Args:
             transition_name: Name of transition (e.g., "T1_StartCoding")
@@ -1070,32 +1090,61 @@ class CoreOrchestrator:
         quality_gates = transition["quality_gates"]
         audit_reports = []
 
-        # Run blocking quality gates first
+        # GAD-004 Phase 2: Run ALL gates and record results BEFORE raising exceptions
+        # This ensures durable state even when gates fail
         for gate in quality_gates:
-            if gate.get("blocking", False):
+            try:
+                # Execute AUDITOR agent (always blocking=False to prevent early exception)
                 audit_report = self.invoke_auditor(
                     check_type=gate["check"],
                     manifest=manifest,
                     severity=gate.get("severity", "critical"),
-                    blocking=True,
+                    blocking=False,  # Don't raise exception yet (GAD-004)
                 )
+
+                # RECORD RESULT in manifest (GAD-004: new functionality)
+                self._record_quality_gate_result(
+                    manifest=manifest,
+                    transition_name=transition_name,
+                    gate=gate,
+                    audit_report=audit_report,
+                )
+
                 audit_reports.append(audit_report)
 
-        # Run async quality gates (fire and forget)
-        for gate in quality_gates:
-            if not gate.get("blocking", False):
-                try:
-                    audit_report = self.invoke_auditor(
-                        check_type=gate["check"],
-                        manifest=manifest,
-                        severity=gate.get("severity", "info"),
-                        blocking=False,
+                # NOW check if we should block (after recording)
+                if gate.get("blocking", False) and audit_report.get("status") == "FAIL":
+                    raise QualityGateFailure(
+                        f"Quality gate '{gate['check']}' FAILED (severity={gate.get('severity')})\n"
+                        f"Findings: {audit_report.get('findings', 'N/A')}\n"
+                        f"Message: {audit_report.get('message', 'N/A')}\n"
+                        f"Remediation: {audit_report.get('remediation', 'See audit report')}"
                     )
-                    audit_reports.append(audit_report)
-                except Exception as e:
-                    logger.warning(f"Async audit failed (non-blocking): {e}")
 
-        # Store audit reports in manifest
+            except QualityGateFailure:
+                # Gate failed - result already recorded in manifest
+                # Re-raise to block transition
+                raise
+            except Exception as e:
+                # Unexpected error - record as ERROR status
+                logger.error(f"Quality gate execution error: {e}")
+                error_report = {
+                    "status": "ERROR",
+                    "message": str(e),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                }
+                self._record_quality_gate_result(
+                    manifest=manifest,
+                    transition_name=transition_name,
+                    gate=gate,
+                    audit_report=error_report,
+                )
+
+                # If blocking, propagate error
+                if gate.get("blocking", False):
+                    raise QualityGateFailure(f"Quality gate execution failed: {e}") from e
+
+        # Store audit reports in manifest artifacts (legacy compatibility)
         if audit_reports:
             if "quality_gate_reports" not in manifest.artifacts:
                 manifest.artifacts["quality_gate_reports"] = {}
@@ -1167,6 +1216,106 @@ class CoreOrchestrator:
 
         logger.info(f"✅ Horizontal audits complete for phase: {phase_name}")
         return audit_results
+
+    # -------------------------------------------------------------------------
+    # GAD-004: Layer 2 - Workflow-Scoped Quality Gate Recording
+    # -------------------------------------------------------------------------
+
+    def _get_transition_config(self, transition_name: str) -> Dict[str, Any]:
+        """
+        Get transition configuration from workflow YAML.
+
+        Implements GAD-004 Phase 2: Quality gate result recording
+
+        Args:
+            transition_name: Name of transition (e.g., "T1_StartCoding")
+
+        Returns:
+            Transition config dict with from_state, to_state, quality_gates
+
+        Raises:
+            ValueError: If transition not found
+        """
+        for transition in self.workflow.get("transitions", []):
+            if transition["name"] == transition_name:
+                return transition
+
+        raise ValueError(f"Transition not found in workflow: {transition_name}")
+
+    def _record_quality_gate_result(
+        self,
+        manifest: ProjectManifest,
+        transition_name: str,
+        gate: Dict[str, Any],
+        audit_report: Dict[str, Any],
+    ) -> None:
+        """
+        Record quality gate result in manifest for auditability.
+
+        Implements GAD-004 Phase 2: Durable state tracking for quality gates
+
+        This enables:
+        - Durable state (persists after process ends)
+        - Audit trail (all gate executions recorded)
+        - Async remediation (external tools can read manifest and fix)
+
+        Args:
+            manifest: Project manifest to update
+            transition_name: Name of transition (e.g., "T1_StartCoding")
+            gate: Gate config from workflow YAML
+            audit_report: Result from AUDITOR agent
+        """
+        # Initialize qualityGates structure if not exists
+        if "status" not in manifest.metadata:
+            manifest.metadata["status"] = {}
+
+        if "qualityGates" not in manifest.metadata["status"]:
+            manifest.metadata["status"]["qualityGates"] = {}
+
+        # Get or create transition record
+        if transition_name not in manifest.metadata["status"]["qualityGates"]:
+            # Extract transition info from workflow YAML
+            try:
+                transition = self._get_transition_config(transition_name)
+                manifest.metadata["status"]["qualityGates"][transition_name] = {
+                    "transition": f"{transition['from_state']} → {transition['to_state']}",
+                    "gates": [],
+                }
+            except ValueError:
+                # Fallback if transition not found
+                manifest.metadata["status"]["qualityGates"][transition_name] = {
+                    "transition": transition_name,
+                    "gates": [],
+                }
+
+        # Build gate result record
+        gate_result = {
+            "check": gate["check"],
+            "status": audit_report.get("status", "UNKNOWN"),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
+        # Add optional fields
+        if "duration_ms" in audit_report:
+            gate_result["duration_ms"] = audit_report["duration_ms"]
+        if "severity" in gate:
+            gate_result["severity"] = gate["severity"]
+        if "blocking" in gate:
+            gate_result["blocking"] = gate["blocking"]
+        if "findings" in audit_report:
+            gate_result["findings"] = audit_report["findings"]
+        if "message" in audit_report:
+            gate_result["message"] = audit_report["message"]
+        if "remediation" in audit_report:
+            gate_result["remediation"] = audit_report["remediation"]
+
+        # Append to gates list
+        manifest.metadata["status"]["qualityGates"][transition_name]["gates"].append(gate_result)
+
+        # Save manifest immediately (durable state)
+        self.save_project_manifest(manifest)
+
+        logger.info(f"✓ Recorded quality gate result: {gate['check']} = {gate_result['status']}")
 
     # -------------------------------------------------------------------------
     # PHASE EXECUTION

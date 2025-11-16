@@ -42,7 +42,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## ✅ OPERATIONAL STATUS (Dated Snapshot)
 
-**Last Verified:** 2025-11-16 11:25 UTC
+**Last Verified:** 2025-11-16 14:57 UTC
 
 ### Phase Implementation Status
 
@@ -63,6 +63,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
 | **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
 | **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.sh` (see linting status) |
+| **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `python3 tests/test_quality_gate_recording.py` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
 | vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -174,6 +175,23 @@ python tests/test_prompt_registry.py
 # Expected: All tests pass (governance injection)
 ```
 
+### Verify Workflow-Scoped Quality Gates Work (GAD-004 Phase 2)
+```bash
+python3 tests/test_quality_gate_recording.py
+# Expected: All tests pass (4 tests)
+# - test_quality_gate_result_recorded_in_manifest
+# - test_multiple_gate_results_accumulated
+# - test_get_transition_config
+# - test_failed_gate_recorded_before_exception
+
+# What this validates:
+# ✅ Quality gate results are recorded in manifest.status.qualityGates
+# ✅ Multiple gate results accumulate (not replaced)
+# ✅ Failed gates record results before blocking transition
+# ✅ Duration tracking works (duration_ms in results)
+# ✅ Optional fields (message, remediation) are captured
+```
+
 ---
 
 ## 🧪 META-TEST (Self-Verification)
@@ -207,6 +225,10 @@ python3 -m pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
 # Test 6: Session Handoff Integration
 [ -f "bin/show-context.sh" ] && [ -x "bin/show-context.sh" ] && \
   echo "✅ Session handoff integration available" || echo "❌ Session handoff scripts missing"
+
+# Test 7: Workflow-Scoped Quality Gates (GAD-004 Phase 2)
+python3 tests/test_quality_gate_recording.py 2>&1 | grep -q "ALL QUALITY GATE RECORDING TESTS PASSED" && \
+  echo "✅ Workflow-scoped quality gates verified" || echo "❌ Quality gate recording not working"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -426,9 +448,20 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 13:40 UTC
-**Updated By:** Claude Code (Session: claude/add-context-script-01GjeoMDCyP1fUT3Jh7SyLMW)
+**Last Updated:** 2025-11-16 14:57 UTC
+**Updated By:** Claude Code (Session: claude/add-show-context-script-018KMT4Xze2TbgLkUridLmAL)
 **Updates:**
+- ✅ **GAD-004 Phase 2 COMPLETE** - Workflow-Scoped Quality Gate Recording
+- ✅ Added `_get_transition_config()` to core_orchestrator.py (retrieves transition metadata)
+- ✅ Added `_record_quality_gate_result()` to core_orchestrator.py (records in manifest.status.qualityGates)
+- ✅ Modified `invoke_auditor()` to track duration_ms and capture message/remediation
+- ✅ Modified `apply_quality_gates()` to record results BEFORE blocking (enables audit trail)
+- ✅ Created `tests/test_quality_gate_recording.py` - all 4 tests passing
+- ✅ Benefits: Durable state, audit trail, async remediation enablement
+- ✅ Zero regression: All existing tests still pass (planning, session enforcement)
+- ✅ Updated CLAUDE.md with verification commands and META-TEST
+
+**Previous Update:** 2025-11-16 13:40 UTC by Claude Code
 - ✅ **Automatic Linting Enforcement COMPLETE** - Belt + Suspenders approach
 - ✅ Layer 1 (Visibility): `show-context.sh` displays linting status at top
 - ✅ Layer 2 (Enforcement): `./bin/commit-and-push.sh` blocks bad commits
@@ -469,7 +502,8 @@ uv run ruff format .
 
 **Meta-Verification:**
 ```bash
-# This document claims to be accurate as of 2025-11-16 08:12 UTC
+# This document claims to be accurate as of 2025-11-16 14:57 UTC
 # Run meta-test above to verify claims match reality
+python3 tests/test_quality_gate_recording.py  # Validates GAD-004 Phase 2
 python3 manual_planning_test.py  # Validates GAD-003 file-based delegation
 ```
