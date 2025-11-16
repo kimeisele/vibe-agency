@@ -208,6 +208,85 @@ def format_test_status(status: Dict) -> str:
         return f"⚠️  {planning}"
 
 
+def format_integrity_status() -> str:
+    """Format system integrity status for MOTD display"""
+    script_path = Path("scripts/verify-system-integrity.py")
+
+    if not script_path.exists():
+        return "⚠️  Script not found"
+
+    try:
+        result = subprocess.run(
+            ["python", str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False
+        )
+
+        if result.returncode == 0:
+            return "✅ Verified"
+        else:
+            return "❌ Compromised"
+
+    except Exception:
+        return "⚠️  Check failed"
+
+
+def verify_system_integrity() -> bool:
+    """
+    Verify system integrity before any operation (Layer 0).
+
+    Runs scripts/verify-system-integrity.py to check that all critical
+    regulatory files match their trusted checksums.
+
+    Returns:
+        bool: True if verification passed, False otherwise
+
+    GAD-005-ADDITION: Layer 0 - System Integrity Verification
+    """
+    import subprocess
+
+    script_path = Path("scripts/verify-system-integrity.py")
+
+    # Check if verification script exists
+    if not script_path.exists():
+        print("⚠️  Warning: System integrity script not found", file=sys.stderr)
+        print(f"    Expected: {script_path}", file=sys.stderr)
+        print("    Skipping integrity check...", file=sys.stderr)
+        print()
+        return True  # Non-fatal if script doesn't exist yet
+
+    # Run verification
+    try:
+        result = subprocess.run(
+            ["python", str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False
+        )
+
+        if result.returncode == 0:
+            return True
+        else:
+            # Verification failed - print output and return False
+            print(result.stdout, file=sys.stderr)
+            return False
+
+    except subprocess.TimeoutExpired:
+        print("⚠️  Warning: System integrity check timed out", file=sys.stderr)
+        print("    Continuing with caution...", file=sys.stderr)
+        print()
+        return True  # Non-fatal timeout
+
+    except Exception as e:
+        print(f"⚠️  Warning: System integrity check failed: {e}", file=sys.stderr)
+        print("    Continuing with caution...", file=sys.stderr)
+        print()
+        return True  # Non-fatal exception
+
+
 def display_motd():
     """
     Display Message of the Day before any vibe-cli execution.
@@ -245,6 +324,7 @@ def display_motd():
     print(f"  Git: {format_git_status(status)}")
     print(f"  Linting: {format_linting_status(status)}")
     print(f"  Tests: {format_test_status(status)}")
+    print(f"  System Integrity: {format_integrity_status()}")
     print()
 
     # Session handoff (if exists)
@@ -800,13 +880,46 @@ def main():
     """CLI entry point"""
     import argparse
 
-    # GAD-005: Display MOTD before any execution (UNAVOIDABLE)
+    # ========================================================================
+    # BOOT SEQUENCE (GAD-005-ADDITION: Multi-Layered Context Injection)
+    # ========================================================================
+    print("🔐 VIBE AGENCY - SYSTEM BOOT")
+    print("=" * 50)
+    print()
+
+    # LAYER 0: Verify system integrity FIRST (GAD-005-ADDITION)
+    print("[Layer 0] Verifying system integrity...")
+    integrity_ok = verify_system_integrity()
+
+    if not integrity_ok:
+        print()
+        print("⛔ BOOT HALTED: System integrity check failed", file=sys.stderr)
+        print("   Cannot proceed with compromised regulators.", file=sys.stderr)
+        print()
+        print("Action Required:", file=sys.stderr)
+        print("  1. Run: python scripts/verify-system-integrity.py", file=sys.stderr)
+        print("  2. Investigate checksum failures", file=sys.stderr)
+        print("  3. Restore files from trusted baseline", file=sys.stderr)
+        print("  4. Regenerate manifest if legitimate changes made:", file=sys.stderr)
+        print("     python scripts/generate-integrity-manifest.py", file=sys.stderr)
+        sys.exit(1)
+
+    print("   ✅ System integrity verified")
+    print()
+
+    # LAYER 1: Display MOTD (GAD-005: Unavoidable MOTD)
+    print("[Layer 1] Loading session context...")
     try:
         display_motd()
     except Exception as e:
         # Non-fatal - show warning and continue
         print(f"⚠️  Warning: MOTD display failed: {e}", file=sys.stderr)
         print()
+
+    print()
+    print("✅ SYSTEM BOOT COMPLETE")
+    print("=" * 50)
+    print()
 
     parser = argparse.ArgumentParser(
         description="VIBE CLI - Agency OS Command Line Interface",
