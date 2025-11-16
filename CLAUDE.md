@@ -13,7 +13,7 @@
 3. **When docs contradict code, trust code**
 4. **When code contradicts tests, trust tests**
 5. **When in doubt: RUN THE VERIFICATION COMMAND**
-6. **ALWAYS use `./bin/commit-and-push.sh` to commit** (Auto-enforces linting, works like gravity)
+6. **ALWAYS use `./bin/pre-push-check.sh` before git push** (Blocks bad commits, prevents CI/CD failures)
 
 ---
 
@@ -332,38 +332,44 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 3. Check ARCHITECTURE_V2.md for intended design
 4. Only claim "missing" if no code exists
 
-### **🚨 BEFORE EVERY COMMIT (AUTOMATIC ENFORCEMENT)**
+### **🚨 BEFORE EVERY PUSH (MANDATORY - AUTOMATED)**
 
-**Use the canonical commit script - it enforces linting like gravity!**
+**CI/CD will FAIL if you skip this!**
 
 ```bash
-# ONE COMMAND to commit with automatic linting enforcement
-./bin/commit-and-push.sh "your commit message"
-
-# What it does automatically:
-# 1. Runs ruff check --fix (auto-fixes errors)
-# 2. Runs ruff format (auto-formats code)
-# 3. BLOCKS commit if unfixable errors exist
-# 4. Commits and pushes if clean
-# 5. Updates system status for next agent
+# ONE COMMAND - runs all checks automatically
+./bin/pre-push-check.sh && git push
 ```
 
-**Why this works everywhere:**
-- ✅ Works in browser-based Claude Code (no git hooks needed)
-- ✅ Works in one-time environments (script is in repo)
-- ✅ Works in desktop (no manual setup)
-- ✅ Auto-fixes what it can, blocks what it can't
-- ✅ CI/CD remains final safety net
+**What this does:**
+1. ✅ Checks linting (ruff check)
+2. ✅ Checks formatting (ruff format --check)
+3. ✅ Updates system status
+4. ✅ BLOCKS push if any check fails
 
-**Architecture (Belt + Suspenders):**
-1. **Layer 1: Visibility** - `./bin/show-context.sh` displays linting status at top
-2. **Layer 2: Enforcement** - `./bin/commit-and-push.sh` blocks bad commits
-3. **Layer 3: Final Gate** - CI/CD catches anything that slips through
+**If checks fail:**
+```bash
+# Fix linting errors
+uv run ruff check . --fix
 
-**Common ruff errors:**
-- F401: Unused imports (auto-fixable)
-- E501: Line too long (auto-fixable)
-- F821: Undefined name (NOT auto-fixable - blocks commit)
+# Fix formatting issues
+uv run ruff format .
+
+# Re-run checks
+./bin/pre-push-check.sh
+```
+
+**Why this is MANDATORY:**
+- CI/CD runs `.github/workflows/validate.yml` on every push
+- It runs `uv run ruff check . --output-format=github` (line 66)
+- If ruff check fails → CI/CD fails → PR cannot merge
+- **./bin/pre-push-check.sh prevents CI/CD failures** by catching issues BEFORE push
+
+**Alternative: All-in-one convenience script**
+```bash
+# Commits AND pushes with automatic linting enforcement
+./bin/commit-and-push.sh "your commit message"
+```
 
 ---
 

@@ -35,23 +35,37 @@ if [ -f "tests/test_planning_workflow.py" ]; then
   fi
 fi
 
-# Check linting status (quick check)
+# Check linting status (ruff check)
 LINTING_STATUS="unknown"
 LINTING_ERROR_COUNT=0
 if command -v uv &>/dev/null; then
-  # Run ruff and capture output (set +e to not exit on error)
+  # Run ruff check and capture output (set +e to not exit on error)
   set +e
   LINTING_OUTPUT=$(uv run ruff check . 2>&1)
   RUFF_EXIT_CODE=$?
   set -e
 
   if [ $RUFF_EXIT_CODE -eq 0 ]; then
-    LINTING_STATUS="clean"
+    LINTING_STATUS="passing"
   else
-    LINTING_STATUS="errors_found"
+    LINTING_STATUS="failing"
     # Count errors (ruff outputs "Found X errors")
     LINTING_ERROR_COUNT=$(echo "$LINTING_OUTPUT" | grep -oP 'Found \K\d+' || echo "0")
   fi
+else
+  LINTING_STATUS="uv_not_available"
+fi
+
+# Check formatting status (ruff format)
+FORMATTING_STATUS="unknown"
+if command -v uv &>/dev/null; then
+  if uv run ruff format --check . &>/dev/null; then
+    FORMATTING_STATUS="passing"
+  else
+    FORMATTING_STATUS="failing"
+  fi
+else
+  FORMATTING_STATUS="uv_not_available"
 fi
 
 # Check if session handoff exists
@@ -78,7 +92,10 @@ cat > "$STATUS_FILE" <<EOF
   },
   "linting": {
     "status": "$LINTING_STATUS",
-    "error_count": $LINTING_ERROR_COUNT
+    "errors_count": $LINTING_ERROR_COUNT
+  },
+  "formatting": {
+    "status": "$FORMATTING_STATUS"
   },
   "session_handoff_exists": $SESSION_HANDOFF_EXISTS,
   "generated_by": "bin/update-system-status.sh"

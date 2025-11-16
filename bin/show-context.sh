@@ -60,14 +60,33 @@ if [ -f "$SYSTEM_STATUS" ]; then
   CLEAN=$(grep '"working_directory_clean"' "$SYSTEM_STATUS" | sed 's/.*: \(.*\)/\1/' | tr -d ',')
   TESTS=$(grep '"planning_workflow"' "$SYSTEM_STATUS" | sed 's/.*: "\(.*\)".*/\1/')
   LINTING_STATUS=$(grep -A 2 '"linting":' "$SYSTEM_STATUS" | grep '"status"' | sed 's/.*: "\(.*\)".*/\1/')
-  LINTING_ERRORS=$(grep -A 2 '"linting":' "$SYSTEM_STATUS" | grep '"error_count"' | sed 's/.*: \(.*\)/\1/' | tr -d ',')
+  LINTING_ERRORS=$(grep -A 2 '"linting":' "$SYSTEM_STATUS" | grep '"errors_count"' | sed 's/.*: \(.*\)/\1/' | tr -d ',')
+  FORMATTING_STATUS=$(grep -A 1 '"formatting":' "$SYSTEM_STATUS" | grep '"status"' | sed 's/.*: "\(.*\)".*/\1/')
 
   echo "Last updated: $TIMESTAMP"
   echo "Current branch: $BRANCH"
   echo "Last commit: $LAST_COMMIT_SHA - $LAST_COMMIT_MSG"
   echo ""
   echo "🔍 PRE-COMMIT CHECKS:"
-  echo "  Linting: $([ "$LINTING_STATUS" = "clean" ] && echo "✅ Clean" || echo "❌ $LINTING_ERRORS errors found - RUN: uv run ruff check . --fix")"
+
+  # Display linting status
+  if [ "$LINTING_STATUS" = "passing" ]; then
+    echo "  Linting: ✅ Passing"
+  elif [ "$LINTING_STATUS" = "failing" ]; then
+    echo "  Linting: ❌ Failing ($LINTING_ERRORS errors)"
+  else
+    echo "  Linting: ⚠️  $LINTING_STATUS"
+  fi
+
+  # Display formatting status
+  if [ "$FORMATTING_STATUS" = "passing" ]; then
+    echo "  Formatting: ✅ Passing"
+  elif [ "$FORMATTING_STATUS" = "failing" ]; then
+    echo "  Formatting: ❌ Failing"
+  else
+    echo "  Formatting: ⚠️  $FORMATTING_STATUS"
+  fi
+
   echo "  Tests (planning): $([ "$TESTS" = "passing" ] && echo "✅ Passing" || echo "❌ $TESTS")"
   echo "  Working directory: $([ "$CLEAN" = "true" ] && echo "✅ Clean" || echo "⚠️  Modified")"
   echo ""
