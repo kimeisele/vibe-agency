@@ -301,36 +301,47 @@ class TestVibeAlignerSystemE2E:
             mock_llm = MockLLMClient.return_value
 
             # Configure mock to return appropriate responses based on task_id
-            def mock_execute(prompt, agent_name=None, max_tokens=4096):
+            def mock_invoke(prompt, model=None, max_tokens=4096):
                 # Detect which task from the prompt
                 if "task_01_education" in prompt.lower() or "education" in prompt.lower():
-                    return mock_llm_responses["task_01_education_calibration"]
+                    response_data = mock_llm_responses["task_01_education_calibration"]
                 elif "task_02_feature" in prompt.lower() or "extraction" in prompt.lower():
-                    return mock_llm_responses["task_02_feature_extraction"]
+                    response_data = mock_llm_responses["task_02_feature_extraction"]
                 elif "task_03_feasibility" in prompt.lower() or "fae" in prompt.lower():
-                    return mock_llm_responses["task_03_feasibility_validation"]
+                    response_data = mock_llm_responses["task_03_feasibility_validation"]
                 elif "task_04_gap" in prompt.lower() or "fdg" in prompt.lower():
-                    return mock_llm_responses["task_04_gap_detection"]
+                    response_data = mock_llm_responses["task_04_gap_detection"]
                 elif "task_05_scope" in prompt.lower() or "negotiation" in prompt.lower():
-                    return mock_llm_responses["task_05_scope_negotiation"]
+                    response_data = mock_llm_responses["task_05_scope_negotiation"]
                 elif "task_06_output" in prompt.lower() or "generation" in prompt.lower():
-                    return mock_llm_responses["task_06_output_generation"]
+                    response_data = mock_llm_responses["task_06_output_generation"]
                 else:
                     # Default response for LEAN_CANVAS_VALIDATOR
-                    return lean_canvas_summary
+                    response_data = lean_canvas_summary
 
-            mock_llm.execute.side_effect = mock_execute
+                # Create mock response object with .content attribute
+                from unittest.mock import MagicMock
+                import json
+                mock_response = MagicMock()
+                mock_response.content = json.dumps(response_data)
+                return mock_response
+
+            # Mock get_cost_summary to return proper cost data
+            mock_llm.get_cost_summary.return_value = {
+                "total_cost_usd": 0.50,
+                "budget_used_percent": 5.0
+            }
 
             # Track prompts for Guardian Directive verification
             executed_prompts = []
 
-            def track_and_execute(prompt, agent_name=None, max_tokens=4096):
+            def track_and_invoke(prompt, model=None, max_tokens=4096):
                 executed_prompts.append(
-                    {"agent": agent_name, "prompt": prompt, "length": len(prompt)}
+                    {"prompt": prompt, "length": len(prompt)}
                 )
-                return mock_execute(prompt, agent_name, max_tokens)
+                return mock_invoke(prompt, model, max_tokens)
 
-            mock_llm.execute.side_effect = track_and_execute
+            mock_llm.invoke.side_effect = track_and_invoke
 
             # Initialize orchestrator in autonomous mode (for testing)
             orchestrator = CoreOrchestrator(repo_root=str(repo_root), execution_mode="autonomous")
