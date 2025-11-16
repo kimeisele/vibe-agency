@@ -23,14 +23,32 @@
 
 ## 🎯 What Is This?
 
-**Vibe Agency** is a **prompt composition system** that helps consultants and agencies plan software projects systematically. It guides you from "I have an idea..." to production-ready specifications using Claude AI.
+**Vibe Agency** is a **Universal Prompt Execution Runtime** that transforms curated domain knowledge into executable workflows for software project planning. It guides you from "I have an idea..." to production-ready specifications using Claude AI.
 
 ### What Makes It Special?
 
-This is **NOT a multi-agent AI system** or automation platform. It's a **structured prompt library** with:
+**Key Innovation: Runs Anywhere Without Infrastructure**
+- 📱 **Browser** - Client-side execution via API (zero infrastructure)
+- 💻 **Desktop** - Claude Code + vibe-cli (current mode)
+- 🖥️ **Server** - Python orchestrator (autonomous mode)
+- ⚡ **Edge** - CDN worker deployment (future)
+
+**Scales Gracefully:**
+- **Start:** Manual prompt copy-paste (works offline, zero setup)
+- **Grow:** File-based delegation via vibe-cli (structured workflow)
+- **Scale:** Autonomous execution via API calls (high throughput)
+- **Deploy:** Browser runtime (no backend needed)
+
+**Different from other AI frameworks:**
+- **LangGraph/CrewAI:** Python-only, server-only, complex infrastructure
+- **ChatGPT Projects:** Cloud-only, no workflow control, not portable
+- **Vibe Agency:** Universal, portable, resource-optimized, graceful degradation
+
+### Core Components
+
 - 📚 **6,400+ lines of curated domain knowledge** (project templates, tech stacks, constraints)
 - 🧩 **Modular prompt templates** (personality + tasks + knowledge + validation gates)
-- 🎯 **Single-LLM workflow** (Claude processes each task manually)
+- 🔄 **TODO-based handoffs** (workflow continuity without human intervention)
 - 📂 **File-based architecture** (no databases, no external services)
 
 **What it does:**
@@ -40,14 +58,15 @@ This is **NOT a multi-agent AI system** or automation platform. It's a **structu
 - ✅ Estimates timeline, budget, complexity
 - ✅ Detects security gaps, dependency issues
 - ✅ Generates architecture blueprints ready for development
+- ✅ **NEW:** Self-documenting workflow via TODO handoffs
 
 **What it's NOT:**
 - ❌ Not a code generator (it plans, doesn't code)
-- ❌ Not autonomous (Claude processes each step manually)*
-- ❌ Not a framework you install (it's a prompt library + knowledge bases)
-- ❌ Not a multi-agent system (single LLM, no agent communication)
+- ❌ Not tied to specific platforms (runs everywhere)
+- ❌ Not a heavy framework (it's prompts + knowledge + state management)
+- ❌ Not infrastructure-dependent (can run client-side)
 
-_*Note: As of v1.2.1 (ADR-003), the system supports both **delegated execution** (default - Claude Code integration) and **autonomous mode** (legacy - for testing). See [Architecture](#-architecture) below._
+_Note: As of v1.3 (ADR-004), Vibe Agency is positioned as a **Universal Runtime** with graceful degradation across execution modes. See [Architecture](#-architecture) and [ADR-004](docs/architecture/ADR-004_Universal_Runtime_Architecture.md) for details._
 
 ---
 

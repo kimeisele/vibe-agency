@@ -249,6 +249,113 @@ GOOD: "As the Claude Code operator, you will:"
 
 ---
 
+## 🔄 WORKFLOW CONTINUITY VIA TODO HANDOFFS
+
+**New in v1.3:** Agents now create structured handoffs for workflow continuity.
+
+### Problem Solved
+**Before:** Agent completes work → HIL manually reads docs → Copy-pastes next prompt
+**After:** Agent completes work → Writes TODO list for next agent → Next agent gets clear tasks
+
+### How It Works
+
+When completing a task, create a handoff document:
+
+```json
+{
+  "handoff": {
+    "timestamp": "2025-11-16T10:30:00Z",
+    "from_agent": "LEAN_CANVAS_VALIDATOR",
+    "to_agent": "VIBE_ALIGNER",
+    "completed_tasks": [
+      "Canvas interview conducted",
+      "Risk analysis completed"
+    ],
+    "artifacts_created": [
+      "lean_canvas_summary.json",
+      "risk_analysis.json"
+    ],
+    "todos": [
+      {
+        "task": "Extract customer segments from lean canvas",
+        "context": {
+          "artifact": "lean_canvas_summary.json",
+          "field": "customer_segments",
+          "note": "Focus on early adopters"
+        },
+        "priority": "high"
+      },
+      {
+        "task": "Calculate complexity scores using FAE constraints",
+        "context": {
+          "knowledge_base": "FAE_constraints.yaml"
+        },
+        "priority": "medium"
+      }
+    ],
+    "workflow_state": "FEATURE_SPECIFICATION",
+    "next_actions": {
+      "immediate": "Load lean_canvas_summary.json and extract customer segments",
+      "after_completion": "Generate feature_spec.json and hand off to GENESIS_BLUEPRINT"
+    }
+  }
+}
+```
+
+Save to: `workspaces/{project}/.handoff/latest.json`
+
+### Benefits
+
+- ✅ Next agent gets clear task list in prompt
+- ✅ System self-documents workflow progress
+- ✅ Resumable execution after interruptions
+- ✅ No HIL intervention required
+- ✅ Auditable workflow progression
+
+### Orchestrator Integration
+
+```python
+# Create handoff (in handler after agent completes)
+orchestrator.create_handoff(
+    from_agent="LEAN_CANVAS_VALIDATOR",
+    to_agent="VIBE_ALIGNER",
+    completed_tasks=["Canvas interview", "Risk analysis"],
+    artifacts_created=["lean_canvas_summary.json"],
+    todos=[
+        {
+            "task": "Extract customer segments",
+            "context": {"artifact": "lean_canvas_summary.json"},
+            "priority": "high"
+        }
+    ],
+    workflow_state="FEATURE_SPECIFICATION"
+)
+
+# Load handoff (when composing next prompt)
+handoff = orchestrator.load_handoff(agent_name="VIBE_ALIGNER")
+if handoff:
+    # Prompt automatically includes TODO list
+    prompt = runtime.compose_prompt_with_handoff("VIBE_ALIGNER", "main_task", {})
+```
+
+### Verification
+
+```bash
+# Check if handoff was created
+ls -la workspaces/my_project/.handoff/
+
+# View latest handoff
+cat workspaces/my_project/.handoff/latest.json
+
+# Run E2E test with handoffs
+python3 manual_planning_test.py
+# Should see handoff created after BUSINESS_VALIDATION
+```
+
+**See:** [TODO_BASED_HANDOFFS.md](docs/architecture/TODO_BASED_HANDOFFS.md) for complete specification.
+
+---
+
 ## 🎯 QUICK START (For New AI Assistants)
 
 ### Before Making Claims
