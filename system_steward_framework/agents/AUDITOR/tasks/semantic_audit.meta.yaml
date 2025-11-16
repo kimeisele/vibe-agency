@@ -1,0 +1,29 @@
+task_id: semantic_audit
+phase: 0
+description: "Semantic audit for quality gates (GAD-004)"
+dependencies: []
+
+inputs:
+  - type: context
+    ref: specification_documents
+    description: "Specifications and documents to audit for semantic consistency"
+
+outputs:
+  - type: audit_report
+    ref: audit_results
+    fields:
+      - passed: boolean
+      - findings: list
+      - recommendations: list
+      - timestamp: string
+
+validation_gates: []
+
+estimated_complexity: medium
+estimated_tokens: 2000
+estimated_duration: "15-30 minutes"
+
+notes: |
+  AUDITOR performs semantic audits on project specifications.
+  Validates for consistency, completeness, and adherence to constraints.
+  Part of quality enforcement system (GAD-004).

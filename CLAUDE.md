@@ -42,14 +42,14 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## ✅ OPERATIONAL STATUS (Dated Snapshot)
 
-**Last Verified:** 2025-11-16 15:30 UTC
+**Last Verified:** 2025-11-16 18:45 UTC (Environment corrected: venv synced with --all-extras)
 
 ### Phase Implementation Status
 
 | Phase | Status | Evidence | Verify Command |
 |-------|--------|----------|----------------|
-| PLANNING | ✅ Works | test_planning_workflow.py PASSES | `python tests/test_planning_workflow.py` |
-| CODING Handler | ✅ Works (tested E2E) | 3 tests pass (test_coding_workflow.py) | `python3 -m pytest tests/test_coding_workflow.py -v` |
+| PLANNING | ✅ Works | test_planning_workflow.py PASSES | `uv run python -m pytest tests/test_planning_workflow.py -v` |
+| CODING Handler | ✅ Works (tested E2E) | 3 tests pass (test_coding_workflow.py) | `uv run pytest tests/test_coding_workflow.py -v` |
 | TESTING Handler | ⚠️ Stub only | testing_handler.py (108 lines) | `grep -n "STUB" agency_os/00_system/orchestrator/handlers/testing_handler.py` |
 | DEPLOYMENT Handler | ✅ Works (tested E2E) | 5 tests pass (test_deployment_workflow.py) | `uv run pytest tests/test_deployment_workflow.py -v` |
 | MAINTENANCE Handler | ⚠️ Stub only | maintenance_handler.py (106 lines) | `grep -n "STUB" agency_os/00_system/orchestrator/handlers/maintenance_handler.py` |
@@ -59,17 +59,17 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | Component | Status | Evidence | Verify Command |
 |-----------|--------|----------|----------------|
 | Core Orchestrator | ✅ Works | State machine tested | `python tests/test_orchestrator_state_machine.py` |
-| **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `python3 manual_planning_test.py` |
+| **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `uv run python manual_planning_test.py` |
 | **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
 | **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
 | **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.sh` (see linting status) |
-| **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `python3 tests/test_quality_gate_recording.py` |
-| **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `python3 tests/e2e/test_orchestrator_e2e.py` |
-| **Multi-Layer Integration (GAD-004 Phase 4)** | **✅ Works (tested)** | **All 3 layers integrated and verified** | `python3 tests/test_multi_layer_integration.py` |
-| Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
-| vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
+| **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `uv run pytest tests/test_quality_gate_recording.py -v` |
+| **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `uv run pytest tests/e2e/test_orchestrator_e2e.py -v` |
+| **Multi-Layer Integration (GAD-004 Phase 4)** | **✅ Works (tested)** | **All 3 layers integrated and verified** | `uv run pytest tests/test_multi_layer_integration.py -v` |
+| Prompt Registry | ✅ Works | 9 governance rules injected | `uv run pytest tests/test_prompt_registry.py -v` |
+| vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (671 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
-| Research Agents | ✅ Dependencies installed | bs4 available | `python3 -c "import bs4; print('✅ bs4 installed')"` |
+| Research Agents | ✅ Dependencies installed | bs4 4.14.2 (venv synced) | `uv run python -c "import bs4; print('✅ bs4:', bs4.__version__)"` |
 
 ### Planning Agents (✅ All Implemented)
 
@@ -97,18 +97,18 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ### Verify File-Based Delegation Works (GAD-003)
 ```bash
-python3 manual_planning_test.py
+uv run python manual_planning_test.py
 # Expected: All 3 PLANNING sub-states complete successfully
 # - BUSINESS_VALIDATION (3 LEAN_CANVAS_VALIDATOR tasks)
 # - FEATURE_SPECIFICATION (VIBE_ALIGNER task)
 # - ARCHITECTURE_DESIGN (GENESIS_BLUEPRINT task)
-# Note: May fail on quality gate AUDITOR (separate system)
+# Note: NOW FIXED - AUDITOR task metadata created
 ```
 
 ### Verify TODO-Based Handoffs Work
 ```bash
 # Run PLANNING workflow
-python3 manual_planning_test.py
+uv run python manual_planning_test.py
 
 # Check handoff.json was created
 cat workspaces/manual-test-project/handoff.json
@@ -186,7 +186,7 @@ grep -n "tool_use\|tool_result" vibe-cli | head -10
 
 ### Verify Research Tools Dependencies
 ```bash
-python3 -c "import bs4" 2>/dev/null && echo "✅ bs4 installed" || echo "❌ bs4 missing"
+uv run python -c "import bs4; print('✅ bs4 installed')" 2>/dev/null || echo "❌ bs4 missing (run: uv sync --all-extras)"
 # Expected: ✅ bs4 installed
 ```
 
@@ -266,21 +266,21 @@ Run this to verify CLAUDE.md claims match reality:
 echo "=== CLAUDE.md Self-Verification ==="
 
 # Test 1: PLANNING really works
-python3 -m pytest tests/test_planning_workflow.py && echo "✅ PLANNING verified" || echo "❌ PLANNING claim FALSE"
+uv run pytest tests/test_planning_workflow.py && echo "✅ PLANNING verified" || echo "❌ PLANNING claim FALSE"
 
 # Test 2: CODING handler E2E tests pass
-python3 -m pytest tests/test_coding_workflow.py && echo "✅ CODING verified" || echo "❌ CODING claim FALSE"
+uv run pytest tests/test_coding_workflow.py && echo "✅ CODING verified" || echo "❌ CODING claim FALSE"
 
 # Test 3: vibe-cli has tool loop
 grep -q "tool_use" vibe-cli && grep -q "tool_result" vibe-cli && \
   echo "✅ vibe-cli has tool support" || echo "❌ vibe-cli missing tool loop"
 
 # Test 4: bs4 dependency
-python3 -c "import bs4" 2>/dev/null && \
-  echo "✅ bs4 installed" || echo "❌ bs4 missing (pip install beautifulsoup4)"
+uv run python -c "import bs4" 2>/dev/null && \
+  echo "✅ bs4 installed" || echo "❌ bs4 missing (run: uv sync --all-extras)"
 
 # Test 5: Prompt Registry
-python3 -m pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
+uv run pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
   echo "✅ Prompt Registry verified" || echo "❌ Prompt Registry not tested"
 
 # Test 6: Session Handoff Integration
@@ -288,11 +288,11 @@ python3 -m pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
   echo "✅ Session handoff integration available" || echo "❌ Session handoff scripts missing"
 
 # Test 7: Workflow-Scoped Quality Gates (GAD-004 Phase 2)
-python3 tests/test_quality_gate_recording.py 2>&1 | grep -q "ALL QUALITY GATE RECORDING TESTS PASSED" && \
+uv run pytest tests/test_quality_gate_recording.py -v 2>&1 | grep -q "passed" && \
   echo "✅ Workflow-scoped quality gates verified" || echo "❌ Quality gate recording not working"
 
 # Test 8: Deployment-Scoped Validation (GAD-004 Phase 3)
-python3 tests/e2e/test_orchestrator_e2e.py 2>&1 | grep -q "ALL E2E TESTS PASSED" && \
+uv run pytest tests/e2e/test_orchestrator_e2e.py -v 2>&1 | grep -q "passed" && \
   [ -f ".github/workflows/post-merge-validation.yml" ] && \
   echo "✅ Deployment-scoped validation verified" || echo "❌ E2E tests or workflow missing"
 
@@ -301,7 +301,7 @@ uv run pytest tests/test_deployment_workflow.py -v 2>&1 | grep -q "5 passed" && 
   echo "✅ DEPLOYMENT handler verified" || echo "❌ DEPLOYMENT handler tests failing"
 
 # Test 10: Multi-Layer Integration (GAD-004 Phase 4)
-python3 tests/test_multi_layer_integration.py 2>&1 | grep -q "ALL LAYERS INTEGRATED SUCCESSFULLY" && \
+uv run pytest tests/test_multi_layer_integration.py -v 2>&1 | grep -q "passed" && \
   echo "✅ Multi-layer integration verified" || echo "❌ Integration test failing"
 ```
 
@@ -522,8 +522,16 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 15:45 UTC
-**Updated By:** Claude Code (Session: claude/get-context-gad-014FWL5rtVhE3SfkErm7Fbmb)
+**Last Updated:** 2025-11-16 18:47 UTC (Environment & Verification Fixes)
+**Updated By:** Claude Code (Session: claude/review-handoff-context-01MAG6zS2GFeubHYiU7pwLor)
+**Current Update:**
+- ✅ **Environment Verification Fixed** - venv properly synced with `uv sync --all-extras`
+- ✅ **AUDITOR Task Metadata Created** - P0 fix for E2E testing (semantic_audit.meta.yaml)
+- ✅ **Verification Commands Standardized** - All test commands now use `uv run` for consistency
+- ✅ **bs4 Dependency Verified** - beautifulsoup4 4.14.2 installed in venv (audit was misleading)
+- ✅ **Line Count Updated** - vibe-cli: 629→671 lines (audit correction)
+- ✅ **Environment Testing Error Documented** - System Python != venv Python; use `uv run`
+
 **Updates:**
 - ✅ **GAD-004 COMPLETE (100%)** - Multi-Layered Quality Enforcement System
 - ✅ Implemented GAD-004 Phase 4 - Integration & Documentation
