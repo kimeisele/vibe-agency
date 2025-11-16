@@ -23,6 +23,8 @@ import json
 import logging
 import re
 import sys
+import time
+import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -669,18 +671,17 @@ class CoreOrchestrator:
         self, agent_name: str, task_id: str, prompt: str, manifest: ProjectManifest
     ) -> Dict[str, Any]:
         """
-        Request intelligence from external operator (Claude Code) via STDOUT/STDIN handoff.
+        Request intelligence from external operator (Claude Code) via file-based delegation.
 
         This is the "Fließband" (conveyor belt) mechanism - the orchestrator
         (the "Arm") composes the prompt and hands it to the "Brain" (Claude Code)
         for execution.
 
-        Protocol (GAD-003 Extended):
-        1. Write INTELLIGENCE_REQUEST to STDOUT (JSON)
-        2. Wait for response on STDIN
-        3. If response contains <tool_use>: Execute tool, send result, goto 2
-        4. If response is INTELLIGENCE_RESPONSE: Parse and return
-        5. Otherwise: Pass through to user
+        Protocol (GAD-003 File-Based):
+        1. Write request to .delegation/request_{uuid}.json
+        2. Poll for response file .delegation/response_{uuid}.json
+        3. Read response and cleanup files
+        4. Return result
 
         Args:
             agent_name: Agent name
@@ -691,12 +692,17 @@ class CoreOrchestrator:
         Returns:
             Agent result (parsed from response)
         """
+        # Generate request ID
+        request_id = str(uuid.uuid4())
+
         # Build intelligence request
         request = {
-            "type": "INTELLIGENCE_REQUEST",
+            "type": "INTELLIGENCE_DELEGATION",
+            "request_id": request_id,
             "agent": agent_name,
             "task_id": task_id,
             "prompt": prompt,
+            "timestamp": datetime.now().isoformat(),
             "context": {
                 "project_id": manifest.project_id,
                 "phase": manifest.current_phase.value,
@@ -704,70 +710,63 @@ class CoreOrchestrator:
                     manifest.current_sub_state.value if manifest.current_sub_state else None
                 ),
             },
-            "wait_for_response": True,
         }
 
-        # Write request to STDOUT with markers (for parsing)
-        print("---INTELLIGENCE_REQUEST_START---")
-        print(json.dumps(request, indent=2))
-        sys.stdout.flush()
-        print("---INTELLIGENCE_REQUEST_END---")
+        # Determine workspace directory
+        workspace_dir = self.workspaces_dir / manifest.name / ".delegation"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
 
-        # GAD-003: Initialize tool executor if available
-        tool_executor = ToolExecutor() if TOOLS_AVAILABLE else None
+        # Write request file
+        request_file = workspace_dir / f"request_{request_id}.json"
+        response_file = workspace_dir / f"response_{request_id}.json"
 
-        # GAD-003: Tool execution loop
-        logger.info("⏳ Waiting for intelligence response from Claude Code...")
-        while True:
-            response_line = sys.stdin.readline()
+        logger.info(f"📤 Writing delegation request: {request_file}")
+        with open(request_file, "w") as f:
+            json.dump(request, f, indent=2)
 
-            if not response_line:
-                raise RuntimeError("No intelligence response received (EOF on STDIN)")
+        # Poll for response file
+        timeout = 600  # 10 minutes
+        poll_interval = 0.5  # 500ms
+        start_time = time.time()
 
-            response_text = response_line.strip()
+        logger.info(f"⏳ Waiting for response file: {response_file}")
+        logger.info(f"   Timeout: {timeout}s, Poll interval: {poll_interval}s")
 
-            # GAD-003: Check if response contains tool use
-            tool_call = self._parse_tool_use(response_text)
-            if tool_call and tool_executor:
-                logger.info(f"🔧 Tool call detected: {tool_call['name']}")
+        while not response_file.exists():
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                # Cleanup request file on timeout
+                if request_file.exists():
+                    request_file.unlink()
+                raise TimeoutError(
+                    f"No intelligence response after {timeout}s\n"
+                    f"Request: {request_file}\n"
+                    f"Expected response: {response_file}"
+                )
 
-                # Execute tool
-                try:
-                    result = tool_executor.execute(tool_call["name"], tool_call["parameters"])
-                    logger.info(f"✅ Tool executed successfully: {tool_call['name']}")
-                except Exception as e:
-                    logger.error(f"❌ Tool execution failed: {e}")
-                    result = {"error": str(e)}
+            time.sleep(poll_interval)
 
-                # Send tool result back to Claude Code
-                tool_result = {"type": "TOOL_RESULT", "tool": tool_call["name"], "result": result}
-                print("---TOOL_RESULT_START---", file=sys.stderr)
-                print(json.dumps(tool_result, indent=2))
-                sys.stdout.flush()
-                print("---TOOL_RESULT_END---", file=sys.stderr)
+        # Read response
+        logger.info(f"✅ Response file found: {response_file}")
+        with open(response_file) as f:
+            response = json.load(f)
 
-                # Continue loop (wait for next response)
-                continue
+        # Cleanup files
+        logger.info("🧹 Cleaning up delegation files...")
+        if request_file.exists():
+            request_file.unlink()
+        if response_file.exists():
+            response_file.unlink()
 
-            # Check if final response (INTELLIGENCE_RESPONSE)
-            try:
-                response = json.loads(response_text)
-                if response.get("type") == "INTELLIGENCE_RESPONSE":
-                    # Extract result
-                    result = response.get("result")
-                    if result is None:
-                        raise RuntimeError("Intelligence response missing 'result' field")
+        # Extract result
+        result = response.get("result")
+        if result is None:
+            raise RuntimeError(
+                f"Intelligence response missing 'result' field\n" f"Response: {response}"
+            )
 
-                    logger.info("✅ Intelligence response received from Claude Code")
-                    return result
-            except json.JSONDecodeError:
-                # Not JSON - might be intermediate output, pass through
-                print(response_text, file=sys.stderr)
-                continue
-
-            # If we get here, something unexpected happened
-            logger.warning(f"Unexpected response format: {response_text[:100]}")
-            print(response_text, file=sys.stderr)
+        logger.info("✅ Intelligence response received and processed")
+        return result
 
     def _parse_tool_use(self, text: str) -> Optional[Dict[str, Any]]:
         """
