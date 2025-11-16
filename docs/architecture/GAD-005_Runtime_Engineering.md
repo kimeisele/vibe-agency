@@ -1,0 +1,1513 @@
+# GAD-005: Runtime Engineering - Self-Regulating Execution Environment
+
+**Status:** ✅ APPROVED
+**Date:** 2025-11-16
+**Authors:** Claude Code (System Architect), Gemini (Co-Architect), Senior Consultant
+**Supersedes:** GAD-005 v1 (over-complex REPL approach)
+**Related:** GAD-004 (Multi-Layered Quality Enforcement), GAD-003 (File-Based Delegation), ADR-003 (Delegated Execution)
+
+---
+
+## Revision History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| v1 | 2025-11-16 | Initial draft (REPL + expression engine) |
+| v2 | 2025-11-16 | **Simplified per consultant:** No REPL (unavoidable MOTD), simple kernel rules, 4-week rollout, failure mode handling |
+
+**Key Simplifications:**
+- ❌ Removed: Persistent REPL (incompatible with file-based delegation)
+- ❌ Removed: Expression engine in v1 (deferred to future if needed)
+- ✅ Added: Unavoidable MOTD (context shown in stdout)
+- ✅ Added: Simple kernel rules (if-statements, no DSL)
+- ✅ Added: Failure mode handling section
+- ✅ Added: Performance benchmarks section
+- ✅ Extended: 4-week rollout with learning checkpoints
+
+---
+
+## Executive Summary
+
+This document defines **Runtime Engineering** - the strategic evolution from prompt engineering to context engineering to **self-regulating execution**.
+
+**The Problem:** Current system relies on documentation (CLAUDE.md checklists) and external enforcement (GitHub Actions). Agents can skip critical steps because the runtime environment doesn't actively prevent mistakes.
+
+**The Solution:** A **Self-Regulating Execution Environment** that enforces correctness at runtime through:
+
+1. **Unavoidable MOTD (Layer 1)** - Context shown in every vibe-cli execution (cannot be skipped)
+2. **Pre-Action Kernel (Layer 2)** - Internal orchestrator circuit breaker with simple validation rules
+3. **Integration with Layer 3** - References existing CI/CD validation (GAD-004 Phase 3)
+
+**Impact:** System becomes **harder to misuse** because critical information is unavoidable and dangerous operations are blocked.
+
+**Timeline:** 4 weeks (Weeks 1-2: MVP implementation, Weeks 3-4: Battle testing + iteration)
+
+**Risk:** LOW (backward compatible, incremental rollout, explicit learning phases)
+
+---
+
+## Table of Contents
+
+1. [Context & Problem Statement](#1-context--problem-statement)
+2. [Decision: Runtime Engineering](#2-decision-runtime-engineering)
+3. [BLUEPRINT: Architectural Design](#3-blueprint-architectural-design)
+4. [IMPLEMENTATION: Concrete Code](#4-implementation-concrete-code)
+5. [HARNESS: Testing & Verification](#5-harness-testing--verification)
+6. [Rollout Plan](#6-rollout-plan)
+7. [Success Metrics](#7-success-metrics)
+8. [Appendix: Rejected Alternatives](#8-appendix-rejected-alternatives)
+
+---
+
+## 1. Context & Problem Statement
+
+### 1.1. The Strategic Evolution
+
+```
+Phase 1: Prompt Engineering (2020-2023)
+  Goal: "What should I tell the AI?"
+  Tool: Carefully crafted prompts
+  Limit: AI forgets between turns
+
+Phase 2: Context Engineering (2023-2024)
+  Goal: "What context should I provide?"
+  Tool: RAG, knowledge bases, structured data
+  Limit: AI doesn't enforce constraints
+
+Phase 3: Runtime Engineering (2024-2025)  ← WE ARE HERE
+  Goal: "How does the system self-regulate?"
+  Tool: Active runtime enforcement
+  Result: System prevents mistakes during execution
+```
+
+### 1.2. Current State: Passive Documentation
+
+**What We Have (GAD-004 Complete):**
+- ✅ **Layer 1:** Session-scoped checks (`bin/pre-push-check.sh`, `.system_status.json`)
+- ✅ **Layer 2:** Workflow-scoped quality gates (manifest recording, AUDITOR blocking)
+- ✅ **Layer 3:** Deployment-scoped validation (E2E tests in CI/CD)
+
+**What's Missing:**
+- ❌ Agents can skip context (must manually run `./bin/show-context.sh`)
+- ❌ Orchestrator has no internal self-checks (relies on external quality gates)
+- ❌ No runtime prevention of dangerous operations
+
+**The Gap:** System provides tools for correctness but doesn't **force** their use.
+
+### 1.3. The Fundamental Problem
+
+**Current Workflow (Manual Vigilance Required):**
+```
+Agent starts work
+  → Must remember to run ./bin/show-context.sh
+  → Must remember to check .system_status.json
+  → Must remember to read session handoff
+  → [If they forget: silent failure]
+```
+
+**Desired Workflow (Automatic Enforcement):**
+```
+Agent runs: vibe-cli run project-name
+  → MOTD auto-displays (unavoidable)
+  → System status shown (unavoidable)
+  → Session handoff shown (unavoidable)
+  → Orchestrator self-checks before mutations
+  → [Impossible to skip critical information]
+```
+
+**Core Insight:** Documentation-driven correctness scales poorly. Runtime enforcement scales infinitely.
+
+---
+
+## 2. Decision: Runtime Engineering
+
+### 2.1. What We're Building
+
+**GAD-005 Decision:** Implement a **Minimal Viable Self-Regulating Environment** via two simple runtime components:
+
+1. **Unavoidable MOTD** (Agent-facing)
+   - Every `vibe-cli` execution shows critical context
+   - MOTD appears in stdout (agents see it, period)
+   - No persistent session, no REPL complexity
+
+2. **Pre-Action Kernel** (Orchestrator-internal)
+   - Simple validation rules (if-statements in v1)
+   - Block dangerous operations (overwrite manifest, commit with linting errors)
+   - Fail-fast with actionable error messages
+
+### 2.2. Relationship to Existing Work
+
+**GAD-005 is NOT replacing GAD-004.** It's the **runtime implementation layer** that makes GAD-004's 3-layer model **self-enforcing**.
+
+| Layer | GAD-004 (Strategy) | GAD-005 v2 (Simplified Runtime) |
+|-------|-------------------|----------------------------------|
+| **Layer 1** | Session-scoped checks (scripts) | **Unavoidable MOTD** (shown in stdout) |
+| **Layer 2** | Workflow-scoped gates (quality gates) | **Pre-Action Kernel** (simple if-statement checks) |
+| **Layer 3** | Deployment-scoped validation (CI/CD) | *(Already implemented in GAD-004 Phase 3)* |
+
+**Analogy:**
+- GAD-004 = "Here are the rules" (policy document)
+- GAD-005 = "Here's how the system enforces the rules itself" (enforcement engine)
+
+### 2.3. Design Principles
+
+1. **Unavoidable by Design** - Critical context shown in stdout (cannot be skipped)
+2. **Fail-Fast with Guidance** - Errors block execution but provide fix instructions
+3. **Simple First** - No DSLs, no expression engines in v1 (keep it simple)
+4. **Backward Compatible** - Existing workflows continue to work
+5. **Observable Enforcement** - All checks logged for auditability
+
+### 2.4. What We're NOT Building (v1)
+
+**Deferred to Future Phases:**
+- ❌ Persistent REPL (incompatible with file-based delegation)
+- ❌ Expression engine / DSL for rules (unnecessary complexity for v1)
+- ❌ Interactive commands during execution (not needed for MVP)
+- ❌ Complex condition evaluation (simple if-statements sufficient)
+
+**Why Defer?**
+1. **REPL incompatibility:** Current architecture uses file-based delegation (`.delegation/request_*.json`), not STDIN/STDOUT interaction
+2. **Expression engine overhead:** 3-5 days of work for marginal benefit when simple rules cover 90% of cases
+3. **Learning first:** Need real usage data to know if we even need these features
+
+---
+
+## 3. BLUEPRINT: Architectural Design
+
+### 3.1. Component A: Unavoidable MOTD
+
+#### 3.1.1. Current Behavior (Easy to Skip)
+
+```bash
+# Current: Agent must remember to check context
+$ vibe-cli run project-name
+[Executes task silently]
+[Exits]
+
+# Agent misses critical info from session handoff
+# Agent doesn't see linting failures
+# Agent doesn't know about uncommitted changes
+```
+
+#### 3.1.2. Target Behavior (Unavoidable Context)
+
+```bash
+# New: MOTD shown automatically
+$ vibe-cli run project-name
+
+════════════════════════════════════════════════════════════
+🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION
+════════════════════════════════════════════════════════════
+
+📊 SYSTEM HEALTH
+  Git: ✅ Clean (branch: claude/feature-123)
+  Linting: ✅ Passing (0 errors)
+  Tests: ✅ Passing
+
+📋 SESSION HANDOFF
+  From: GENESIS_BLUEPRINT
+  Date: 2025-11-16
+
+  Completed:
+    ✅ Core module architecture defined
+    ✅ Extension modules scoped
+
+  Your TODOs:
+    → 1. Implement authentication module (core_modules/auth.py)
+    → 2. Write unit tests (tests/test_auth.py)
+    → 3. Update feature_spec.json with implementation status
+
+💡 QUICK COMMANDS
+  ./bin/show-context.sh    - Full system context
+  ./bin/pre-push-check.sh  - Pre-push quality checks
+
+════════════════════════════════════════════════════════════
+
+[Now executes task...]
+```
+
+#### 3.1.3. Architecture
+
+**Key Insight:** No REPL needed. Just show MOTD before execution.
+
+**File:** `vibe-cli` (add MOTD to existing one-shot execution)
+
+```python
+def display_motd():
+    """
+    Display Message of the Day before any vibe-cli execution.
+
+    This makes critical context UNAVOIDABLE - agents see it in stdout.
+    """
+    # Load system status
+    status = load_system_status()
+
+    # Load session handoff (if exists)
+    handoff = load_session_handoff() if has_session_handoff() else None
+
+    # Render MOTD
+    print("═" * 60)
+    print("🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION")
+    print("═" * 60)
+    print()
+
+    # System health
+    print("📊 SYSTEM HEALTH")
+    print(f"  Git: {format_git_status(status)}")
+    print(f"  Linting: {format_linting_status(status)}")
+    print(f"  Tests: {format_test_status(status)}")
+    print()
+
+    # Session handoff (if exists)
+    if handoff:
+        print("📋 SESSION HANDOFF")
+        print(f"  From: {handoff.get('from_agent', 'Unknown')}")
+        print()
+        print("  Your TODOs:")
+        for todo in handoff.get('next_session_todos', [])[:3]:
+            print(f"    → {todo}")
+        print()
+
+    # Quick commands
+    print("💡 QUICK COMMANDS")
+    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
+    print()
+    print("═" * 60)
+    print()
+
+def main():
+    """Main entry point - now with unavoidable MOTD"""
+
+    # ALWAYS display MOTD (unavoidable)
+    display_motd()
+
+    # Continue with existing logic
+    # ... existing vibe-cli code ...
+```
+
+**Benefits:**
+- ✅ Simple (no REPL, no persistent session)
+- ✅ Unavoidable (shown in stdout before execution)
+- ✅ Compatible with file-based delegation
+- ✅ Works in CI/CD (just stdout text)
+
+---
+
+### 3.2. Component B: Pre-Action Kernel
+
+#### 3.2.1. Current State (No Internal Checks)
+
+```python
+# Current orchestrator behavior
+def save_artifact(self, artifact_name: str, content: str):
+    """Save artifact to workspace"""
+    # Problem: No checks before mutation!
+    path = self.workspace / artifact_name
+    path.write_text(content)  # ← Can overwrite critical files
+```
+
+#### 3.2.2. Target State (Simple Validation)
+
+```python
+# New orchestrator behavior (v1: simple checks)
+def save_artifact(self, artifact_name: str, content: str):
+    """Save artifact to workspace"""
+
+    # PRE-ACTION KERNEL CHECK (simple if-statements)
+    self._kernel_check_save_artifact(artifact_name)
+
+    # Now safe to proceed
+    path = self.workspace / artifact_name
+    path.write_text(content)
+
+def _kernel_check_save_artifact(self, artifact_name: str):
+    """Kernel check: Prevent overwriting critical files"""
+
+    CRITICAL_FILES = ['project_manifest.json', '.session_handoff.json']
+
+    if artifact_name in CRITICAL_FILES:
+        raise KernelViolationError(
+            f"❌ Cannot overwrite critical file: {artifact_name}\n"
+            f"Remediation: Use update_manifest() or create_session_handoff() instead"
+        )
+```
+
+**Note:** No `kernel_rules.yaml` in v1. Just Python if-statements. Simple and debuggable.
+
+#### 3.2.3. Kernel Checks (v1 Scope)
+
+**Check 1: No Overwrite Critical Files**
+```python
+def _kernel_check_save_artifact(self, artifact_name: str):
+    CRITICAL_FILES = ['project_manifest.json', '.session_handoff.json']
+    if artifact_name in CRITICAL_FILES:
+        raise KernelViolationError(...)
+```
+
+**Check 2: Git Working Directory Clean (Warning Only)**
+```python
+def _kernel_check_transition_state(self, transition_name: str):
+    git_status = self._get_git_status()
+    if not git_status['clean']:
+        logger.warning(
+            "⚠️  Git working directory not clean\n"
+            "   Uncommitted changes may be lost during state transition"
+        )
+```
+
+**Check 3: Linting Passed Before Commit**
+```python
+def _kernel_check_git_commit(self):
+    status = self._get_system_status()
+    if status['linting']['status'] != 'passing':
+        raise KernelViolationError(
+            f"❌ Linting errors detected ({status['linting']['errors_count']} errors)\n"
+            f"Remediation: Run `uv run ruff check . --fix`"
+        )
+```
+
+**That's it for v1.** Three simple checks. No YAML, no DSL, no expression engine.
+
+#### 3.2.4. Future Enhancement (v2+): Declarative Rules
+
+**If** real usage shows we need more rules, **then** add `kernel_rules.yaml`:
+
+```yaml
+# Future: kernel_rules.yaml (only if v1 proves we need it)
+rules:
+  save_artifact:
+    - check: no_overwrite_critical_files
+      files: [project_manifest.json, .session_handoff.json]
+      severity: critical
+      blocking: true
+```
+
+But for v1: **Keep it simple.** Python if-statements only.
+
+---
+
+### 3.3. Integration: How Components Work Together
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ AGENT (Claude Code)                                      │
+│                                                           │
+│  $ vibe-cli run project-name                             │
+└───────────────────┬─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 1: Unavoidable MOTD (GAD-005 Component A)        │
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│
+│  1. Run system health checks                             │
+│  2. Load session handoff                                 │
+│  3. Display MOTD in stdout (UNAVOIDABLE)                 │
+│                                                           │
+│  Output: Agent sees context before execution starts      │
+└───────────────────┬─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 2: Pre-Action Kernel (GAD-005 Component B)       │
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│
+│  Before every orchestrator mutation:                     │
+│    _kernel_check_save_artifact()                         │
+│    _kernel_check_transition_state()                      │
+│    _kernel_check_git_commit()                            │
+│                                                           │
+│  Simple if-statements (v1):                              │
+│    - No overwrite critical files                         │
+│    - Warn on dirty git state                             │
+│    - Block commit with linting errors                    │
+└───────────────────┬─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 3: CI/CD Validation (GAD-004 Phase 3)            │
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│
+│  Post-merge checks (already implemented):                │
+│    - E2E tests (tests/e2e/)                             │
+│    - Performance tests (tests/performance/)             │
+└─────────────────────────────────────────────────────────┘
+
+Result: 3-layer defense in depth, fully self-regulating
+```
+
+---
+
+## 4. IMPLEMENTATION: Concrete Code
+
+### 4.1. Phase 1: Unavoidable MOTD (Week 1)
+
+#### 4.1.1. Extend vibe-cli with MOTD
+
+**File:** `vibe-cli` (add before main execution)
+
+```python
+#!/usr/bin/env python3
+"""
+vibe-cli - Session Shell for VIBE Agency
+
+GAD-005: Runtime Engineering - Self-Regulating Execution Environment
+"""
+
+import sys
+import json
+import subprocess
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+
+def load_system_status() -> Dict[str, Any]:
+    """Load .system_status.json"""
+    status_file = Path(".system_status.json")
+    if status_file.exists():
+        with open(status_file) as f:
+            return json.load(f)
+    return {}
+
+
+def load_session_handoff() -> Optional[Dict[str, Any]]:
+    """Load .session_handoff.json if exists"""
+    handoff_file = Path(".session_handoff.json")
+    if handoff_file.exists():
+        with open(handoff_file) as f:
+            return json.load(f)
+    return None
+
+
+def format_git_status(status: Dict) -> str:
+    """Format git status for MOTD"""
+    git = status.get("git", {})
+    if git.get("working_directory_clean"):
+        branch = git.get("branch", "unknown")
+        return f"✅ Clean (branch: {branch})"
+    else:
+        return "⚠️  Uncommitted changes"
+
+
+def format_linting_status(status: Dict) -> str:
+    """Format linting status for MOTD"""
+    linting = status.get("linting", {})
+    status_val = linting.get("status", "unknown")
+
+    if status_val == "passing":
+        return "✅ Passing (0 errors)"
+    elif status_val == "failing":
+        errors = linting.get("errors_count", 0)
+        return f"❌ Failing ({errors} errors)"
+    else:
+        return f"⚠️  {status_val}"
+
+
+def format_test_status(status: Dict) -> str:
+    """Format test status for MOTD"""
+    tests = status.get("tests", {})
+    planning = tests.get("planning_workflow", "unknown")
+
+    if planning == "passing":
+        return "✅ Passing"
+    elif planning == "failing":
+        return "❌ Failing"
+    else:
+        return f"⚠️  {planning}"
+
+
+def display_motd():
+    """
+    Display Message of the Day before any vibe-cli execution.
+
+    This makes critical context UNAVOIDABLE - agents see it in stdout.
+    """
+    # Update system status first
+    status_script = Path("bin/update-system-status.sh")
+    if status_script.exists():
+        subprocess.run([str(status_script)], capture_output=True)
+
+    # Load data
+    status = load_system_status()
+    handoff = load_session_handoff()
+
+    # Render MOTD
+    print("═" * 60)
+    print("🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION")
+    print("═" * 60)
+    print()
+
+    # System health
+    print("📊 SYSTEM HEALTH")
+    print(f"  Git: {format_git_status(status)}")
+    print(f"  Linting: {format_linting_status(status)}")
+    print(f"  Tests: {format_test_status(status)}")
+    print()
+
+    # Session handoff (if exists)
+    if handoff:
+        print("📋 SESSION HANDOFF")
+        print(f"  From: {handoff.get('from_agent', 'Unknown')}")
+        date = handoff.get('date', 'Unknown')
+        print(f"  Date: {date}")
+        print()
+
+        # Completed items (max 3)
+        completed = handoff.get('completed', [])
+        if completed:
+            print("  Completed:")
+            for item in completed[:3]:
+                # Clean up checkmarks
+                item_clean = item.replace('✅', '').strip()
+                print(f"    ✅ {item_clean}")
+            if len(completed) > 3:
+                print(f"    ... and {len(completed) - 3} more")
+            print()
+
+        # Your TODOs (max 3)
+        todos = handoff.get('next_session_todos', [])
+        if todos:
+            print("  Your TODOs:")
+            for todo in todos[:3]:
+                # Clean up formatting
+                todo_clean = todo.replace('🎯', '').replace('→', '').strip()
+                if todo_clean:
+                    print(f"    → {todo_clean}")
+            if len(todos) > 3:
+                print(f"    ... and {len(todos) - 3} more")
+            print()
+
+    # Quick commands
+    print("💡 QUICK COMMANDS")
+    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
+    print()
+    print("═" * 60)
+    print()
+
+
+def main():
+    """Main entry point - now with unavoidable MOTD"""
+
+    # ALWAYS display MOTD (unavoidable)
+    try:
+        display_motd()
+    except Exception as e:
+        # Non-fatal - continue even if MOTD fails
+        print(f"⚠️  Warning: MOTD display failed: {e}")
+        print()
+
+    # Continue with existing vibe-cli logic
+    # ... rest of existing code ...
+```
+
+---
+
+### 4.2. Phase 2: Pre-Action Kernel (Week 2)
+
+#### 4.2.1. Add Kernel Exception
+
+**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+
+**Add near top (after imports):**
+
+```python
+class KernelViolationError(Exception):
+    """Raised when Pre-Action Kernel check fails"""
+    pass
+```
+
+#### 4.2.2. Add Kernel Check Methods
+
+**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+
+**Add after line 765 (after `_request_intelligence`):**
+
+```python
+# ============================================================================
+# PRE-ACTION KERNEL (GAD-005)
+# Simple validation checks before dangerous operations
+# ============================================================================
+
+def _kernel_check_save_artifact(self, artifact_name: str) -> None:
+    """
+    Kernel check: Prevent overwriting critical files.
+
+    Args:
+        artifact_name: Name of artifact being saved
+
+    Raises:
+        KernelViolationError: If trying to overwrite critical file
+    """
+    CRITICAL_FILES = ['project_manifest.json', '.session_handoff.json']
+
+    if artifact_name in CRITICAL_FILES:
+        raise KernelViolationError(
+            f"❌ KERNEL VIOLATION: Cannot overwrite critical file: {artifact_name}\n"
+            f"\n"
+            f"Remediation:\n"
+            f"  - For manifest: Use save_project_manifest() method\n"
+            f"  - For handoff: Use dedicated handoff creation method\n"
+            f"\n"
+            f"Critical files must be updated through designated methods to ensure integrity."
+        )
+
+    logger.debug(f"✓ Kernel check passed: save_artifact({artifact_name})")
+
+
+def _kernel_check_transition_state(self, transition_name: str) -> None:
+    """
+    Kernel check: Warn if git working directory is not clean.
+
+    Args:
+        transition_name: Name of state transition
+    """
+    git_status = self._get_git_status()
+
+    if not git_status.get("status", {}).get("clean", False):
+        logger.warning(
+            f"⚠️  KERNEL WARNING: Git working directory not clean during transition: {transition_name}\n"
+            f"   Uncommitted changes:\n"
+            f"   {chr(10).join('     - ' + line for line in git_status.get('uncommitted_changes', [])[:5])}\n"
+            f"\n"
+            f"   Recommendation: Commit or stash changes before state transitions"
+        )
+
+    logger.debug(f"✓ Kernel check passed: transition_state({transition_name})")
+
+
+def _kernel_check_git_commit(self) -> None:
+    """
+    Kernel check: Block git commits if linting errors exist.
+
+    Raises:
+        KernelViolationError: If linting errors detected
+    """
+    status = self._get_system_status()
+    linting = status.get("linting", {})
+
+    if linting.get("status") == "failing":
+        errors_count = linting.get("errors_count", 0)
+        raise KernelViolationError(
+            f"❌ KERNEL VIOLATION: Cannot commit with linting errors\n"
+            f"\n"
+            f"Errors: {errors_count} linting error(s) detected\n"
+            f"\n"
+            f"Remediation:\n"
+            f"  1. Run: uv run ruff check . --fix\n"
+            f"  2. Review remaining errors: uv run ruff check .\n"
+            f"  3. Re-run this operation after fixing all errors"
+        )
+
+    logger.debug("✓ Kernel check passed: git_commit()")
+
+
+def _get_system_status(self) -> Dict[str, Any]:
+    """
+    Get current system status from .system_status.json
+
+    Returns:
+        System status dict
+    """
+    status_file = self.repo_root / ".system_status.json"
+    if status_file.exists():
+        with open(status_file) as f:
+            return json.load(f)
+    return {}
+
+
+def _get_git_status(self) -> Dict[str, Any]:
+    """
+    Get git working directory status.
+
+    Returns:
+        Dict with git state
+    """
+    try:
+        # Check if working directory is clean
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=self.repo_root,
+            check=False
+        )
+        clean = len(result.stdout.strip()) == 0
+
+        return {
+            "status": {"clean": clean},
+            "uncommitted_changes": result.stdout.strip().split("\n") if not clean else []
+        }
+    except Exception as e:
+        logger.warning(f"Failed to get git status: {e}")
+        return {"status": {"clean": False}, "error": str(e)}
+```
+
+#### 4.2.3. Integrate Kernel Checks
+
+**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+
+**Modify `save_artifact` method:**
+
+```python
+def save_artifact(
+    self, manifest: ProjectManifest, artifact_name: str, content: str
+) -> None:
+    """
+    Save an artifact to the workspace.
+
+    NEW (GAD-005): Pre-Action Kernel check before saving
+    """
+    # PRE-ACTION KERNEL CHECK (GAD-005)
+    self._kernel_check_save_artifact(artifact_name)
+
+    # Now safe to proceed with existing logic
+    artifact_path = self.workspace_root / manifest.name / artifact_name
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text(content)
+
+    logger.info(f"✓ Saved artifact: {artifact_name}")
+```
+
+**Note:** Only integrate where it makes sense. Don't add kernel checks to every method - just dangerous mutations.
+
+---
+
+### 4.3. Performance Optimization
+
+**Target Metrics:**
+- MOTD display time: < 1 second
+- Kernel check latency: < 50ms per check
+- System status load time: < 200ms
+
+**Optimizations:**
+1. Cache system status for 10 seconds (avoid re-reading file)
+2. Make MOTD failure non-fatal (continue even if display fails)
+3. Keep kernel checks simple (no complex validation)
+
+---
+
+### 4.4. Error Handling & Logging
+
+**All kernel violations should:**
+1. Log to orchestrator log file
+2. Provide actionable remediation steps
+3. Include context (what was attempted, why it failed)
+
+**Example:**
+```python
+try:
+    orchestrator.save_artifact(manifest, "project_manifest.json", content)
+except KernelViolationError as e:
+    logger.error(f"Kernel violation: {e}")
+    # Error message includes remediation steps
+    raise
+```
+
+---
+
+### 4.5. Failure Mode Handling
+
+#### 4.5.1. Failure Mode 1: MOTD Display Fails
+
+**Scenario:** `.system_status.json` is corrupted or missing
+
+**Behavior:**
+```python
+try:
+    display_motd()
+except Exception as e:
+    # Non-fatal - show warning and continue
+    print(f"⚠️  Warning: MOTD display failed: {e}")
+    print()
+```
+
+**Remediation:** Agent continues execution, can manually run `./bin/show-context.sh`
+
+---
+
+#### 4.5.2. Failure Mode 2: Kernel Check Hangs
+
+**Scenario:** `_get_git_status()` hangs on slow filesystem
+
+**Mitigation:**
+```python
+result = subprocess.run(
+    ["git", "status", "--porcelain"],
+    capture_output=True,
+    text=True,
+    timeout=5,  # ← Add timeout
+    cwd=self.repo_root
+)
+```
+
+**Behavior:** After 5s timeout, treat as "git status unknown" and continue with warning
+
+---
+
+#### 4.5.3. Failure Mode 3: Kernel Bug
+
+**Scenario:** Bug in kernel check logic causes false positive
+
+**Mitigation:**
+1. **Extensive testing** before production
+2. **Gradual rollout** (enable one check at a time)
+3. **Escape hatch:** Environment variable override
+
+```python
+# Allow bypassing kernel in emergencies
+BYPASS_KERNEL = os.getenv("VIBE_BYPASS_KERNEL", "false").lower() == "true"
+
+if not BYPASS_KERNEL:
+    self._kernel_check_save_artifact(artifact_name)
+```
+
+**Usage:**
+```bash
+# Emergency bypass (logged and audited)
+VIBE_BYPASS_KERNEL=true vibe-cli run project-name
+```
+
+---
+
+#### 4.5.4. Failure Mode 4: System Status Outdated
+
+**Scenario:** `.system_status.json` is stale (linting passed, but now failing)
+
+**Mitigation:**
+- MOTD always runs `./bin/update-system-status.sh` before displaying
+- Max staleness: 1 second (just regenerated)
+
+**Edge case:** If update script fails, use stale data with warning:
+```python
+if status_script.exists():
+    result = subprocess.run([str(status_script)], capture_output=True, timeout=10)
+    if result.returncode != 0:
+        print("⚠️  Warning: System status update failed (using cached data)")
+```
+
+---
+
+### 4.6. Rollback Plan
+
+**If kernel checks cause problems:**
+
+**Option 1: Disable specific check**
+```python
+# In core_orchestrator.py, comment out problematic check:
+def save_artifact(...):
+    # TEMPORARILY DISABLED (see issue #123)
+    # self._kernel_check_save_artifact(artifact_name)
+    ...
+```
+
+**Option 2: Disable all kernel checks**
+```bash
+# Set environment variable
+export VIBE_BYPASS_KERNEL=true
+```
+
+**Option 3: Revert to pre-GAD-005**
+```bash
+git revert <gad-005-commit-hash>
+git push
+```
+
+**Recovery time:** < 1 hour (simple code changes, no migration needed)
+
+---
+
+## 5. HARNESS: Testing & Verification
+
+### 5.1. MOTD Tests
+
+#### 5.1.1. Manual Verification
+
+```bash
+# Test 1: MOTD displays
+./vibe-cli run test-project
+# Expected: MOTD shown before execution
+
+# Test 2: MOTD shows linting errors
+echo "import unused" >> temp_test.py
+./vibe-cli run test-project
+# Expected: MOTD shows "Linting: ❌ Failing (1 error)"
+
+# Cleanup
+rm temp_test.py
+uv run ruff check . --fix
+```
+
+#### 5.1.2. Automated Test
+
+**File:** `tests/test_motd.py` (new)
+
+```python
+#!/usr/bin/env python3
+"""Tests for Unavoidable MOTD (GAD-005 Component A)"""
+import subprocess
+from pathlib import Path
+
+
+def test_motd_displays():
+    """Verify MOTD is shown before vibe-cli execution"""
+    result = subprocess.run(
+        ["./vibe-cli", "--help"],  # Simple command
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+
+    # MOTD should appear in stdout
+    assert "VIBE AGENCY" in result.stdout
+    assert "SYSTEM HEALTH" in result.stdout
+
+    print("✅ MOTD displayed successfully")
+
+
+def test_motd_shows_linting_status():
+    """Verify MOTD includes linting status"""
+    # Ensure system status exists
+    status_file = Path(".system_status.json")
+    assert status_file.exists()
+
+    result = subprocess.run(
+        ["./vibe-cli", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+
+    # Should show linting status
+    assert "Linting:" in result.stdout
+
+    print("✅ MOTD shows linting status")
+
+
+def test_motd_non_fatal():
+    """Verify MOTD failure doesn't block execution"""
+    # Temporarily corrupt system status
+    status_file = Path(".system_status.json")
+    backup = status_file.read_text() if status_file.exists() else None
+
+    try:
+        # Write invalid JSON
+        status_file.write_text("{invalid json")
+
+        result = subprocess.run(
+            ["./vibe-cli", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        # Should show warning but still execute
+        assert result.returncode == 0
+        assert "Warning" in result.stdout or "Warning" in result.stderr
+
+        print("✅ MOTD failure is non-fatal")
+
+    finally:
+        # Restore
+        if backup:
+            status_file.write_text(backup)
+
+
+if __name__ == "__main__":
+    try:
+        test_motd_displays()
+        test_motd_shows_linting_status()
+        test_motd_non_fatal()
+
+        print("\n✅ ALL MOTD TESTS PASSED")
+    except AssertionError as e:
+        print(f"\n❌ TEST FAILED: {e}")
+        exit(1)
+```
+
+---
+
+### 5.2. Pre-Action Kernel Tests
+
+#### 5.2.1. Unit Tests
+
+**File:** `tests/test_kernel_checks.py` (new)
+
+```python
+#!/usr/bin/env python3
+"""Tests for Pre-Action Kernel (GAD-005 Component B)"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
+
+from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+
+def test_kernel_blocks_manifest_overwrite():
+    """Verify kernel prevents overwriting project_manifest.json"""
+    orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+    try:
+        orchestrator._kernel_check_save_artifact("project_manifest.json")
+        assert False, "Should have raised KernelViolationError"
+    except KernelViolationError as e:
+        assert "Cannot overwrite critical file" in str(e)
+        print("✅ Kernel blocked critical file overwrite")
+
+
+def test_kernel_allows_safe_artifacts():
+    """Verify kernel allows saving safe artifacts"""
+    orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+    # Should not raise
+    orchestrator._kernel_check_save_artifact("feature_spec.json")
+
+    print("✅ Kernel allowed safe artifact")
+
+
+def test_kernel_warns_on_dirty_git():
+    """Verify kernel warns if git working directory is dirty"""
+    import tempfile
+    import subprocess
+
+    # Create temp git repo
+    with tempfile.TemporaryDirectory() as tmpdir:
+        repo = Path(tmpdir)
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
+
+        # Create uncommitted file
+        (repo / "test.txt").write_text("test")
+
+        orchestrator = CoreOrchestrator(repo_root=repo)
+
+        # Should log warning but not raise
+        orchestrator._kernel_check_transition_state("T1_Test")
+
+        print("✅ Kernel warned on dirty git state")
+
+
+if __name__ == "__main__":
+    try:
+        test_kernel_blocks_manifest_overwrite()
+        test_kernel_allows_safe_artifacts()
+        test_kernel_warns_on_dirty_git()
+
+        print("\n✅ ALL KERNEL TESTS PASSED")
+    except Exception as e:
+        print(f"\n❌ TEST FAILED: {e}")
+        import traceback
+        traceback.print_exc()
+        exit(1)
+```
+
+---
+
+### 5.3. Integration Test
+
+**File:** `tests/test_runtime_engineering.py` (new)
+
+```python
+#!/usr/bin/env python3
+"""Integration test for GAD-005: Runtime Engineering (Simplified)"""
+import subprocess
+from pathlib import Path
+
+
+def test_complete_runtime_enforcement():
+    """End-to-end test: MOTD + Pre-Action Kernel"""
+
+    print("🧪 Testing Runtime Engineering integration...")
+
+    # COMPONENT A: Unavoidable MOTD
+    print("\n1️⃣  Testing Unavoidable MOTD...")
+
+    result = subprocess.run(
+        ["./vibe-cli", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+
+    assert result.returncode == 0, "vibe-cli failed"
+    assert "VIBE AGENCY" in result.stdout, "MOTD not displayed"
+    print("   ✅ MOTD working")
+
+    # COMPONENT B: Pre-Action Kernel
+    print("\n2️⃣  Testing Pre-Action Kernel...")
+
+    import sys
+    sys.path.insert(0, "agency_os/00_system/orchestrator")
+    from core_orchestrator import CoreOrchestrator, KernelViolationError
+
+    orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+    # Test kernel blocks critical operations
+    try:
+        orchestrator._kernel_check_save_artifact("project_manifest.json")
+        assert False, "Kernel should have blocked"
+    except KernelViolationError:
+        pass  # Expected
+
+    print("   ✅ Pre-Action Kernel working")
+
+    print("\n✅ RUNTIME ENGINEERING INTEGRATION COMPLETE")
+
+
+if __name__ == "__main__":
+    try:
+        test_complete_runtime_enforcement()
+    except Exception as e:
+        print(f"\n❌ INTEGRATION TEST FAILED: {e}")
+        import traceback
+        traceback.print_exc()
+        exit(1)
+```
+
+---
+
+### 5.4. Performance Benchmarks
+
+**File:** `tests/performance/test_runtime_performance.py` (new)
+
+```python
+#!/usr/bin/env python3
+"""Performance tests for GAD-005 Runtime Engineering"""
+import time
+import subprocess
+from pathlib import Path
+
+
+def benchmark_motd_display():
+    """Benchmark: MOTD display time should be < 1 second"""
+
+    start = time.time()
+    subprocess.run(
+        ["./vibe-cli", "--help"],
+        capture_output=True,
+        timeout=5
+    )
+    duration = time.time() - start
+
+    print(f"📊 MOTD display time: {duration:.3f}s")
+
+    if duration > 1.0:
+        print(f"   ⚠️  WARNING: MOTD slower than target (1s)")
+    else:
+        print(f"   ✅ MOTD within target")
+
+    return duration
+
+
+def benchmark_kernel_check():
+    """Benchmark: Kernel check should be < 50ms"""
+
+    import sys
+    sys.path.insert(0, "agency_os/00_system/orchestrator")
+    from core_orchestrator import CoreOrchestrator
+
+    orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+    start = time.time()
+    orchestrator._kernel_check_save_artifact("test.json")
+    duration = (time.time() - start) * 1000  # Convert to ms
+
+    print(f"📊 Kernel check latency: {duration:.2f}ms")
+
+    if duration > 50:
+        print(f"   ⚠️  WARNING: Kernel check slower than target (50ms)")
+    else:
+        print(f"   ✅ Kernel check within target")
+
+    return duration
+
+
+if __name__ == "__main__":
+    print("🧪 Runtime Engineering Performance Benchmarks")
+    print("=" * 60)
+
+    motd_time = benchmark_motd_display()
+    kernel_time = benchmark_kernel_check()
+
+    print("=" * 60)
+    print(f"\nResults:")
+    print(f"  MOTD display: {motd_time:.3f}s (target: <1s)")
+    print(f"  Kernel check: {kernel_time:.2f}ms (target: <50ms)")
+
+    # Non-blocking (always exit 0)
+    print("\n✅ Performance benchmarks complete (non-blocking)")
+```
+
+---
+
+## 6. Rollout Plan
+
+### 6.1. Week 1: Unavoidable MOTD Implementation
+
+**Tasks:**
+1. Extend `vibe-cli` with `display_motd()` function
+2. Add helper functions (load status, format output)
+3. Test MOTD display manually
+4. Write automated tests (`tests/test_motd.py`)
+5. Update CLAUDE.md with new behavior
+
+**Success Criteria:**
+- MOTD displays before every `vibe-cli` execution
+- Shows system health + session handoff
+- Non-fatal (continues even if display fails)
+- Tests pass
+
+**Deliverables:**
+- Modified `vibe-cli` with MOTD
+- `tests/test_motd.py` (all tests passing)
+- Updated CLAUDE.md
+
+---
+
+### 6.2. Week 2: Pre-Action Kernel Implementation
+
+**Tasks:**
+1. Add `KernelViolationError` exception class
+2. Implement 3 kernel check methods
+3. Integrate checks into orchestrator methods
+4. Write unit tests (`tests/test_kernel_checks.py`)
+5. Manual testing with real workflows
+
+**Success Criteria:**
+- Kernel blocks critical file overwrites
+- Kernel warns on dirty git state
+- Kernel blocks commits with linting errors
+- Tests pass
+- Zero false positives in manual testing
+
+**Deliverables:**
+- Modified `core_orchestrator.py` with kernel checks
+- `tests/test_kernel_checks.py` (all tests passing)
+- Integration test (`tests/test_runtime_engineering.py`)
+
+---
+
+### 6.3. Week 3: Battle Testing & Learning
+
+**Tasks:**
+1. Deploy to development environment
+2. Monitor real usage for 1 week
+3. Collect feedback from agents
+4. Measure performance (MOTD time, kernel latency)
+5. Document any issues or false positives
+
+**Success Criteria:**
+- No blocking bugs
+- No false positives
+- Performance targets met (MOTD <1s, kernel <50ms)
+- Positive feedback from agents
+
+**Checkpoint Decision:**
+- **If successful:** Proceed to Week 4 (production deployment)
+- **If issues:** Fix bugs, iterate, extend testing period
+
+---
+
+### 6.4. Week 4: Production Deployment & Documentation
+
+**Tasks:**
+1. Deploy to production
+2. Create usage guide (`docs/guides/RUNTIME_ENGINEERING_GUIDE.md`)
+3. Update CLAUDE.md with complete system overview
+4. Write performance benchmarks (`tests/performance/test_runtime_performance.py`)
+5. Update session handoff
+6. Mark GAD-005 as ✅ Complete
+
+**Success Criteria:**
+- All tests pass (unit + integration + performance)
+- Documentation complete
+- No regressions
+- System battle-tested for 2+ weeks
+
+**Deliverables:**
+- Production deployment
+- Usage guide
+- Performance benchmarks
+- Updated CLAUDE.md
+- GAD-005 marked ✅ Complete
+
+---
+
+### 6.5. Future Enhancements (Post-v1)
+
+**Only if real usage proves necessary:**
+
+1. **Declarative `kernel_rules.yaml`** (if we need >10 rules)
+2. **Expression engine** (if simple if-statements become unwieldy)
+3. **Interactive commands** (if agents request mid-execution status)
+4. **Advanced MOTD customization** (if different agents need different views)
+
+**Decision point:** After 4 weeks of v1 usage, review:
+- How many kernel rules do we have? (If >10, consider YAML)
+- Are rules getting complex? (If yes, consider expression engine)
+- Are agents requesting features? (If yes, consider enhancements)
+
+---
+
+## 7. Success Metrics
+
+### 7.1. Adoption Metrics
+
+**Target: Unavoidable MOTD**
+- Coverage: **100% of vibe-cli executions show MOTD** (unavoidable by design)
+- Visibility: **Agents see critical info in <1 second** (MOTD display time)
+
+**Monitoring:**
+```bash
+# Count vibe-cli executions (from logs)
+grep "vibe-cli" logs/*.log | wc -l
+```
+
+---
+
+### 7.2. Enforcement Metrics
+
+**Target: Pre-Action Kernel**
+- Kernel checks executed: **100% of mutation operations**
+- Violations blocked: **Catch 100% of critical violations**
+- False positive rate: **<1%**
+
+**Monitoring:**
+```bash
+# Count kernel checks
+grep "Kernel check passed" logs/orchestrator.log | wc -l
+
+# Count violations blocked
+grep "KernelViolationError" logs/orchestrator.log | wc -l
+```
+
+---
+
+### 7.3. Performance Metrics
+
+**Targets:**
+- MOTD display time: **<1 second** (95th percentile)
+- Kernel check latency: **<50ms per check** (95th percentile)
+- System status load time: **<200ms** (95th percentile)
+
+**Monitoring:**
+```bash
+# Run performance benchmarks
+python3 tests/performance/test_runtime_performance.py
+```
+
+---
+
+### 7.4. Quality Metrics
+
+**Targets:**
+- Incorrect state mutations: **0 incidents/week**
+- Agent confusion rate: **<5% sessions require clarification**
+- Documentation lookups: **50% reduction** (info now ambient)
+
+**Monitoring:**
+- Manual incident tracking
+- Agent feedback surveys
+- Session handoff analysis
+
+---
+
+## 8. Appendix: Rejected Alternatives
+
+### 8.1. Persistent REPL (Rejected)
+
+**Proposal:** Make vibe-cli a persistent REPL with interactive prompt
+
+**Rejection Reasons:**
+1. **Architectural incompatibility:** Current system uses file-based delegation (`.delegation/request_*.json`), not STDIN/STDOUT interaction
+2. **Agent behavior mismatch:** Claude Code agents execute commands and parse output, not interact with REPLs
+3. **Testing complexity:** REPLs are hard to test (async input, stateful sessions)
+4. **CI/CD incompatibility:** REPLs don't work well in automated environments
+
+**What we chose:** Unavoidable MOTD (shown in stdout, no persistent session)
+
+---
+
+### 8.2. Expression Engine / DSL (Rejected for v1)
+
+**Proposal:** Implement `kernel_rules.yaml` with expression evaluator (`_safe_eval`)
+
+**Rejection Reasons:**
+1. **Unnecessary complexity:** Simple if-statements cover 90% of use cases
+2. **Implementation time:** 3-5 days for safe expression evaluator
+3. **Debugging difficulty:** DSL errors harder to debug than Python
+4. **YAGNI:** No evidence we need >10 rules yet
+
+**What we chose:** Simple Python if-statements in v1, defer YAML to future if needed
+
+---
+
+### 8.3. Git Hooks as Primary Enforcement (Rejected)
+
+**Proposal:** Move all enforcement to git hooks (`.githooks/pre-commit`, etc.)
+
+**Rejection Reasons:**
+1. **Setup friction:** Requires `git config core.hooksPath .githooks`
+2. **Agent limitations:** Claude Code agents can't run git config
+3. **Environment-specific:** Doesn't work consistently across environments
+4. **Late enforcement:** Only runs at commit time (too late for runtime errors)
+
+**What we chose:** Runtime kernel checks (immediate prevention) + git hooks as backup
+
+---
+
+### 8.4. No Kernel, Only External Quality Gates (Rejected)
+
+**Proposal:** Rely solely on AUDITOR agent for quality enforcement
+
+**Rejection Reasons:**
+1. **Wrong layer:** AUDITOR runs at workflow transitions (too late for internal bugs)
+2. **External dependency:** If AUDITOR breaks, entire enforcement fails
+3. **No fail-fast:** Errors discovered late in execution
+4. **No prevention:** AUDITOR detects violations after they happen
+
+**What we chose:** Internal Pre-Action Kernel (prevention) + External AUDITOR (detection)
+
+---
+
+## 9. References
+
+- **GAD-004:** Multi-Layered Quality Enforcement (3-layer strategy)
+- **GAD-003:** File-Based Delegation (architecture foundation)
+- **ADR-003:** Delegated Execution Architecture (brain-arm model)
+- **CLAUDE.md:** Operational truth (verification commands)
+- **Consultant Feedback:** Senior review (simplification recommendations)
+
+---
+
+## 10. Document History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| v1 | 2025-11-16 | Claude Code, Gemini | Initial draft (REPL + expression engine) |
+| v2 | 2025-11-16 | Claude Code, Gemini, Senior Consultant | **Simplified:** No REPL, simple rules, 4-week rollout, failure modes |
+
+---
+
+## 11. Acknowledgments
+
+**Co-Architect:** Gemini (Google)
+- Identified need for declarative `kernel_rules.yaml`
+- Recommended Layer 3 context acknowledgment
+
+**Senior Consultant:**
+- Identified REPL incompatibility with file-based delegation
+- Recommended simplification (no expression engine in v1)
+- Recommended 4-week rollout with learning checkpoints
+- Recommended failure mode handling section
+- Recommended performance benchmarks section
+
+---
+
+**STATUS: ✅ APPROVED (2025-11-16)**
+
+**Next Steps:**
+1. ✅ Approval received from stakeholders
+2. Begin Week 1: Unavoidable MOTD implementation
+3. Checkpoint after Week 2: Review and decide on Week 3+
+4. Final deployment after Week 4 battle testing
