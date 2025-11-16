@@ -272,9 +272,12 @@ class VibeCLI:
             logger.info(f"   Context: {context}")
             logger.info(f"   Prompt length: {len(prompt)} chars")
 
-            # Delegate to Claude Code operator (MVP - DELEGATION ONLY)
+            # Get project_id from context
+            project_id = context.get('project_id', 'unknown-project')
+
+            # Delegate to Claude Code operator (FILE-BASED DELEGATION)
             logger.info(f"⚙️  Delegating prompt to Claude Code operator...")
-            result = self._delegate_to_operator(prompt, agent, task_id)
+            result = self._delegate_to_operator(prompt, agent, task_id, project_id)
 
             # Build response
             response = {
@@ -459,69 +462,121 @@ class VibeCLI:
 
         return results
 
-    def _delegate_to_operator(self, prompt: str, agent: str, task_id: str) -> Dict[str, Any]:
+    def _delegate_to_operator(self, prompt: str, agent: str, task_id: str, project_id: str) -> Dict[str, Any]:
         """
-        Delegate prompt execution to Claude Code operator (MVP - DELEGATION ONLY).
+        Delegate prompt execution to Claude Code operator via FILE-BASED exchange.
 
-        This method DOES NOT call Anthropic API directly.
-        Instead, it delegates to Claude Code operator via structured output.
+        Changed from STDIN/STDOUT to file-based for Browser environment compatibility.
 
         Architecture:
-        1. Print delegation request to STDOUT (JSON)
-        2. Claude Code operator reads request
-        3. Claude Code calls Anthropic API
-        4. Claude Code sends response via STDIN
-        5. Return parsed response
+        1. Write delegation request to .delegation/request_{uuid}.json
+        2. Poll for .delegation/response_{uuid}.json
+        3. Read response, cleanup files, return result
 
         Args:
             prompt: Prompt text
             agent: Agent name
             task_id: Task ID
+            project_id: Project ID (for workspace path)
 
         Returns:
             Parsed response from Claude Code operator
 
-        Note: This is the MVP architecture (DELEGATION ONLY).
-              Standalone mode (direct API calls) is deferred to v1.1.
+        Note: File-based delegation (Nov 16 fix).
               See: docs/architecture/EXECUTION_MODE_STRATEGY.md
+              See: ARCHITECTURE_BREAKDOWN_REPORT.md
         """
+        import uuid
+        import time
         from datetime import datetime
+        from pathlib import Path
+
+        # Create delegation directory
+        delegation_dir = self.repo_root / "workspaces" / project_id / ".delegation"
+        delegation_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate unique request ID
+        request_id = str(uuid.uuid4())
+        request_file = delegation_dir / f"request_{request_id}.json"
+        response_file = delegation_dir / f"response_{request_id}.json"
 
         # Build delegation request
         delegation_request = {
             "type": "INTELLIGENCE_DELEGATION",
+            "request_id": request_id,
             "agent": agent,
             "task_id": task_id,
             "prompt": prompt,
             "timestamp": datetime.now().isoformat(),
             "metadata": {
                 "delegator": "vibe-cli",
-                "mode": "delegation_only"
+                "mode": "file_based_delegation",
+                "request_file": str(request_file),
+                "response_file": str(response_file)
             }
         }
 
-        # Print delegation request to STDOUT (Claude Code reads this)
-        logger.info("📤 Delegating intelligence request to Claude Code operator...")
-        print("\n---DELEGATION_REQUEST_START---")
-        print(json.dumps(delegation_request))
-        print("---DELEGATION_REQUEST_END---")
-        sys.stdout.flush()
+        # Write request file
+        with open(request_file, 'w') as f:
+            json.dump(delegation_request, f, indent=2)
 
-        # Read response from STDIN (Claude Code provides this)
-        logger.info("⏳ Waiting for response from Claude Code operator...")
-        response_line = sys.stdin.readline()
+        logger.info(f"📤 Delegation request written: {request_file}")
+        logger.info(f"⏳ Waiting for response from Claude Code operator...")
+        logger.info(f"   Expected response file: {response_file}")
 
-        if not response_line:
-            raise RuntimeError("No response from Claude Code operator (STDIN closed)")
+        # Poll for response file
+        timeout = 600  # 10 minutes
+        start_time = time.time()
+        poll_interval = 0.5  # Check every 500ms
 
-        # Parse response
+        while not response_file.exists():
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                # Cleanup request file on timeout
+                if request_file.exists():
+                    request_file.unlink()
+                raise TimeoutError(
+                    f"No response after {timeout}s. "
+                    f"Expected file: {response_file}"
+                )
+
+            time.sleep(poll_interval)
+
+            # Log progress every 10 seconds
+            if int(elapsed) % 10 == 0 and int(elapsed) > 0:
+                logger.info(f"   Still waiting... ({int(elapsed)}s elapsed)")
+
+        # Read response
         try:
-            response = json.loads(response_line)
-            logger.info("✅ Received response from Claude Code operator")
+            with open(response_file) as f:
+                response = json.load(f)
+
+            logger.info("✅ Response received from Claude Code operator")
+
+            # Cleanup files
+            if request_file.exists():
+                request_file.unlink()
+            if response_file.exists():
+                response_file.unlink()
+
             return response.get("result", {})
+
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Claude Code response: {e}")
-            raise RuntimeError(f"Invalid response from Claude Code operator: {response_line}")
+            logger.error(f"Failed to parse response file: {e}")
+            # Cleanup on error
+            if request_file.exists():
+                request_file.unlink()
+            if response_file.exists():
+                response_file.unlink()
+            raise RuntimeError(f"Invalid response JSON in {response_file}: {e}")
+        except Exception as e:
+            logger.error(f"Error reading response: {e}")
+            # Cleanup on error
+            if request_file.exists():
+                request_file.unlink()
+            if response_file.exists():
+                response_file.unlink()
+            raise
 
     def _run_autonomous(self, project_id: str) -> None:
         """
