@@ -325,6 +325,11 @@ def display_motd():
     print(f"  Linting: {format_linting_status(status)}")
     print(f"  Tests: {format_test_status(status)}")
     print(f"  System Integrity: {format_integrity_status()}")
+
+    # Steward principles (bedrock operating principles)
+    steward = status.get("steward", "")
+    if steward:
+        print(f"  Steward: {steward}")
     print()
 
     # Session handoff (if exists)
