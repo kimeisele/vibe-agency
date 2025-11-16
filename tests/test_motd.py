@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for Unavoidable MOTD (GAD-005 Component A)"""
+
 import subprocess
 from pathlib import Path
 
@@ -10,7 +11,7 @@ def test_motd_displays():
         ["uv", "run", "./vibe-cli", "--help"],  # Simple command
         capture_output=True,
         text=True,
-        timeout=30
+        timeout=30,
     )
 
     # MOTD should appear in stdout
@@ -33,10 +34,7 @@ def test_motd_shows_linting_status():
             subprocess.run([str(update_script)], check=True, capture_output=True)
 
     result = subprocess.run(
-        ["uv", "run", "./vibe-cli", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=30
+        ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
     )
 
     # Should show linting status
@@ -48,10 +46,7 @@ def test_motd_shows_linting_status():
 def test_motd_shows_git_status():
     """Verify MOTD includes git status"""
     result = subprocess.run(
-        ["uv", "run", "./vibe-cli", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=30
+        ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
     )
 
     # Should show git status
@@ -63,10 +58,7 @@ def test_motd_shows_git_status():
 def test_motd_shows_test_status():
     """Verify MOTD includes test status"""
     result = subprocess.run(
-        ["uv", "run", "./vibe-cli", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=30
+        ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
     )
 
     # Should show test status
@@ -81,10 +73,7 @@ def test_motd_shows_session_handoff():
 
     if handoff_file.exists():
         result = subprocess.run(
-            ["uv", "run", "./vibe-cli", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=30
+            ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
         )
 
         # Should show session handoff section
@@ -97,10 +86,7 @@ def test_motd_shows_session_handoff():
 def test_motd_shows_quick_commands():
     """Verify MOTD shows quick commands section"""
     result = subprocess.run(
-        ["uv", "run", "./vibe-cli", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=30
+        ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
     )
 
     # Should show quick commands
@@ -122,16 +108,15 @@ def test_motd_non_fatal():
         status_file.write_text("{invalid json")
 
         result = subprocess.run(
-            ["uv", "run", "./vibe-cli", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=30
+            ["uv", "run", "./vibe-cli", "--help"], capture_output=True, text=True, timeout=30
         )
 
         # Should still execute (exit code 0)
         # Note: --help exits with 0, even if MOTD fails
         # The key point is: MOTD failure doesn't block execution
-        assert result.returncode == 0, f"vibe-cli failed when MOTD errored (exit {result.returncode})"
+        assert result.returncode == 0, (
+            f"vibe-cli failed when MOTD errored (exit {result.returncode})"
+        )
 
         print("✅ MOTD failure is non-fatal")
 
@@ -160,5 +145,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)
