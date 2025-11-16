@@ -304,6 +304,32 @@ class PlanningHandler:
 
         manifest.artifacts["lean_canvas_summary"] = lean_canvas
 
+        # Create handoff for next agent
+        project_dir = self.orchestrator._get_manifest_path(manifest.project_id).parent
+        handoff_dir = project_dir / ".handoff"
+        handoff_dir.mkdir(parents=True, exist_ok=True)
+
+        handoff = {
+            "from_agent": "LEAN_CANVAS_VALIDATOR",
+            "completed": [
+                "Canvas interview conducted",
+                "Risk analysis completed"
+            ],
+            "artifacts": ["lean_canvas_summary.json"],
+            "next_agent": "VIBE_ALIGNER",
+            "todos": [
+                "Extract customer segments from lean_canvas_summary.json (field: customer_segments)",
+                "Define must-have features based on problem statement (field: problem)",
+                "Calculate complexity scores using FAE_constraints.yaml"
+            ]
+        }
+
+        import json
+        with open(handoff_dir / "latest.json", 'w') as f:
+            json.dump(handoff, f, indent=2)
+
+        logger.info(f"✅ Handoff created: {handoff_dir / 'latest.json'}")
+
         logger.info(
             "✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json (full sequence: 01→02→03)"
         )
