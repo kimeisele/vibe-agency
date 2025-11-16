@@ -53,26 +53,54 @@
   ],
 
   "next_session_todos": [
+    "CRITICAL: Design holistic session handoff integration",
+    "Problem: .session_handoff.json exists but 0% integrated (only manual cat)",
+    "Reality: Session-wechsel happen CONSTANTLY (every PR = new session)",
+    "Requirements:",
+    "  - Robust (not error-prone manual process)",
+    "  - Minimal code (mainly JSON/data, not abstractions)",
+    "  - Holistic (two handoff types: manual session + automatic system status)",
+    "  - Simple integration (maybe git hooks + JSON files)",
+    "Design two handoff mechanisms:",
+    "  Type 1: Manual Session Handoff (PR end → next agent)",
+    "  Type 2: System Status Beat (git push/pull → auto-update status)",
+    "Goal: Next agent runs ONE command (e.g. cat .session_handoff.json) and has full context",
+    "---",
+    "AFTER session handoff design:",
     "Review PR description (PR_DESCRIPTION.md) and decide: merge or adjust",
-    "If merge: Create PR, get approval, merge to main",
-    "THEN: Choose next priority from impact report:",
-    "  Option A: Resume flag (~50 lines, high value)",
-    "  Option B: HITL approval on handoffs (~20 lines, compliance)",
-    "  Option C: Extend handoffs to CODING phase (~60 lines, consistency)",
-    "  Option D: Portfolio test with real project (validate system end-to-end)"
+    "Choose next priority: Resume flag, HITL approval, or CODING phase handoffs"
   ],
 
   "context_for_next_session": {
     "system_state": "Stable - all tests pass, handoffs verified working",
+    "critical_insight": "Session handoffs happen CONSTANTLY (every PR), not rarely. Need automated solution.",
     "known_issues": [
       "AUDITOR quality gate missing task files (separate system, not blocking)",
-      "pytest not installed by default (documented in CLAUDE.md)"
+      "pytest not installed by default (documented in CLAUDE.md)",
+      ".session_handoff.json exists but 0% integrated (only manual cat command)"
     ],
     "key_decisions": [
       "Handoffs use SIMPLE JSON (no validation, no schema, no abstractions)",
       "Planning_handler.py uses _get_manifest_path().parent for workspace path",
-      "handoff_todos injected into agent inputs as formatted string"
+      "handoff_todos injected into agent inputs as formatted string",
+      "Agent handoffs (PLANNING) = 100% automated",
+      "Session handoffs = 0% automated (TO BE SOLVED)"
     ],
+    "session_handoff_challenge": {
+      "problem": "How to automate session handoffs without adding complexity?",
+      "constraints": [
+        "Minimal code (prefer JSON/data over abstractions)",
+        "Robust (can't rely on manual cat)",
+        "Holistic (handle both manual session end + automatic status updates)"
+      ],
+      "ideas_to_explore": [
+        "Git hooks (post-commit, post-push) to auto-update session status",
+        "Simple shell script that updates .session_handoff.json",
+        "vibe-cli could show session context on startup (reads .session_handoff.json)",
+        "Separate .system_status.json for live status (git-driven)"
+      ],
+      "success_criteria": "Next agent runs ONE command and has full context"
+    },
     "testing_notes": "manual_planning_test.py validates full workflow, shows handoff logging works"
   },
 
@@ -87,7 +115,10 @@
     "DO NOT add validation/schema to handoffs (keep it simple)",
     "DO NOT create HandoffManager class (no abstractions)",
     "DO NOT batch multiple handoffs in one file (one file per transition)",
-    "DO NOT trust docs without running verification commands"
+    "DO NOT trust docs without running verification commands",
+    "DO NOT assume session handoffs are rare (they happen every PR)",
+    "DO NOT build complex orchestration for session handoffs (prefer git hooks + JSON)",
+    "DO NOT ignore the problem (manual cat is not robust enough for production)"
   ],
 
   "meta": {
