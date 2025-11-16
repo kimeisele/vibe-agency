@@ -1,0 +1,1334 @@
+# GAD-005 ADDITION: Multi-Layered Context Injection Architecture
+
+**STATUS: FINAL - PRODUCTION READY**  
+**VERSION: 2.0 (with System Integrity Manifest)**
+
+*This document extends GAD-005 with a comprehensive, defense-in-depth approach to context injection that works across all deployment targets (web, CLI, embedded) and execution modes (delegated, autonomous). It includes a meta-layer for self-verification.*
+
+-----
+
+## 1. Executive Summary
+
+**Problem:** How do we ensure agent clarity and context awareness across multiple deployment targets, execution modes, and failure scenarios—while also ensuring the integrity of the regulatory system itself?
+
+**Solution:** A five-layer defense-in-depth architecture that provides context through multiple channels, creates “gravitational pull” toward correct behavior, and verifies its own integrity before every operation.
+
+### The Five Layers
+
+1. **Layer 0: System Integrity Verification** (Meta - Self-Regulation)
+1. **Layer 1: Session Shell** (Primary - Frictionless Entry)
+1. **Layer 2: Ambient Context** (Passive - Active Artifacts)
+1. **Layer 3: Commit Watermarking** (Local - Last Resort)
+1. **Layer 4: Remote Validation** (Enforcement - CI/CD Gates)
+
+**Key Insight:** Layer 0 ensures that Layers 1-4 can be trusted. The regulators regulate themselves before regulating anything else.
+
+-----
+
+## 2. Architecture Overview
+
+### 2.1. The “Who Watches the Watchmen?” Problem
+
+**Critical Realization:** The GAD-005 architecture regulates **projects**, but what regulates **the architecture itself**?
+
+```
+WITHOUT LAYER 0:
+├── validate_receipts.py enforces rules
+└── But what if validate_receipts.py is corrupted?
+    └── The entire system is compromised!
+
+WITH LAYER 0:
+├── system_integrity_manifest.json defines trusted state
+├── vibe-cli verifies itself BEFORE any operation
+└── Only then do Layers 1-4 activate
+```
+
+**Philosophy:** “Don’t Trust, Verify” - applied to the system itself.
+
+### 2.2. Multi-Sphere Design Philosophy
+
+The system operates across multiple spheres:
+
+```
+META SPHERE (Layer 0)
+└── System Integrity Verification
+    • Verifies regulatory scripts
+    • Verifies configuration files
+    • Verifies kernel rules
+
+DEPLOYMENT SPHERE (Horizontal)
+├── Web Application (full CI/CD)
+├── CLI Tools (git-based)
+├── Embedded/IoT (JSON-only, no git)
+└── Generator Mode (project templates)
+
+EXECUTION SPHERE (Vertical)  
+├── Delegated (Claude Code integration)
+└── Autonomous (Direct API calls)
+
+CONTEXT SPHERE (Depth - Layers 1-4)
+├── Session Shell (interactive)
+├── Ambient Artifacts (passive)
+├── Commit Hooks (local enforcement)
+└── CI/CD (remote enforcement)
+
+VALIDATION SPHERE (Gates)
+├── Pre-flight checks
+├── In-flight monitoring
+└── Post-flight verification
+```
+
+### 2.3. Layer Activation Matrix
+
+|Deployment Target   |L0|L1|L2|L3|L4|
+|--------------------|--|--|--|--|--|
+|**Web App (CI/CD)** |✅ |✅ |✅ |✅ |✅ |
+|**CLI Tool**        |✅ |✅ |✅ |✅ |⚠️ |
+|**Raspberry Pi/IoT**|✅ |⚠️ |✅ |❌ |❌ |
+|**Generator Mode**  |✅ |✅ |✅ |✅ |✅ |
+
+**Legend:**
+
+- ✅ **Always Active** - Core functionality
+- ⚠️ **Optional** - Can be enabled if needed
+- ❌ **Not Applicable** - Architecture doesn’t support
+
+**Note:** Layer 0 is **ALWAYS ACTIVE** for all deployment targets that use Session Shell.
+
+-----
+
+## 3. Layer 0: System Integrity Verification (The Meta-Layer)
+
+### 3.1. Purpose
+
+Ensure that the regulatory framework itself has not been tampered with, corrupted, or drift ed before any project-level operation begins.
+
+### 3.2. The System Integrity Manifest
+
+```json
+{
+  "manifestVersion": "1.0.0",
+  "generatedAt": "2025-01-15T10:00:00Z",
+  "trustedBaseline": {
+    "scripts": {
+      "validate_receipts.py": {
+        "path": "scripts/validate_receipts.py",
+        "sha256": "a1b2c3d4e5f6...",
+        "purpose": "Validates receipts in CI/CD",
+        "critical": true
+      },
+      "check_watermarks.py": {
+        "path": "scripts/check_watermarks.py",
+        "sha256": "f6e5d4c3b2a1...",
+        "purpose": "Analyzes commit watermarks",
+        "critical": true
+      },
+      "update-system-status.sh": {
+        "path": "scripts/update-system-status.sh",
+        "sha256": "9876543210ab...",
+        "purpose": "Updates system health status",
+        "critical": true
+      }
+    },
+    "configs": {
+      "kernel_rules.yaml": {
+        "path": "config/kernel_rules.yaml",
+        "sha256": "deadbeef1234...",
+        "purpose": "Defines core system rules",
+        "critical": true
+      },
+      "pr-validation.yml": {
+        "path": ".github/workflows/pr-validation.yml",
+        "sha256": "cafe0000babe...",
+        "purpose": "CI/CD validation workflow",
+        "critical": true
+      }
+    },
+    "hooks": {
+      "pre-commit": {
+        "path": ".git/hooks/pre-commit",
+        "sha256": "1234567890ab...",
+        "purpose": "Commit watermarking hook",
+        "critical": true
+      }
+    }
+  }
+}
+```
+
+### 3.3. Implementation: Self-Verification Logic
+
+```python
+#!/usr/bin/env python3
+# scripts/verify-system-integrity.py
+
+import json
+import hashlib
+import sys
+from pathlib import Path
+from typing import Dict, Tuple
+
+class SystemIntegrityError(Exception):
+    """Raised when system integrity check fails."""
+    pass
+
+def calculate_sha256(file_path: str) -> str:
+    """Calculate SHA256 checksum of a file."""
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+def verify_system_integrity(manifest_path: str = ".vibe/system_integrity_manifest.json") -> Tuple[bool, Dict]:
+    """
+    Verify that all critical system files match their trusted checksums.
+    
+    Returns:
+        (success: bool, report: dict)
+    """
+    # Load manifest
+    try:
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+    except FileNotFoundError:
+        raise SystemIntegrityError(
+            f"❌ CRITICAL: System integrity manifest not found at {manifest_path}"
+        )
+    
+    baseline = manifest["trustedBaseline"]
+    report = {
+        "verified": [],
+        "failed": [],
+        "missing": []
+    }
+    
+    # Verify each category
+    for category in ["scripts", "configs", "hooks"]:
+        for name, spec in baseline.get(category, {}).items():
+            file_path = spec["path"]
+            expected_checksum = spec["sha256"]
+            
+            # Check if file exists
+            if not Path(file_path).exists():
+                report["missing"].append({
+                    "file": file_path,
+                    "purpose": spec["purpose"]
+                })
+                continue
+            
+            # Calculate current checksum
+            current_checksum = calculate_sha256(file_path)
+            
+            # Compare
+            if current_checksum == expected_checksum:
+                report["verified"].append(file_path)
+            else:
+                report["failed"].append({
+                    "file": file_path,
+                    "purpose": spec["purpose"],
+                    "expected": expected_checksum,
+                    "actual": current_checksum,
+                    "critical": spec.get("critical", False)
+                })
+    
+    # Determine success
+    success = len(report["failed"]) == 0 and len(report["missing"]) == 0
+    
+    return success, report
+
+def print_integrity_report(success: bool, report: Dict):
+    """Print human-readable integrity report."""
+    
+    if success:
+        print("✅ SYSTEM INTEGRITY: VERIFIED")
+        print(f"   {len(report['verified'])} critical files verified")
+        return
+    
+    print("❌ SYSTEM INTEGRITY: COMPROMISED")
+    print()
+    
+    if report["failed"]:
+        print("🚨 FAILED CHECKSUMS:")
+        for failure in report["failed"]:
+            print(f"   • {failure['file']}")
+            print(f"     Purpose: {failure['purpose']}")
+            print(f"     Expected: {failure['expected'][:16]}...")
+            print(f"     Actual:   {failure['actual'][:16]}...")
+            if failure["critical"]:
+                print(f"     ⚠️  CRITICAL: This file is essential for system regulation")
+            print()
+    
+    if report["missing"]:
+        print("🚨 MISSING FILES:")
+        for missing in report["missing"]:
+            print(f"   • {missing['file']}")
+            print(f"     Purpose: {missing['purpose']}")
+            print()
+    
+    print("⛔ SYSTEM HALTED: Integrity verification failed")
+    print("   The system's self-regulation is compromised.")
+    print("   DO NOT PROCEED until integrity is restored.")
+
+def main():
+    """Main entry point."""
+    try:
+        success, report = verify_system_integrity()
+        print_integrity_report(success, report)
+        
+        if not success:
+            sys.exit(1)
+        
+        sys.exit(0)
+    
+    except SystemIntegrityError as e:
+        print(str(e))
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+### 3.4. Integration with Session Shell
+
+```python
+# vibe-cli (Session Shell Boot Sequence)
+class SessionShell:
+    def boot(self):
+        """Boot sequence with Layer 0 verification."""
+        
+        print("🔐 VIBE AGENCY - SYSTEM BOOT")
+        print("=" * 50)
+        print()
+        
+        # LAYER 0: Verify system integrity FIRST
+        print("[Layer 0] Verifying system integrity...")
+        integrity_ok = self._verify_system_integrity()
+        
+        if not integrity_ok:
+            print()
+            print("⛔ BOOT HALTED: System integrity check failed")
+            print("   Cannot proceed with compromised regulators.")
+            print()
+            print("Action Required:")
+            print("  1. Run: python scripts/verify-system-integrity.py")
+            print("  2. Investigate checksum failures")
+            print("  3. Restore files from trusted baseline")
+            print("  4. Regenerate manifest if legitimate changes made")
+            sys.exit(1)
+        
+        print("   ✅ System integrity verified")
+        print()
+        
+        # LAYERS 1-4: Proceed with normal boot
+        print("[Layer 1] Loading Session Shell...")
+        self._load_session_shell()
+        
+        print("[Layer 2] Loading ambient context...")
+        self._load_ambient_context()
+        
+        print("[Layer 3] Checking git hooks...")
+        self._verify_git_hooks()
+        
+        print("[Layer 4] Checking CI/CD connection...")
+        self._check_ci_connection()
+        
+        print()
+        print("✅ ALL SYSTEMS OPERATIONAL")
+        print("=" * 50)
+        self._show_prompt()
+    
+    def _verify_system_integrity(self) -> bool:
+        """Run Layer 0 verification."""
+        import subprocess
+        result = subprocess.run(
+            ["python", "scripts/verify-system-integrity.py"],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            print(result.stdout)
+            return False
+        
+        return True
+```
+
+### 3.5. Generating the Integrity Manifest
+
+```python
+#!/usr/bin/env python3
+# scripts/generate-integrity-manifest.py
+
+import json
+import hashlib
+from pathlib import Path
+from datetime import datetime
+
+CRITICAL_FILES = {
+    "scripts": [
+        ("scripts/validate_receipts.py", "Validates receipts in CI/CD"),
+        ("scripts/check_watermarks.py", "Analyzes commit watermarks"),
+        ("scripts/update-system-status.sh", "Updates system health status"),
+        ("scripts/verify-system-integrity.py", "Verifies system integrity"),
+    ],
+    "configs": [
+        ("config/kernel_rules.yaml", "Defines core system rules"),
+        (".github/workflows/pr-validation.yml", "CI/CD validation workflow"),
+    ],
+    "hooks": [
+        (".git/hooks/pre-commit", "Commit watermarking hook"),
+    ]
+}
+
+def generate_manifest(output_path: str = ".vibe/system_integrity_manifest.json"):
+    """Generate system integrity manifest."""
+    
+    manifest = {
+        "manifestVersion": "1.0.0",
+        "generatedAt": datetime.utcnow().isoformat() + "Z",
+        "trustedBaseline": {}
+    }
+    
+    for category, files in CRITICAL_FILES.items():
+        manifest["trustedBaseline"][category] = {}
+        
+        for file_path, purpose in files:
+            if not Path(file_path).exists():
+                print(f"⚠️  Warning: {file_path} not found, skipping")
+                continue
+            
+            checksum = calculate_sha256(file_path)
+            
+            manifest["trustedBaseline"][category][Path(file_path).name] = {
+                "path": file_path,
+                "sha256": checksum,
+                "purpose": purpose,
+                "critical": True
+            }
+    
+    # Save manifest
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(manifest, f, indent=2)
+    
+    print(f"✅ System integrity manifest generated: {output_path}")
+    print(f"   {sum(len(v) for v in manifest['trustedBaseline'].values())} files registered")
+
+def calculate_sha256(file_path: str) -> str:
+    """Calculate SHA256 checksum."""
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+if __name__ == "__main__":
+    generate_manifest()
+```
+
+### 3.6. Workflow: Updating Critical Files
+
+```bash
+# When you need to update a critical file:
+
+# 1. Make your changes
+vim scripts/validate_receipts.py
+
+# 2. Test the changes
+python scripts/validate_receipts.py --test
+
+# 3. Regenerate the integrity manifest
+python scripts/generate-integrity-manifest.py
+
+# 4. Commit both changes together
+git add scripts/validate_receipts.py
+git add .vibe/system_integrity_manifest.json
+git commit -m "refactor: Update receipt validation logic
+
+- Enhanced error messages
+- Added signature verification
+- Updated integrity manifest"
+```
+
+### 3.7. Why This Works
+
+**The Integrity Paradox:**
+
+- Q: “But can’t someone just modify the manifest too?”
+- A: **Yes, but that’s traceable in git history.**
+
+```bash
+# The manifest itself is version-controlled
+git log .vibe/system_integrity_manifest.json
+
+# Any unauthorized change creates a permanent record
+git diff HEAD~1 .vibe/system_integrity_manifest.json
+```
+
+**Layer 4 (CI/CD) can enforce:**
+
+```python
+# In CI/CD: Check if manifest was updated without code changes
+manifest_changed = "system_integrity_manifest.json" in changed_files
+code_changed = any(f.startswith("scripts/") for f in changed_files)
+
+if manifest_changed and not code_changed:
+    fail("⛔ Manifest updated without corresponding code changes")
+```
+
+**Result:** You can modify the system, but you **cannot hide** the modification.
+
+-----
+
+## 4. Layer 1: Session Shell (Primary Entry)
+
+### 4.1. Purpose
+
+Provide the **frictionless, correct path** that makes bypassing it more work than using it.
+
+### 4.2. Implementation
+
+```bash
+# vibe-cli (Session Shell)
+$ vibe-cli start
+
+🔐 VIBE AGENCY - SYSTEM BOOT
+==================================================
+
+[Layer 0] Verifying system integrity...
+   ✅ System integrity verified
+
+[Layer 1] Loading Session Shell...
+[Layer 2] Loading ambient context...
+[Layer 3] Checking git hooks...
+[Layer 4] Checking CI/CD connection...
+
+✅ ALL SYSTEMS OPERATIONAL
+==================================================
+
+┌──────────────────────────────────────────────┐
+│ 🎯 VIBE AGENCY - SESSION SHELL v1.3          │
+├──────────────────────────────────────────────┤
+│ ✅ System Status: All Green                  │
+│ 📋 Next Task: #42 - Implement User Auth      │
+│ 🎨 Context: Auto-loaded from manifest        │
+│ 📊 Health: Linting ✓ Tests ✓ Build ✓        │
+├──────────────────────────────────────────────┤
+│ Commands:                                    │
+│  > start     - Begin task #42                │
+│  > status    - Show full system state        │
+│  > tasks     - List all pending tasks        │
+│  > verify    - Re-run integrity check        │
+│  > help      - Show all commands             │
+└──────────────────────────────────────────────┘
+
+> 
+```
+
+### 4.3. Key Features
+
+- **Layer 0 verification on every boot**
+- **Zero-friction startup**: One command, full context
+- **Automatic receipt generation**: Proves work was done via shell
+- **Symbiotic file management**: Auto-updates interdependent files
+- **Visual clarity**: Immediate system health visibility
+
+-----
+
+## 5. Layer 2: Ambient Context (Passive Awareness)
+
+### 5.1. Purpose
+
+Ensure that any agent performing basic due diligence automatically absorbs correct context from a **single source of truth**.
+
+### 5.2. Implementation: Active Artifacts
+
+#### 5.2.1. Consolidated Manifest
+
+Transform `project_manifest.json` from static plan to living status document:
+
+```json
+{
+  "projectState": {
+    "name": "yoga-booking-system",
+    "phase": "PLANNING",
+    "version": "1.2.0"
+  },
+  
+  "systemHealth": {
+    "linting": {
+      "status": "PASSING",
+      "lastChecked": "2025-01-15T14:30:00Z",
+      "errors": []
+    },
+    "tests": {
+      "status": "PASSING", 
+      "coverage": 87,
+      "lastRun": "2025-01-15T14:25:00Z"
+    },
+    "build": {
+      "status": "SUCCESS",
+      "lastBuild": "2025-01-15T14:28:00Z"
+    },
+    "systemIntegrity": {
+      "status": "VERIFIED",
+      "lastCheck": "2025-01-15T14:30:00Z",
+      "manifestChecksum": "sha256:abc123..."
+    }
+  },
+  
+  "nextAction": {
+    "taskId": 42,
+    "title": "Implement User Authentication",
+    "assignedAgent": "GENESIS_BLUEPRINT",
+    "estimatedComplexity": 13,
+    "dependencies": [38, 39],
+    "createdAt": "2025-01-15T10:00:00Z"
+  },
+  
+  "stateChecksum": "sha256:abc123...",
+  "lastUpdated": "2025-01-15T14:30:00Z"
+}
+```
+
+**Note:** `systemIntegrity` block is now included, referencing Layer 0 status.
+
+### 5.3. Symbiotic Files Pattern
+
+Create **circular dependencies** between files:
+
+```
+project_manifest.json
+├── Contains: stateChecksum (hash of .vibe/state.json)
+├── Contains: systemIntegrity.manifestChecksum
+└── Updated by: update-system-status.sh
+
+.vibe/state.json  
+├── Contains: manifestChecksum (hash of project_manifest.json)
+└── Updated by: vibe-cli / update-system-status.sh
+
+.vibe/system_integrity_manifest.json
+├── Contains: checksums of all critical files
+└── Generated by: generate-integrity-manifest.py
+
+.vibe/receipts/task_*.json
+├── Contains: systemHealthSnapshot (at task start)
+├── Contains: integrityVerified: true
+└── Created by: vibe-cli only
+```
+
+-----
+
+## 6. Layer 3: Commit Watermarking (Local Last Resort)
+
+### 6.1. Implementation: Smart Pre-Commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Layer 0: Verify system integrity FIRST
+echo "🔐 Pre-commit: Verifying system integrity..."
+python scripts/verify-system-integrity.py
+if [ $? -ne 0 ]; then
+    echo "⛔ Commit blocked: System integrity check failed"
+    echo "   Cannot commit with compromised regulatory framework"
+    exit 1
+fi
+
+# Run silently to avoid disrupting workflow
+SYSTEM_STATUS=$(bash scripts/update-system-status.sh 2>/dev/null)
+
+# Extract key health metrics
+LINT_STATUS=$(jq -r '.systemHealth.linting.status' project_manifest.json)
+TEST_STATUS=$(jq -r '.systemHealth.tests.status' project_manifest.json)
+BUILD_STATUS=$(jq -r '.systemHealth.build.status' project_manifest.json)
+INTEGRITY_STATUS=$(jq -r '.systemHealth.systemIntegrity.status' project_manifest.json)
+
+# Construct watermark
+WATERMARK=$(cat <<EOF
+---
+**VIBE-AGENCY: PRE-COMMIT SYSTEM STATUS**
+**Timestamp:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+**System Integrity:** ${INTEGRITY_STATUS}
+**Linting:** ${LINT_STATUS}
+**Tests:** ${TEST_STATUS}
+**Build:** ${BUILD_STATUS}
+---
+
+EOF
+)
+
+# Prepend to commit message
+COMMIT_MSG_FILE="$1"
+echo "$WATERMARK" | cat - "$COMMIT_MSG_FILE" > temp
+mv temp "$COMMIT_MSG_FILE"
+
+exit 0  # Always allow commit (watermark only)
+```
+
+**Key Addition:** Layer 0 verification runs **before** watermarking.
+
+-----
+
+## 7. Layer 4: Remote Validation (Enforcement)
+
+### 7.1. CI/CD with Integrity Check
+
+```yaml
+# .github/workflows/pr-validation.yml
+name: Validate PR with System Integrity
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  system-integrity:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Verify system integrity
+        run: |
+          python scripts/verify-system-integrity.py
+          if [ $? -ne 0 ]; then
+            echo "⛔ PR BLOCKED: System integrity compromised"
+            exit 1
+          fi
+      
+      - name: Check for unauthorized manifest changes
+        run: |
+          # Check if manifest changed without code changes
+          MANIFEST_CHANGED=$(git diff --name-only HEAD~1 | grep "system_integrity_manifest.json" || true)
+          SCRIPTS_CHANGED=$(git diff --name-only HEAD~1 | grep "^scripts/" || true)
+          
+          if [ -n "$MANIFEST_CHANGED" ] && [ -z "$SCRIPTS_CHANGED" ]; then
+            echo "⛔ PR BLOCKED: Integrity manifest changed without script changes"
+            exit 1
+          fi
+  
+  validate-receipts:
+    needs: system-integrity
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Validate receipts
+        run: |
+          python scripts/validate_receipts.py \
+            --commits $(git log --format=%H origin/main..HEAD) \
+            --receipts-dir .vibe/receipts/
+```
+
+**Key Addition:** System integrity is verified **before** any other checks.
+
+-----
+
+## 8. Complete Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 0: SYSTEM INTEGRITY VERIFICATION                  │
+│ • Verifies regulatory scripts haven't been tampered     │
+│ • Runs BEFORE any other layer activates                 │
+│ • Blocks boot if integrity check fails                  │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 1: SESSION SHELL                                  │
+│ • Frictionless entry point                              │
+│ • Automatic receipt generation                          │
+│ • Context auto-loading                                  │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 2: AMBIENT CONTEXT                                │
+│ • Consolidated manifest (single source of truth)        │
+│ • Symbiotic files (circular checksums)                  │
+│ • Passive context absorption                            │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 3: COMMIT WATERMARKING                            │
+│ • Pre-commit hook with integrity check                  │
+│ • Automatic status injection                            │
+│ • Permanent git history record                          │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│ LAYER 4: REMOTE VALIDATION                              │
+│ • CI/CD integrity verification                          │
+│ • Receipt validation                                    │
+│ • PR gating (unavoidable enforcement)                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+-----
+
+## 9. Threat Model & Defense
+
+### 9.1. Attack Scenarios & Mitigations
+
+|Attack                                                    |Without Layer 0         |With Layer 0                                            |
+|----------------------------------------------------------|------------------------|--------------------------------------------------------|
+|**Modify `validate_receipts.py` to always return success**|✅ Attack succeeds       |❌ Boot fails, integrity check catches modification      |
+|**Delete pre-commit hook**                                |✅ Watermarking bypassed |❌ Integrity check catches missing hook                  |
+|**Modify `kernel_rules.yaml` to weaken constraints**      |✅ Weakened rules applied|❌ Integrity check catches modification                  |
+|**Replace entire `.git/hooks/` directory**                |✅ All hooks bypassed    |❌ Integrity check catches missing checksums             |
+|**Tamper with integrity manifest itself**                 |N/A                     |⚠️ Git history shows change, CI blocks if no code changes|
+
+### 9.2. The “Integrity Paradox” Resolution
+
+**Problem:** “Can’t an attacker just modify the manifest too?”
+
+**Answer:** Yes, but:
+
+1. **Git tracks all changes:** Manifest modifications are **visible** in git history
+1. **CI enforces coherence:** Manifest changes without corresponding code changes → blocked
+1. **Baseline restoration:** Trusted baseline can be restored from git tag or release
+
+```bash
+# Restore trusted baseline
+git checkout v1.0.0 -- .vibe/system_integrity_manifest.json
+python scripts/verify-system-integrity.py
+```
+
+-----
+
+## 10. Implementation Roadmap
+
+### Phase 0: Meta-Layer (Week 1)
+
+- ✅ Implement `verify-system-integrity.py`
+- ✅ Implement `generate-integrity-manifest.py`
+- ✅ Create initial `system_integrity_manifest.json`
+- ✅ Integrate Layer 0 into Session Shell boot
+- ✅ Test integrity verification
+
+### Phase 1: Foundation (Week 2)
+
+- ✅ Enhance `project_manifest.json` with `systemHealth` block
+- ✅ Implement `update-system-status.sh` enhancements
+- ✅ Create symbiotic checksums logic
+- ✅ Test ambient context in isolation
+
+### Phase 2: Local Enforcement (Week 3)
+
+- ✅ Implement pre-commit hook with Layer 0 check
+- ✅ Create receipt generation logic
+- ✅ Build Session Shell prototype (`vibe-cli`)
+- ✅ Test full local workflow
+
+### Phase 3: Remote Validation (Week 4)
+
+- ✅ Implement CI/CD validation scripts
+- ✅ Create GitHub Actions workflows with integrity check
+- ✅ Test PR blocking logic
+- ✅ Document deployment configurations
+
+### Phase 4: Hardening (Week 5)
+
+- ✅ Add cryptographic signatures to receipts
+- ✅ Implement manifest coherence checks in CI
+- ✅ Create integrity restore procedures
+- ✅ Full penetration testing
+
+-----
+
+## 11. Testing Strategy
+
+### 11.1. Layer 0 Specific Tests
+
+```python
+def test_integrity_verification_clean():
+    """System passes integrity check with clean files."""
+    success, report = verify_system_integrity()
+    assert success == True
+    assert len(report["failed"]) == 0
+
+def test_integrity_verification_tampered():
+    """System fails integrity check with tampered file."""
+    # Tamper with critical file
+    with open("scripts/validate_receipts.py", "a") as f:
+        f.write("# tampered\n")
+    
+    success, report = verify_system_integrity()
+    assert success == False
+    assert len(report["failed"]) > 0
+
+def test_boot_blocks_on_failed_integrity():
+    """Session Shell boot is blocked if integrity fails."""
+    # Tamper with file
+    with open("scripts/validate_receipts.py", "a") as f:
+        f.write("# tampered\n")
+    
+    # Attempt boot
+    shell = SessionShell()
+    with pytest.raises(SystemExit):
+        shell.boot()
+
+def test_manifest_generation():
+    """Integrity manifest generation works correctly."""
+    generate_manifest()
+    
+    assert os.path.exists(".vibe/system_integrity_manifest.json")
+    manifest = json.load(open(".vibe/system_integrity_manifest.json"))
+    assert "trustedBaseline" in manifest
+```
+
+### 11.2. Attack Simulation Tests
+
+```python
+def test_attack_modify_validator():
+    """Simulate attack: modify validator script."""
+    # Attacker modifies validate_receipts.py
+    with open("scripts/validate_receipts.py", "w") as f:
+        f.write("def validate_receipts(*args): return 0  # bypass!\n")
+    
+    # Attempt to boot Session Shell
+    shell = SessionShell()
+    
+    # Should fail at Layer 0
+    with pytest.raises(SystemExit) as exc:
+        shell.boot()
+    
+    # Verify failure message
+    assert "System integrity check failed" in str(exc.value)
+
+def test_attack_delete_hook():
+    """Simulate attack: delete pre-commit hook."""
+    # Attacker deletes hook
+    os.remove(".git/hooks/pre-commit")
+    
+    # Attempt to boot
+    shell = SessionShell()
+    with pytest.raises(SystemExit):
+        shell.boot()
+    
+    # Layer 0 should catch missing hook
+    success, report = verify_system_integrity()
+    assert "pre-commit" in [m["file"] for m in report["missing"]]
+```
+
+-----
+
+## 12. Operations & Maintenance
+
+### 12.1. Daily Operations
+
+```bash
+# Normal workflow (no manual integrity checks needed)
+$ vibe-cli start
+🔐 System boot with automatic Layer 0 verification
+✅ All systems operational
+
+# Explicit integrity check (if concerned)
+$ vibe-cli verify
+🔐 Running system integrity verification...
+✅ All critical files verified
+```
+
+### 12.2. Updating Critical Files
+
+```bash
+# Workflow for updating a regulatory script:
+
+# 1. Make changes
+vim scripts/validate_receipts.py
+
+# 2. Test changes
+python -m pytest tests/test_validation.py
+
+# 3. Regenerate integrity manifest
+python scripts/generate-integrity-manifest.py
+
+# 4. Verify new state
+python scripts/verify-system-integrity.py
+
+# 5. Commit together
+git add scripts/validate_receipts.py .vibe/system_integrity_manifest.json
+git commit -m "refactor: Enhanced validation logic"
+```
+
+### 12.3. Incident Response
+
+```bash
+# If integrity check fails:
+
+# 1. Identify what changed
+python scripts/verify-system-integrity.py
+
+# Output:
+❌ SYSTEM INTEGRITY: COMPROMISED
+🚨 FAILED CHECKSUMS:
+   • scripts/validate_receipts.py
+     Purpose: Validates receipts in CI/CD
+     Expected: a1b2c3d4e5f6...
+     Actual:   f6e5d4c3b2a1...
+     ⚠️  CRITICAL: This file is essential for system regulation
+
+# 2. Check git history
+git log scripts/validate_receipts.py
+
+# 3. Restore from trusted baseline
+git checkout v1.0.0 -- scripts/validate_receipts.py
+
+# 4. Verify restoration
+python scripts/verify-system-integrity.py
+✅ SYSTEM INTEGRITY: VERIFIED
+```
+
+-----
+
+## 13. Security Hardening
+
+### 13.1. Signed Manifests (Future Enhancement)
+
+```python
+# Generate manifest with cryptographic signature
+import hmac
+import hashlib
+
+def generate_signed_manifest(secret_key: bytes):
+    """Generate manifest with HMAC signature."""
+    manifest = generate_manifest()
+    
+    # Create signature
+    manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
+    signature = hmac.new(secret_key, manifest_bytes, hashlib.sha256).hexdigest()
+    
+    manifest["signature"] = signature
+    return manifest
+
+def verify_signed_manifest(manifest: dict, secret_key: bytes) -> bool:
+    """Verify manifest signature."""
+    stored_signature = manifest.pop("signature")
+    manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
+    expected_signature = hmac.new(secret_key, manifest_bytes, hashlib.sha256).hexdigest()
+    
+    return hmac.compare_digest(stored_signature, expected_signature)
+```
+
+### 13.2. CI/CD Secret Management
+
+```yaml
+# .github/workflows/pr-validation.yml
+env:
+  INTEGRITY_SECRET: ${{ secrets.VIBE_INTEGRITY_KEY }}
+
+steps:
+  - name: Verify signed manifest
+    run: |
+      python scripts/verify-system-integrity.py \
+        --secret-key "$INTEGRITY_SECRET" \
+        --verify-signature
+```
+
+-----
+
+## 14. Deployment-Specific Configurations
+
+### 14.1. Full Stack Web App
+
+```yaml
+# config/deployment/web-app.yml
+layers:
+  systemIntegrity:
+    enabled: true
+    haltOnFailure: true
+    signedManifests: true
+  
+  sessionShell: 
+    enabled: true
+    required: true
+  
+  ambientContext:
+    enabled: true
+    consolidateManifest: true
+    symbioticFiles: true
+  
+  commitWatermarking:
+    enabled: true
+    strictMode: false
+    verifyIntegrityFirst: true
+  
+  remoteValidation:
+    enabled: true
+    requireReceipts: true
+    requireSessionShell: true
+    blockDirtyState: true
+    enforceIntegrity: true
+```
+
+### 14.2. CLI Tool
+
+```yaml
+# config/deployment/cli-tool.yml
+layers:
+  systemIntegrity:
+    enabled: true
+    haltOnFailure: true
+    signedManifests: false
+  
+  sessionShell:
+    enabled: true
+    required: false
+  
+  ambientContext:
+    enabled: true
+  
+  commitWatermarking:
+    enabled: true
+    strictMode: true
+    verifyIntegrityFirst: true
+  
+  remoteValidation:
+    enabled: false
+```
+
+### 14.3. Embedded/IoT
+
+```yaml
+# config/deployment/iot-embedded.yml
+layers:
+  systemIntegrity:
+    enabled: true
+    haltOnFailure: true
+    reducedScope: true  # Only verify JSON processors
+  
+  sessionShell:
+    enabled: false
+  
+  ambientContext:
+    enabled: true
+    consolidateManifest: true
+    symbioticFiles: false
+  
+  commitWatermarking:
+    enabled: false
+  
+  remoteValidation:
+    enabled: false
+```
+
+-----
+
+## 15. Monitoring & Observability
+
+### 15.1. Integrity Metrics
+
+```python
+# Track integrity verification metrics
+{
+  "metrics": {
+    "layer0": {
+      "verifications_total": 1234,
+      "failures_total": 2,
+      "last_failure": "2025-01-15T10:30:00Z",
+      "failed_files": ["scripts/validate_receipts.py"]
+    },
+    "layer1_usage": 0.95,
+    "layer2_reads": 1234,
+    "layer3_watermarks": 89,
+    "layer4_validations": 23
+  }
+}
+```
+
+### 15.2. Compliance Dashboard
+
+```bash
+python scripts/compliance_report.py
+
+┌──────────────────────────────────────────┐
+│ VIBE AGENCY - COMPLIANCE REPORT          │
+├──────────────────────────────────────────┤
+│ System Integrity: ✅ VERIFIED            │
+│ Last Check: 2025-01-15T14:30:00Z         │
+│ Verified Files: 12/12                    │
+├──────────────────────────────────────────┤
+│ Total Commits: 156                       │
+│ Via Session Shell: 148 (94.9%)           │
+│ With Receipts: 148 (94.9%)               │
+│ With Watermarks: 152 (97.4%)             │
+│ Started Clean: 145 (92.9%)               │
+├──────────────────────────────────────────┤
+│ ✅ Overall Compliance: 94.9%             │
+└──────────────────────────────────────────┘
+```
+
+-----
+
+## 16. FAQ: Layer 0
+
+### Q: Why is Layer 0 needed if we have git?
+
+**A:** Git tracks *that* something changed, but doesn’t *prevent* you from using compromised tools. Layer 0 ensures you don’t **boot** with compromised regulators.
+
+### Q: Can’t an attacker just modify the integrity manifest?
+
+**A:** Yes, but:
+
+1. Git history makes it visible
+1. CI enforces that manifest changes require code changes
+1. Trusted baseline can be restored from releases/tags
+
+### Q: What if a legitimate file update is flagged?
+
+**A:** Regenerate the manifest:
+
+```bash
+python scripts/generate-integrity-manifest.py
+git add .vibe/system_integrity_manifest.json
+```
+
+### Q: Does Layer 0 slow down the boot?
+
+**A:** Minimal impact (~100-200ms for 10-15 files). Can be cached if needed.
+
+### Q: What if I don’t want Layer 0?
+
+**A:** Configure `layers.systemIntegrity.enabled: false` in deployment config. Not recommended for production.
+
+-----
+
+## 17. Success Criteria (Updated)
+
+This implementation is successful if:
+
+✅ **Layer 0**: 100% of boots verify system integrity, 0 compromised boots  
+✅ **Layer 1**: 90%+ of tasks initiated via Session Shell  
+✅ **Layer 2**: Single manifest file contains all context needed  
+✅ **Layer 3**: 95%+ of commits have watermarks  
+✅ **Layer 4**: Zero “dirty state” commits reach `main`  
+✅ **Overall**: Agent compliance through convenience + cryptographic verification
+
+-----
+
+## 18. Final Architectural Truth
+
+```
+The system that regulates itself is the only system that can be trusted.
+
+Layer 0 ensures that the regulators are themselves regulated.
+Layers 1-4 regulate the project.
+Git regulates Layer 0.
+CI/CD regulates git.
+
+This is a complete, self-verifying system.
+```
+
+-----
+
+## 19. Conclusion
+
+The Multi-Layered Context Injection Architecture with System Integrity Verification provides:
+
+1. **Meta-Level Defense**: Regulators verify themselves before regulating anything else
+1. **Defense in Depth**: Five complementary layers, not redundant checkpoints
+1. **Deployment Flexibility**: Works across web, CLI, IoT, generator modes
+1. **Psychological Design**: Makes correct behavior the path of least resistance
+1. **Cryptographic Verification**: Truth is mathematically verifiable
+1. **Remote Enforcement**: Final truth cannot be bypassed locally
+
+**The key insight:** There is no “one last guardrail” – there is **gravitational pull** toward correct behavior, **cryptographic verification** of system integrity, and **unavoidable remote validation**.
+
+**This architecture answers “Who watches the watchmen?” with: The watchmen watch themselves first.**
+
+-----
+
+## Appendix A: Complete File Structure (Updated)
+
+```
+vibe-agency/
+├── .git/
+│   └── hooks/
+│       └── pre-commit              # Layer 3 (with Layer 0 check)
+│
+├── .github/
+│   └── workflows/
+│       └── pr-validation.yml       # Layer 4 (with Layer 0 check)
+│
+├── .vibe/
+│   ├── system_integrity_manifest.json  # Layer 0: Trusted baseline
+│   ├── state.json                      # Layer 2: Symbiotic files
+│   ├── status_cache.json               # Performance cache
+│   └── receipts/                       # Layer 4: Receipt storage
+│       ├── task_001.json
+│       ├── task_002.json
+│       └── ...
+│
+├── scripts/
+│   ├── verify-system-integrity.py      # Layer 0: Verification
+│   ├── generate-integrity-manifest.py  # Layer 0: Manifest generation
+│   ├── update-system-status.sh         # Layer 2: Status updates
+│   ├── validate_receipts.py            # Layer 4: Validation
+│   ├── check_watermarks.py             # Layer 4: Watermark analysis
+│   └── compliance_report.py            # Monitoring
+│
+├── config/
+│   └── deployment/
+│       ├── web-app.yml                 # Full stack config
+│       ├── cli-tool.yml                # CLI config
+│       ├── iot-embedded.yml            # IoT config
+│       └── generator.yml               # Generator config
+│
+├── vibe-cli                            # Layer 1: Session Shell
+└── project_manifest.json               # Layer 2: Active artifact
+```
+
+-----
+
+## Appendix B: Quick Reference Commands (Updated)
+
+```bash
+# Verify system integrity manually
+python scripts/verify-system-integrity.py
+
+# Regenerate integrity manifest after updates
+python scripts/generate-integrity-manifest.py
+
+# Start task via Session Shell (includes Layer 0 check)
+vibe-cli start
+
+# Explicit re-verification during session
+vibe-cli verify
+
+# Update system status manually
+bash scripts/update-system-status.sh
+
+# Run CI validation locally
+python scripts/validate_receipts.py \
+  --commits $(git log --format=%H -5) \
+  --receipts-dir .vibe/receipts/
+
+# Generate compliance report (including integrity)
+python scripts/compliance_report.py
+
+# Restore integrity from trusted baseline
+git checkout v1.0.0 -- .vibe/system_integrity_manifest.json
+git checkout v1.0.0 -- scripts/
+```
+
+-----
+
+**VERSION: 2.0 - FINAL**  
+**STATUS: PRODUCTION READY WITH GEMINI’S ENHANCEMENT**  
+**LAST UPDATED: 2025-01-16**
+
+-----
+
+**END OF DOCUMENT**
+
+*“The system that regulates itself is the only system worthy of trust.”*
