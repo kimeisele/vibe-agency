@@ -1,12 +1,14 @@
 name: Test Google Search API
 
 on:
-  push:
-    branches:
-      - claude/**
-      - main
-      - develop
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only - real API calls disabled in CI/CD
+  # Disabled auto-trigger to prevent 429 rate limit errors
+  # See: docs/reports/CRITICAL_REAL_API_CALLS_IN_TESTS.md
+  # push:
+  #   branches:
+  #     - claude/**
+  #     - main
+  #     - develop
 
 jobs:
   test-research-tools:
