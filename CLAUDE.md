@@ -41,7 +41,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## ✅ OPERATIONAL STATUS (Dated Snapshot)
 
-**Last Verified:** 2025-11-16 08:12 UTC
+**Last Verified:** 2025-11-16 10:07 UTC
 
 ### Phase Implementation Status
 
@@ -59,6 +59,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 |-----------|--------|----------|----------------|
 | Core Orchestrator | ✅ Works | State machine tested | `python tests/test_orchestrator_state_machine.py` |
 | **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `python3 manual_planning_test.py` |
+| **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
 | vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -96,6 +97,28 @@ python3 manual_planning_test.py
 # - FEATURE_SPECIFICATION (VIBE_ALIGNER task)
 # - ARCHITECTURE_DESIGN (GENESIS_BLUEPRINT task)
 # Note: May fail on quality gate AUDITOR (separate system)
+```
+
+### Verify TODO-Based Handoffs Work
+```bash
+# Run PLANNING workflow
+python3 manual_planning_test.py
+
+# Check handoff.json was created
+cat workspaces/manual-test-project/handoff.json
+
+# Expected: JSON with structure:
+# {
+#   "from_agent": "VIBE_ALIGNER",
+#   "to_agent": "GENESIS_BLUEPRINT",
+#   "completed": "Feature specification and scope negotiation",
+#   "todos": [
+#     "Select core modules from feature_spec.json",
+#     "Design extension modules for complex features",
+#     ...
+#   ],
+#   "timestamp": "2025-11-16T..."
+# }
 ```
 
 ### Verify PLANNING Phase Works
@@ -334,9 +357,16 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 
 ---
 
-**Last Updated:** 2025-11-16 08:12 UTC
-**Updated By:** Claude Code (Session: claude/file-based-delegation-01ECDgTuVfZdPyi29nbSbUw7)
+**Last Updated:** 2025-11-16 10:07 UTC
+**Updated By:** Claude Code (Session: claude/analyze-architecture-plan-01YTUh8kt2FP7W8KvzwQM28s)
 **Updates:**
+- ✅ **TODO-Based Handoffs IMPLEMENTED** - Simple handoff.json file created between agents
+- ✅ Handoffs active: LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER → GENESIS_BLUEPRINT
+- ✅ Benefits: Workflow transparency, resumable execution, human-readable audit trail
+- ✅ Zero complexity: Just JSON file read/write (no abstractions, no validation layers)
+- ✅ Verified: handoff.json created successfully in test workspace
+
+**Previous Update:** 2025-11-16 08:12 UTC by Claude Code
 - ✅ **File-Based Delegation (GAD-003) COMPLETE** - E2E test validates full PLANNING workflow
 - ✅ Fixed planning_handler.py task IDs (scope_negotiation → 05_scope_negotiation, architecture_generation → 05_handoff)
 - ✅ Added architecture.json to artifact registry in core_orchestrator.py
