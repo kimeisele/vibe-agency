@@ -55,3 +55,4 @@ workspaces/test_*/
 !workspaces/*/project_manifest.json
 .claude/settings.local.json
 workspaces/yoga-studio-mvp-001/
+workspaces/manual-test-project/
