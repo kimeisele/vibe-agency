@@ -1,0 +1,8 @@
+feat(planning): Add TODO-based handoffs for agent context transfer
+
+Implements simple JSON-based handoff mechanism between PLANNING agents.
+Enables workflow transparency, crash recovery, and audit compliance.
+
+- 90 lines of code (zero abstractions)
+- Verified working (full PLANNING workflow tested)
+- Handoff chain: LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER → GENESIS_BLUEPRINT
