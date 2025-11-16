@@ -668,10 +668,10 @@ class CoreOrchestrator:
         }
 
         # Write request to STDOUT with markers (for parsing)
-        print("---INTELLIGENCE_REQUEST_START---", file=sys.stderr)
+        print("---INTELLIGENCE_REQUEST_START---")
         print(json.dumps(request, indent=2))
         sys.stdout.flush()
-        print("---INTELLIGENCE_REQUEST_END---", file=sys.stderr)
+        print("---INTELLIGENCE_REQUEST_END---")
 
         # GAD-003: Initialize tool executor if available
         tool_executor = ToolExecutor() if TOOLS_AVAILABLE else None
