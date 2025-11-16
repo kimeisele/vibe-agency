@@ -35,6 +35,25 @@ if [ -f "tests/test_planning_workflow.py" ]; then
   fi
 fi
 
+# Check linting status (quick check)
+LINTING_STATUS="unknown"
+LINTING_ERROR_COUNT=0
+if command -v uv &>/dev/null; then
+  # Run ruff and capture output (set +e to not exit on error)
+  set +e
+  LINTING_OUTPUT=$(uv run ruff check . 2>&1)
+  RUFF_EXIT_CODE=$?
+  set -e
+
+  if [ $RUFF_EXIT_CODE -eq 0 ]; then
+    LINTING_STATUS="clean"
+  else
+    LINTING_STATUS="errors_found"
+    # Count errors (ruff outputs "Found X errors")
+    LINTING_ERROR_COUNT=$(echo "$LINTING_OUTPUT" | grep -oP 'Found \K\d+' || echo "0")
+  fi
+fi
+
 # Check if session handoff exists
 SESSION_HANDOFF_EXISTS="false"
 if [ -f ".session_handoff.json" ]; then
@@ -56,6 +75,10 @@ cat > "$STATUS_FILE" <<EOF
   },
   "tests": {
     "planning_workflow": "$TESTS_STATUS"
+  },
+  "linting": {
+    "status": "$LINTING_STATUS",
+    "error_count": $LINTING_ERROR_COUNT
   },
   "session_handoff_exists": $SESSION_HANDOFF_EXISTS,
   "generated_by": "bin/update-system-status.sh"

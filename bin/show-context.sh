@@ -59,12 +59,17 @@ if [ -f "$SYSTEM_STATUS" ]; then
   LAST_COMMIT_MSG=$(grep '"message"' "$SYSTEM_STATUS" | sed 's/.*: "\(.*\)".*/\1/')
   CLEAN=$(grep '"working_directory_clean"' "$SYSTEM_STATUS" | sed 's/.*: \(.*\)/\1/' | tr -d ',')
   TESTS=$(grep '"planning_workflow"' "$SYSTEM_STATUS" | sed 's/.*: "\(.*\)".*/\1/')
+  LINTING_STATUS=$(grep -A 2 '"linting":' "$SYSTEM_STATUS" | grep '"status"' | sed 's/.*: "\(.*\)".*/\1/')
+  LINTING_ERRORS=$(grep -A 2 '"linting":' "$SYSTEM_STATUS" | grep '"error_count"' | sed 's/.*: \(.*\)/\1/' | tr -d ',')
 
   echo "Last updated: $TIMESTAMP"
   echo "Current branch: $BRANCH"
   echo "Last commit: $LAST_COMMIT_SHA - $LAST_COMMIT_MSG"
-  echo "Working directory: $([ "$CLEAN" = "true" ] && echo "✅ Clean" || echo "⚠️  Modified")"
-  echo "Tests (planning): $([ "$TESTS" = "passing" ] && echo "✅ Passing" || echo "❌ $TESTS")"
+  echo ""
+  echo "🔍 PRE-COMMIT CHECKS:"
+  echo "  Linting: $([ "$LINTING_STATUS" = "clean" ] && echo "✅ Clean" || echo "❌ $LINTING_ERRORS errors found - RUN: uv run ruff check . --fix")"
+  echo "  Tests (planning): $([ "$TESTS" = "passing" ] && echo "✅ Passing" || echo "❌ $TESTS")"
+  echo "  Working directory: $([ "$CLEAN" = "true" ] && echo "✅ Clean" || echo "⚠️  Modified")"
   echo ""
 else
   echo "⚠️  No system status found ($SYSTEM_STATUS)"
