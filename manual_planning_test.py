@@ -65,78 +65,305 @@ def create_mock_response(request_file: Path, request: dict):
 
     print(f"\n🤔 Generating mock response for {agent}.{task_id}...")
 
-    # Mock responses for different agents
+    # Mock responses for different agents (schema-compliant)
     if agent == "VIBE_ALIGNER":
-        if "education" in task_id:
+        # Task: 05_scope_negotiation (planning_handler.py:339-344)
+        # Schema: feature_spec.json (ORCHESTRATION_data_contracts.yaml:71-177)
+        # Required: project, features, scope_negotiation, validation, metadata
+        if task_id == "05_scope_negotiation":
             result = {
-                "education_complete": True,
-                "user_understanding": "User understands the process",
-            }
-        elif "feature" in task_id:
-            result = {
-                "features": ["User authentication", "Dashboard", "Data export"],
-                "extracted_requirements": "Basic MVP features identified",
-            }
-        elif "feasibility" in task_id:
-            result = {
-                "technical_feasibility": "HIGH",
-                "business_feasibility": "MEDIUM",
-                "recommendations": "Proceed with MVP",
-            }
-        elif "gap" in task_id:
-            result = {"gaps": [], "clarifications_needed": []}
-        elif "scope" in task_id:
-            result = {
-                "mvp_features": ["User auth", "Dashboard"],
-                "deferred_features": ["Data export"],
-                "negotiation_complete": True,
+                "project": {
+                    "name": "SimplePM - Project Management for Small Teams",
+                    "category": "Web App",
+                    "scale": "Small Team",
+                    "target_scope": "mvp",
+                    "core_problem": "Small teams (5-10 people) struggle with overcomplicated project management tools that have too many features and poor UX",
+                    "target_users": "Small development teams, design agencies, and consultancies",
+                },
+                "features": [
+                    {
+                        "id": "F001",
+                        "name": "User Authentication",
+                        "priority": "must_have",
+                        "complexity_score": 3,
+                        "estimated_effort": "2 days",
+                        "input": {
+                            "format": "Email + password form",
+                            "example": "user@example.com, password123",
+                            "constraints": "Email validation, password min 8 chars",
+                        },
+                        "processing": {
+                            "description": "Hash password, create session token",
+                            "external_dependencies": ["bcrypt", "JWT library"],
+                            "side_effects": ["User session created", "Auth token stored"],
+                        },
+                        "output": {
+                            "format": "Auth token + user profile",
+                            "example": "{'token': 'abc123', 'user': {...}}",
+                            "success_criteria": "User can login and access dashboard",
+                        },
+                        "dependencies": {
+                            "required": [],
+                            "optional": [],
+                        },
+                        "fae_validation": {
+                            "passed": True,
+                            "constraints_checked": ["Security", "Data validation"],
+                            "issues": [],
+                        },
+                    },
+                    {
+                        "id": "F002",
+                        "name": "Project Dashboard",
+                        "priority": "must_have",
+                        "complexity_score": 5,
+                        "estimated_effort": "3 days",
+                        "input": {
+                            "format": "User ID from auth",
+                            "example": "user_123",
+                            "constraints": "Authenticated user required",
+                        },
+                        "processing": {
+                            "description": "Fetch user projects, render dashboard UI",
+                            "external_dependencies": ["React", "API backend"],
+                            "side_effects": ["Dashboard view loaded"],
+                        },
+                        "output": {
+                            "format": "Dashboard page with project list",
+                            "example": "List of 5 projects with status",
+                            "success_criteria": "User sees all their projects",
+                        },
+                        "dependencies": {
+                            "required": [
+                                {
+                                    "component": "F001",
+                                    "reason": "Needs authentication",
+                                    "source": "Auth Service",
+                                }
+                            ],
+                            "optional": [],
+                        },
+                        "fae_validation": {
+                            "passed": True,
+                            "constraints_checked": ["Performance", "UX"],
+                            "issues": [],
+                        },
+                    },
+                ],
+                "scope_negotiation": {
+                    "total_complexity": 8,
+                    "complexity_breakdown": {
+                        "must_have": 8,
+                        "should_have": 0,
+                        "wont_have_v1": 5,
+                    },
+                    "timeline_estimate": "1 week MVP",
+                    "v1_exclusions": ["Team Collaboration", "Data Export", "Mobile App"],
+                },
+                "validation": {
+                    "fae_passed": True,
+                    "fdg_passed": True,
+                    "apce_passed": True,
+                    "all_features_complete": True,
+                    "ready_for_genesis": True,
+                },
+                "metadata": {
+                    "vibe_version": "1.0",
+                    "created_at": "2025-11-16T08:00:00Z",
+                    "user_educated": True,
+                    "scope_negotiated": True,
+                },
             }
         else:
             result = {"status": "success", "data": f"Mock response for {task_id}"}
 
     elif agent == "MARKET_RESEARCHER":
+        # Task: competitor_identification (planning_handler.py:150-155)
         result = {
-            "market_size": "Large addressable market",
-            "competitors": ["Competitor A", "Competitor B"],
-            "market_trends": "Growing demand for solution",
+            "competitors": [
+                {"name": "Asana", "market_position": "Leader"},
+                {"name": "Trello", "market_position": "Challenger"},
+            ],
+            "market_size": "$4.5B TAM",
+            "trends": ["Remote work adoption", "AI-powered project management"],
+            "opportunities": "Underserved small teams market",
         }
 
     elif agent == "TECH_RESEARCHER":
+        # Task: api_evaluation (planning_handler.py:157-162)
         result = {
-            "tech_stack_recommendation": "Python + React",
-            "architecture": "Serverless",
-            "considerations": "Scalability is key",
+            "recommended_stack": {
+                "backend": "Python (FastAPI)",
+                "frontend": "React + TypeScript",
+                "database": "PostgreSQL",
+                "hosting": "AWS Lambda + RDS",
+            },
+            "api_integrations": ["Auth0", "Stripe", "SendGrid"],
+            "architectural_pattern": "Serverless microservices",
+            "scalability_notes": "Auto-scaling with Lambda, RDS read replicas for growth",
         }
 
     elif agent == "FACT_VALIDATOR":
-        result = {"validation_status": "VERIFIED", "issues": [], "confidence": "HIGH"}
+        # Task: knowledge_base_audit (planning_handler.py:165-170)
+        # CRITICAL: quality_score must be >= 50 or workflow blocks
+        result = {
+            "quality_score": 85,
+            "flagged_issues": [],
+            "validated_claims": [
+                "Market size estimate verified via Gartner report",
+                "Tech stack choices align with project constraints",
+            ],
+            "confidence": "HIGH",
+        }
 
     elif agent == "USER_RESEARCHER":
+        # Task: persona_generation (planning_handler.py:186-192)
         result = {
-            "user_insights": "Users need simple interface",
-            "pain_points": ["Complex workflows", "Slow performance"],
-            "preferences": "Mobile-first design",
+            "personas": [
+                {
+                    "name": "Sarah - Project Manager",
+                    "goals": "Track team progress efficiently",
+                    "pain_points": "Complex tools, poor mobile UX",
+                },
+                {
+                    "name": "Mike - Developer",
+                    "goals": "Quick task updates",
+                    "pain_points": "Too many notifications",
+                },
+            ],
+            "user_insights": "Small teams want simplicity over enterprise features",
         }
 
     elif agent == "LEAN_CANVAS_VALIDATOR":
-        result = {
-            "canvas_valid": True,
-            "problem": "Users struggle with X",
-            "solution": "Our product solves X",
-            "unique_value": "Simplicity + Speed",
-            "validation_score": 8,
-        }
+        # LEAN_CANVAS_VALIDATOR has 3 tasks (planning_handler.py:229-309)
+
+        if task_id == "01_canvas_interview":
+            # Task 01: Canvas Interview (collect 9 fields)
+            result = {
+                "problem": "Small teams struggle with overcomplicated project tools",
+                "solution": "Simple, focused project management for 5-10 person teams",
+                "unique_value_proposition": "Get started in 5 minutes, not 5 hours",
+                "unfair_advantage": "Team has built PM tools at 3 previous startups",
+                "customer_segments": ["Small dev teams", "Design agencies", "Consultancies"],
+                "key_metrics": ["Weekly active teams", "Tasks created per team", "Retention rate"],
+                "channels": ["Product Hunt launch", "Developer communities", "Content marketing"],
+                "cost_structure": ["AWS hosting", "Developer salaries", "Marketing spend"],
+                "revenue_streams": ["Monthly SaaS subscription ($20/month per team)"],
+            }
+
+        elif task_id == "02_risk_analysis":
+            # Task 02: Risk Analysis
+            result = {
+                "riskiest_assumptions": [
+                    {
+                        "assumption": "Small teams will pay $20/month",
+                        "risk_level": "HIGH",
+                        "validation_method": "Landing page + pre-sales",
+                    },
+                    {
+                        "assumption": "Users want simplicity over features",
+                        "risk_level": "MEDIUM",
+                        "validation_method": "User interviews (10 target customers)",
+                    },
+                ]
+            }
+
+        elif task_id == "03_handoff":
+            # Task 03: Handoff - Generate lean_canvas_summary.json
+            # CRITICAL: readiness.status must be "READY"
+            # Schema requires: canvas_fields (not canvas), riskiest_assumptions, readiness
+            result = {
+                "version": "1.0",
+                "canvas_fields": {
+                    "problem": "Small teams struggle with overcomplicated project tools. Too many features, poor UX, expensive pricing.",
+                    "customer_segments": "Small dev teams (5-10 people), Design agencies, Consultancies",
+                    "unique_value_proposition": "Get started in 5 minutes, not 5 hours - Simple PM tool built for small teams",
+                    "solution": "User authentication, Project dashboard, Task tracking - Core PM features only",
+                    "channels": "Product Hunt launch, Developer communities, Content marketing, GitHub sponsorships",
+                    "revenue_streams": "Monthly SaaS subscription ($20/month per team)",
+                    "cost_structure": "AWS hosting ($100/mo), Developer salaries ($8k/mo), Marketing spend ($1k/mo)",
+                    "key_metrics": "Weekly active teams, Tasks created per team, Monthly retention rate",
+                    "unfair_advantage": "Team has built PM tools at 3 previous startups - Deep domain knowledge",
+                },
+                "riskiest_assumptions": [
+                    {
+                        "assumption": "Small teams will pay $20/month",
+                        "why_risky": "Price point untested, competition offers free tiers",
+                        "validation_method": "Landing page + pre-sales campaign with 50 signups target",
+                    },
+                    {
+                        "assumption": "Users want simplicity over features",
+                        "why_risky": "May underestimate feature requirements",
+                        "validation_method": "User interviews with 10 target customers",
+                    },
+                ],
+                "readiness": {
+                    "status": "READY",
+                    "confidence_level": "high",
+                    "missing_inputs": [],
+                },
+            }
+
+        else:
+            result = {"status": "success", "data": f"Mock response for {task_id}"}
 
     elif agent == "GENESIS_BLUEPRINT":
-        result = {
-            "feature_spec": {
-                "features": [
-                    {"name": "Authentication", "priority": "P0"},
-                    {"name": "Dashboard", "priority": "P0"},
+        # Task: 05_handoff (planning_handler.py:397-402)
+        # Must return: modules, dependencies, build_config, test_strategy
+        if task_id == "05_handoff":
+            result = {
+                "architecture_pattern": "Serverless Microservices",
+                "modules": [
+                    {
+                        "name": "auth-service",
+                        "type": "backend",
+                        "tech": "Python FastAPI",
+                        "responsibilities": ["User authentication", "Session management"],
+                    },
+                    {
+                        "name": "project-service",
+                        "type": "backend",
+                        "tech": "Python FastAPI",
+                        "responsibilities": ["Project CRUD", "Task management"],
+                    },
+                    {
+                        "name": "web-ui",
+                        "type": "frontend",
+                        "tech": "React + TypeScript",
+                        "responsibilities": ["User interface", "State management"],
+                    },
                 ],
-                "user_stories": ["As user, I can login", "As user, I can view dashboard"],
+                "dependencies": [
+                    {"from": "web-ui", "to": "auth-service", "type": "REST API"},
+                    {"from": "web-ui", "to": "project-service", "type": "REST API"},
+                    {"from": "project-service", "to": "auth-service", "type": "Auth validation"},
+                ],
+                "build_config": {
+                    "backend": {
+                        "runtime": "Python 3.11",
+                        "package_manager": "uv",
+                        "deployment": "AWS Lambda",
+                    },
+                    "frontend": {
+                        "runtime": "Node 20",
+                        "build_tool": "Vite",
+                        "deployment": "S3 + CloudFront",
+                    },
+                },
+                "test_strategy": {
+                    "unit_tests": "pytest (backend), Jest (frontend)",
+                    "integration_tests": "Postman collections",
+                    "e2e_tests": "Playwright",
+                    "coverage_target": "80%",
+                },
+                "deployment_plan": {
+                    "environments": ["dev", "staging", "prod"],
+                    "ci_cd": "GitHub Actions",
+                    "infrastructure": "Terraform",
+                },
             }
-        }
+        else:
+            result = {"status": "success", "data": f"Mock response for {task_id}"}
 
     else:
         result = {

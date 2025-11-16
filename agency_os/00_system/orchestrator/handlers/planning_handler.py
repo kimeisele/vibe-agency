@@ -338,7 +338,7 @@ class PlanningHandler:
         # Execute VIBE_ALIGNER
         feature_spec = self.orchestrator.execute_agent(
             agent_name="VIBE_ALIGNER",
-            task_id="scope_negotiation",
+            task_id="05_scope_negotiation",
             inputs={"project_context": manifest.metadata, "lean_canvas_summary": lean_canvas},
             manifest=manifest,
         )
@@ -396,7 +396,7 @@ class PlanningHandler:
         # Execute GENESIS_BLUEPRINT
         architecture_output = self.orchestrator.execute_agent(
             agent_name="GENESIS_BLUEPRINT",
-            task_id="architecture_generation",
+            task_id="05_handoff",
             inputs={"feature_spec": feature_spec, "project_context": manifest.metadata},
             manifest=manifest,
         )
