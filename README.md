@@ -27,11 +27,24 @@
 
 ### What Makes It Special?
 
-This is **NOT a multi-agent AI system** or automation platform. It's a **structured prompt library** with:
+This **IS a multi-agent system** with 7 specialized agents for software planning. However, it's NOT autonomous - it uses **delegated execution** where Claude Code (the human operator) executes each agent's task manually.
+
+### Architecture Overview
+
+**7 Agents with 31 Tasks:**
+- **VIBE_ALIGNER** (planning) - Feature extraction & scope negotiation
+- **LEAN_CANVAS_VALIDATOR** (planning) - Idea validation & business model
+- **GENESIS_BLUEPRINT** (planning) - Architecture & tech stack selection
+- **MARKET_RESEARCHER** (research) - Market opportunity analysis
+- **TECH_RESEARCHER** (research) - Technology stack research
+- **FACT_VALIDATOR** (research) - Claim validation & risk analysis
+- **USER_RESEARCHER** (research) - User research & personas
+
+**Execution Model:**
 - 📚 **6,400+ lines of curated domain knowledge** (project templates, tech stacks, constraints)
 - 🧩 **Modular prompt templates** (personality + tasks + knowledge + validation gates)
-- 🎯 **Single-LLM workflow** (Claude processes each task manually)
-- 📂 **File-based architecture** (no databases, no external services)
+- 👤 **Manual operator workflow** (Claude Code processes each task, shows requests/responses)
+- 📂 **File-based delegation** (no databases, no external services)
 
 **What it does:**
 - ✅ Turns vague ideas into concrete feature lists
@@ -42,12 +55,12 @@ This is **NOT a multi-agent AI system** or automation platform. It's a **structu
 - ✅ Generates architecture blueprints ready for development
 
 **What it's NOT:**
+- ❌ Not autonomous (requires Claude Code operator)
 - ❌ Not a code generator (it plans, doesn't code)
-- ❌ Not autonomous (Claude processes each step manually)*
 - ❌ Not a framework you install (it's a prompt library + knowledge bases)
-- ❌ Not a multi-agent system (single LLM, no agent communication)
+- ❌ Not real-time research (research agents validate static knowledge, Phase 2b not implemented)*
 
-_*Note: As of v1.2.1 (ADR-003), the system supports both **delegated execution** (default - Claude Code integration) and **autonomous mode** (legacy - for testing). See [Architecture](#-architecture) below._
+_*See [Research Agent Status](#research-agent-status) below for details._
 
 ---
 
@@ -56,13 +69,17 @@ _*Note: As of v1.2.1 (ADR-003), the system supports both **delegated execution**
 ### Setup (One Command)
 
 ```bash
-make install
+# Standard installation (planning agents only)
+uv sync
+
+# With research agent support (includes web scraping tools)
+uv sync --extra dev
 ```
 
-Or manually:
+Or with make:
 
 ```bash
-./setup.sh
+make install
 ```
 
 ### Usage
@@ -108,6 +125,45 @@ make security
 ### For Devcontainer Users
 
 Open in VS Code with Dev Containers extension. Everything auto-installs.
+
+---
+
+## 🔬 Research Agent Status
+
+**Current State:** ⚠️ **Partial Implementation**
+
+Vibe Agency includes 4 research agents:
+- **MARKET_RESEARCHER** - Analyzes market opportunities and competitive landscape
+- **TECH_RESEARCHER** - Researches technology stacks and framework recommendations
+- **FACT_VALIDATOR** - Validates technical claims and identifies risks
+- **USER_RESEARCHER** - Develops user personas and research insights
+
+### What Research Agents Currently Do
+
+✅ **Implemented:**
+- Validate ideas against 6,400+ lines of knowledge bases
+- Extract and summarize market insights from knowledge bases
+- Generate tech stack recommendations with trade-offs
+- Identify technical risks and security gaps
+- Create user personas based on market research
+
+❌ **NOT Implemented (Phase 2b):**
+- Real-time web search (Google, Crunchbase, ProductHunt)
+- Live market data integration
+- Current technology trends
+- Real-time competitor analysis
+
+### Why This Matters
+
+The research agents are **passive validators**, not **active researchers**. They:
+- ✅ Read static YAML knowledge bases
+- ✅ Apply heuristics and rules
+- ✅ Generate validation reports
+- ❌ Cannot execute live web searches (requires Phase 2b orchestrator integration)
+
+**Timeline for Real-Time Research:** If you need Phase 2b (live web search integration), that's a separate 6-8 hour implementation. For now, use the agents as validation/analysis tools against your knowledge bases.
+
+**Recommendation:** Use research agents to validate and refine your ideas, then supplement with manual market research if needed.
 
 ---
 
@@ -493,24 +549,32 @@ Beginners can use the `simple_crud_learning` template:
 
 ## 🚦 Current Status
 
-**Version:** 1.0 (RELEASED)
-- ✅ All 7 agents implemented (31 tasks total)
-- ✅ Complete knowledge bases (18 templates, 8 tech stacks, 6,400+ lines)
-- ✅ All tests passing (23/23 integration tests)
-- ✅ Complete documentation (5 comprehensive guides)
-- ✅ Production-ready NFRs (security, performance, reliability)
+**Version:** 1.2.1 (Production-Ready - Planning Only)
 
-**Maturity:** Production-Ready
-- Core system: 100% functional
-- Documentation: Complete
-- Testing: All passing
-- Ready for production use
+### What's Complete ✅
+- ✅ **3 Planning Agents** fully functional (VIBE_ALIGNER, LEAN_CANVAS_VALIDATOR, GENESIS_BLUEPRINT)
+- ✅ **Complete knowledge bases** (18 templates, 8 tech stacks, 6,400+ lines)
+- ✅ **Quality gates** and validation tests (107/108 passing)
+- ✅ **File-based delegation** architecture (no external services)
+- ✅ **Session handoff system** (multi-agent coordination)
 
-**Known Limitations:**
-- No automated runtime (manual Claude processing)
-- Templates focus on web/mobile (limited desktop, IoT, embedded)
-- Rates assume EU/US market (adjust for other regions)
-- English only (no i18n)
+### What's Partial ⚠️
+- ⚠️ **4 Research Agents** implemented but Phase 2b missing
+  - Can validate against knowledge bases ✅
+  - Cannot execute real-time web searches ❌ (6-8 hours to implement)
+- ⚠️ **Templates** focus on web/mobile (limited desktop, IoT, embedded)
+- ⚠️ **Rates** assume EU/US market
+
+### What's Missing ❌
+- ❌ Code generation (planning only, not coding)
+- ❌ Autonomous execution (requires Claude Code operator)
+- ❌ Non-English languages
+
+**Maturity Level:** Production-Ready for Planning Workflows
+- Planning agents: 100% functional
+- Research agents: 50% functional (validation only, no web search)
+- No breaking issues or regressions
+- Suitable for production use with operator oversight
 
 ---
 
