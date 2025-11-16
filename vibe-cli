@@ -21,6 +21,7 @@ Version: 1.0 (Delegation Mode - No Direct API Calls)
 import sys
 from pathlib import Path
 
+
 def _ensure_uv_environment():
     """
     Ensure UV environment is set up (Layer 2 of 4-layer defense).
@@ -62,7 +63,10 @@ def _ensure_uv_environment():
         print("from the locked versions in uv.lock (deterministic builds).", file=sys.stderr)
         print("", file=sys.stderr)
         print("Why this error?", file=sys.stderr)
-        print("  vibe-agency uses UV for dependency management (10-15x faster than pip).", file=sys.stderr)
+        print(
+            "  vibe-agency uses UV for dependency management (10-15x faster than pip).",
+            file=sys.stderr,
+        )
         print("  Dependencies are locked in uv.lock for reproducibility.", file=sys.stderr)
         print("  See: MIGRATION_NOTES.md for more info.", file=sys.stderr)
         sys.exit(1)
@@ -74,6 +78,7 @@ def _ensure_uv_environment():
         # Running outside .venv - might be manual activation or system Python
         # Don't fail hard, but warn (imports will fail if truly wrong)
         import os
+
         if not os.getenv("VIRTUAL_ENV"):  # Not in any venv
             print("⚠️  Warning: Not running in UV environment", file=sys.stderr)
             print("", file=sys.stderr)
@@ -82,24 +87,24 @@ def _ensure_uv_environment():
             print("", file=sys.stderr)
             # Don't exit - let imports fail naturally if deps are wrong
 
+
 # Execute environment check BEFORE any other imports
 _ensure_uv_environment()
+
+import json
+import logging
 
 # ============================================================================
 # IMPORTS (After Dependency Check)
 # ============================================================================
 import os
-import json
-import logging
 import subprocess
-import yaml
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] %(message)s'
-)
+import yaml
+
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -122,16 +127,27 @@ class VibeCLI:
         self.repo_root = Path(repo_root)
 
         # Orchestrator path
-        self.orchestrator_path = self.repo_root / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+        self.orchestrator_path = (
+            self.repo_root / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+        )
 
         if not self.orchestrator_path.exists():
             raise FileNotFoundError(f"Orchestrator not found: {self.orchestrator_path}")
 
         # Tool definitions path (GAD-003)
-        self.tool_definitions_path = self.repo_root / "agency_os" / "00_system" / "orchestrator" / "tools" / "tool_definitions.yaml"
+        self.tool_definitions_path = (
+            self.repo_root
+            / "agency_os"
+            / "00_system"
+            / "orchestrator"
+            / "tools"
+            / "tool_definitions.yaml"
+        )
 
         # Tool executor path (for local tool execution)
-        self.tool_executor_path = self.repo_root / "agency_os" / "00_system" / "orchestrator" / "tools"
+        self.tool_executor_path = (
+            self.repo_root / "agency_os" / "00_system" / "orchestrator" / "tools"
+        )
 
     def run_project(self, project_id: str, mode: str = "delegated") -> None:
         """
@@ -170,7 +186,7 @@ class VibeCLI:
             str(self.orchestrator_path),
             str(self.repo_root),
             project_id,
-            "--mode=delegated"
+            "--mode=delegated",
         ]
 
         logger.info(f"   Command: {' '.join(cmd)}")
@@ -182,7 +198,7 @@ class VibeCLI:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1  # Line buffered
+            bufsize=1,  # Line buffered
         )
 
         logger.info("✅ Orchestrator launched (PID: {})".format(process.pid))
@@ -219,7 +235,7 @@ class VibeCLI:
                 if "---INTELLIGENCE_REQUEST_END---" in line:
                     capturing_request = False
                     # Parse and handle request
-                    request_json = ''.join(intelligence_request_buffer)
+                    request_json = "".join(intelligence_request_buffer)
                     self._handle_intelligence_request(request_json, process)
                     continue
 
@@ -227,7 +243,7 @@ class VibeCLI:
                     intelligence_request_buffer.append(line)
                 else:
                     # Regular output - print to console
-                    print(line, end='')
+                    print(line, end="")
 
                 # Also check stderr for log messages
                 # (non-blocking read would be better, but this works for now)
@@ -261,10 +277,10 @@ class VibeCLI:
             # Parse request
             request = json.loads(request_json)
 
-            agent = request.get('agent')
-            task_id = request.get('task_id')
-            prompt = request.get('prompt')
-            context = request.get('context', {})
+            agent = request.get("agent")
+            task_id = request.get("task_id")
+            prompt = request.get("prompt")
+            context = request.get("context", {})
 
             logger.info(f"🤖 Intelligence Request:")
             logger.info(f"   Agent: {agent}")
@@ -273,7 +289,7 @@ class VibeCLI:
             logger.info(f"   Prompt length: {len(prompt)} chars")
 
             # Get project_id from context
-            project_id = context.get('project_id', 'unknown-project')
+            project_id = context.get("project_id", "unknown-project")
 
             # Delegate to Claude Code operator (FILE-BASED DELEGATION)
             logger.info(f"⚙️  Delegating prompt to Claude Code operator...")
@@ -285,10 +301,7 @@ class VibeCLI:
                 "agent": agent,
                 "task_id": task_id,
                 "result": result,
-                "metadata": {
-                    "executor": "vibe-cli",
-                    "model": "claude-3-5-sonnet-20241022"
-                }
+                "metadata": {"executor": "vibe-cli", "model": "claude-3-5-sonnet-20241022"},
             }
 
             # Send response to orchestrator via STDIN
@@ -304,7 +317,7 @@ class VibeCLI:
             error_response = {
                 "type": "INTELLIGENCE_RESPONSE",
                 "result": {"error": str(e)},
-                "metadata": {"error": True}
+                "metadata": {"error": True},
             }
             process.stdin.write(json.dumps(error_response) + "\n")
             process.stdin.flush()
@@ -338,11 +351,11 @@ class VibeCLI:
             logger.warning(f"Composition file not found: {composition_path}")
             return []
 
-        with open(composition_path, 'r') as f:
+        with open(composition_path, "r") as f:
             composition = yaml.safe_load(f)
 
         # Extract tool names
-        tool_names = composition.get('tools', [])
+        tool_names = composition.get("tools", [])
         if not tool_names:
             logger.debug(f"Agent {agent} has no tools configured")
             return []
@@ -352,14 +365,14 @@ class VibeCLI:
             logger.warning(f"Tool definitions not found: {self.tool_definitions_path}")
             return []
 
-        with open(self.tool_definitions_path, 'r') as f:
+        with open(self.tool_definitions_path, "r") as f:
             tool_definitions = yaml.safe_load(f)
 
         # Convert to Anthropic schema
         tools = []
         for tool_name in tool_names:
-            if tool_name in tool_definitions.get('tools', {}):
-                tool_def = tool_definitions['tools'][tool_name]
+            if tool_name in tool_definitions.get("tools", {}):
+                tool_def = tool_definitions["tools"][tool_name]
                 anthropic_tool = self._convert_yaml_to_anthropic_schema(tool_name, tool_def)
                 tools.append(anthropic_tool)
             else:
@@ -368,7 +381,9 @@ class VibeCLI:
         logger.info(f"Loaded {len(tools)} tools for agent {agent}: {[t['name'] for t in tools]}")
         return tools
 
-    def _convert_yaml_to_anthropic_schema(self, tool_name: str, tool_def: Dict[str, Any]) -> Dict[str, Any]:
+    def _convert_yaml_to_anthropic_schema(
+        self, tool_name: str, tool_def: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Convert YAML tool definition to Anthropic's JSON tool schema.
 
@@ -383,29 +398,25 @@ class VibeCLI:
         properties = {}
         required = []
 
-        for param_name, param_def in tool_def.get('parameters', {}).items():
+        for param_name, param_def in tool_def.get("parameters", {}).items():
             properties[param_name] = {
-                "type": param_def.get('type', 'string'),
-                "description": param_def.get('description', '')
+                "type": param_def.get("type", "string"),
+                "description": param_def.get("description", ""),
             }
 
             # Add default if specified
-            if 'default' in param_def:
-                properties[param_name]['default'] = param_def['default']
+            if "default" in param_def:
+                properties[param_name]["default"] = param_def["default"]
 
             # Track required parameters
-            if param_def.get('required', False):
+            if param_def.get("required", False):
                 required.append(param_name)
 
         # Return Anthropic tool schema
         return {
             "name": tool_name,
-            "description": tool_def.get('description', ''),
-            "input_schema": {
-                "type": "object",
-                "properties": properties,
-                "required": required
-            }
+            "description": tool_def.get("description", ""),
+            "input_schema": {"type": "object", "properties": properties, "required": required},
         }
 
     def _execute_tools(self, tool_use_blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -432,37 +443,43 @@ class VibeCLI:
         # Execute each tool
         results = []
         for tool_use in tool_use_blocks:
-            if tool_use.get('type') != 'tool_use':
+            if tool_use.get("type") != "tool_use":
                 continue
 
-            tool_name = tool_use.get('name')
-            tool_input = tool_use.get('input', {})
-            tool_use_id = tool_use.get('id')
+            tool_name = tool_use.get("name")
+            tool_input = tool_use.get("input", {})
+            tool_use_id = tool_use.get("id")
 
             logger.info(f"Executing tool: {tool_name} with input: {tool_input}")
 
             try:
                 # Execute tool
                 result = executor.execute_tool(tool_name, tool_input)
-                results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use_id,
-                    "content": json.dumps(result)
-                })
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": json.dumps(result),
+                    }
+                )
                 logger.info(f"Tool {tool_name} executed successfully")
 
             except Exception as e:
                 logger.error(f"Tool {tool_name} execution failed: {e}")
-                results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use_id,
-                    "content": json.dumps({"error": str(e)}),
-                    "is_error": True
-                })
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": json.dumps({"error": str(e)}),
+                        "is_error": True,
+                    }
+                )
 
         return results
 
-    def _delegate_to_operator(self, prompt: str, agent: str, task_id: str, project_id: str) -> Dict[str, Any]:
+    def _delegate_to_operator(
+        self, prompt: str, agent: str, task_id: str, project_id: str
+    ) -> Dict[str, Any]:
         """
         Delegate prompt execution to Claude Code operator via FILE-BASED exchange.
 
@@ -486,8 +503,8 @@ class VibeCLI:
               See: docs/architecture/EXECUTION_MODE_STRATEGY.md
               See: ARCHITECTURE_BREAKDOWN_REPORT.md
         """
-        import uuid
         import time
+        import uuid
         from datetime import datetime
         from pathlib import Path
 
@@ -512,12 +529,12 @@ class VibeCLI:
                 "delegator": "vibe-cli",
                 "mode": "file_based_delegation",
                 "request_file": str(request_file),
-                "response_file": str(response_file)
-            }
+                "response_file": str(response_file),
+            },
         }
 
         # Write request file
-        with open(request_file, 'w') as f:
+        with open(request_file, "w") as f:
             json.dump(delegation_request, f, indent=2)
 
         logger.info(f"📤 Delegation request written: {request_file}")
@@ -536,8 +553,7 @@ class VibeCLI:
                 if request_file.exists():
                     request_file.unlink()
                 raise TimeoutError(
-                    f"No response after {timeout}s. "
-                    f"Expected file: {response_file}"
+                    f"No response after {timeout}s. " f"Expected file: {response_file}"
                 )
 
             time.sleep(poll_interval)
@@ -593,7 +609,7 @@ class VibeCLI:
             str(self.orchestrator_path),
             str(self.repo_root),
             project_id,
-            "--mode=autonomous"
+            "--mode=autonomous",
         ]
 
         result = subprocess.run(cmd)
@@ -619,32 +635,23 @@ Notes:
   - MVP uses DELEGATION ONLY mode
   - Claude Code operator provides intelligence (not vibe-cli)
   - No API keys required (Claude Code handles authentication)
-        """
+        """,
     )
 
+    parser.add_argument("command", type=str, choices=["run"], help="Command to execute")
+    parser.add_argument("project_id", type=str, help="Project ID")
     parser.add_argument(
-        'command',
+        "--mode",
         type=str,
-        choices=['run'],
-        help='Command to execute'
+        choices=["delegated", "autonomous"],
+        default="delegated",
+        help="Execution mode (default: delegated)",
     )
     parser.add_argument(
-        'project_id',
-        type=str,
-        help='Project ID'
-    )
-    parser.add_argument(
-        '--mode',
-        type=str,
-        choices=['delegated', 'autonomous'],
-        default='delegated',
-        help='Execution mode (default: delegated)'
-    )
-    parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         type=Path,
         default=Path.cwd(),
-        help='Repository root (default: current directory)'
+        help="Repository root (default: current directory)",
     )
 
     args = parser.parse_args()
@@ -653,7 +660,7 @@ Notes:
     cli = VibeCLI(repo_root=args.repo_root)
 
     # Execute command
-    if args.command == 'run':
+    if args.command == "run":
         cli.run_project(args.project_id, mode=args.mode)
     else:
         parser.print_help()

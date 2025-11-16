@@ -6,11 +6,12 @@ to Claude Code operator via file-based exchange (instead of STDIN/STDOUT).
 """
 
 import json
-import pytest
-import time
-import threading
-from pathlib import Path
 import shutil
+import threading
+import time
+from pathlib import Path
+
+import pytest
 
 
 def test_file_based_delegation_flow():
@@ -40,13 +41,10 @@ def test_file_based_delegation_flow():
             "agent": "VIBE_ALIGNER",
             "task_id": "01_feature_extraction",
             "prompt": "Extract features from: Test project idea",
-            "metadata": {
-                "delegator": "vibe-cli",
-                "mode": "file_based_delegation"
-            }
+            "metadata": {"delegator": "vibe-cli", "mode": "file_based_delegation"},
         }
 
-        with open(request_file, 'w') as f:
+        with open(request_file, "w") as f:
             json.dump(request_data, f, indent=2)
 
         assert request_file.exists(), "Request file should be created"
@@ -63,19 +61,13 @@ def test_file_based_delegation_flow():
             # Generate response
             response_data = {
                 "result": {
-                    "features": [
-                        "Test feature 1",
-                        "Test feature 2"
-                    ],
-                    "scope_negotiation": {
-                        "mvp_features": 2,
-                        "total_features": 2
-                    }
+                    "features": ["Test feature 1", "Test feature 2"],
+                    "scope_negotiation": {"mvp_features": 2, "total_features": 2},
                 }
             }
 
             # Write response
-            with open(response_file, 'w') as f:
+            with open(response_file, "w") as f:
                 json.dump(response_data, f, indent=2)
 
         # Start operator simulation in background
@@ -140,10 +132,10 @@ def test_file_based_delegation_timeout():
             "request_id": request_id,
             "agent": "TEST_AGENT",
             "task_id": "timeout_test",
-            "prompt": "This will timeout"
+            "prompt": "This will timeout",
         }
 
-        with open(request_file, 'w') as f:
+        with open(request_file, "w") as f:
             json.dump(request_data, f)
 
         # Simulate polling with short timeout
@@ -190,14 +182,14 @@ def test_file_based_delegation_invalid_json():
             "request_id": request_id,
             "agent": "TEST_AGENT",
             "task_id": "invalid_json_test",
-            "prompt": "Test invalid JSON"
+            "prompt": "Test invalid JSON",
         }
 
-        with open(request_file, 'w') as f:
+        with open(request_file, "w") as f:
             json.dump(request_data, f)
 
         # Write INVALID JSON response
-        with open(response_file, 'w') as f:
+        with open(response_file, "w") as f:
             f.write("{ this is not valid json }")
 
         # Simulate reading response
@@ -236,7 +228,7 @@ def test_delegation_directory_creation():
 
         # Verify permissions allow file creation
         test_file = delegation_dir / "test.json"
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             json.dump({"test": "data"}, f)
 
         assert test_file.exists()
