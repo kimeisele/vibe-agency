@@ -2,7 +2,7 @@
 
 **Version:** 2.0
 **Purpose:** Prevent hallucination. Show REAL operational status, not design intent.
-**Last Updated:** 2025-11-15
+**Last Updated:** 2025-11-16
 
 ---
 
@@ -13,7 +13,7 @@
 3. **When docs contradict code, trust code**
 4. **When code contradicts tests, trust tests**
 5. **When in doubt: RUN THE VERIFICATION COMMAND**
-6. **ALWAYS run `uv run ruff check . --fix` BEFORE every commit** (CI/CD will fail otherwise)
+6. **ALWAYS use `./bin/commit-and-push.sh` to commit** (Auto-enforces linting, works like gravity)
 
 ---
 
@@ -62,6 +62,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `python3 manual_planning_test.py` |
 | **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
 | **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
+| **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.sh` (see linting status) |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
 | vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -331,37 +332,38 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 3. Check ARCHITECTURE_V2.md for intended design
 4. Only claim "missing" if no code exists
 
-### **🚨 BEFORE EVERY COMMIT (MANDATORY)**
+### **🚨 BEFORE EVERY COMMIT (AUTOMATIC ENFORCEMENT)**
 
-**CI/CD will FAIL if you skip this!**
+**Use the canonical commit script - it enforces linting like gravity!**
 
 ```bash
-# Step 1: Run ruff check and auto-fix
-uv run ruff check . --fix
+# ONE COMMAND to commit with automatic linting enforcement
+./bin/commit-and-push.sh "your commit message"
 
-# Step 2: Verify no errors remain
-uv run ruff check . --output-format=github
-
-# Step 3: Check formatting
-uv run ruff format --check .
-
-# Only THEN commit!
-git add . && git commit -m "..." && git push
+# What it does automatically:
+# 1. Runs ruff check --fix (auto-fixes errors)
+# 2. Runs ruff format (auto-formats code)
+# 3. BLOCKS commit if unfixable errors exist
+# 4. Commits and pushes if clean
+# 5. Updates system status for next agent
 ```
 
-**Why this is MANDATORY:**
-- CI/CD runs `.github/workflows/validate.yml` on every push
-- It runs `uv run ruff check . --output-format=github` (line 66)
-- If ruff check fails → CI/CD fails → PR cannot merge
-- Pre-commit hooks DON'T work (require user to run git config)
-- **YOU (Claude Code) are the operator → YOU must check before commit**
+**Why this works everywhere:**
+- ✅ Works in browser-based Claude Code (no git hooks needed)
+- ✅ Works in one-time environments (script is in repo)
+- ✅ Works in desktop (no manual setup)
+- ✅ Auto-fixes what it can, blocks what it can't
+- ✅ CI/CD remains final safety net
+
+**Architecture (Belt + Suspenders):**
+1. **Layer 1: Visibility** - `./bin/show-context.sh` displays linting status at top
+2. **Layer 2: Enforcement** - `./bin/commit-and-push.sh` blocks bad commits
+3. **Layer 3: Final Gate** - CI/CD catches anything that slips through
 
 **Common ruff errors:**
-- F401: Unused imports
-- E501: Line too long
-- F841: Unused variable
-
-**Auto-fix available:** `uv run ruff check . --fix`
+- F401: Unused imports (auto-fixable)
+- E501: Line too long (auto-fixable)
+- F821: Undefined name (NOT auto-fixable - blocks commit)
 
 ---
 
@@ -418,9 +420,20 @@ git add . && git commit -m "..." && git push
 
 ---
 
-**Last Updated:** 2025-11-16 11:25 UTC
-**Updated By:** Claude Code (Session: claude/continue-session-handoff-01SAywRRHvVSxGmTKRf61YML)
+**Last Updated:** 2025-11-16 13:40 UTC
+**Updated By:** Claude Code (Session: claude/add-context-script-01GjeoMDCyP1fUT3Jh7SyLMW)
 **Updates:**
+- ✅ **Automatic Linting Enforcement COMPLETE** - Belt + Suspenders approach
+- ✅ Layer 1 (Visibility): `show-context.sh` displays linting status at top
+- ✅ Layer 2 (Enforcement): `./bin/commit-and-push.sh` blocks bad commits
+- ✅ Layer 3 (Final Gate): CI/CD validation remains
+- ✅ Works everywhere: browser, desktop, one-time environments (no git hooks needed)
+- ✅ Auto-fixes what it can (F401, E501), blocks what it can't (F821)
+- ✅ Tested LIVE: Created linting errors, verified detection + blocking
+- ✅ Core Principle #6 updated: Use `./bin/commit-and-push.sh` instead of manual checklist
+- ✅ Zero abstractions: Just shell + JSON (like session handoff system)
+
+**Previous Update:** 2025-11-16 11:25 UTC by Claude Code
 - ✅ **Session Handoff Integration COMPLETE** - Holistic two-file handoff system
 - ✅ ONE command (`./bin/show-context.sh`) gives full session context
 - ✅ Two-file system: `.session_handoff.json` (manual) + `.system_status.json` (auto-updated)
