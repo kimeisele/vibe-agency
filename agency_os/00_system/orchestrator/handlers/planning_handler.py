@@ -304,8 +304,30 @@ class PlanningHandler:
 
         manifest.artifacts["lean_canvas_summary"] = lean_canvas
 
+        # Write handoff for next agent (VIBE_ALIGNER)
+        import json
+        from pathlib import Path
+
+        workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
+        handoff = {
+            "from_agent": "LEAN_CANVAS_VALIDATOR",
+            "to_agent": "VIBE_ALIGNER",
+            "completed": "Business validation (Lean Canvas)",
+            "todos": [
+                "Extract customer segments from lean_canvas_summary.json",
+                "Map features to customer problems and solutions",
+                "Calculate complexity using FAE_constraints.yaml",
+                "Start interactive scope negotiation with user",
+            ],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
+        handoff_path = workspace_path / "handoff.json"
+        with open(handoff_path, "w") as f:
+            json.dump(handoff, f, indent=2)
+
         logger.info(
-            "✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json (full sequence: 01→02→03)"
+            "✅ BUSINESS_VALIDATION complete → lean_canvas_summary.json + handoff.json (full sequence: 01→02→03)"
         )
 
     # -------------------------------------------------------------------------
@@ -335,11 +357,33 @@ class PlanningHandler:
                 "lean_canvas_summary.json not found - BUSINESS_VALIDATION must run first"
             )
 
+        # Load handoff from previous agent
+        import json
+        from pathlib import Path
+
+        workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
+        handoff_path = workspace_path / "handoff.json"
+
+        handoff_todos = None
+        if handoff_path.exists():
+            with open(handoff_path) as f:
+                handoff = json.load(f)
+                todos_list = handoff.get("todos", [])
+                handoff_todos = "\n".join(f"- {todo}" for todo in todos_list)
+                logger.info(f"📝 Loaded {len(todos_list)} TODOs from previous agent")
+        else:
+            handoff_todos = "No handoff found (starting fresh)"
+            logger.info("📝 No handoff found, agent starting fresh")
+
         # Execute VIBE_ALIGNER
         feature_spec = self.orchestrator.execute_agent(
             agent_name="VIBE_ALIGNER",
             task_id="05_scope_negotiation",
-            inputs={"project_context": manifest.metadata, "lean_canvas_summary": lean_canvas},
+            inputs={
+                "project_context": manifest.metadata,
+                "lean_canvas_summary": lean_canvas,
+                "handoff_todos": handoff_todos,
+            },
             manifest=manifest,
         )
 
@@ -358,7 +402,27 @@ class PlanningHandler:
 
         manifest.artifacts["feature_spec"] = feature_spec
 
-        logger.info("✅ FEATURE_SPECIFICATION complete → feature_spec.json")
+        # Write handoff for next agent (GENESIS_BLUEPRINT)
+        workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
+        handoff = {
+            "from_agent": "VIBE_ALIGNER",
+            "to_agent": "GENESIS_BLUEPRINT",
+            "completed": "Feature specification and scope negotiation",
+            "todos": [
+                "Select core modules from feature_spec.json",
+                "Design extension modules for complex features",
+                "Generate config schema (genesis.yaml)",
+                "Validate architecture against FAE constraints",
+                "Create code_gen_spec.json for CODING phase",
+            ],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
+        handoff_path = workspace_path / "handoff.json"
+        with open(handoff_path, "w") as f:
+            json.dump(handoff, f, indent=2)
+
+        logger.info("✅ FEATURE_SPECIFICATION complete → feature_spec.json + handoff.json")
 
     # -------------------------------------------------------------------------
     # ARCHITECTURE DESIGN STATE
@@ -393,11 +457,33 @@ class PlanningHandler:
                 "GENESIS_BLUEPRINT may request additional clarifications."
             )
 
+        # Load handoff from previous agent
+        import json
+        from pathlib import Path
+
+        workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
+        handoff_path = workspace_path / "handoff.json"
+
+        handoff_todos = None
+        if handoff_path.exists():
+            with open(handoff_path) as f:
+                handoff = json.load(f)
+                todos_list = handoff.get("todos", [])
+                handoff_todos = "\n".join(f"- {todo}" for todo in todos_list)
+                logger.info(f"📝 Loaded {len(todos_list)} TODOs from previous agent")
+        else:
+            handoff_todos = "No handoff found (starting fresh)"
+            logger.info("📝 No handoff found, agent starting fresh")
+
         # Execute GENESIS_BLUEPRINT
         architecture_output = self.orchestrator.execute_agent(
             agent_name="GENESIS_BLUEPRINT",
             task_id="05_handoff",
-            inputs={"feature_spec": feature_spec, "project_context": manifest.metadata},
+            inputs={
+                "feature_spec": feature_spec,
+                "project_context": manifest.metadata,
+                "handoff_todos": handoff_todos,
+            },
             manifest=manifest,
         )
 

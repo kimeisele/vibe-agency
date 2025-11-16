@@ -1,0 +1,131 @@
+{
+  "from_session": "claude/analyze-architecture-plan-01YTUh8kt2FP7W8KvzwQM28s",
+  "from_agent": "Claude Code (System Architect + Steward)",
+  "date": "2025-11-16",
+  "branch": "claude/analyze-architecture-plan-01YTUh8kt2FP7W8KvzwQM28s",
+
+  "completed": [
+    "Architecture analysis (comprehensive system review)",
+    "TODO-based handoffs implementation (PLANNING phase)",
+    "Impact assessment (data-driven, no speculation)",
+    "Documentation updates (CLAUDE.md, README.md)",
+    "Test verification (handoffs work end-to-end)"
+  ],
+
+  "artifacts_created": [
+    "ARCHITECTURE_ANALYSIS_2025-11-16.md",
+    "TODO_HANDOFFS_IMPACT_REPORT.md",
+    "PR_DESCRIPTION.md",
+    ".session_handoff.json"
+  ],
+
+  "code_changes": {
+    "files_modified": [
+      "agency_os/00_system/orchestrator/handlers/planning_handler.py"
+    ],
+    "lines_added": 90,
+    "complexity_added": 0,
+    "abstractions_added": 0,
+    "description": "Simple JSON read/write for handoffs between agents"
+  },
+
+  "commits": [
+    {
+      "sha": "ac2ae7e",
+      "message": "feat: Implement TODO-based handoffs between PLANNING agents"
+    },
+    {
+      "sha": "dd398de",
+      "message": "docs: Update CLAUDE.md with TODO-based handoffs status"
+    },
+    {
+      "sha": "372747f",
+      "message": "docs: Add TODO-based handoffs to README architecture section"
+    },
+    {
+      "sha": "ce39fee",
+      "message": "docs: Add data-driven impact assessment for TODO-handoffs"
+    },
+    {
+      "sha": "4005f5d",
+      "message": "docs: Add comprehensive architecture analysis (2025-11-16)"
+    }
+  ],
+
+  "next_session_todos": [
+    "CRITICAL: Design holistic session handoff integration",
+    "Problem: .session_handoff.json exists but 0% integrated (only manual cat)",
+    "Reality: Session-wechsel happen CONSTANTLY (every PR = new session)",
+    "Requirements:",
+    "  - Robust (not error-prone manual process)",
+    "  - Minimal code (mainly JSON/data, not abstractions)",
+    "  - Holistic (two handoff types: manual session + automatic system status)",
+    "  - Simple integration (maybe git hooks + JSON files)",
+    "Design two handoff mechanisms:",
+    "  Type 1: Manual Session Handoff (PR end → next agent)",
+    "  Type 2: System Status Beat (git push/pull → auto-update status)",
+    "Goal: Next agent runs ONE command (e.g. cat .session_handoff.json) and has full context",
+    "---",
+    "AFTER session handoff design:",
+    "Review PR description (PR_DESCRIPTION.md) and decide: merge or adjust",
+    "Choose next priority: Resume flag, HITL approval, or CODING phase handoffs"
+  ],
+
+  "context_for_next_session": {
+    "system_state": "Stable - all tests pass, handoffs verified working",
+    "critical_insight": "Session handoffs happen CONSTANTLY (every PR), not rarely. Need automated solution.",
+    "known_issues": [
+      "AUDITOR quality gate missing task files (separate system, not blocking)",
+      "pytest not installed by default (documented in CLAUDE.md)",
+      ".session_handoff.json exists but 0% integrated (only manual cat command)"
+    ],
+    "key_decisions": [
+      "Handoffs use SIMPLE JSON (no validation, no schema, no abstractions)",
+      "Planning_handler.py uses _get_manifest_path().parent for workspace path",
+      "handoff_todos injected into agent inputs as formatted string",
+      "Agent handoffs (PLANNING) = 100% automated",
+      "Session handoffs = 0% automated (TO BE SOLVED)"
+    ],
+    "session_handoff_challenge": {
+      "problem": "How to automate session handoffs without adding complexity?",
+      "constraints": [
+        "Minimal code (prefer JSON/data over abstractions)",
+        "Robust (can't rely on manual cat)",
+        "Holistic (handle both manual session end + automatic status updates)"
+      ],
+      "ideas_to_explore": [
+        "Git hooks (post-commit, post-push) to auto-update session status",
+        "Simple shell script that updates .session_handoff.json",
+        "vibe-cli could show session context on startup (reads .session_handoff.json)",
+        "Separate .system_status.json for live status (git-driven)"
+      ],
+      "success_criteria": "Next agent runs ONE command and has full context"
+    },
+    "testing_notes": "manual_planning_test.py validates full workflow, shows handoff logging works"
+  },
+
+  "critical_files_to_understand": [
+    "planning_handler.py - Contains handoff logic",
+    "CLAUDE.md - Operational truth (what works, how to verify)",
+    "TODO_HANDOFFS_IMPACT_REPORT.md - Data-driven analysis of what changed",
+    "ARCHITECTURE_ANALYSIS_2025-11-16.md - System understanding"
+  ],
+
+  "anti_patterns_to_avoid": [
+    "DO NOT add validation/schema to handoffs (keep it simple)",
+    "DO NOT create HandoffManager class (no abstractions)",
+    "DO NOT batch multiple handoffs in one file (one file per transition)",
+    "DO NOT trust docs without running verification commands",
+    "DO NOT assume session handoffs are rare (they happen every PR)",
+    "DO NOT build complex orchestration for session handoffs (prefer git hooks + JSON)",
+    "DO NOT ignore the problem (manual cat is not robust enough for production)"
+  ],
+
+  "meta": {
+    "handoff_type": "session_handoff",
+    "scope": "project_development",
+    "level": "roadmap",
+    "created": "2025-11-16T10:30:00Z",
+    "format_version": "1.0"
+  }
+}

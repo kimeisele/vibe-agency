@@ -146,6 +146,12 @@ Vibe Agency uses a **Brain-Arm architecture**:
    - No human in the loop
    - Kept for backward compatibility
 
+**New in v1.3:** TODO-Based Handoffs
+- Agents pass context to next agent via simple `handoff.json` files
+- Contains completed tasks + TODO list for next agent
+- Benefits: Workflow transparency, resumable execution, human-readable audit trail
+- Zero complexity: Just JSON file read/write (no abstractions)
+
 **Learn more:**
 - 📖 [ADR-003: Delegated Execution Architecture](docs/architecture/ADR-003_Delegated_Execution_Architecture.md)
 - 📘 [Delegated Execution Guide](docs/guides/DELEGATED_EXECUTION_GUIDE.md)
