@@ -54,3 +54,4 @@ workspaces/test_*/
 # Exception: Keep project manifests
 !workspaces/*/project_manifest.json
 .claude/settings.local.json
+workspaces/yoga-studio-mvp-001/

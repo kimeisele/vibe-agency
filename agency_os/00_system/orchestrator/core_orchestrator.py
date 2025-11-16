@@ -20,21 +20,22 @@ Version: 1.1 (Phase 3 - GAD-002 + GAD-003)
 """
 
 import json
-import yaml
 import logging
-import sys
 import re
+import sys
 import xml.etree.ElementTree as ET
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 # Add runtime to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "runtime"))
 
-from llm_client import LLMClient, BudgetExceededError
+from llm_client import BudgetExceededError, LLMClient
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -412,24 +413,63 @@ class CoreOrchestrator:
         )
 
     def _get_manifest_path(self, project_id: str) -> Path:
-        """Get path to project manifest"""
-        # Find project directory by project_id
-        for workspace_dir in self.workspaces_dir.iterdir():
-            if workspace_dir.is_dir():
-                manifest_path = workspace_dir / "project_manifest.json"
-                if manifest_path.exists():
-                    try:
-                        with open(manifest_path, "r") as f:
-                            data = json.load(f)
-                            # Safely check for projectId (handle invalid manifests)
-                            if data.get("metadata", {}).get("projectId") == project_id:
-                                return manifest_path
-                    except (json.JSONDecodeError, KeyError) as e:
-                        # Skip invalid manifests (log warning but continue search)
-                        logger.warning(f"Skipping invalid manifest {manifest_path}: {e}")
-                        continue
+        """Get path to project manifest (robust search).
 
-        raise FileNotFoundError(f"Project {project_id} not found in workspaces")
+        Searches:
+          - workspaces/ (non-recursive and recursive)
+          - repo root (recursive) as a fallback
+
+        Accepts a match when either:
+          - metadata.projectId == project_id OR
+          - parent directory name == project_id
+        """
+        searched_paths = []
+        search_bases = []
+
+        # Prefer explicit workspaces dir, but fall back to repo root
+        if self.workspaces_dir.exists():
+            search_bases.append(self.workspaces_dir)
+        else:
+            logger.warning(
+                f"Workspaces directory not found at {self.workspaces_dir}; "
+                f"falling back to repo root search"
+            )
+            search_bases.append(self.repo_root)
+
+        # Always add repo_root as secondary fallback (avoids missing test fixtures)
+        if self.repo_root not in search_bases:
+            search_bases.append(self.repo_root)
+
+        for base in search_bases:
+            # search recursively to handle nested fixtures
+            for manifest_path in base.rglob("project_manifest.json"):
+                searched_paths.append(str(manifest_path))
+                try:
+                    with open(manifest_path, "r") as f:
+                        data = json.load(f)
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning(f"Skipping invalid manifest {manifest_path}: {e}")
+                    continue
+
+                # Prefer explicit metadata.projectId match
+                if data.get("metadata", {}).get("projectId") == project_id:
+                    logger.debug(f"Found manifest for {project_id} at {manifest_path}")
+                    return manifest_path
+
+                # Fallback: if workspace folder name matches project_id
+                if manifest_path.parent.name == project_id:
+                    logger.debug(
+                        f"Found manifest by parent folder match for {project_id} at {manifest_path}"
+                    )
+                    return manifest_path
+
+        # Nothing found — include searched bases for diagnostics
+        raise FileNotFoundError(
+            f"Project '{project_id}' not found in workspaces. "
+            f"Searched bases: {', '.join(str(p) for p in search_bases)}. "
+            f"Checked manifest candidates: {len(searched_paths)} "
+            f"(examples: {searched_paths[:5]})"
+        )
 
     def _validate_manifest_structure(self, data: Dict[str, Any], project_id: str) -> None:
         """
@@ -668,10 +708,10 @@ class CoreOrchestrator:
         }
 
         # Write request to STDOUT with markers (for parsing)
-        print("---INTELLIGENCE_REQUEST_START---", file=sys.stderr)
+        print("---INTELLIGENCE_REQUEST_START---")
         print(json.dumps(request, indent=2))
         sys.stdout.flush()
-        print("---INTELLIGENCE_REQUEST_END---", file=sys.stderr)
+        print("---INTELLIGENCE_REQUEST_END---")
 
         # GAD-003: Initialize tool executor if available
         tool_executor = ToolExecutor() if TOOLS_AVAILABLE else None

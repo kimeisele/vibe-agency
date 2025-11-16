@@ -6,10 +6,10 @@ Tests that ALL agents can compose their prompts correctly.
 No LLM calls - just validates that composition works.
 """
 
-import sys
-import os
-from pathlib import Path
 import importlib.util
+import os
+import sys
+from pathlib import Path
 
 # Debug: Print working directory
 print(f"Working directory: {os.getcwd()}")
@@ -39,8 +39,8 @@ except Exception as e:
     sys.exit(1)
 
 
-def test_agent_prompt_composition(agent_id: str, task_id: str) -> bool:
-    """Test if agent can compose a valid prompt"""
+def check_agent_prompt_composition(agent_id: str, task_id: str) -> bool:
+    """Check if agent can compose a valid prompt (not a pytest test)"""
     runtime = PromptRuntime()
 
     try:
@@ -104,7 +104,7 @@ def main():
 
     results = []
     for agent_id, task_id in test_cases:
-        success = test_agent_prompt_composition(agent_id, task_id)
+        success = check_agent_prompt_composition(agent_id, task_id)
         results.append((agent_id, task_id, success))
 
     print()

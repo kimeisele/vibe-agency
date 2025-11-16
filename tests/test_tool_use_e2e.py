@@ -19,13 +19,13 @@ Test Flow:
 This test validates GAD-003 (Research Tool Integration) is complete.
 """
 
-import sys
-import json
-import pytest
-import importlib.util
 import importlib.machinery
+import importlib.util
+import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
+
+import pytest
 
 # Add vibe-cli to path
 repo_root = Path(__file__).parent.parent
@@ -48,7 +48,7 @@ class TestToolUseE2E:
     def vibe_cli(self):
         """Initialize VibeCLI instance (works WITHOUT API key via mocks)"""
         # Use dummy key for testing - real API calls will be mocked
-        return VibeCLI(repo_root=repo_root, anthropic_api_key="test-key-dummy")
+        return VibeCLI(repo_root=repo_root)  # File-based delegation - no API key needed
 
     @pytest.fixture
     def mock_tool_executor(self):
@@ -116,176 +116,71 @@ class TestToolUseE2E:
         assert anthropic_schema["input_schema"]["required"] == ["query"]
         assert anthropic_schema["input_schema"]["properties"]["limit"]["default"] == 10
 
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer executes tools directly. "
+        "Tool execution is delegated to Claude Code operator. "
+        "See tests/test_file_based_delegation.py for delegation tests."
+    )
     def test_execute_tools_with_mock(self, vibe_cli, mock_tool_executor):
         """Test: _execute_tools() executes tools and formats results correctly"""
-        # Patch the ToolExecutor import in vibe_cli
-        with patch("vibe_cli.ToolExecutor", return_value=mock_tool_executor):
-            tool_use_blocks = [
-                {
-                    "type": "tool_use",
-                    "id": "toolu_123",
-                    "name": "google_search",
-                    "input": {"query": "AI startups 2024"},
-                }
-            ]
+        # NOTE: This test is for autonomous mode (removed in file-based delegation)
+        # In file-based delegation, Claude Code executes tools, not vibe-cli
+        pass
 
-            results = vibe_cli._execute_tools(tool_use_blocks)
-
-            assert len(results) == 1
-            assert results[0]["type"] == "tool_result"
-            assert results[0]["tool_use_id"] == "toolu_123"
-
-            # Verify content is JSON string
-            content = json.loads(results[0]["content"])
-            assert "results" in content
-
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer makes API calls directly. "
+        "Multi-turn conversation handled by Claude Code operator. "
+        "See tests/test_file_based_delegation.py for delegation tests."
+    )
     def test_multi_turn_conversation_with_mocked_api(self, vibe_cli, mock_tool_executor):
         """
         Test: Multi-turn conversation with MOCKED Anthropic API
 
-        This tests the complete tool use loop WITHOUT requiring API key:
-        1. Send prompt for market research
-        2. Mock API responds with tool_use (google_search)
-        3. Execute tool locally (mocked)
-        4. Send tool_result back to API (mocked)
-        5. Mock API responds with final answer
+        NOTE: This test is for autonomous mode (removed in file-based delegation).
+        In file-based delegation:
+        - vibe-cli writes delegation request to file
+        - Claude Code operator reads file, makes API calls, writes response
+        - vibe-cli polls for and reads response file
         """
-        # Patch tool executor
-        with patch("vibe_cli.ToolExecutor", return_value=mock_tool_executor):
-            # Mock the Anthropic API client
-            mock_client = MagicMock()
-            vibe_cli.client = mock_client
+        pass
 
-            # First API call - responds with tool_use
-            mock_tool_block = MagicMock()
-            mock_tool_block.type = "tool_use"
-            mock_tool_block.id = "toolu_123"
-            mock_tool_block.name = "google_search"
-            mock_tool_block.input = {"query": "AI startups 2024"}
-
-            mock_response_1 = MagicMock()
-            mock_response_1.stop_reason = "tool_use"
-            mock_response_1.content = [mock_tool_block]
-
-            # Second API call - responds with final answer
-            mock_text_block = MagicMock()
-            mock_text_block.type = "text"
-            mock_text_block.text = (
-                '{"startups": [{"name": "OpenAI", "description": "Leading AI company"}]}'
-            )
-
-            mock_response_2 = MagicMock()
-            mock_response_2.stop_reason = "end_turn"
-            mock_response_2.content = [mock_text_block]
-
-            # Configure mock to return responses in sequence
-            mock_client.messages.create.side_effect = [mock_response_1, mock_response_2]
-
-            # Execute
-            prompt = "Find top AI startups using google_search"
-            result = vibe_cli._execute_prompt(
-                prompt=prompt, agent="MARKET_RESEARCHER", task_id="test_task"
-            )
-
-            # Verify result
-            assert isinstance(result, dict)
-            assert "startups" in result
-            assert len(result["startups"]) > 0
-
-            # Verify API was called twice (initial + after tool use)
-            assert mock_client.messages.create.call_count == 2
-
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer has _execute_prompt() method. "
+        "Prompt execution delegated to Claude Code operator."
+    )
     def test_agent_without_tools_works(self, vibe_cli):
         """Test: Agents without tools use simple request/response (no tool loop)"""
-        # Mock API client
-        mock_client = MagicMock()
-        vibe_cli.client = mock_client
+        # NOTE: This test is for autonomous mode (removed in file-based delegation)
+        pass
 
-        # Mock response (no tools)
-        mock_text_block = MagicMock()
-        mock_text_block.type = "text"
-        mock_text_block.text = '{"status": "ok", "message": "Test passed"}'
-
-        mock_response = MagicMock()
-        mock_response.stop_reason = "end_turn"
-        mock_response.content = [mock_text_block]
-
-        mock_client.messages.create.return_value = mock_response
-
-        # Execute
-        prompt = 'Return JSON: {"status": "ok"}'
-        result = vibe_cli._execute_prompt(prompt=prompt, agent="VIBE_ALIGNER", task_id="test_task")
-
-        # Verify
-        assert isinstance(result, dict)
-        assert result["status"] == "ok"
-
-        # Verify API was called once (no tool loop)
-        assert mock_client.messages.create.call_count == 1
-
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer has _extract_final_response() method. "
+        "Response extraction handled by Claude Code operator."
+    )
     def test_extract_final_response_json(self, vibe_cli):
         """Test: _extract_final_response() parses JSON correctly"""
-        # Mock response with JSON content
-        mock_response = Mock()
-        mock_text_block = Mock()
-        mock_text_block.type = "text"
-        mock_text_block.text = '{"status": "ok", "value": 42}'
-        mock_response.content = [mock_text_block]
+        # NOTE: This test is for autonomous mode (removed in file-based delegation)
+        pass
 
-        result = vibe_cli._extract_final_response(mock_response, "TEST_AGENT")
-
-        assert result == {"status": "ok", "value": 42}
-
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer has _extract_final_response() method. "
+        "Response extraction handled by Claude Code operator."
+    )
     def test_extract_final_response_non_json(self, vibe_cli):
         """Test: _extract_final_response() wraps non-JSON in dict"""
-        # Mock response with non-JSON content
-        mock_response = Mock()
-        mock_text_block = Mock()
-        mock_text_block.type = "text"
-        mock_text_block.text = "This is not JSON"
-        mock_response.content = [mock_text_block]
+        # NOTE: This test is for autonomous mode (removed in file-based delegation)
+        pass
 
-        result = vibe_cli._extract_final_response(mock_response, "TEST_AGENT")
-
-        assert result == {"text": "This is not JSON"}
-
+    @pytest.mark.skip(
+        reason="File-based delegation: vibe-cli no longer has _execute_prompt() or _execute_tools() methods. "
+        "Multi-turn conversation and tool execution delegated to Claude Code operator. "
+        "Max turns enforcement now handled by operator."
+    )
     def test_max_turns_limit(self, vibe_cli):
         """Test: Conversation stops after max_turns to prevent infinite loops"""
-        # Mock client
-        mock_client = MagicMock()
-        vibe_cli.client = mock_client
-
-        # Mock that always returns tool_use (infinite loop scenario)
-        mock_tool_block = MagicMock()
-        mock_tool_block.type = "tool_use"
-        mock_tool_block.id = "toolu_123"
-        mock_tool_block.name = "google_search"
-        mock_tool_block.input = {"query": "test"}
-
-        mock_response = MagicMock()
-        mock_response.stop_reason = "tool_use"
-        mock_response.content = [mock_tool_block]
-
-        mock_client.messages.create.return_value = mock_response
-
-        # Mock tool executor
-        with patch.object(
-            vibe_cli,
-            "_execute_tools",
-            return_value=[
-                {"type": "tool_result", "tool_use_id": "toolu_123", "content": '{"result": "test"}'}
-            ],
-        ):
-            result = vibe_cli._execute_prompt(
-                prompt="Test", agent="MARKET_RESEARCHER", task_id="test"
-            )
-
-        # Should hit max_turns (10) and return error
-        assert "error" in result
-        assert "Max conversation turns" in result["error"]
-
-        # Verify we hit max_turns (10 API calls)
-        assert mock_client.messages.create.call_count == 10
+        # NOTE: This test is for autonomous mode (removed in file-based delegation)
+        # In file-based delegation, Claude Code operator handles multi-turn conversation
+        pass
 
 
 def test_integration_vibe_cli_initialization():

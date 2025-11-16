@@ -4,6 +4,23 @@
 
 ---
 
+## 🤖 **FOR AI AGENTS / ASSISTANTS**
+
+**If you're an AI agent (Claude Code, GitHub Copilot, etc.), read this FIRST:**
+
+👉 **[AGENTS_START_HERE.md](./AGENTS_START_HERE.md)** - Critical architecture understanding for AI operators
+
+### TL;DR for AI Agents:
+- **You are the OPERATOR** of this system, not an external service
+- vibe-cli is NOT autonomous - it returns **prompts** for YOU to execute
+- Architecture: `You → vibe-cli → prompts back to you → you do work → save results`
+- **Read [CLAUDE.md](./CLAUDE.md)** for operational status (what actually works)
+- **Read [AGENTS_START_HERE.md](./AGENTS_START_HERE.md)** for detailed onboarding
+
+**Common mistake:** Treating vibe-cli as an autonomous system that "delegates to Claude Code". **Wrong.** You use vibe-cli as a tool to get structured prompts.
+
+---
+
 ## 🎯 What Is This?
 
 **Vibe Agency** is a **prompt composition system** that helps consultants and agencies plan software projects systematically. It guides you from "I have an idea..." to production-ready specifications using Claude AI.

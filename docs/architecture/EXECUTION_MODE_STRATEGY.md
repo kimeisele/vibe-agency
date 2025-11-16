@@ -107,7 +107,10 @@ if response.stop_reason == "tool_use":  # ❌ FORBIDDEN (for MVP)
 
 ---
 
-## 🔄 EXECUTION FLOW (MVP)
+## 🔄 EXECUTION FLOW (MVP - FILE-BASED)
+
+**Changed:** Nov 16, 2025 - Switched from STDIN/STDOUT to file-based delegation
+**Reason:** Browser environment compatibility (see ARCHITECTURE_BREAKDOWN_REPORT.md)
 
 ### Step 1: Claude Code Launches vibe-cli
 
@@ -139,41 +142,73 @@ print(json.dumps({
 }))
 ```
 
-### Step 4: vibe-cli Passes to Claude Code
+### Step 4: vibe-cli Writes Request to File
 
 ```python
-# vibe-cli reads STDOUT
+# vibe-cli reads STDOUT from orchestrator
 intelligence_request = parse_stdout(process.stdout)
 
-# vibe-cli prints to Claude Code session (NOT API call!)
-print("\n=== INTELLIGENCE REQUEST ===")
-print(intelligence_request['prompt'])
-print("=== Respond with JSON ===")
+# vibe-cli writes request to file (NEW - file-based delegation)
+request_file = Path(f"workspaces/{project_id}/.delegation/request_{uuid}.json")
+with open(request_file, 'w') as f:
+    json.dump(intelligence_request, f)
+
+logger.info(f"📤 Delegation request written: {request_file}")
+logger.info("⏳ Waiting for response file...")
 ```
 
-### Step 5: Claude Code (Operator) Responds
-
-```
-Claude Code session (me!):
-  I see the prompt
-  I execute it
-  I type response as JSON
-```
-
-### Step 6: vibe-cli Sends Response to Orchestrator
+### Step 5: Claude Code (Operator) Reads Request & Responds
 
 ```python
-# vibe-cli reads Claude Code's typed response
-response = input("Your response: ")  # Or from stdin
+# Claude Code session (me!) reads request file
+with open("workspaces/my-project/.delegation/request_abc123.json") as f:
+    request = json.load(f)
 
-# vibe-cli sends to orchestrator's stdin
+# Execute prompt via Anthropic API
+response = anthropic.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=4000,
+    messages=[{"role": "user", "content": request["prompt"]}]
+)
+
+# Write response file
+response_file = "workspaces/my-project/.delegation/response_abc123.json"
+with open(response_file, 'w') as f:
+    json.dump({"result": parse_response(response)}, f)
+```
+
+### Step 6: vibe-cli Polls for Response File
+
+```python
+# vibe-cli polls for response (500ms intervals)
+response_file = Path(f"workspaces/{project_id}/.delegation/response_{uuid}.json")
+
+timeout = 600  # 10 minutes
+while not response_file.exists():
+    if timeout_exceeded:
+        raise TimeoutError()
+    time.sleep(0.5)
+
+# Read response
+with open(response_file) as f:
+    response = json.load(f)
+
+# Cleanup
+request_file.unlink()
+response_file.unlink()
+```
+
+### Step 7: vibe-cli Sends Response to Orchestrator
+
+```python
+# vibe-cli forwards response to orchestrator via STDIN
 process.stdin.write(json.dumps({
     "type": "INTELLIGENCE_RESPONSE",
-    "result": json.loads(response)
+    "result": response["result"]
 }))
 ```
 
-### Step 7: Orchestrator Processes Result
+### Step 8: Orchestrator Processes Result
 
 ```python
 # core_orchestrator.py
@@ -181,6 +216,67 @@ response = json.loads(sys.stdin.readline())
 result = response['result']
 # Update manifest, save artifacts, etc.
 ```
+
+---
+
+## 📁 FILE-BASED DELEGATION DETAILS
+
+### Request File Format
+
+**Location:** `workspaces/{project_id}/.delegation/request_{uuid}.json`
+
+**Schema:**
+```json
+{
+  "type": "INTELLIGENCE_DELEGATION",
+  "request_id": "abc123-uuid",
+  "agent": "VIBE_ALIGNER",
+  "task_id": "01_feature_extraction",
+  "prompt": "Full composed prompt text...",
+  "timestamp": "2025-11-16T00:30:00Z",
+  "metadata": {
+    "delegator": "vibe-cli",
+    "mode": "file_based_delegation",
+    "request_file": "workspaces/my-project/.delegation/request_abc123.json",
+    "response_file": "workspaces/my-project/.delegation/response_abc123.json"
+  }
+}
+```
+
+### Response File Format
+
+**Location:** `workspaces/{project_id}/.delegation/response_{uuid}.json`
+
+**Schema:**
+```json
+{
+  "result": {
+    "features": [...],
+    "scope_negotiation": {...},
+    ...
+  }
+}
+```
+
+### Cleanup Strategy
+
+- **Success:** Both files deleted after response read
+- **Timeout:** Request file deleted, no response file created
+- **Error:** Both files deleted to prevent stale data
+
+### Compatibility
+
+✅ **Works in:**
+- Claude Code Browser
+- Claude Code CLI
+- GitHub Codespaces
+- Local terminal
+- CI/CD environments
+
+✅ **No dependencies on:**
+- STDIN/STDOUT interactivity
+- Subprocess communication
+- Terminal features
 
 ---
 
