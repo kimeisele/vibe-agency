@@ -46,6 +46,9 @@ workspaces/*/artifacts/*/*
 # Session handoff system status (auto-generated, do not commit)
 .system_status.json
 
+# System integrity manifest (generated at runtime, Layer 0)
+.vibe/
+
 # Workspace artifacts (test project outputs)
 workspaces/*/artifacts/**/*.json
 workspaces/*/artifacts/**/*.md
