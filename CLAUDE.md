@@ -66,8 +66,9 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `uv run pytest tests/test_quality_gate_recording.py -v` |
 | **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `uv run pytest tests/e2e/test_orchestrator_e2e.py -v` |
 | **Multi-Layer Integration (GAD-004 Phase 4)** | **✅ Works (tested)** | **All 3 layers integrated and verified** | `uv run pytest tests/test_multi_layer_integration.py -v` |
+| **Unavoidable MOTD (GAD-005 Week 1)** | **✅ Works (tested)** | **MOTD shown before every vibe-cli execution** | `uv run python tests/test_motd.py` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `uv run pytest tests/test_prompt_registry.py -v` |
-| vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (671 lines) | `wc -l vibe-cli` |
+| vibe-cli | ✅ Enhanced (MOTD integrated) | vibe-cli (812 lines, +141 from MOTD) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
 | Research Agents | ✅ Dependencies installed | bs4 4.14.2 (venv synced) | `uv run python -c "import bs4; print('✅ bs4:', bs4.__version__)"` |
 
@@ -253,6 +254,31 @@ python3 tests/test_multi_layer_integration.py
 # ✅ Complete defense-in-depth quality enforcement
 ```
 
+### Verify Unavoidable MOTD Works (GAD-005 Week 1)
+```bash
+# Run MOTD tests
+uv run python tests/test_motd.py
+# Expected: All 7 tests pass
+# - test_motd_displays
+# - test_motd_shows_linting_status
+# - test_motd_shows_git_status
+# - test_motd_shows_test_status
+# - test_motd_shows_session_handoff
+# - test_motd_shows_quick_commands
+# - test_motd_non_fatal
+
+# What this validates:
+# ✅ MOTD displays before every vibe-cli execution (unavoidable)
+# ✅ Shows system health (git, linting, tests)
+# ✅ Shows session handoff (if available)
+# ✅ Shows quick commands for deeper context
+# ✅ MOTD failure is non-fatal (doesn't block execution)
+
+# Manual test - see MOTD in action
+uv run ./vibe-cli --help
+# Expected: MOTD shown at top, then help text
+```
+
 ---
 
 ## 🧪 META-TEST (Self-Verification)
@@ -303,6 +329,10 @@ uv run pytest tests/test_deployment_workflow.py -v 2>&1 | grep -q "5 passed" && 
 # Test 10: Multi-Layer Integration (GAD-004 Phase 4)
 uv run pytest tests/test_multi_layer_integration.py -v 2>&1 | grep -q "passed" && \
   echo "✅ Multi-layer integration verified" || echo "❌ Integration test failing"
+
+# Test 11: Unavoidable MOTD (GAD-005 Week 1)
+uv run python tests/test_motd.py 2>&1 | grep -q "ALL MOTD TESTS PASSED" && \
+  echo "✅ Unavoidable MOTD verified" || echo "❌ MOTD tests failing"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -522,9 +552,23 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 18:47 UTC (Environment & Verification Fixes)
-**Updated By:** Claude Code (Session: claude/review-handoff-context-01MAG6zS2GFeubHYiU7pwLor)
+**Last Updated:** 2025-11-16 (Current Session)
+**Updated By:** Claude Code (Session: claude/continue-gad-005-01UzBViwHs1WYPczk26gx9Cg)
 **Current Update:**
+- ✅ **GAD-005 Week 1 COMPLETE** - Unavoidable MOTD Implementation
+- ✅ Implemented `display_motd()` function in vibe-cli (141 new lines)
+- ✅ MOTD displays before EVERY vibe-cli execution (unavoidable by design)
+- ✅ Shows system health: git status, linting status, test status
+- ✅ Shows session handoff: completed items + next TODOs
+- ✅ Shows quick commands for deeper context
+- ✅ MOTD failure is non-fatal (doesn't block execution)
+- ✅ Created tests/test_motd.py - all 7 tests passing
+- ✅ Updated CLAUDE.md with GAD-005 verification commands
+- ✅ Added Test 11 to META-TEST for MOTD verification
+- ✅ Benefits: Critical context now unavoidable, reduces agent mistakes
+- ✅ Zero regression: All existing functionality intact
+
+**Previous Update:** 2025-11-16 18:47 UTC by Claude Code
 - ✅ **Environment Verification Fixed** - venv properly synced with `uv sync --all-extras`
 - ✅ **AUDITOR Task Metadata Created** - P0 fix for E2E testing (semantic_audit.meta.yaml)
 - ✅ **Verification Commands Standardized** - All test commands now use `uv run` for consistency
@@ -604,9 +648,10 @@ uv run ruff format .
 
 **Meta-Verification:**
 ```bash
-# This document claims to be accurate as of 2025-11-16 15:30 UTC
+# This document claims to be accurate as of 2025-11-16 (Current Session)
 # Run meta-test above to verify claims match reality
 python3 tests/test_quality_gate_recording.py  # Validates GAD-004 Phase 2
 python3 manual_planning_test.py  # Validates GAD-003 file-based delegation
 uv run pytest tests/test_deployment_workflow.py -v  # Validates DEPLOYMENT handler Phase 4
+uv run python tests/test_motd.py  # Validates GAD-005 Week 1 (Unavoidable MOTD)
 ```

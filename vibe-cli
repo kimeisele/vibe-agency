@@ -108,6 +108,139 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# GAD-005: RUNTIME ENGINEERING - UNAVOIDABLE MOTD
+# ============================================================================
+
+
+def load_system_status() -> Dict[str, Any]:
+    """Load .system_status.json"""
+    status_file = Path(".system_status.json")
+    if status_file.exists():
+        with open(status_file) as f:
+            return json.load(f)
+    return {}
+
+
+def load_session_handoff() -> Optional[Dict[str, Any]]:
+    """Load .session_handoff.json if exists"""
+    handoff_file = Path(".session_handoff.json")
+    if handoff_file.exists():
+        with open(handoff_file) as f:
+            return json.load(f)
+    return None
+
+
+def format_git_status(status: Dict) -> str:
+    """Format git status for MOTD"""
+    git = status.get("git", {})
+    if git.get("working_directory_clean"):
+        branch = git.get("branch", "unknown")
+        return f"✅ Clean (branch: {branch})"
+    else:
+        return "⚠️  Uncommitted changes"
+
+
+def format_linting_status(status: Dict) -> str:
+    """Format linting status for MOTD"""
+    linting = status.get("linting", {})
+    status_val = linting.get("status", "unknown")
+
+    if status_val == "passing":
+        return "✅ Passing (0 errors)"
+    elif status_val == "failing":
+        errors = linting.get("errors_count", 0)
+        return f"❌ Failing ({errors} errors)"
+    else:
+        return f"⚠️  {status_val}"
+
+
+def format_test_status(status: Dict) -> str:
+    """Format test status for MOTD"""
+    tests = status.get("tests", {})
+    planning = tests.get("planning_workflow", "unknown")
+
+    if planning == "passing":
+        return "✅ Passing"
+    elif planning == "failing":
+        return "❌ Failing"
+    else:
+        return f"⚠️  {planning}"
+
+
+def display_motd():
+    """
+    Display Message of the Day before any vibe-cli execution.
+
+    This makes critical context UNAVOIDABLE - agents see it in stdout.
+
+    GAD-005: Runtime Engineering - Self-Regulating Execution Environment
+    """
+    # Update system status first
+    status_script = Path("bin/update-system-status.sh")
+    if status_script.exists():
+        subprocess.run([str(status_script)], capture_output=True)
+
+    # Load data
+    status = load_system_status()
+    handoff = load_session_handoff()
+
+    # Render MOTD
+    print("═" * 60)
+    print("🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION")
+    print("═" * 60)
+    print()
+
+    # System health
+    print("📊 SYSTEM HEALTH")
+    print(f"  Git: {format_git_status(status)}")
+    print(f"  Linting: {format_linting_status(status)}")
+    print(f"  Tests: {format_test_status(status)}")
+    print()
+
+    # Session handoff (if exists)
+    if handoff:
+        print("📋 SESSION HANDOFF")
+        print(f"  From: {handoff.get('from_agent', 'Unknown')}")
+        date = handoff.get('date', 'Unknown')
+        print(f"  Date: {date}")
+        print()
+
+        # Completed items (max 3)
+        completed = handoff.get('completed', [])
+        if completed:
+            print("  Completed:")
+            for item in completed[:3]:
+                # Clean up checkmarks
+                item_clean = item.replace('✅', '').strip()
+                if item_clean:
+                    print(f"    ✅ {item_clean}")
+            if len(completed) > 3:
+                print(f"    ... and {len(completed) - 3} more")
+            print()
+
+        # Your TODOs (max 3)
+        todos = handoff.get('recommendations_for_next_session', [])
+        if todos:
+            print("  Your TODOs:")
+            for todo in todos[:3]:
+                # Clean up formatting
+                todo_clean = todo.replace('🚀', '').replace('→', '').replace('✅', '').strip()
+                if todo_clean:
+                    print(f"    → {todo_clean}")
+            if len(todos) > 3:
+                print(f"    ... and {len(todos) - 3} more")
+            print()
+
+    # Quick commands
+    print("💡 QUICK COMMANDS")
+    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
+    print()
+    print("═" * 60)
+    print()
+
+
 class VibeCLI:
     """
     Main CLI class that manages the orchestrator <-> Claude Code handoff.
@@ -619,6 +752,15 @@ class VibeCLI:
 def main():
     """CLI entry point"""
     import argparse
+
+    # ALWAYS display MOTD first (GAD-005: Unavoidable Context)
+    # This runs BEFORE argparse so even --help sees it
+    try:
+        display_motd()
+    except Exception as e:
+        # Non-fatal - continue even if MOTD fails
+        print(f"⚠️  Warning: MOTD display failed: {e}")
+        print()
 
     parser = argparse.ArgumentParser(
         description="VIBE CLI - Agency OS Command Line Interface",
