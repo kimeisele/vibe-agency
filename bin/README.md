@@ -95,12 +95,9 @@ Created/updated by `update-system-status.sh`
 # OR install git hooks for automatic updates
 ```
 
-## Git Hooks (Optional but Recommended)
+## Git Hooks (Optional)
 
-**What they do:**
-1. **Pre-commit** - Runs ruff linting BEFORE commit (catches errors early)
-2. **Post-commit** - Updates system status AFTER commit
-3. **Post-push** - Updates system status AFTER push
+Auto-update system status after commits/pushes
 
 **Install:**
 ```bash
@@ -113,15 +110,8 @@ git config --unset core.hooksPath
 ```
 
 **Hooks:**
-- `.githooks/pre-commit` - Runs `ruff check --fix` (blocks commit on errors)
-- `.githooks/post-commit` - Updates `.system_status.json`
-- `.githooks/post-push` - Updates `.system_status.json`
-
-**Benefits:**
-- ✅ Catch linting errors BEFORE pushing to CI/CD
-- ✅ Auto-fix simple issues (unused imports, formatting)
-- ✅ Keep system status always fresh
-- ✅ Prevent "failing CI" surprises
+- `.githooks/post-commit` - Updates status after commit
+- `.githooks/post-push` - Updates status after push
 
 ## Workflow
 
