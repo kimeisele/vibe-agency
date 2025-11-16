@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# pre-commit hook
+# Runs ruff linting before commit to catch errors early
+#
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "🔍 Running ruff linting..."
+
+# Run ruff check (auto-fix where possible)
+if uv run ruff check . --fix --quiet 2>/dev/null; then
+    echo "✅ Ruff linting passed"
+
+    # If ruff fixed anything, stage the changes
+    git add -u
+
+    # Update system status after successful commit preparation
+    ./bin/update-system-status.sh >/dev/null 2>&1 || true
+
+    exit 0
+else
+    echo ""
+    echo "❌ Ruff linting failed!"
+    echo ""
+    echo "Run this to see errors:"
+    echo "  uv run ruff check ."
+    echo ""
+    echo "Run this to auto-fix:"
+    echo "  uv run ruff check . --fix"
+    echo ""
+    echo "To commit anyway (not recommended):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+fi

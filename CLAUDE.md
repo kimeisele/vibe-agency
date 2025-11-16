@@ -137,9 +137,11 @@ cat workspaces/manual-test-project/handoff.json
 
 # Expected: Creates/updates .system_status.json
 
-# Optional: Install git hooks for auto-updates
+# Optional: Install git hooks for auto-updates + linting
 git config core.hooksPath .githooks
-# Now .system_status.json auto-updates on commit/push
+# Benefits:
+# - pre-commit: Runs ruff linting (catches errors before CI/CD)
+# - post-commit/post-push: Auto-updates .system_status.json
 ```
 
 ### Verify PLANNING Phase Works
