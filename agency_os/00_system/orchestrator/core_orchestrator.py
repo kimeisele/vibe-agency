@@ -22,6 +22,7 @@ Version: 1.1 (Phase 3 - GAD-002 + GAD-003)
 import json
 import logging
 import re
+import subprocess
 import sys
 import time
 import uuid
@@ -133,6 +134,12 @@ class ArtifactNotFoundError(OrchestratorError):
 
 class StateTransitionError(OrchestratorError):
     """Raised when state transition is invalid"""
+
+    pass
+
+
+class KernelViolationError(OrchestratorError):
+    """Raised when Pre-Action Kernel check fails (GAD-005)"""
 
     pass
 
@@ -570,7 +577,11 @@ class CoreOrchestrator:
         Save artifact to project workspace (with schema validation).
 
         Implements GAD-002 Decision 3: Centralized Schema Validation
+        NEW (GAD-005): Pre-Action Kernel check before saving
         """
+        # PRE-ACTION KERNEL CHECK (GAD-005)
+        self._kernel_check_save_artifact(artifact_name)
+
         # Validate before saving
         if validate:
             self.validator.validate_artifact(artifact_name, data)
@@ -763,6 +774,122 @@ class CoreOrchestrator:
 
         logger.info("✅ Intelligence response received and processed")
         return result
+
+    # =========================================================================
+    # PRE-ACTION KERNEL (GAD-005)
+    # Simple validation checks before dangerous operations
+    # =========================================================================
+
+    def _kernel_check_save_artifact(self, artifact_name: str) -> None:
+        """
+        Kernel check: Prevent overwriting critical files.
+
+        Args:
+            artifact_name: Name of artifact being saved
+
+        Raises:
+            KernelViolationError: If trying to overwrite critical file
+        """
+        CRITICAL_FILES = ["project_manifest.json", ".session_handoff.json"]
+
+        if artifact_name in CRITICAL_FILES:
+            raise KernelViolationError(
+                f"❌ KERNEL VIOLATION: Cannot overwrite critical file: {artifact_name}\n"
+                f"\n"
+                f"Remediation:\n"
+                f"  - For manifest: Use save_project_manifest() method\n"
+                f"  - For handoff: Use dedicated handoff creation method\n"
+                f"\n"
+                f"Critical files must be updated through designated methods to ensure integrity."
+            )
+
+        logger.debug(f"✓ Kernel check passed: save_artifact({artifact_name})")
+
+    def _kernel_check_transition_state(self, transition_name: str) -> None:
+        """
+        Kernel check: Warn if git working directory is not clean.
+
+        Args:
+            transition_name: Name of state transition
+        """
+        git_status = self._get_git_status()
+
+        if not git_status.get("status", {}).get("clean", False):
+            uncommitted = git_status.get("uncommitted_changes", [])[:5]
+            changes_str = "\n".join(f"     - {line}" for line in uncommitted)
+            logger.warning(
+                f"⚠️  KERNEL WARNING: Git working directory not clean during transition: {transition_name}\n"
+                f"   Uncommitted changes:\n"
+                f"{changes_str}\n"
+                f"\n"
+                f"   Recommendation: Commit or stash changes before state transitions"
+            )
+
+        logger.debug(f"✓ Kernel check passed: transition_state({transition_name})")
+
+    def _kernel_check_git_commit(self) -> None:
+        """
+        Kernel check: Block git commits if linting errors exist.
+
+        Raises:
+            KernelViolationError: If linting errors detected
+        """
+        status = self._get_system_status()
+        linting = status.get("linting", {})
+
+        if linting.get("status") == "failing":
+            errors_count = linting.get("errors_count", 0)
+            raise KernelViolationError(
+                f"❌ KERNEL VIOLATION: Cannot commit with linting errors\n"
+                f"\n"
+                f"Errors: {errors_count} linting error(s) detected\n"
+                f"\n"
+                f"Remediation:\n"
+                f"  1. Run: uv run ruff check . --fix\n"
+                f"  2. Review remaining errors: uv run ruff check .\n"
+                f"  3. Re-run this operation after fixing all errors"
+            )
+
+        logger.debug("✓ Kernel check passed: git_commit()")
+
+    def _get_system_status(self) -> Dict[str, Any]:
+        """
+        Get current system status from .system_status.json
+
+        Returns:
+            System status dict
+        """
+        status_file = self.repo_root / ".system_status.json"
+        if status_file.exists():
+            with open(status_file) as f:
+                return json.load(f)
+        return {}
+
+    def _get_git_status(self) -> Dict[str, Any]:
+        """
+        Get git working directory status.
+
+        Returns:
+            Dict with git state
+        """
+        try:
+            # Check if working directory is clean
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_root,
+                check=False,
+            )
+            clean = len(result.stdout.strip()) == 0
+
+            return {
+                "status": {"clean": clean},
+                "uncommitted_changes": result.stdout.strip().split("\n") if not clean else [],
+            }
+        except Exception as e:
+            logger.warning(f"Failed to get git status: {e}")
+            return {"status": {"clean": False}, "error": str(e)}
 
     def _parse_tool_use(self, text: str) -> Optional[Dict[str, Any]]:
         """
