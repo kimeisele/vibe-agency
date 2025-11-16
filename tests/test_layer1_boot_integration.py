@@ -59,7 +59,7 @@ class TestLayer1BootIntegration:
             "[Layer 0] Verifying system integrity...",
             "✅ System integrity verified",
             "[Layer 1] Loading session context...",
-            "✅ SYSTEM BOOT COMPLETE"
+            "✅ SYSTEM BOOT COMPLETE",
         ]
 
         # The actual test would run vibe-cli and capture output
@@ -193,8 +193,9 @@ def test_layer1_requirements_met():
     assert "def verify_system_integrity()" in content, "verify_system_integrity function missing"
 
     # Requirement 2: Runs before MOTD
-    assert content.index("verify_system_integrity()") < content.index("display_motd()"), \
+    assert content.index("verify_system_integrity()") < content.index("display_motd()"), (
         "Layer 0 verification must run before MOTD"
+    )
 
     # Requirement 3: Boot halts on failure
     assert "⛔ BOOT HALTED" in content, "Boot halt message missing"
