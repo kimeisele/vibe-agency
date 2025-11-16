@@ -306,7 +306,6 @@ class PlanningHandler:
 
         # Write handoff for next agent (VIBE_ALIGNER)
         import json
-        from pathlib import Path
 
         workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
         handoff = {
@@ -359,7 +358,6 @@ class PlanningHandler:
 
         # Load handoff from previous agent
         import json
-        from pathlib import Path
 
         workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
         handoff_path = workspace_path / "handoff.json"
@@ -459,7 +457,6 @@ class PlanningHandler:
 
         # Load handoff from previous agent
         import json
-        from pathlib import Path
 
         workspace_path = self.orchestrator._get_manifest_path(manifest.project_id).parent
         handoff_path = workspace_path / "handoff.json"
