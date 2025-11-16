@@ -42,7 +42,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## ✅ OPERATIONAL STATUS (Dated Snapshot)
 
-**Last Verified:** 2025-11-16 14:57 UTC
+**Last Verified:** 2025-11-16 15:14 UTC
 
 ### Phase Implementation Status
 
@@ -64,6 +64,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
 | **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.sh` (see linting status) |
 | **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `python3 tests/test_quality_gate_recording.py` |
+| **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `python3 tests/e2e/test_orchestrator_e2e.py` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
 | vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -192,6 +193,30 @@ python3 tests/test_quality_gate_recording.py
 # ✅ Optional fields (message, remediation) are captured
 ```
 
+### Verify Deployment-Scoped Validation Works (GAD-004 Phase 3)
+```bash
+# Run E2E tests
+python3 tests/e2e/test_orchestrator_e2e.py
+# Expected: All tests pass (3 tests)
+# - test_orchestrator_initialization
+# - test_workflow_yaml_loaded
+# - test_prompt_registry_available
+
+# Run performance tests (non-blocking)
+python3 tests/performance/test_orchestrator_performance.py
+# Expected: All tests complete (non-blocking, always exits 0)
+
+# Verify GitHub Actions workflow exists
+ls -la .github/workflows/post-merge-validation.yml
+# Expected: File exists and is readable
+
+# What this validates:
+# ✅ E2E tests validate orchestrator initialization and workflow loading
+# ✅ Performance tests provide non-blocking metrics
+# ✅ GitHub Actions workflow will run E2E tests on push to main/develop
+# ✅ Post-merge validation provides final production readiness gate
+```
+
 ---
 
 ## 🧪 META-TEST (Self-Verification)
@@ -229,6 +254,11 @@ python3 -m pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
 # Test 7: Workflow-Scoped Quality Gates (GAD-004 Phase 2)
 python3 tests/test_quality_gate_recording.py 2>&1 | grep -q "ALL QUALITY GATE RECORDING TESTS PASSED" && \
   echo "✅ Workflow-scoped quality gates verified" || echo "❌ Quality gate recording not working"
+
+# Test 8: Deployment-Scoped Validation (GAD-004 Phase 3)
+python3 tests/e2e/test_orchestrator_e2e.py 2>&1 | grep -q "ALL E2E TESTS PASSED" && \
+  [ -f ".github/workflows/post-merge-validation.yml" ] && \
+  echo "✅ Deployment-scoped validation verified" || echo "❌ E2E tests or workflow missing"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -448,18 +478,17 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 14:57 UTC
-**Updated By:** Claude Code (Session: claude/add-show-context-script-018KMT4Xze2TbgLkUridLmAL)
+**Last Updated:** 2025-11-16 15:14 UTC
+**Updated By:** Claude Code (Session: claude/add-show-context-script-01MFmiR2socc5ZwxL5d8t1AX)
 **Updates:**
-- ✅ **GAD-004 Phase 2 COMPLETE** - Workflow-Scoped Quality Gate Recording
-- ✅ Added `_get_transition_config()` to core_orchestrator.py (retrieves transition metadata)
-- ✅ Added `_record_quality_gate_result()` to core_orchestrator.py (records in manifest.status.qualityGates)
-- ✅ Modified `invoke_auditor()` to track duration_ms and capture message/remediation
-- ✅ Modified `apply_quality_gates()` to record results BEFORE blocking (enables audit trail)
-- ✅ Created `tests/test_quality_gate_recording.py` - all 4 tests passing
-- ✅ Benefits: Durable state, audit trail, async remediation enablement
-- ✅ Zero regression: All existing tests still pass (planning, session enforcement)
-- ✅ Updated CLAUDE.md with verification commands and META-TEST
+- ✅ **GAD-004 Phase 3 COMPLETE** - Deployment-Scoped Validation
+- ✅ Created `.github/workflows/post-merge-validation.yml` (E2E tests on push to main/develop)
+- ✅ Created `tests/e2e/test_orchestrator_e2e.py` - all 3 E2E tests passing
+- ✅ Created `tests/performance/test_orchestrator_performance.py` - non-blocking perf tests
+- ✅ Added verification commands to CLAUDE.md for Phase 3
+- ✅ Added Test 8 to META-TEST for deployment-scoped validation
+- ✅ Benefits: Final production readiness gate, E2E validation on merge, performance monitoring
+- ✅ Zero regression: All existing tests still pass (planning, session enforcement, quality gates)
 
 **Previous Update:** 2025-11-16 13:40 UTC by Claude Code
 - ✅ **Automatic Linting Enforcement COMPLETE** - Belt + Suspenders approach
