@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# post-push hook
+# Auto-updates .system_status.json after each push
+#
+# Install: git config core.hooksPath .githooks
+
+# Update system status
+./bin/update-system-status.sh

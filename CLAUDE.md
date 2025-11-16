@@ -41,7 +41,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## ✅ OPERATIONAL STATUS (Dated Snapshot)
 
-**Last Verified:** 2025-11-16 10:07 UTC
+**Last Verified:** 2025-11-16 11:25 UTC
 
 ### Phase Implementation Status
 
@@ -60,6 +60,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | Core Orchestrator | ✅ Works | State machine tested | `python tests/test_orchestrator_state_machine.py` |
 | **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `python3 manual_planning_test.py` |
 | **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
+| **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `python tests/test_prompt_registry.py` |
 | vibe-cli | ⚠️ Code exists, untested E2E | vibe-cli (629 lines) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -121,6 +122,26 @@ cat workspaces/manual-test-project/handoff.json
 # }
 ```
 
+### Verify Session Handoff Integration Works
+```bash
+# ONE COMMAND to get full session context
+./bin/show-context.sh
+
+# Expected output:
+# - Session handoff (from previous agent)
+# - System status (current branch, commits, tests)
+# - Quick commands for deeper inspection
+
+# Update system status manually
+./bin/update-system-status.sh
+
+# Expected: Creates/updates .system_status.json
+
+# Optional: Install git hooks for auto-updates
+git config core.hooksPath .githooks
+# Now .system_status.json auto-updates on commit/push
+```
+
 ### Verify PLANNING Phase Works
 ```bash
 python tests/test_planning_workflow.py
@@ -180,6 +201,10 @@ python3 -c "import bs4" 2>/dev/null && \
 # Test 5: Prompt Registry
 python3 -m pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
   echo "✅ Prompt Registry verified" || echo "❌ Prompt Registry not tested"
+
+# Test 6: Session Handoff Integration
+[ -f "bin/show-context.sh" ] && [ -x "bin/show-context.sh" ] && \
+  echo "✅ Session handoff integration available" || echo "❌ Session handoff scripts missing"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -276,6 +301,9 @@ GOOD: "As the Claude Code operator, you will:"
 
 ### Before Making Claims
 ```bash
+# 0. Get full session context (MOST IMPORTANT - DO THIS FIRST!)
+./bin/show-context.sh
+
 # 1. Verify structure
 ls -la agency_os/01_planning_framework/agents/
 
@@ -357,9 +385,18 @@ cat ARCHITECTURE_V2.md  # Conceptual model
 
 ---
 
-**Last Updated:** 2025-11-16 10:07 UTC
-**Updated By:** Claude Code (Session: claude/analyze-architecture-plan-01YTUh8kt2FP7W8KvzwQM28s)
+**Last Updated:** 2025-11-16 11:25 UTC
+**Updated By:** Claude Code (Session: claude/continue-session-handoff-01SAywRRHvVSxGmTKRf61YML)
 **Updates:**
+- ✅ **Session Handoff Integration COMPLETE** - Holistic two-file handoff system
+- ✅ ONE command (`./bin/show-context.sh`) gives full session context
+- ✅ Two-file system: `.session_handoff.json` (manual) + `.system_status.json` (auto-updated)
+- ✅ Git hooks available for auto-updates (optional: `git config core.hooksPath .githooks`)
+- ✅ Shell scripts: `show-context.sh`, `update-system-status.sh`, `create-session-handoff.sh`
+- ✅ Zero abstractions: Just shell + JSON (no validation, no classes)
+- ✅ Verified: show-context.sh displays both files correctly
+
+**Previous Update:** 2025-11-16 10:07 UTC by Claude Code
 - ✅ **TODO-Based Handoffs IMPLEMENTED** - Simple handoff.json file created between agents
 - ✅ Handoffs active: LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER → GENESIS_BLUEPRINT
 - ✅ Benefits: Workflow transparency, resumable execution, human-readable audit trail

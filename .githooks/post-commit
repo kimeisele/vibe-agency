@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# post-commit hook
+# Auto-updates .system_status.json after each commit
+#
+# Install: git config core.hooksPath .githooks
+
+# Update system status
+./bin/update-system-status.sh
