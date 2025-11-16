@@ -82,46 +82,75 @@
     "   - Estimated effort: 120-150 hours over 5 phases",
     "   - Requires: Cryptographic signatures, penetration testing, security hardening"
   ],
-  "recommendations_for_next_session": [
-    "🎯 DECISION REQUIRED: Should we proceed with GAD-005-ADDITION?",
-    "",
-    "Option A: START GAD-005-ADDITION (5-week commitment)",
-    "   Pros:",
-    "   - Complete defense-in-depth security architecture",
-    "   - Self-regulating system with integrity verification",
-    "   - Production-ready for security-critical deployments",
-    "   Cons:",
-    "   - Large scope (120-150 hours over 5 phases)",
-    "   - Security-critical (requires careful testing)",
-    "   - May delay other roadmap items",
-    "",
-    "Option B: DEFER GAD-005-ADDITION to GAD-006 planning",
-    "   Pros:",
-    "   - Focus on core business value features",
-    "   - GAD-005 baseline is already solid",
-    "   - Can revisit when security requirements increase",
-    "   Cons:",
-    "   - Missing defense-in-depth (only 2 layers: MOTD + Kernel)",
-    "   - No integrity verification (could be compromised)",
-    "   - Less production-ready for high-security environments",
-    "",
-    "Option C: HYBRID - Implement Layer 0 only (Week 1)",
-    "   Pros:",
-    "   - Gets most critical piece (system integrity verification)",
-    "   - Relatively small scope (1 week vs 5 weeks)",
-    "   - Can add Layers 1-4 later if needed",
-    "   Cons:",
-    "   - Incomplete architecture (missing 4 layers)",
-    "   - May create technical debt if not completed",
-    "",
-    "🎯 RECOMMENDED: Option C (Layer 0 only)",
-    "   Rationale:",
-    "   - Layer 0 is the meta-layer (most important)",
-    "   - Provides 'Who watches the watchmen?' protection",
-    "   - Small enough to complete in 1 week",
-    "   - Layers 1-4 can be added incrementally",
-    "   - Unblocks other roadmap items sooner"
-  ],
+  "road_to_gad_005_addition": {
+    "note": "The '37 TODOs' display was a parsing artifact. Actual discrete tasks: 19 items across 4 priority groups.",
+    "priority_1_housekeeping": {
+      "status": "✅ COMPLETE",
+      "tasks": [
+        "✅ Git status clean (verified: nothing to commit)",
+        "✅ All tests passing (27/27 GAD-005 tests + 12/12 core tests)",
+        "✅ Linting passing (0 errors)",
+        "✅ Session handoff created (accurate as of 2025-11-16)"
+      ]
+    },
+    "priority_2_decision": {
+      "status": "⏳ PENDING USER INPUT",
+      "task": "DECIDE: Which path for GAD-005-ADDITION?",
+      "options": {
+        "option_a": {
+          "name": "Full 5-week implementation (Layers 0-4)",
+          "scope": "120-150 hours over 5 phases",
+          "pros": ["Complete defense-in-depth", "Self-regulating system", "Production-ready for high-security"],
+          "cons": ["Large scope", "Security-critical testing required", "May delay other roadmap items"]
+        },
+        "option_b": {
+          "name": "Defer to GAD-006 planning",
+          "scope": "No immediate work",
+          "pros": ["Focus on core business features", "GAD-005 baseline is solid", "Revisit when needed"],
+          "cons": ["Only 2 security layers (MOTD + Kernel)", "No integrity verification", "Less production-ready"]
+        },
+        "option_c": {
+          "name": "Layer 0 only (hybrid - 1 week) ⭐ RECOMMENDED",
+          "scope": "1 week, 10 implementation tasks",
+          "pros": ["Gets most critical piece", "Small scope", "Layers 1-4 addable later", "Unblocks roadmap"],
+          "cons": ["Incomplete architecture", "Potential technical debt if not completed"],
+          "recommendation_rationale": "Layer 0 is the meta-layer (most important). Provides 'Who watches watchmen?' protection. Small enough to complete quickly."
+        }
+      }
+    },
+    "priority_3_execution": {
+      "status": "⏳ BLOCKED (waiting on Priority 2 decision)",
+      "applies_if": "Option C selected (Layer 0 only)",
+      "phase_0_layer_0_tasks": [
+        "Create system integrity verification module",
+        "Implement checksum validation for critical files",
+        "Design signature verification system",
+        "Create integrity report generator",
+        "Write unit tests for Layer 0 (target: 15 tests)",
+        "Integration test: Verify integrity checks block tampering",
+        "Performance test: Verify <100ms integrity check",
+        "Update CLAUDE.md with Layer 0 status",
+        "Create PR: feat: Implement GAD-005-ADDITION Layer 0",
+        "Merge Layer 0 to main"
+      ]
+    },
+    "priority_4_documentation": {
+      "status": "⏳ BLOCKED (waiting on execution)",
+      "tasks": [
+        "Update CLAUDE.md with completion status",
+        "Update session handoff for next agent",
+        "Commit and push all changes",
+        "Update roadmap documents"
+      ]
+    },
+    "task_summary": {
+      "total_discrete_tasks": 19,
+      "priority_1": "4 tasks (✅ ALL COMPLETE)",
+      "priority_2": "1 decision (⏳ PENDING)",
+      "priority_3": "10 tasks (⏳ BLOCKED)",
+      "priority_4": "4 tasks (⏳ BLOCKED)"
+    }
+  },
   "commands_to_verify_this_session": [
     "# Verify GAD-005 is complete",
     "uv run python tests/test_motd.py",
