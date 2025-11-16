@@ -46,7 +46,6 @@ def _ensure_uv_environment():
     """
     repo_root = Path(__file__).parent
     venv_path = repo_root / ".venv"
-    lock_path = repo_root / "uv.lock"
 
     # Check if UV environment exists
     if not venv_path.exists():
@@ -91,16 +90,16 @@ def _ensure_uv_environment():
 # Execute environment check BEFORE any other imports
 _ensure_uv_environment()
 
+# ruff: noqa: E402
+# ^ Intentional: imports after environment check to fail fast if deps missing
 import json
 import logging
 
 # ============================================================================
 # IMPORTS (After Dependency Check)
 # ============================================================================
-import os
 import subprocess
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import yaml
 
@@ -282,7 +281,7 @@ class VibeCLI:
             prompt = request.get("prompt")
             context = request.get("context", {})
 
-            logger.info(f"🤖 Intelligence Request:")
+            logger.info("🤖 Intelligence Request:")
             logger.info(f"   Agent: {agent}")
             logger.info(f"   Task: {task_id}")
             logger.info(f"   Context: {context}")
@@ -292,7 +291,7 @@ class VibeCLI:
             project_id = context.get("project_id", "unknown-project")
 
             # Delegate to Claude Code operator (FILE-BASED DELEGATION)
-            logger.info(f"⚙️  Delegating prompt to Claude Code operator...")
+            logger.info("⚙️  Delegating prompt to Claude Code operator...")
             result = self._delegate_to_operator(prompt, agent, task_id, project_id)
 
             # Build response
@@ -306,10 +305,10 @@ class VibeCLI:
 
             # Send response to orchestrator via STDIN
             response_json = json.dumps(response)
-            logger.info(f"📤 Sending intelligence response...")
+            logger.info("📤 Sending intelligence response...")
             process.stdin.write(response_json + "\n")
             process.stdin.flush()
-            logger.info(f"✅ Intelligence response sent")
+            logger.info("✅ Intelligence response sent")
 
         except Exception as e:
             logger.error(f"❌ Failed to handle intelligence request: {e}")
@@ -506,7 +505,6 @@ class VibeCLI:
         import time
         import uuid
         from datetime import datetime
-        from pathlib import Path
 
         # Create delegation directory
         delegation_dir = self.repo_root / "workspaces" / project_id / ".delegation"
@@ -538,7 +536,7 @@ class VibeCLI:
             json.dump(delegation_request, f, indent=2)
 
         logger.info(f"📤 Delegation request written: {request_file}")
-        logger.info(f"⏳ Waiting for response from Claude Code operator...")
+        logger.info("⏳ Waiting for response from Claude Code operator...")
         logger.info(f"   Expected response file: {response_file}")
 
         # Poll for response file
@@ -552,9 +550,7 @@ class VibeCLI:
                 # Cleanup request file on timeout
                 if request_file.exists():
                     request_file.unlink()
-                raise TimeoutError(
-                    f"No response after {timeout}s. " f"Expected file: {response_file}"
-                )
+                raise TimeoutError(f"No response after {timeout}s. Expected file: {response_file}")
 
             time.sleep(poll_interval)
 
@@ -615,6 +611,171 @@ class VibeCLI:
         result = subprocess.run(cmd)
         sys.exit(result.returncode)
 
+    def run_operator(self, project_id: str) -> None:
+        """
+        Run operator mode: Watch for delegation requests and respond to them.
+
+        This is the "Claude Code operator" side of the file-based delegation protocol.
+
+        Flow:
+        1. Watch .delegation/ directory for request_*.json files
+        2. When found, read the request and display the prompt
+        3. Wait for user input (or call LLM if --auto flag set)
+        4. Write response_*.json file back
+        5. Repeat
+
+        Args:
+            project_id: Project ID to watch
+        """
+        import time
+        from datetime import datetime
+
+        delegation_dir = self.repo_root / "workspaces" / project_id / ".delegation"
+
+        print("=" * 70)
+        print("🤖 VIBE-CLI OPERATOR MODE")
+        print("=" * 70)
+        print(f"\n📋 Project: {project_id}")
+        print(f"📂 Watching: {delegation_dir}")
+        print("\n⏳ Waiting for intelligence requests...")
+        print("   (Press Ctrl+C to stop)\n")
+
+        # Ensure directory exists
+        delegation_dir.mkdir(parents=True, exist_ok=True)
+
+        # Track processed requests to avoid duplicates
+        processed_requests = set()
+
+        try:
+            while True:
+                # Look for request files
+                request_files = sorted(delegation_dir.glob("request_*.json"))
+
+                for request_file in request_files:
+                    request_id = request_file.stem.replace("request_", "")
+
+                    # Skip if already processed
+                    if request_id in processed_requests:
+                        continue
+
+                    # Check if response already exists
+                    response_file = delegation_dir / f"response_{request_id}.json"
+                    if response_file.exists():
+                        processed_requests.add(request_id)
+                        continue
+
+                    # Read and display request
+                    try:
+                        with open(request_file, "r") as f:
+                            request = json.load(f)
+
+                        self._handle_intelligence_request(request, response_file)
+                        processed_requests.add(request_id)
+
+                    except Exception as e:
+                        logger.error(f"Error processing request {request_id}: {e}")
+                        # Write error response
+                        error_response = {
+                            "error": str(e),
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                        with open(response_file, "w") as f:
+                            json.dump(error_response, f, indent=2)
+
+                # Sleep before next check
+                time.sleep(0.5)
+
+        except KeyboardInterrupt:
+            print("\n\n🛑 Operator mode stopped by user")
+            sys.exit(0)
+
+    def _handle_intelligence_request(self, request: Dict[str, Any], response_file: Path) -> None:
+        """
+        Handle a single intelligence delegation request.
+
+        Args:
+            request: Request data from request_*.json
+            response_file: Path to write response_*.json
+        """
+        from datetime import datetime
+
+        print("\n" + "=" * 70)
+        print("📬 INTELLIGENCE REQUEST")
+        print("=" * 70)
+        print(f"\n🤖 Agent: {request['agent']}")
+        print(f"📋 Task: {request['task_id']}")
+        print(f"🕐 Time: {request['timestamp']}")
+        print(f"\n📝 Prompt ({len(request['prompt'])} chars):")
+        print("-" * 70)
+
+        # Show first 1000 chars of prompt
+        prompt = request["prompt"]
+        if len(prompt) > 1000:
+            print(prompt[:1000])
+            print(f"\n... ({len(prompt) - 1000} more chars)")
+        else:
+            print(prompt)
+
+        print("-" * 70)
+        print("\n💡 Enter your response as JSON (or type 'mock' for auto-mock):")
+        print('   Example: {"result": {"status": "success", "data": "..."}} \n')
+
+        # Get user input
+        user_input = input("Response: ").strip()
+
+        if user_input.lower() == "mock":
+            # Generate mock response based on agent/task
+            result = self._generate_mock_response(request)
+            print("\n✅ Generated mock response")
+        else:
+            # Parse user JSON
+            try:
+                response_data = json.loads(user_input)
+                result = response_data.get("result", response_data)
+            except json.JSONDecodeError as e:
+                print(f"\n❌ Invalid JSON: {e}")
+                print("Using error response instead")
+                result = {"error": f"Invalid JSON from operator: {e}"}
+
+        # Write response file
+        response = {
+            "result": result,
+            "metadata": {
+                "responded_at": datetime.now().isoformat(),
+                "operator": "vibe-cli-manual",
+            },
+        }
+
+        with open(response_file, "w") as f:
+            json.dump(response, f, indent=2)
+
+        print(f"\n✅ Response written: {response_file.name}")
+        print("=" * 70)
+
+    def _generate_mock_response(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a mock response for testing.
+
+        Args:
+            request: Intelligence request
+
+        Returns:
+            Mock result data
+        """
+        agent = request["agent"]
+        task_id = request["task_id"]
+
+        # Simple mock - return success status
+        return {
+            "status": "success",
+            "message": f"Mock response for {agent}.{task_id}",
+            "data": {
+                "agent": agent,
+                "task": task_id,
+                "completed": True,
+            },
+        }
+
 
 def main():
     """CLI entry point"""
@@ -628,6 +789,9 @@ Examples:
   # Run project in delegated mode (default - MVP)
   vibe-cli run my-project-123
 
+  # Run operator mode (watch and respond to delegation requests)
+  vibe-cli operator my-project-123
+
   # Run in autonomous mode (standalone - deferred to v1.1)
   vibe-cli run my-project-123 --mode=autonomous
 
@@ -635,17 +799,18 @@ Notes:
   - MVP uses DELEGATION ONLY mode
   - Claude Code operator provides intelligence (not vibe-cli)
   - No API keys required (Claude Code handles authentication)
+  - Use 'operator' command to manually respond to intelligence requests
         """,
     )
 
-    parser.add_argument("command", type=str, choices=["run"], help="Command to execute")
+    parser.add_argument("command", type=str, choices=["run", "operator"], help="Command to execute")
     parser.add_argument("project_id", type=str, help="Project ID")
     parser.add_argument(
         "--mode",
         type=str,
         choices=["delegated", "autonomous"],
         default="delegated",
-        help="Execution mode (default: delegated)",
+        help="Execution mode (default: delegated) - only for 'run' command",
     )
     parser.add_argument(
         "--repo-root",
@@ -662,6 +827,8 @@ Notes:
     # Execute command
     if args.command == "run":
         cli.run_project(args.project_id, mode=args.mode)
+    elif args.command == "operator":
+        cli.run_operator(args.project_id)
     else:
         parser.print_help()
         sys.exit(1)
