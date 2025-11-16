@@ -28,7 +28,7 @@ fi
 # Run test suite status (quick check)
 TESTS_STATUS="unknown"
 if [ -f "tests/test_planning_workflow.py" ]; then
-  if python3 -m pytest tests/test_planning_workflow.py -q --tb=no &>/dev/null; then
+  if python3 tests/test_planning_workflow.py &>/dev/null; then
     TESTS_STATUS="passing"
   else
     TESTS_STATUS="failing"
