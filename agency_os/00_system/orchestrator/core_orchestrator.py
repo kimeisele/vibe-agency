@@ -292,6 +292,16 @@ class CoreOrchestrator:
         # Lazy-load handlers
         self._handlers = {}
 
+        # GAD-100 Phase 3: Add VibeConfig
+        try:
+            from lib.vibe_config import VibeConfig
+            self.vibe_config = VibeConfig(repo_root=self.repo_root)
+            self.system_self_aware = True
+        except Exception as e:
+            logger.warning(f"VibeConfig not available: {e}")
+            self.vibe_config = None
+            self.system_self_aware = False
+
         logger.info(f"Core Orchestrator initialized (mode: {execution_mode})")
 
     # -------------------------------------------------------------------------
@@ -338,6 +348,44 @@ class CoreOrchestrator:
                 raise ValueError(f"No handler for phase: {phase}")
 
         return self._handlers[phase]
+
+    # -------------------------------------------------------------------------
+    # SYSTEM HEALTH (GAD-100 Phase 3)
+    # -------------------------------------------------------------------------
+
+    def check_system_health(self) -> bool:
+        """
+        Check system health before phase transitions.
+
+        Returns:
+            True if system healthy, False if degraded
+
+        Related: GAD-100 (VibeConfig), GAD-500 (integrity checks)
+        """
+        if not self.system_self_aware:
+            # Graceful degradation: no VibeConfig = assume healthy
+            return True
+
+        try:
+            return self.vibe_config.is_system_healthy()
+        except Exception as e:
+            logger.warning(f"Health check failed: {e}")
+            return True  # Fail open (don't block work)
+
+    def get_system_status_summary(self) -> Dict[str, Any]:
+        """
+        Get full system status for logging/debugging.
+
+        Returns:
+            Full status dict or error dict if VibeConfig unavailable
+        """
+        if not self.system_self_aware:
+            return {"error": "VibeConfig not available"}
+
+        try:
+            return self.vibe_config.get_full_status()
+        except Exception as e:
+            return {"error": str(e)}
 
     # -------------------------------------------------------------------------
     # PROJECT MANIFEST MANAGEMENT
@@ -1458,7 +1506,17 @@ class CoreOrchestrator:
 
         Implements GAD-002 Decision 1: Hierarchical Architecture
         Implements GAD-002 Decision 4: Continuous Per-Phase Auditing
+        Implements GAD-100 Phase 3: System health validation
         """
+        # GAD-100 Phase 3: Check health before phase transition
+        if self.system_self_aware:
+            healthy = self.check_system_health()
+            if not healthy:
+                logger.warning("⚠️  System integrity degraded!")
+                logger.warning("   Continuing but recommend running:")
+                logger.warning("   python scripts/verify-system-integrity.py")
+                # Don't block - just warn
+
         # Get handler for current phase
         handler = self.get_phase_handler(manifest.current_phase)
 
