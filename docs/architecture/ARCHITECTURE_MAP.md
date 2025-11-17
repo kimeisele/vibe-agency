@@ -9,6 +9,9 @@
 ## 1. The Complete Picture
 
 ```
+-> status TODO: GAD-001 to GAD-004 need REFRAMING to fit into "PILLARS of GAD" (add to `ARCHITECTURE_MAP.md` when approved) 
+-> fit into `Dependency Graph`
+-> GAD-005 as FOUNDATION is SECURED
 ┌────────────────────────────────────────────────────────────┐
 │                    VIBE AGENCY ARCHITECTURE                │
 │                                                            │
@@ -105,8 +108,8 @@ hosting:
   - Claude Code environment
   - File system + Python
 
-cost: "$20/month (Claude subscription)"
-setup: "30 minutes"
+cost: "various options, also free, works currently best with Claude Code"
+setup: "1 minutes"
 use_case: "Individual developer, small teams, most projects"
 ```
 
