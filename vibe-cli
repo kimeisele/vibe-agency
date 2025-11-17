@@ -572,6 +572,8 @@ class VibeCLI:
             return_code = process.wait()
             if return_code == 0:
                 logger.info("✅ Orchestrator finished successfully")
+                # GAD-100 Phase 3: Auto-create session handoff
+                self._auto_create_handoff()
             else:
                 logger.error(f"❌ Orchestrator failed with code {return_code}")
 
@@ -900,6 +902,29 @@ class VibeCLI:
             if response_file.exists():
                 response_file.unlink()
             raise
+
+    def _auto_create_handoff(self) -> None:
+        """
+        Automatically create session handoff after orchestrator finishes.
+
+        Related: GAD-100 Phase 3 - Handoff Automation
+        """
+        import subprocess
+
+        script_path = self.repo_root / "bin" / "create-session-handoff.sh"
+
+        if script_path.exists():
+            try:
+                subprocess.run(
+                    [str(script_path), "--auto"],
+                    cwd=self.repo_root,
+                    check=True
+                )
+                logger.info("✅ Session handoff auto-created")
+            except subprocess.CalledProcessError as e:
+                logger.warning(f"⚠️  Failed to auto-create handoff: {e}")
+        else:
+            logger.warning("⚠️  Handoff script not found, skipping auto-creation")
 
     def _run_autonomous(self, project_id: str) -> None:
         """
