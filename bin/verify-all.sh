@@ -37,13 +37,13 @@ run_test() {
 
 # Layer 0: System Integrity
 echo "━━━ LAYER 0: SYSTEM INTEGRITY ━━━"
-run_test "Layer 0 Integrity Tests" "uv run pytest tests/test_layer0_integrity.py -v"
-run_test "Layer 0 Performance Tests" "uv run pytest tests/performance/test_layer0_performance.py -v"
+run_test "Layer 0 Integrity Tests" "pytest tests/test_layer0_integrity.py -v"
+run_test "Layer 0 Performance Tests" "pytest tests/performance/test_layer0_performance.py -v"
 echo ""
 
 # Layer 1: Boot Integration
 echo "━━━ LAYER 1: BOOT INTEGRATION ━━━"
-run_test "Layer 1 Boot Tests" "uv run pytest tests/test_layer1_boot_integration.py -v"
+run_test "Layer 1 Boot Tests" "pytest tests/test_layer1_boot_integration.py -v"
 echo ""
 
 # GAD-005: Runtime Engineering
@@ -56,21 +56,21 @@ echo ""
 
 # Core Workflows
 echo "━━━ CORE WORKFLOWS ━━━"
-run_test "Planning Workflow" "uv run pytest tests/test_planning_workflow.py -v"
-run_test "Coding Workflow" "uv run pytest tests/test_coding_workflow.py -v"
-run_test "Deployment Workflow" "uv run pytest tests/test_deployment_workflow.py -v"
+run_test "Planning Workflow" "pytest tests/test_planning_workflow.py -v"
+run_test "Coding Workflow" "pytest tests/test_coding_workflow.py -v"
+run_test "Deployment Workflow" "pytest tests/test_deployment_workflow.py -v"
 echo ""
 
 # GAD-004: Multi-Layer Quality Enforcement
 echo "━━━ GAD-004: QUALITY ENFORCEMENT ━━━"
-run_test "Quality Gate Recording" "uv run pytest tests/test_quality_gate_recording.py -v"
-run_test "Multi-Layer Integration" "uv run pytest tests/test_multi_layer_integration.py -v"
-run_test "E2E Orchestrator Tests" "uv run pytest tests/e2e/test_orchestrator_e2e.py -v"
+run_test "Quality Gate Recording" "pytest tests/test_quality_gate_recording.py -v"
+run_test "Multi-Layer Integration" "pytest tests/test_multi_layer_integration.py -v"
+run_test "E2E Orchestrator Tests" "pytest tests/e2e/test_orchestrator_e2e.py -v"
 echo ""
 
 # Prompt Registry
 echo "━━━ PROMPT REGISTRY ━━━"
-run_test "Prompt Registry Tests" "uv run pytest tests/test_prompt_registry.py -v"
+run_test "Prompt Registry Tests" "pytest tests/test_prompt_registry.py -v"
 echo ""
 
 # File-Based Delegation (GAD-003)
