@@ -12,7 +12,7 @@
   },
 
   "layer1_runtime": {
-    "current_status": "System operational. Kernel test assertions fixed. Test suite at 95.7% passing.",
+    "current_status": "System operational. Kernel tests + dependency regression fixed. Test suite at 95.7% passing.",
     "todos": [
       "Optional: Fix 2 remaining test failures (E2E vibe_aligner, session_handoff schema validation)",
       "Optional: Reduce TODO count in docs (currently 27 docs with TODO/FIXME/WIP)"
@@ -77,7 +77,8 @@
       "PR #98: Foundation Closure Phases 1-4",
       "PR #99: GAD-502 Haiku Hardening (15 tests passing)",
       "PR #100: system-boot.sh performance optimization (< 0.2s)",
-      "commit 58b493f: Fixed kernel test assertions (3 tests, now 10/10 passing)"
+      "commit 58b493f: Fixed kernel test assertions (3 tests, now 10/10 passing)",
+      "commit e3c2b01: Fixed recurring dependency regression (auto-sync on boot)"
     ],
     "warnings": [],
     "next_steps_detail": [
