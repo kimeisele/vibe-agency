@@ -6,7 +6,6 @@ for system health checks and status reporting.
 """
 
 import json
-import pytest
 import sys
 from pathlib import Path
 

@@ -34,10 +34,10 @@ GAD-5XX/
 ```
 
 **The 8 Pillars**:
-- GAD-1XX: [Pillar 1 - TBD]
-- GAD-2XX: [Pillar 2 - TBD]
-- GAD-3XX: [Pillar 3 - TBD]
-- GAD-4XX: [Pillar 4 - TBD]
+- GAD-1XX: Planning & Research
+- GAD-2XX: Core Orchestration & Workflow
+- GAD-3XX: Agent Framework & Runtime
+- GAD-4XX: Quality & Testing
 - GAD-5XX: Runtime Engineering
 - GAD-6XX: Knowledge Department
 - GAD-7XX: STEWARD Governance

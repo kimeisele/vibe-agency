@@ -53,7 +53,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
 try:
-    from phoenix_config import ConfigLoader, ConfigurationError, UniversalConfig
+    from phoenix_config import ConfigurationError, UniversalConfig
+
     PHOENIX_AVAILABLE = True
 except ImportError:
     PHOENIX_AVAILABLE = False
@@ -142,7 +143,7 @@ class VibeConfig(ConfigLoaderInterface):
             )
 
         # Load environment overlay (if exists)
-        env_config_path = self.repo_root / "config" / f"{self.env}.yaml"
+        # env_config_path = self.repo_root / "config" / f"{self.env}.yaml"  # Unused for now
 
         # Create UniversalConfig for the environment
         if self.env == "production":
@@ -283,6 +284,7 @@ class VibeConfig(ConfigLoaderInterface):
         For now, delegate to LegacyConfigLoader implementation
         """
         from legacy_config_loader import LegacyConfigLoader
+
         legacy = LegacyConfigLoader(self.repo_root)
         return legacy._generate_system_status()
 
@@ -387,7 +389,7 @@ def create_vibe_config(env: str = "development", **kwargs) -> VibeConfig:
     return VibeConfig(env=env, **kwargs)
 
 
-def create_legacy_config(**kwargs) -> "LegacyConfigLoader":
+def create_legacy_config(**kwargs):
     """
     Create LegacyConfigLoader instance (convenience function)
 
@@ -395,7 +397,8 @@ def create_legacy_config(**kwargs) -> "LegacyConfigLoader":
         **kwargs: Arguments passed to LegacyConfigLoader()
 
     Returns:
-        LegacyConfigLoader instance
+        LegacyConfigLoader: LegacyConfigLoader instance
     """
     from legacy_config_loader import LegacyConfigLoader
+
     return LegacyConfigLoader(**kwargs)

@@ -102,7 +102,9 @@ class LegacyConfigLoader(ConfigLoaderInterface):
 
     def __init__(self, repo_root: Path, workspaces_dir: Optional[Path] = None):
         self.repo_root = Path(repo_root)
-        self.workspaces_dir = Path(workspaces_dir) if workspaces_dir else self.repo_root / "workspaces"
+        self.workspaces_dir = (
+            Path(workspaces_dir) if workspaces_dir else self.repo_root / "workspaces"
+        )
 
         if not self.repo_root.exists():
             raise ValueError(f"Repository root not found: {self.repo_root}")
@@ -303,7 +305,9 @@ class LegacyConfigLoader(ConfigLoaderInterface):
                 text=True,
                 timeout=5,
             )
-            is_clean = len(status_result.stdout.strip()) == 0 if status_result.returncode == 0 else False
+            is_clean = (
+                len(status_result.stdout.strip()) == 0 if status_result.returncode == 0 else False
+            )
 
             return {"branch": branch, "working_directory_clean": is_clean}
         except (subprocess.TimeoutExpired, FileNotFoundError):

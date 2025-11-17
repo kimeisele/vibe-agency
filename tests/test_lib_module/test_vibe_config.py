@@ -7,7 +7,6 @@ and provides the expected API.
 
 import json
 import pytest
-from pathlib import Path
 from lib.vibe_config import VibeConfig
 
 
@@ -38,12 +37,9 @@ def test_get_system_integrity_valid(tmp_path):
 
     manifest = {
         "status": "VERIFIED",
-        "checksums": {
-            "vibe-cli": "abc123",
-            "project_manifest.json": "def456"
-        },
+        "checksums": {"vibe-cli": "abc123", "project_manifest.json": "def456"},
         "last_verified": "2025-11-17T18:30:00Z",
-        "violations": []
+        "violations": [],
     }
 
     manifest_file = vibe_dir / "system_integrity_manifest.json"
@@ -99,12 +95,9 @@ def test_get_recent_receipts_sorted(tmp_path):
 
     # Create 3 receipts with different timestamps
     import time
+
     for i in range(3):
-        receipt = {
-            "agent": f"Agent{i}",
-            "task": f"Task{i}",
-            "timestamp": f"2025-11-17T18:3{i}:00Z"
-        }
+        receipt = {"agent": f"Agent{i}", "task": f"Task{i}", "timestamp": f"2025-11-17T18:3{i}:00Z"}
         receipt_file = receipts_dir / f"receipt_{i}.json"
         with open(receipt_file, "w") as f:
             json.dump(receipt, f)
@@ -141,19 +134,19 @@ def test_get_session_handoff_valid(tmp_path):
             "from": "Claude Code",
             "date": "2025-11-17",
             "state": "complete",
-            "blocker": None
+            "blocker": None,
         },
         "layer1_runtime": {
             "completed_summary": "Test work completed",
             "todos": ["Task 1", "Task 2"],
-            "critical_files": []
+            "critical_files": [],
         },
         "layer2_detail": {
             "completed": [],
             "key_decisions": [],
             "warnings": [],
-            "next_steps_detail": []
-        }
+            "next_steps_detail": [],
+        },
     }
 
     handoff_file = tmp_path / ".session_handoff.json"
@@ -178,19 +171,19 @@ def test_get_handoff_summary(tmp_path):
             "from": "Claude Code - Test",
             "date": "2025-11-17",
             "state": "blocked",
-            "blocker": "Waiting for approval"
+            "blocker": "Waiting for approval",
         },
         "layer1_runtime": {
             "completed_summary": "Phase 1 complete",
             "todos": ["Fix bug", "Write tests"],
-            "critical_files": []
+            "critical_files": [],
         },
         "layer2_detail": {
             "completed": [],
             "key_decisions": [],
             "warnings": [],
-            "next_steps_detail": []
-        }
+            "next_steps_detail": [],
+        },
     }
 
     handoff_file = tmp_path / ".session_handoff.json"

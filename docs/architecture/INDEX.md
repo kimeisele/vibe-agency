@@ -6,17 +6,22 @@
 
 ## The 8 Pillars (GAD)
 
-### GAD-1XX: [Pillar 1 - TBD]
-- [GAD-100: Main Document](GAD-1XX/GAD-100.md) ⚠️ TODO: Migrate from GAD-001
+### GAD-1XX: Planning & Research ✅
+- [GAD-100: Planning & Research EPIC](GAD-1XX/GAD-100.md) (Migrated from GAD-001 + GAD-003)
+- [GAD-101: Research Tool Integration](GAD-1XX/GAD-101.md) ⚠️ Planned
 
-### GAD-2XX: [Pillar 2 - TBD]
-- [GAD-200: Main Document](GAD-2XX/GAD-200.md) ⚠️ TODO: Migrate from GAD-002
+### GAD-2XX: Core Orchestration & Workflow ✅
+- [GAD-200: Core Orchestration EPIC](GAD-2XX/GAD-200.md) (Migrated from GAD-002)
+- [GAD-201: Testing Handler](GAD-2XX/GAD-201.md) ⚠️ Planned
+- [GAD-202: Maintenance Handler](GAD-2XX/GAD-202.md) ⚠️ Planned
 
-### GAD-3XX: [Pillar 3 - TBD]
-- [GAD-300: Main Document](GAD-3XX/GAD-300.md) ⚠️ TODO: Migrate from GAD-003
+### GAD-3XX: Agent Framework & Runtime ✅
+- [GAD-300: Agent Framework EPIC](GAD-3XX/GAD-300.md) (New pillar)
+- [GAD-301: Prompt Composition System](GAD-3XX/GAD-301.md) ⚠️ Planned
+- [GAD-302: Agent Lifecycle Management](GAD-3XX/GAD-302.md) ⚠️ Planned
 
-### GAD-4XX: [Pillar 4 - TBD]
-- [GAD-400: Main Document](GAD-4XX/GAD-400.md) ⚠️ TODO: Migrate from GAD-004
+### GAD-4XX: Quality & Testing ✅
+- [GAD-400: Quality & Testing EPIC](GAD-4XX/GAD-400.md) (Migrated from GAD-004)
 
 ### GAD-5XX: Runtime Engineering ✅
 - [GAD-500: Runtime Engineering EPIC](GAD-5XX/GAD-500.md)
@@ -70,17 +75,21 @@ The Verification Architecture Documents test cross-pillar integration:
 - [CRITICAL_PATH_ANALYSIS.yaml](CRITICAL_PATH_ANALYSIS.yaml)
 - [SYSTEM_DATA_FLOW_MAP.yaml](SYSTEM_DATA_FLOW_MAP.yaml)
 
-### Legacy GAD Files (Pre-Migration)
-These files remain at the root level pending further review and consolidation:
+### Legacy GAD Files (Archived)
+These files have been archived after migration to new structure:
 
-- GAD-001_Research_Integration.md
-- GAD-001_VERIFICATION_HARNESS.md
-- GAD-002_Core_SDLC_Orchestration.md
-- GAD-002_VERIFICATION_HARNESS.md
-- GAD-003_Research_Capability_Restoration.md
-- GAD-003_COMPLETION_ASSESSMENT.md
-- GAD-003_IMPLEMENTATION_STATUS.md
-- GAD-004_Multi_Layered_Quality_Enforcement.md
+**Location:** `archive/pre-migration/`
+
+- GAD-001_Research_Integration.md → **GAD-100** (Planning & Research)
+- GAD-001_VERIFICATION_HARNESS.md → Archived
+- GAD-002_Core_SDLC_Orchestration.md → **GAD-200** (Orchestration)
+- GAD-002_VERIFICATION_HARNESS.md → Archived
+- GAD-003_Research_Capability_Restoration.md → **GAD-100** (Part of Planning)
+- GAD-003_COMPLETION_ASSESSMENT.md → Archived
+- GAD-003_IMPLEMENTATION_STATUS.md → Archived
+- GAD-004_Multi_Layered_Quality_Enforcement.md → **GAD-400** (Quality)
+
+**Migration Date:** 2025-11-17
 
 ---
 
@@ -94,5 +103,5 @@ These files remain at the root level pending further review and consolidation:
 
 ---
 
-**Last Updated**: 2025-11-17  
-**Version**: 2.0 (Final - Week 3 Complete)
+**Last Updated**: 2025-11-17
+**Version**: 3.0 (Foundation Closure - GAD-1XX through GAD-4XX Complete)

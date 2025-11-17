@@ -85,6 +85,7 @@ def test_workspace(repo_root, tmp_path):
 
     # Copy config files to tmp_path (needed for VibeConfig)
     import shutil
+
     config_src = repo_root / "config"
     config_dst = tmp_path / "config"
     if config_src.exists():
@@ -225,6 +226,7 @@ def test_session_handoff_missing_equivalence(tmp_path):
 
     with open(config_dir / "vibe_config.yaml", "w") as f:
         import yaml
+
         yaml.dump(vibe_config_data, f)
 
     base_config = {
@@ -234,6 +236,7 @@ def test_session_handoff_missing_equivalence(tmp_path):
 
     with open(config_dir / "base.yaml", "w") as f:
         import yaml
+
         yaml.dump(base_config, f)
 
     legacy = LegacyConfigLoader(repo_root=tmp_path)
@@ -459,6 +462,7 @@ def test_final_equivalence_verdict(legacy_loader, vibe_config):
 
     # Final check: both implement interface
     from legacy_config_loader import ConfigLoaderInterface
+
     assert isinstance(legacy_loader, ConfigLoaderInterface)
     assert isinstance(vibe_config, ConfigLoaderInterface)
 

@@ -17,6 +17,7 @@ from typing import Literal, Dict, List, Optional
 
 try:
     import requests
+
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
@@ -34,9 +35,7 @@ class LayerDetector:
     """
 
     def __init__(
-        self,
-        runtime_health_url: str = "http://localhost:8000/health",
-        timeout: float = 1.0
+        self, runtime_health_url: str = "http://localhost:8000/health", timeout: float = 1.0
     ):
         """
         Initialize layer detector.
@@ -96,10 +95,7 @@ class LayerDetector:
             return False
 
         try:
-            response = requests.get(
-                self.runtime_health_url,
-                timeout=self.timeout
-            )
+            response = requests.get(self.runtime_health_url, timeout=self.timeout)
             return response.status_code == 200
         except (requests.RequestException, ConnectionError, OSError):
             return False
@@ -117,31 +113,28 @@ class LayerDetector:
             True if tool execution is available, False otherwise
         """
         # Strategy 1: Check for Claude Code config
-        config_file = Path('.claude/settings.local.json')
+        config_file = Path(".claude/settings.local.json")
         if config_file.exists():
             return True
 
         # Strategy 2: Check for Claude Code environment markers
-        claude_markers = [
-            '/tmp/.claude_code',
-            Path.home() / '.config' / 'claude-code'
-        ]
+        claude_markers = ["/tmp/.claude_code", Path.home() / ".config" / "claude-code"]
         for marker in claude_markers:
             if Path(marker).exists():
                 return True
 
         # Strategy 3: Check Python environment for tool execution capability
         # In Claude Code, sys.modules will contain specific packages
-        if 'anthropic' in sys.modules or 'claude_code' in sys.modules:
+        if "anthropic" in sys.modules or "claude_code" in sys.modules:
             return True
 
         # Strategy 4: Check for workspace directory structure
         # Vibe-agency workspace indicates tool capability
         workspace_indicators = [
-            Path('agency_os'),
-            Path('knowledge_department'),
-            Path('steward'),
-            Path('.session_handoff.json')
+            Path("agency_os"),
+            Path("knowledge_department"),
+            Path("steward"),
+            Path(".session_handoff.json"),
         ]
 
         # If at least 2 indicators present, likely in tool environment
@@ -170,7 +163,7 @@ class LayerDetector:
                 "manual_operations",
                 "prompt_based_interaction",
                 "user_file_access",
-                "manual_validation"
+                "manual_validation",
             ],
             2: [
                 "automated_queries",
@@ -180,7 +173,7 @@ class LayerDetector:
                 "knowledge_query",
                 "steward_validate",
                 "receipt_generation",
-                "integrity_checks"
+                "integrity_checks",
             ],
             3: [
                 "api_calls",
@@ -192,14 +185,14 @@ class LayerDetector:
                 "semantic_expansion",
                 "audit_logging",
                 "client_research_apis",
-                "federated_query"
-            ]
+                "federated_query",
+            ],
         }
 
         # Return cumulative capabilities (Layer 3 includes Layer 2 and 1)
         all_capabilities = []
-        for l in range(1, layer + 1):
-            all_capabilities.extend(capabilities_map[l])
+        for layer_num in range(1, layer + 1):
+            all_capabilities.extend(capabilities_map[layer_num])
 
         return all_capabilities
 

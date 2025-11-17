@@ -65,7 +65,7 @@ class VibeConfig:
             return {
                 "status": "UNKNOWN",
                 "error": f"Manifest not found: {manifest_file}",
-                "hint": "Run: python scripts/generate-integrity-manifest.py"
+                "hint": "Run: python scripts/generate-integrity-manifest.py",
             }
 
         try:
@@ -74,10 +74,7 @@ class VibeConfig:
 
             # Validate required fields
             if "checksums" not in data:
-                return {
-                    "status": "UNKNOWN",
-                    "error": "Invalid manifest: missing 'checksums' field"
-                }
+                return {"status": "UNKNOWN", "error": "Invalid manifest: missing 'checksums' field"}
 
             # Check if manifest has status field (newer format)
             status = data.get("status", "UNKNOWN")
@@ -86,14 +83,11 @@ class VibeConfig:
                 "status": status,
                 "checksums": data.get("checksums", {}),
                 "last_verified": data.get("last_verified", "never"),
-                "violations": data.get("violations", [])
+                "violations": data.get("violations", []),
             }
 
         except json.JSONDecodeError as e:
-            return {
-                "status": "UNKNOWN",
-                "error": f"Invalid JSON in manifest: {e}"
-            }
+            return {"status": "UNKNOWN", "error": f"Invalid JSON in manifest: {e}"}
 
     def is_system_healthy(self) -> bool:
         """
@@ -191,10 +185,7 @@ class VibeConfig:
         handoff = self.get_session_handoff()
 
         if not handoff:
-            return {
-                "state": "unknown",
-                "error": "No session handoff found"
-            }
+            return {"state": "unknown", "error": "No session handoff found"}
 
         # Extract from 4-layer format
         layer0 = handoff.get("layer0_bedrock", {})
@@ -206,7 +197,7 @@ class VibeConfig:
             "date": layer0.get("date", "Unknown"),
             "summary": layer1.get("completed_summary", ""),
             "todos": layer1.get("todos", []),
-            "blocker": layer0.get("blocker")
+            "blocker": layer0.get("blocker"),
         }
 
     # ========================================
@@ -233,5 +224,5 @@ class VibeConfig:
             "receipts": self.get_recent_receipts(limit=3),
             "handoff": self.get_handoff_summary(),
             "healthy": self.is_system_healthy(),
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }

@@ -295,6 +295,7 @@ class CoreOrchestrator:
         # GAD-100 Phase 3: Add VibeConfig
         try:
             from lib.vibe_config import VibeConfig
+
             self.vibe_config = VibeConfig(repo_root=self.repo_root)
             self.system_self_aware = True
         except Exception as e:

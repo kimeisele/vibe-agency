@@ -67,6 +67,7 @@ def test_workspace(repo_root, tmp_path):
 
     # Copy config files to tmp_path (needed for VibeConfig)
     import shutil
+
     config_src = repo_root / "config"
     config_dst = tmp_path / "config"
     if config_src.exists():
@@ -132,7 +133,9 @@ def test_vibe_config_init_missing_config(tmp_path):
     with pytest.raises(FileNotFoundError) as exc_info:
         VibeConfig(env="development", repo_root=tmp_path)
 
-    assert "vibe_config.yaml" in str(exc_info.value) or "Vibe config not found" in str(exc_info.value)
+    assert "vibe_config.yaml" in str(exc_info.value) or "Vibe config not found" in str(
+        exc_info.value
+    )
 
 
 def test_vibe_config_init_missing_base_config(tmp_path):
@@ -149,6 +152,7 @@ def test_vibe_config_init_missing_base_config(tmp_path):
 
     with open(config_dir / "vibe_config.yaml", "w") as f:
         import yaml
+
         yaml.dump(vibe_config, f)
 
     # Should fail because base.yaml missing
@@ -239,6 +243,7 @@ def test_get_session_handoff_missing(tmp_path):
 
     with open(config_dir / "vibe_config.yaml", "w") as f:
         import yaml
+
         yaml.dump(vibe_config_data, f)
 
     # Create minimal base.yaml
@@ -249,6 +254,7 @@ def test_get_session_handoff_missing(tmp_path):
 
     with open(config_dir / "base.yaml", "w") as f:
         import yaml
+
         yaml.dump(base_config, f)
 
     config = VibeConfig(env="development", repo_root=tmp_path, validate_schemas=False)
@@ -464,4 +470,5 @@ def test_create_legacy_config(repo_root):
     config = create_legacy_config(repo_root=repo_root)
 
     from legacy_config_loader import LegacyConfigLoader
+
     assert isinstance(config, LegacyConfigLoader)
