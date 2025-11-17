@@ -426,6 +426,23 @@ GOOD: "As the Claude Code operator, you will:"
 
 ---
 
+## 🚀 THE ONE COMMAND (For Next Session)
+
+**To start a new session with full context:**
+
+```bash
+./bin/system-boot.sh
+```
+
+This outputs THE PROMPT for the next agent:
+- **STEWARD persona** (system prompt <100 tokens)
+- **Full session handoff** (context + backlog + priorities)
+- **Ready to execute** - just read and do
+
+**Copy the output and give it to the next agent as their initial prompt.**
+
+---
+
 ## 🎯 QUICK START (For New AI Assistants)
 
 ### Before Making Claims
