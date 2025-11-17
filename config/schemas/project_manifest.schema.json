@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agency.os/schemas/project_manifest.json",
+  "title": "Project Manifest",
+  "description": "Canonical schema for vibe-agency project manifests (workspaces/*/project_manifest.json)",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec", "status", "artifacts"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "pattern": "^agency\\.os/v[0-9]+[a-z0-9]*$",
+      "description": "API version (e.g., agency.os/v1alpha1)",
+      "examples": ["agency.os/v1alpha1", "agency.os/v1"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["Project"],
+      "description": "Resource type (always 'Project' for manifests)"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["projectId", "name", "description", "owner", "createdAt", "lastUpdatedAt"],
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique project identifier (UUID or human-readable slug)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable project name"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Brief project description"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project owner (email or identifier)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of project creation"
+        },
+        "lastUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last update"
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": ["vibe"],
+      "properties": {
+        "vibe": {
+          "type": "object",
+          "description": "Vibe specification (flexible schema - accepts any properties)",
+          "additionalProperties": true
+        },
+        "genesis": {
+          "type": "object",
+          "description": "Genesis Blueprint specification (flexible schema)",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "required": ["projectPhase", "lastUpdate", "message"],
+      "properties": {
+        "projectPhase": {
+          "type": "string",
+          "enum": ["PLANNING", "AWAITING_CODE_GENERATION", "CODING", "TESTING", "DEPLOYMENT", "MAINTENANCE", "PRODUCTION"],
+          "description": "Current SDLC phase (AWAITING_CODE_GENERATION is a transition state between PLANNING and CODING)"
+        },
+        "planningSubState": {
+          "type": "string",
+          "enum": ["RESEARCH", "BUSINESS_VALIDATION", "FEATURE_SPECIFICATION", "ARCHITECTURE_DESIGN"],
+          "description": "Optional: Fine-grained sub-state during PLANNING phase (orchestrator-managed)"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last status update"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable status message"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Project artifacts organized by SDLC phase",
+      "properties": {
+        "planning": {
+          "type": "object",
+          "description": "Planning phase artifacts",
+          "patternProperties": {
+            "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+              "$ref": "#/$defs/artifactMetadata"
+            }
+          },
+          "additionalProperties": false
+        },
+        "code": {
+          "type": "object",
+          "description": "Coding phase artifacts",
+          "properties": {
+            "mainRepository": {
+              "type": "object",
+              "description": "Special case: Git repository metadata (not a standard artifact)",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Git repository URL"
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "Git branch name"
+                },
+                "lastCommit": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{7,40}$",
+                  "description": "Last commit hash"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "patternProperties": {
+            "^(?!mainRepository$)[a-zA-Z_][a-zA-Z0-9_]*$": {
+              "$ref": "#/$defs/artifactMetadata"
+            }
+          },
+          "additionalProperties": false
+        },
+        "test": {
+          "type": "object",
+          "description": "Testing phase artifacts",
+          "patternProperties": {
+            "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+              "$ref": "#/$defs/artifactMetadata"
+            }
+          },
+          "additionalProperties": false
+        },
+        "deployment": {
+          "type": "object",
+          "description": "Deployment phase artifacts",
+          "patternProperties": {
+            "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+              "$ref": "#/$defs/artifactMetadata"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "description": "Optional: Project budget tracking (for client/production projects)",
+      "required": ["max_cost_usd", "current_cost_usd", "alert_threshold"],
+      "properties": {
+        "max_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum budget in USD"
+        },
+        "current_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Current spending in USD"
+        },
+        "alert_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Alert when spending exceeds this fraction (0.0-1.0)"
+        },
+        "cost_breakdown": {
+          "type": "object",
+          "description": "Detailed cost breakdown by category",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "roadmap": {
+      "type": "object",
+      "description": "Optional: Project roadmap with version planning",
+      "patternProperties": {
+        "^v[0-9]+\\.[0-9]+$": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["planned", "planning_complete", "in_progress", "completed", "deferred"]
+            },
+            "timeline": {
+              "type": "string"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "artifactMetadata": {
+      "type": "object",
+      "description": "Standardized artifact metadata (supports both file-based and git-based artifacts)",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "File path to artifact (relative to repo root)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional: ISO 8601 timestamp when artifact was created"
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Optional: Git commit hash (for git-tracked artifacts)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Optional: Artifact status (orchestrator-managed)"
+        },
+        "validation": {
+          "type": "object",
+          "description": "Optional: Validation results (orchestrator-managed)",
+          "additionalProperties": true
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional: External URL (for git repositories, etc.)"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Optional: Git branch name (for repository artifacts)"
+        },
+        "lastCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Optional: Last commit hash (for repository artifacts)"
+        },
+        "implementation_timeline": {
+          "type": "string",
+          "description": "Optional: Implementation timeline estimate"
+        },
+        "sprint_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional: Number of sprints required"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

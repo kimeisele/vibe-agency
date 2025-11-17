@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agency.os/schemas/session_handoff.json",
+  "title": "Session Handoff",
+  "description": "Canonical schema for session handoff files (.session_handoff.json)",
+  "type": "object",
+  "required": [
+    "_schema_version",
+    "_token_budget",
+    "_optimization",
+    "layer0_bedrock",
+    "layer1_runtime",
+    "layer2_detail"
+  ],
+  "properties": {
+    "_schema_version": {
+      "type": "string",
+      "description": "Handoff schema version (e.g., 2.0_4layer)",
+      "pattern": "^[0-9]+\\.[0-9]+(_[a-z0-9]+)?$"
+    },
+    "_token_budget": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Token budget for handoff message (must be positive)"
+    },
+    "_optimization": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Summary of what was optimized/achieved in this session"
+    },
+    "layer0_bedrock": {
+      "type": "object",
+      "description": "Layer 0: High-level state (complete/blocked/needs-input)",
+      "required": ["from", "date", "state", "blocker"],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who/what created this handoff (e.g., 'Claude Code - Session XYZ')"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Date in YYYY-MM-DD format"
+        },
+        "state": {
+          "type": "string",
+          "enum": ["complete", "blocked", "needs-input", "in-progress"],
+          "description": "Current session state"
+        },
+        "blocker": {
+          "type": ["string", "null"],
+          "description": "What is blocking progress (null if none)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "layer1_runtime": {
+      "type": "object",
+      "description": "Layer 1: Runtime context (summary, todos, critical files)",
+      "required": ["completed_summary", "todos", "critical_files"],
+      "properties": {
+        "completed_summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What was completed in this session (1-2 sentences)"
+        },
+        "todos": {
+          "type": "array",
+          "description": "Remaining tasks (empty array if all complete)",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "critical_files": {
+          "type": "array",
+          "description": "Files the next agent should read first",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "layer2_detail": {
+      "type": "object",
+      "description": "Layer 2: Technical details (for agents who need full context)",
+      "required": ["completed", "key_decisions", "warnings", "next_steps_detail"],
+      "properties": {
+        "completed": {
+          "type": "array",
+          "description": "Detailed list of completed work items",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "key_decisions": {
+          "type": "array",
+          "description": "Important architectural/design decisions made",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Warnings, gotchas, or things to watch out for",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "next_steps_detail": {
+          "type": "array",
+          "description": "Detailed next steps (expands layer1_runtime.todos)",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
