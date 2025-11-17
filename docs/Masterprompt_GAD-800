@@ -1,0 +1,484 @@
+# 📋 MASTER PROMPT FOR CLAUDE CODE
+
+```markdown
+# GAD-800 UPGRADE: Vision (30%) → Implementation Ready (80%)
+
+## CONTEXT
+You are upgrading GAD-800 (Integration Matrix) from a low-confidence vision draft to implementation-ready documentation. This is CRITICAL infrastructure - without it, the entire Vibe Agency system cannot integrate properly.
+
+## YOUR MISSION
+Transform `docs/architecture/GAD-8XX/GAD-800.md` into a concrete, actionable specification with:
+1. ✅ Clear integration protocols (code examples)
+2. ✅ Layer detection implementation (concrete logic)
+3. ✅ Degradation decision trees (executable)
+4. ✅ Knowledge graph schema v1 (YAML spec)
+5. ✅ Test scenarios for ALL cross-system interactions
+
+## CURRENT PROBLEMS TO FIX
+From the existing GAD-800.md:
+- "Architecture noch outdated" → Update to match current reality
+- "Low confidence" → Add concrete examples and code
+- "Nur hin gerotzt" → Professional, detailed specification
+- "30% detail level" → Bring to 80% with implementation details
+
+## WHAT TO KEEP
+The existing structure is GOOD:
+- ✅ Three dimensions (Layers, Systems, Components)
+- ✅ Component compatibility matrix
+- ✅ Degradation paths concept
+- ✅ Knowledge graph as glue
+
+## WHAT TO ADD
+
+### 1. CONCRETE INTEGRATION PROTOCOLS
+
+Add actual code examples for each interaction:
+
+```yaml
+# Example: Agent-to-Knowledge Protocol (Layer 2)
+agent_requests_knowledge:
+  code_example: |
+    from knowledge_department.tools import knowledge_query
+    
+    result = knowledge_query(
+        query="booking system patterns",
+        scope="public",
+        expand_graph=True,
+        max_results=5
+    )
+    
+    # Returns: {
+    #   "results": [
+    #     {"file": "booking_systems.yaml", "snippet": "..."},
+    #     {"file": "reservation_patterns.yaml", "snippet": "..."}
+    #   ],
+    #   "expanded_concepts": ["availability_calendar", "payment_processing"]
+    # }
+```
+
+Do this for:
+
+- ✅ Agent → Knowledge (Layer 1, 2, 3)
+- ✅ Agent → STEWARD (Layer 1, 2, 3)
+- ✅ Knowledge → STEWARD (Layer 2, 3)
+
+### 2. LAYER DETECTION IMPLEMENTATION
+
+Replace the conceptual code with ACTUAL working implementation:
+
+```python
+# Add to: docs/architecture/GAD-8XX/layer_detection.py (NEW FILE)
+import requests
+from pathlib import Path
+
+class LayerDetector:
+    """Concrete layer detection implementation."""
+    
+    def detect_layer(self) -> int:
+        """
+        Detect current execution layer.
+        
+        Returns:
+            1: Browser/prompt-only
+            2: Claude Code/tools
+            3: Full runtime/APIs
+        """
+        # Check Layer 3: Runtime services
+        if self._check_runtime_services():
+            return 3
+        
+        # Check Layer 2: Tool execution
+        if self._check_tool_capability():
+            return 2
+        
+        # Default: Layer 1
+        return 1
+    
+    def _check_runtime_services(self) -> bool:
+        """Check if runtime services are available."""
+        try:
+            response = requests.get(
+                'http://localhost:8000/health',
+                timeout=1
+            )
+            return response.status_code == 200
+        except (requests.RequestException, ConnectionError):
+            return False
+    
+    def _check_tool_capability(self) -> bool:
+        """Check if tools can be executed."""
+        # Check for .claude/settings.local.json
+        config_file = Path('.claude/settings.local.json')
+        if not config_file.exists():
+            return False
+        
+        # Check for tool execution environment
+        import sys
+        return 'claude_code' in sys.modules or Path('/tmp/.claude_code').exists()
+
+# Usage example
+detector = LayerDetector()
+current_layer = detector.detect_layer()
+print(f"Running in Layer {current_layer}")
+```
+
+### 3. DEGRADATION DECISION TREES (EXECUTABLE)
+
+Create actual YAML decision trees:
+
+```yaml
+# Add to: docs/architecture/GAD-8XX/degradation_rules.yaml (NEW FILE)
+degradation_rules:
+  
+  knowledge_query:
+    layer3_available:
+      condition: "runtime_services_up"
+      action: "use_research_engine"
+      capabilities:
+        - multi_source_search
+        - semantic_expansion
+        - client_research_apis
+    
+    layer3_fails:
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "use_knowledge_query_tool"
+      capabilities:
+        - local_yaml_search
+        - knowledge_graph_expansion
+      notify: "⚠️ Degraded to Layer 2: Limited to local knowledge"
+    
+    layer2_fails:
+      degrade_to: "layer1"
+      condition: "always"
+      action: "prompt_user"
+      capabilities:
+        - manual_file_check
+      notify: "⚠️ Degraded to Layer 1: Manual operation required"
+  
+  steward_validation:
+    layer3_available:
+      action: "governance_engine_enforce"
+      capabilities:
+        - runtime_blocking
+        - audit_logging
+        - policy_enforcement
+    
+    layer3_fails:
+      degrade_to: "layer2"
+      action: "steward_validate_tool"
+      capabilities:
+        - validation_checks
+        - recommendation_only
+      notify: "⚠️ Degraded to Layer 2: Validation only, no enforcement"
+    
+    layer2_fails:
+      degrade_to: "layer1"
+      action: "steward_guidance"
+      capabilities:
+        - policy_explanation
+        - user_decision
+      notify: "⚠️ Degraded to Layer 1: Guidance only"
+```
+
+### 4. KNOWLEDGE GRAPH SCHEMA V1
+
+Create concrete YAML schema:
+
+```yaml
+# Add to: knowledge_department/config/knowledge_graph.yaml (CREATE IF MISSING)
+schema_version: "1.0"
+last_updated: "2025-11-17"
+
+node_types:
+  - id: "project_type"
+    properties:
+      - name
+      - description
+      - typical_duration_days
+      - complexity_score
+    
+  - id: "domain_concept"
+    properties:
+      - name
+      - definition
+      - related_industries
+    
+  - id: "tech_stack"
+    properties:
+      - name
+      - primary_language
+      - frameworks
+      - maturity_level
+    
+  - id: "agent"
+    properties:
+      - name
+      - purpose
+      - input_requirements
+      - output_artifacts
+    
+  - id: "governance_rule"
+    properties:
+      - name
+      - policy_type
+      - severity
+      - enforcement_layer
+
+edge_types:
+  - id: "requires"
+    from: ["project_type"]
+    to: ["domain_concept", "tech_stack"]
+    
+  - id: "implements"
+    from: ["tech_stack"]
+    to: ["domain_concept"]
+    
+  - id: "uses"
+    from: ["agent"]
+    to: ["tech_stack", "domain_concept"]
+    
+  - id: "governed_by"
+    from: ["project_type", "domain_concept", "agent"]
+    to: ["governance_rule"]
+    
+  - id: "defined_in"
+    from: ["domain_concept"]
+    to: ["knowledge_file"]
+
+# Example graph instance
+graph_instance:
+  nodes:
+    booking_system:
+      type: "project_type"
+      name: "Booking System"
+      description: "Reservation and scheduling platform"
+      typical_duration_days: 60
+      complexity_score: 7
+      
+    reservation_management:
+      type: "domain_concept"
+      name: "Reservation Management"
+      definition: "Core booking workflow and state management"
+      
+    next_fullstack:
+      type: "tech_stack"
+      name: "Next.js Full Stack"
+      primary_language: "TypeScript"
+      frameworks: ["Next.js 14", "React", "Prisma"]
+      
+    VIBE_ALIGNER:
+      type: "agent"
+      name: "VIBE_ALIGNER"
+      purpose: "Feature specification and validation"
+      
+    access_control:
+      type: "governance_rule"
+      name: "Access Control Policy"
+      policy_type: "confidentiality"
+      severity: "critical"
+      enforcement_layer: 2
+
+  edges:
+    - from: "booking_system"
+      to: "reservation_management"
+      type: "requires"
+      
+    - from: "booking_system"
+      to: "next_fullstack"
+      type: "requires"
+      
+    - from: "next_fullstack"
+      to: "reservation_management"
+      type: "implements"
+      
+    - from: "VIBE_ALIGNER"
+      to: "reservation_management"
+      type: "uses"
+      
+    - from: "booking_system"
+      to: "access_control"
+      type: "governed_by"
+```
+
+### 5. TEST SCENARIOS
+
+Create comprehensive test cases:
+
+```python
+# Add to: tests/architecture/test_gad800_integration.py (NEW FILE)
+"""
+GAD-800 Integration Matrix Tests
+Tests all cross-system interactions at all layers.
+"""
+import pytest
+from pathlib import Path
+
+class TestAgentToKnowledge:
+    """Test Agent → Knowledge interactions."""
+    
+    def test_layer1_manual_query(self):
+        """Layer 1: Agent prompts user to check knowledge file."""
+        # Simulate prompt-based interaction
+        prompt = "Please check knowledge_department/domain_knowledge/booking_systems.yaml"
+        assert "booking_systems.yaml" in prompt
+        
+    def test_layer2_tool_query(self):
+        """Layer 2: Agent uses knowledge_query tool."""
+        from knowledge_department.tools import knowledge_query
+        
+        result = knowledge_query(
+            query="booking patterns",
+            scope="public"
+        )
+        
+        assert result["status"] == "success"
+        assert len(result["results"]) > 0
+        
+    @pytest.mark.skipif(
+        not Path('http://localhost:8000/health').exists(),
+        reason="Layer 3 services not available"
+    )
+    def test_layer3_research_engine(self):
+        """Layer 3: Agent uses ResearchEngine API."""
+        import requests
+        
+        response = requests.post(
+            'http://localhost:8000/research',
+            json={
+                "query": "booking system best practices",
+                "sources": ["internal", "external"]
+            }
+        )
+        
+        assert response.status_code == 200
+        assert "report" in response.json()
+
+class TestAgentToSTEWARD:
+    """Test Agent → STEWARD interactions."""
+    
+    def test_layer1_guidance(self):
+        """Layer 1: STEWARD provides guidance."""
+        # Simulate guidance interaction
+        question = "Can I access client_a knowledge?"
+        guidance = "Check project_id in project_manifest.json"
+        assert "project_id" in guidance
+        
+    def test_layer2_validation(self):
+        """Layer 2: STEWARD validates operations."""
+        from steward.tools import steward_validate
+        
+        result = steward_validate(
+            operation="confidential_access",
+            resource="client_a/knowledge",
+            context={"project_id": "project_123"}
+        )
+        
+        assert result["allowed"] in [True, False]
+        assert "reason" in result
+        
+    def test_layer3_enforcement(self):
+        """Layer 3: STEWARD enforces policies."""
+        # Test runtime enforcement
+        pass  # TODO: Implement when Layer 3 available
+
+class TestKnowledgeToSTEWARD:
+    """Test Knowledge ↔ STEWARD interactions."""
+    
+    def test_access_control_check(self):
+        """Knowledge checks with STEWARD before returning confidential data."""
+        # Test that confidential queries require validation
+        pass  # TODO: Implement
+
+class TestGracefulDegradation:
+    """Test graceful degradation between layers."""
+    
+    def test_layer3_to_layer2_degradation(self):
+        """System degrades gracefully when Layer 3 fails."""
+        from docs.architecture.GAD_8XX.layer_detection import LayerDetector
+        
+        detector = LayerDetector()
+        current_layer = detector.detect_layer()
+        
+        # Should detect correct layer
+        assert current_layer in [1, 2, 3]
+        
+    def test_layer2_to_layer1_degradation(self):
+        """System degrades to manual mode when tools fail."""
+        # Test fallback to prompt-based interaction
+        pass  # TODO: Implement
+```
+
+## DELIVERABLES
+
+Create/update these files:
+
+1. ✅ **docs/architecture/GAD-8XX/GAD-800.md** (UPGRADE existing)
+
+- Add all code examples above
+- Increase detail level to 80%
+- Fix “outdated architecture” issues
+- Professional tone throughout
+
+1. ✅ **docs/architecture/GAD-8XX/layer_detection.py** (NEW)
+
+- Concrete layer detection implementation
+
+1. ✅ **docs/architecture/GAD-8XX/degradation_rules.yaml** (NEW)
+
+- Executable degradation decision trees
+
+1. ✅ **knowledge_department/config/knowledge_graph.yaml** (NEW or UPDATE)
+
+- Concrete knowledge graph schema v1
+
+1. ✅ **tests/architecture/test_gad800_integration.py** (NEW)
+
+- Comprehensive integration tests
+
+## SUCCESS CRITERIA
+
+- ✅ GAD-800.md is 80%+ detail level
+- ✅ All code examples are concrete and runnable
+- ✅ Layer detection works in practice
+- ✅ Degradation rules are executable
+- ✅ Knowledge graph has v1 schema
+- ✅ Tests cover all major interactions
+- ✅ Professional documentation quality
+- ✅ No “vision draft” language remaining
+
+## CONSTRAINTS
+
+- Follow existing STRUCTURE.md conventions
+- Update ARCHITECTURE_MAP.md if needed to reflect new reality
+- Ensure backward compatibility with existing GAD-5XX, GAD-6XX, GAD-7XX
+- Keep file organization clean (GAD-8XX/ folder)
+
+## AFTER COMPLETION
+
+Create a summary:
+
+- What was upgraded
+- New files created
+- Breaking changes (if any)
+- Next steps for implementation
+
+-----
+
+**Execute this entire upgrade in one session. You have everything you need.**
+
+```
+---
+
+## ✅ PROMPT FERTIG
+
+Claude Code kann jetzt:
+1. GAD-800.md upgraden (30% → 80%)
+2. Neue Files erstellen (layer_detection.py, degradation_rules.yaml, etc.)
+3. Tests schreiben
+4. Alles committen
+
+**ZERO HIL FRICTION** 🚀
+
+Soll ich was ändern oder passt das?​​​​​​​​​​​​​​​​
+```
