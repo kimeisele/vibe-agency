@@ -34,9 +34,7 @@ from pathlib import Path
 import pytest
 
 # Add orchestrator to path for imports
-sys.path.insert(
-    0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
 
 
 class TestHallucinationScenarios:

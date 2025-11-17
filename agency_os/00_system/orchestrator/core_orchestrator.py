@@ -1056,9 +1056,7 @@ class CoreOrchestrator:
         Returns:
             int: Number of times this violation has been attempted (1-indexed)
         """
-        self._kernel_violations[violation_type] = (
-            self._kernel_violations.get(violation_type, 0) + 1
-        )
+        self._kernel_violations[violation_type] = self._kernel_violations.get(violation_type, 0) + 1
         return self._kernel_violations[violation_type]
 
     def _get_system_status(self) -> Dict[str, Any]:

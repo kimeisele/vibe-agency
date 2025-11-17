@@ -1,14 +1,11 @@
 #!/bin/bash
 #
-# system-boot.sh - THE ONE COMMAND
+# system-boot.sh - THE ONE COMMAND (INSTANT)
 #
-# Purpose: Boot sequence that gives agent FULL CONTEXT + NEXT ACTION
+# Purpose: Show session handoff + current branch (< 1 second)
 # Usage: ./bin/system-boot.sh
 #
-# Displays:
-#   1. Layer 0 Kernel (system integrity)
-#   2. Session Handoff (context + backlog)
-#   3. Next Action (THE SINGLE THING TO DO)
+# For full system status (tests, linting, etc): ./bin/show-status.sh
 #
 
 set -euo pipefail
@@ -22,31 +19,9 @@ echo "════════════════════════�
 echo ""
 
 # ============================================================================
-# LAYER 0: KERNEL - System Integrity Verification
+# SESSION HANDOFF - Context + Backlog
 # ============================================================================
-echo "━━━ LAYER 0: KERNEL VERIFICATION ━━━"
-echo ""
-
-if [ -f "scripts/verify-system-integrity.py" ]; then
-    # Run integrity check (fast mode)
-    INTEGRITY_RESULT=$(python scripts/verify-system-integrity.py 2>&1 | tail -5 || echo "⚠️  Integrity check failed")
-
-    if echo "$INTEGRITY_RESULT" | grep -q "✅"; then
-        echo "✅ System Integrity: VERIFIED"
-    else
-        echo "⚠️  System Integrity: DEGRADED"
-        echo "   Run: python scripts/verify-system-integrity.py"
-    fi
-else
-    echo "✅ System Integrity: Scripts present (full check skipped)"
-fi
-
-echo ""
-
-# ============================================================================
-# LAYER 1: SESSION HANDOFF - Context + Backlog
-# ============================================================================
-echo "━━━ LAYER 1: SESSION HANDOFF ━━━"
+echo "━━━ SESSION HANDOFF ━━━"
 echo ""
 
 if [ -f ".session_handoff.json" ]; then
@@ -107,59 +82,13 @@ fi
 echo ""
 
 # ============================================================================
-# LAYER 2: SYSTEM STATUS - Quick Health Check
+# CURRENT BRANCH (instant, no git status)
 # ============================================================================
-echo "━━━ LAYER 2: SYSTEM STATUS ━━━"
-echo ""
-
-# Git status
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    STATUS=$(git status --porcelain)
-
     echo "Branch: $BRANCH"
-
-    if [ -z "$STATUS" ]; then
-        echo "Working Directory: ✅ Clean"
-    else
-        echo "Working Directory: ⚠️  Modified files"
-        echo "$STATUS" | head -5
-    fi
 else
-    echo "Git: ⚠️  Not a git repository"
-fi
-
-echo ""
-
-# Linting status (quick check)
-if command -v ruff &> /dev/null; then
-    LINT_ERRORS=$(uv run ruff check . --quiet 2>&1 | wc -l || echo "unknown")
-
-    if [ "$LINT_ERRORS" -eq 0 ]; then
-        echo "Linting: ✅ Clean"
-    else
-        echo "Linting: ⚠️  $LINT_ERRORS errors"
-        echo "   Fix: uv run ruff check . --fix"
-    fi
-else
-    echo "Linting: ⚠️  ruff not available"
-fi
-
-echo ""
-
-# Test status (smoke test only)
-if [ -d "tests" ]; then
-    echo "Tests: Running quick smoke check..."
-    TEST_RESULT=$(uv run pytest tests/test_layer0_integrity.py -q --tb=no 2>&1 | tail -1 || echo "failed")
-
-    if echo "$TEST_RESULT" | grep -q "passed"; then
-        echo "Tests: ✅ Smoke test passed"
-    else
-        echo "Tests: ⚠️  Smoke test failed"
-        echo "   Run: uv run pytest tests/ -v"
-    fi
-else
-    echo "Tests: ⚠️  No test directory found"
+    echo "Git: Not a git repository"
 fi
 
 echo ""

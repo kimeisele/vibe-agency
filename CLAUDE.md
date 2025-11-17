@@ -435,10 +435,13 @@ You are STEWARD. Run ./bin/system-boot.sh and follow the instructions.
 ```
 
 **That's it.** Claude Code will:
-1. Execute the script
+1. Execute the script (instant, < 0.2 seconds)
 2. See the STEWARD persona + full handoff JSON
 3. Read the mission and backlog
 4. Start working
+
+**Performance:** Boot script is INSTANT (< 1 second). No tests, no linting, no checks.
+**For full status:** Run `./bin/show-status.sh` separately (includes tests, linting, etc)
 
 No manual steps. No copy-paste. Just give that one prompt.
 
