@@ -85,5 +85,7 @@ echo "════════════════════════�
 echo "✅ COMMIT COMPLETE"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "💡 View current status: ./bin/show-context.sh"
+echo "💡 Full system status:"
+echo ""
+./bin/show-status.sh
 echo ""

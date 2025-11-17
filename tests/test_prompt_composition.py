@@ -148,6 +148,5 @@ class TestPromptCompositionSummary:
         # Assert at least 80% pass rate (allow some failures for agents not yet implemented)
         pass_rate = passed / total if total > 0 else 0
         assert pass_rate >= 0.8, (
-            f"Pass rate too low: {pass_rate:.1%} (expected ≥80%)\n"
-            f"Failed: {failed}/{total} tests"
+            f"Pass rate too low: {pass_rate:.1%} (expected ≥80%)\nFailed: {failed}/{total} tests"
         )

@@ -2,16 +2,118 @@
 """
 show-context.py - Display session context in one command
 
-BURN THE GHEE Phase 2: Replaces show-context.sh (106 lines → 30 lines)
-- No more grep/sed hell (39 shell commands eliminated)
-- Direct JSON parsing (robust, maintainable)
-- Supports 4-layer handoff protocol
+BURN THE GHEE Phase 3: Enhanced with full system visibility
+- Session handoff (Layer 0-2)
+- System status (git, linting, tests)
+- Test results (quick smoke check)
+- TODO summary (code + docs)
+- Architecture completion (GAD/VAD/LAD status)
+- Recent activity (last 3 commits)
 
 Usage: ./bin/show-context.py
 """
 
 import json
+import subprocess
 from pathlib import Path
+
+
+def get_test_status():
+    """Run quick smoke test and return status."""
+    try:
+        result = subprocess.run(
+            ["uv", "run", "pytest", "tests/test_layer0_integrity.py", "-v", "--tb=no"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        output = result.stdout + result.stderr
+
+        # Parse pytest output
+        if "passed" in output:
+            # Extract counts (e.g., "14 passed in 0.5s")
+            for line in output.split("\n"):
+                if "passed" in line and ("failed" in line or "error" in line or "in" in line):
+                    return "✅", line.strip()
+            return "✅", "Tests passing"
+        elif "FAILED" in output or "failed" in output:
+            return "❌", "Tests failing"
+        elif "ERROR" in output or "error" in output:
+            return "⚠️", "Test errors"
+        else:
+            return "⚠️", "Unknown status"
+    except Exception as e:
+        return "⚠️", f"Could not run tests: {str(e)[:50]}"
+
+
+def get_todo_summary():
+    """Scan for TODOs in code and docs."""
+    try:
+        # Search in code
+        code_result = subprocess.run(
+            ["grep", "-r", "-i", "TODO\\|FIXME\\|XXX\\|HACK", "agency_os/", "--include=*.py"],
+            capture_output=True,
+            text=True,
+        )
+        code_count = (
+            len(code_result.stdout.strip().split("\n")) if code_result.stdout.strip() else 0
+        )
+
+        # Search in docs
+        docs_result = subprocess.run(
+            ["grep", "-r", "-i", "TODO\\|FIXME", "docs/", "--include=*.md"],
+            capture_output=True,
+            text=True,
+        )
+        docs_count = (
+            len(docs_result.stdout.strip().split("\n")) if docs_result.stdout.strip() else 0
+        )
+
+        return code_count, docs_count
+    except Exception:
+        return 0, 0
+
+
+def get_architecture_status():
+    """Check GAD/VAD/LAD completion status."""
+    gad_status = {}
+
+    # Check GAD pillars
+    pillars = {
+        "GAD-1XX": "docs/architecture/GAD-1XX/GAD-100.md",
+        "GAD-2XX": "docs/architecture/GAD-2XX/GAD-200.md",
+        "GAD-3XX": "docs/architecture/GAD-3XX/GAD-300.md",
+        "GAD-4XX": "docs/architecture/GAD-4XX/GAD-400.md",
+        "GAD-5XX": "docs/architecture/GAD-5XX/GAD-500.md",
+        "GAD-6XX": "docs/architecture/GAD-6XX/GAD-600.md",
+        "GAD-7XX": "docs/architecture/GAD-7XX/GAD-700.md",
+        "GAD-8XX": "docs/architecture/GAD-8XX/GAD-800.md",
+    }
+
+    for pillar, path in pillars.items():
+        gad_status[pillar] = "✅" if Path(path).exists() else "❌"
+
+    # Check LAD
+    lad_complete = all(Path(f"docs/architecture/LAD/LAD-{i}.md").exists() for i in [1, 2, 3])
+
+    # Check VAD
+    vad_files = list(Path("docs/architecture/VAD").glob("VAD-00*.md"))
+    vad_complete = len(vad_files) >= 3
+
+    return gad_status, lad_complete, vad_complete
+
+
+def get_recent_commits():
+    """Get last 3 commits."""
+    try:
+        result = subprocess.run(
+            ["git", "log", "--oneline", "-3"],
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip().split("\n") if result.stdout.strip() else []
+    except Exception:
+        return []
 
 
 def main():
@@ -111,6 +213,50 @@ def main():
         print("⚠️  No system status found (.system_status.json)")
         print("   Run: ./bin/update-system-status.sh")
         print()
+
+    # Test status (quick smoke check)
+    print("━━━ TEST STATUS (live check) ━━━")
+    print()
+    test_icon, test_msg = get_test_status()
+    print(f"{test_icon} {test_msg}")
+    print()
+
+    # TODO summary
+    print("━━━ TODO SUMMARY ━━━")
+    print()
+    code_todos, docs_todos = get_todo_summary()
+    total_todos = code_todos + docs_todos
+    if total_todos > 0:
+        print(f"⚠️  {total_todos} TODOs found ({code_todos} in code, {docs_todos} in docs)")
+    else:
+        print("✅ No TODOs found")
+    print()
+
+    # Architecture status
+    print("━━━ ARCHITECTURE STATUS ━━━")
+    print()
+    gad_status, lad_complete, vad_complete = get_architecture_status()
+
+    print("GAD Pillars:")
+    for pillar, status_icon in gad_status.items():
+        print(f"  {status_icon} {pillar}")
+
+    lad_icon = "✅" if lad_complete else "❌"
+    vad_icon = "✅" if vad_complete else "❌"
+    print(f"\n{lad_icon} LAD (Layers): {'Complete' if lad_complete else 'Incomplete'}")
+    print(f"{vad_icon} VAD (Verification): {'Complete' if vad_complete else 'Incomplete'}")
+    print()
+
+    # Recent activity
+    print("━━━ RECENT ACTIVITY ━━━")
+    print()
+    commits = get_recent_commits()
+    if commits:
+        for commit in commits:
+            print(f"  {commit}")
+    else:
+        print("  (No commits found)")
+    print()
 
     print("=" * 70)
     print()
