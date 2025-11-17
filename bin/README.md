@@ -1,12 +1,12 @@
 # Session Handoff Scripts
 
-ONE COMMAND to get full session context: `./bin/show-context.sh`
+ONE COMMAND to get full session context: `./bin/show-context.py`
 
 ## Quick Start (For Next Agent)
 
 ```bash
 # Get full context in one command
-./bin/show-context.sh
+./bin/show-context.py
 ```
 
 This shows:
@@ -15,12 +15,12 @@ This shows:
 
 ## Scripts
 
-### `show-context.sh` ⭐ MAIN COMMAND
+### `show-context.py` ⭐ MAIN COMMAND
 Displays full session context (session handoff + system status)
 
 **Usage:**
 ```bash
-./bin/show-context.sh
+./bin/show-context.py
 ```
 
 **Output:**
@@ -137,7 +137,7 @@ git push
 
 ```bash
 # 1. Get full context (ONE COMMAND)
-./bin/show-context.sh
+./bin/show-context.py
 
 # 2. Read full details if needed
 cat .session_handoff.json
@@ -152,7 +152,7 @@ cat CLAUDE.md | grep 'Verify Command'
 ✅ **Robust** - Automated system status updates (via git hooks)
 ✅ **Minimal** - Simple shell scripts + JSON files (no abstractions)
 ✅ **Holistic** - Two handoff types (manual session + auto system status)
-✅ **ONE COMMAND** - `./bin/show-context.sh` gives full context
+✅ **ONE COMMAND** - `./bin/show-context.py` gives full context
 
 **Two-File System:**
 1. `.session_handoff.json` - Rich context from previous agent (manual)
@@ -165,7 +165,7 @@ cat CLAUDE.md | grep 'Verify Command'
 
 ## Examples
 
-### Example: show-context.sh output
+### Example: show-context.py output
 
 ```
 ════════════════════════════════════════════════════════════════

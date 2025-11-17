@@ -103,10 +103,10 @@ def is_stale(timestamp_str: str, hours: int = 1) -> bool:
 
 ---
 
-## 🔥 OPTIMIZATION #2: Replace show-context.sh with Python
+## 🔥 OPTIMIZATION #2: Replace show-context.py with Python
 
 **Problem:**
-- `bin/show-context.sh`: 106 lines of shell
+- `bin/show-context.py`: 106 lines of shell
 - 39 commands (23 grep + 16 sed) just to parse JSON
 - Fragile (breaks if JSON structure changes)
 - Hard to maintain (sed regex hell)
@@ -305,7 +305,7 @@ echo "✅ VERIFICATION COMPLETE"
 ```
 bin/pre-push-check.sh         → linting + formatting
 bin/update-system-status.sh   → git status + tests
-bin/show-context.sh           → display status
+bin/show-context.py           → display status
 scripts/verify-system-integrity.py  → Layer 0
 scripts/generate-integrity-manifest.py  → Layer 0
 ```
@@ -409,7 +409,7 @@ echo "✅ SYSTEM HEALTHY"
 2. Remove redundant status update (5 min)
 
 ### Phase 2: Maintainability (1 hour)
-3. Replace show-context.sh with Python (30 min)
+3. Replace show-context.py with Python (30 min)
 4. Consolidate verification scripts (30 min)
 
 ### Phase 3: Documentation (1 hour)

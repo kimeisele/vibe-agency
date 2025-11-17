@@ -49,7 +49,7 @@ This document defines the **Multi-Layered Quality Enforcement System** - a compr
 **Session Handoff System (✅ Implemented):**
 - `.session_handoff.json` - Manual handoffs between agents
 - `.system_status.json` - Auto-updated git/test status
-- `bin/show-context.sh` - ONE COMMAND for full context
+- `bin/show-context.py` - ONE COMMAND for full context
 
 **Quality Gates (✅ Implemented):**
 - Workflow-level gates (security, compliance) block state transitions
@@ -199,7 +199,7 @@ Exit Codes:
 
 **C. Display Integration**
 
-File: `bin/show-context.sh` (extend existing)
+File: `bin/show-context.py` (extend existing)
 
 ```
 Shows:
@@ -230,7 +230,7 @@ git push (allowed)
 - **Manual:** `./bin/pre-push-check.sh && git push`
 - **Git Hook:** `.githooks/pre-push` calls script (optional)
 - **CLAUDE.md:** Updated to reference pre-push-check.sh
-- **show-context.sh:** Displays linting/formatting status
+- **show-context.py:** Displays linting/formatting status
 
 ---
 
@@ -657,7 +657,7 @@ cat > "$STATUS_FILE" <<EOF
 EOF
 ```
 
-#### 4.1.2. Extend `bin/show-context.sh`
+#### 4.1.2. Extend `bin/show-context.py`
 
 **Location:** After line 67 (after tests display)
 
@@ -1206,8 +1206,8 @@ cat .system_status.json | grep -A 3 '"linting"'
 #     "errors_count": 0
 #   }
 
-# 3. Verify show-context.sh displays linting status
-./bin/show-context.sh | grep -i linting
+# 3. Verify show-context.py displays linting status
+./bin/show-context.py | grep -i linting
 
 # Expected output:
 #   Linting: ✅ Passing
@@ -1582,7 +1582,7 @@ if __name__ == "__main__":
 
 - [ ] **Layer 1: Session-Scoped**
   - [ ] `bin/update-system-status.sh` includes linting check
-  - [ ] `bin/show-context.sh` displays linting status
+  - [ ] `bin/show-context.py` displays linting status
   - [ ] `bin/pre-push-check.sh` exists and is executable
   - [ ] Pre-push check blocks on linting failures
   - [ ] CLAUDE.md updated with new workflow
@@ -1618,7 +1618,7 @@ if __name__ == "__main__":
 
 **Tasks:**
 1. Extend `bin/update-system-status.sh` with linting/formatting checks
-2. Extend `bin/show-context.sh` to display linting status
+2. Extend `bin/show-context.py` to display linting status
 3. Create `bin/pre-push-check.sh`
 4. Update CLAUDE.md
 5. Write tests (`tests/test_session_enforcement.py`)
@@ -1627,7 +1627,7 @@ if __name__ == "__main__":
 
 **Success Criteria:**
 - Pre-push check blocks bad commits
-- Agents see linting status in `./bin/show-context.sh`
+- Agents see linting status in `./bin/show-context.py`
 - No CI/CD linting failures for 1 week
 
 ---
@@ -1779,7 +1779,7 @@ gh run list --workflow=post-merge-validation.yml --limit 100 --json conclusion |
 
 - **GAD-002:** Core SDLC Orchestration (quality gates foundation)
 - **ADR-003:** Delegated Execution Architecture (why orchestrator is remote)
-- **Session Handoff System:** `.session_handoff.json`, `bin/show-context.sh`
+- **Session Handoff System:** `.session_handoff.json`, `bin/show-context.py`
 - **CLAUDE.md:** Operational truth (verification commands)
 
 ---

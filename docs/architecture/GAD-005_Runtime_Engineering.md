@@ -88,7 +88,7 @@ Phase 3: Runtime Engineering (2024-2025)  ← WE ARE HERE
 - ✅ **Layer 3:** Deployment-scoped validation (E2E tests in CI/CD)
 
 **What's Missing:**
-- ❌ Agents can skip context (must manually run `./bin/show-context.sh`)
+- ❌ Agents can skip context (must manually run `./bin/show-context.py`)
 - ❌ Orchestrator has no internal self-checks (relies on external quality gates)
 - ❌ No runtime prevention of dangerous operations
 
@@ -99,7 +99,7 @@ Phase 3: Runtime Engineering (2024-2025)  ← WE ARE HERE
 **Current Workflow (Manual Vigilance Required):**
 ```
 Agent starts work
-  → Must remember to run ./bin/show-context.sh
+  → Must remember to run ./bin/show-context.py
   → Must remember to check .system_status.json
   → Must remember to read session handoff
   → [If they forget: silent failure]
@@ -218,7 +218,7 @@ $ vibe-cli run project-name
     → 3. Update feature_spec.json with implementation status
 
 💡 QUICK COMMANDS
-  ./bin/show-context.sh    - Full system context
+  ./bin/show-context.py    - Full system context
   ./bin/pre-push-check.sh  - Pre-push quality checks
 
 ════════════════════════════════════════════════════════════
@@ -270,7 +270,7 @@ def display_motd():
 
     # Quick commands
     print("💡 QUICK COMMANDS")
-    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/show-context.py    - Full system context")
     print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
     print()
     print("═" * 60)
@@ -577,7 +577,7 @@ def display_motd():
 
     # Quick commands
     print("💡 QUICK COMMANDS")
-    print("  ./bin/show-context.sh    - Full system context")
+    print("  ./bin/show-context.py    - Full system context")
     print("  ./bin/pre-push-check.sh  - Pre-push quality checks")
     print()
     print("═" * 60)
@@ -820,7 +820,7 @@ except Exception as e:
     print()
 ```
 
-**Remediation:** Agent continues execution, can manually run `./bin/show-context.sh`
+**Remediation:** Agent continues execution, can manually run `./bin/show-context.py`
 
 ---
 

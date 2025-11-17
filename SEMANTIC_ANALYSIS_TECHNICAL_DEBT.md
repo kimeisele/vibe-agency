@@ -273,7 +273,7 @@ Do Phase 2 + 3 first (12 hours → 52.6% protection) before:
     {
       "id": "MOTD-Test-Sync-Mismatch",
       "title": "Fix show-context file name mismatch",
-      "description": "Test expects show-context.sh, code has show-context.py",
+      "description": "Test expects show-context.py, code has show-context.py",
       "semantics": {
         "documented": false,
         "code_exists": true,
@@ -299,7 +299,7 @@ Do Phase 2 + 3 first (12 hours → 52.6% protection) before:
     {
       "id": "CLAUDE-md-Documentation-Drift",
       "title": "Update 8 doc files with correct show-context filename",
-      "description": "References to show-context.sh should be show-context.py",
+      "description": "References to show-context.py should be show-context.py",
       "semantics": {
         "documented": false,
         "code_exists": true,

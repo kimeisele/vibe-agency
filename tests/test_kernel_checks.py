@@ -20,9 +20,14 @@ def test_kernel_blocks_manifest_overwrite():
         orchestrator._kernel_check_save_artifact("project_manifest.json")
         assert False, "Should have raised KernelViolationError"
     except KernelViolationError as e:
-        assert "Cannot overwrite critical file" in str(e)
-        assert "project_manifest.json" in str(e)
-        print("✅ Kernel blocked critical file overwrite (manifest)")
+        # GAD-005-HAIKU Phase 3: Validate Haiku-readable error format
+        error_msg = str(e)
+        assert "🚫 BLOCKED:" in error_msg, "Missing BLOCKED header"
+        assert "project_manifest.json" in error_msg, "Missing artifact name"
+        assert "WHY:" in error_msg, "Missing WHY section"
+        assert "WHAT TO DO INSTEAD:" in error_msg, "Missing remediation"
+        assert "EXAMPLE:" in error_msg, "Missing examples"
+        print("✅ Kernel blocked critical file overwrite (manifest) with Haiku-readable error")
 
 
 def test_kernel_blocks_handoff_overwrite():
@@ -33,9 +38,14 @@ def test_kernel_blocks_handoff_overwrite():
         orchestrator._kernel_check_save_artifact(".session_handoff.json")
         assert False, "Should have raised KernelViolationError"
     except KernelViolationError as e:
-        assert "Cannot overwrite critical file" in str(e)
-        assert ".session_handoff.json" in str(e)
-        print("✅ Kernel blocked critical file overwrite (handoff)")
+        # GAD-005-HAIKU Phase 3: Validate Haiku-readable error format
+        error_msg = str(e)
+        assert "🚫 BLOCKED:" in error_msg, "Missing BLOCKED header"
+        assert ".session_handoff.json" in error_msg, "Missing artifact name"
+        assert "WHY:" in error_msg, "Missing WHY section"
+        assert "WHAT TO DO INSTEAD:" in error_msg, "Missing remediation"
+        assert "EXAMPLE:" in error_msg, "Missing examples"
+        print("✅ Kernel blocked critical file overwrite (handoff) with Haiku-readable error")
 
 
 def test_kernel_allows_safe_artifacts():
@@ -82,9 +92,14 @@ def test_kernel_blocks_commit_with_linting_errors():
             orchestrator._kernel_check_git_commit()
             assert False, "Should have raised KernelViolationError"
         except KernelViolationError as e:
-            assert "Cannot commit with linting errors" in str(e)
-            assert "5 linting error(s)" in str(e)
-            print("✅ Kernel blocked commit with linting errors")
+            # GAD-005-HAIKU Phase 3: Validate Haiku-readable error format
+            error_msg = str(e)
+            assert "🚫 BLOCKED:" in error_msg, "Missing BLOCKED header"
+            assert "5 linting error(s)" in error_msg, "Missing error count"
+            assert "WHY:" in error_msg, "Missing WHY section"
+            assert "WHAT TO DO INSTEAD:" in error_msg, "Missing remediation"
+            assert "ruff check . --fix" in error_msg, "Missing fix command"
+            print("✅ Kernel blocked commit with linting errors (Haiku-readable)")
     finally:
         # Restore original status file
         if original_status is not None:

@@ -61,8 +61,8 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | Core Orchestrator | ✅ Works | State machine tested | `python tests/test_orchestrator_state_machine.py` |
 | **File-Based Delegation (GAD-003)** | **✅ Works (E2E tested)** | **manual_planning_test.py validates full PLANNING workflow** | `uv run python manual_planning_test.py` |
 | **TODO-Based Handoffs** | **✅ Works** | **handoff.json created between agents** | `cat workspaces/manual-test-project/handoff.json` |
-| **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.sh` |
-| **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.sh` (see linting status) |
+| **Session Handoff Integration** | **✅ Works** | **ONE command shows full context** | `./bin/show-context.py` |
+| **Automatic Linting Enforcement** | **✅ Works (tested live)** | **Belt + suspenders: visibility + blocking** | `./bin/show-context.py` (see linting status) |
 | **Workflow-Scoped Quality Gates (GAD-004 Phase 2)** | **✅ Works (tested)** | **Gate results recorded in manifest.status.qualityGates** | `uv run pytest tests/test_quality_gate_recording.py -v` |
 | **Deployment-Scoped Validation (GAD-004 Phase 3)** | **✅ Works (tested)** | **E2E tests run on push to main/develop** | `uv run pytest tests/e2e/test_orchestrator_e2e.py -v` |
 | **Multi-Layer Integration (GAD-004 Phase 4)** | **✅ Works (tested)** | **All 3 layers integrated and verified** | `uv run pytest tests/test_multi_layer_integration.py -v` |
@@ -172,7 +172,7 @@ uv run pytest tests/test_prompt_registry.py 2>&1 | grep -q "passed" && \
   echo "✅ Prompt Registry verified" || echo "❌ Prompt Registry not tested"
 
 # Test 6: Session Handoff Integration
-[ -f "bin/show-context.sh" ] && [ -x "bin/show-context.sh" ] && \
+[ -f "bin/show-context.py" ] && [ -x "bin/show-context.py" ] && \
   echo "✅ Session handoff integration available" || echo "❌ Session handoff scripts missing"
 
 # Test 7: Workflow-Scoped Quality Gates (GAD-004 Phase 2)
@@ -312,7 +312,7 @@ GOOD: "As the Claude Code operator, you will:"
 ### Before Making Claims
 ```bash
 # 0. Get full session context (MOST IMPORTANT - DO THIS FIRST!)
-./bin/show-context.sh
+./bin/show-context.py
 
 # 1. Verify structure
 ls -la agency_os/01_planning_framework/agents/
@@ -522,7 +522,7 @@ uv run ruff format .
 
 **Previous Update:** 2025-11-16 13:40 UTC by Claude Code
 - ✅ **Automatic Linting Enforcement COMPLETE** - Belt + Suspenders approach
-- ✅ Layer 1 (Visibility): `show-context.sh` displays linting status at top
+- ✅ Layer 1 (Visibility): `show-context.py` displays linting status at top
 - ✅ Layer 2 (Enforcement): `./bin/commit-and-push.sh` blocks bad commits
 - ✅ Layer 3 (Final Gate): CI/CD validation remains
 - ✅ Works everywhere: browser, desktop, one-time environments (no git hooks needed)
@@ -533,12 +533,12 @@ uv run ruff format .
 
 **Previous Update:** 2025-11-16 11:25 UTC by Claude Code
 - ✅ **Session Handoff Integration COMPLETE** - Holistic two-file handoff system
-- ✅ ONE command (`./bin/show-context.sh`) gives full session context
+- ✅ ONE command (`./bin/show-context.py`) gives full session context
 - ✅ Two-file system: `.session_handoff.json` (manual) + `.system_status.json` (auto-updated)
 - ✅ Git hooks available for auto-updates (optional: `git config core.hooksPath .githooks`)
-- ✅ Shell scripts: `show-context.sh`, `update-system-status.sh`, `create-session-handoff.sh`
+- ✅ Shell scripts: `show-context.py`, `update-system-status.sh`, `create-session-handoff.sh`
 - ✅ Zero abstractions: Just shell + JSON (no validation, no classes)
-- ✅ Verified: show-context.sh displays both files correctly
+- ✅ Verified: show-context.py displays both files correctly
 
 **Previous Update:** 2025-11-16 10:07 UTC by Claude Code
 - ✅ **TODO-Based Handoffs IMPLEMENTED** - Simple handoff.json file created between agents

@@ -139,9 +139,45 @@ class StateTransitionError(OrchestratorError):
 
 
 class KernelViolationError(OrchestratorError):
-    """Raised when Pre-Action Kernel check fails (GAD-005)"""
+    """
+    Raised when Pre-Action Kernel check fails (GAD-005).
 
-    pass
+    GAD-005-HAIKU Phase 3: Haiku-readable error messages.
+    All errors MUST include:
+    - Simple explanation (1 sentence, no jargon)
+    - Actionable remediation (numbered steps)
+    - Working example (copy-pasteable)
+    """
+
+    def __init__(
+        self,
+        operation: str,          # What they tried to do
+        why: str,                # Simple 1-sentence explanation
+        remediation: list[str],  # Numbered action steps
+        example_good: str,       # Working code
+        example_bad: str,        # What they tried
+        learn_more: str | None = None   # Optional doc link
+    ):
+        self.operation = operation
+        self.why = why
+        self.remediation = remediation
+        self.example_good = example_good
+        self.example_bad = example_bad
+        self.learn_more = learn_more
+
+        # Format message for Haiku readability
+        msg = f"🚫 BLOCKED: {self.operation}\n\n"
+        msg += f"WHY: {self.why}\n\n"
+        msg += "WHAT TO DO INSTEAD:\n"
+        for i, step in enumerate(self.remediation, 1):
+            msg += f"  {i}. {step}\n"
+        msg += "\nEXAMPLE:\n"
+        msg += f"  ✅ {self.example_good}\n"
+        msg += f"  ❌ {self.example_bad}\n"
+        if self.learn_more:
+            msg += f"\n📚 LEARN MORE: {self.learn_more}\n"
+
+        super().__init__(msg)
 
 
 class SchemaValidationError(OrchestratorError):
@@ -794,13 +830,15 @@ class CoreOrchestrator:
 
         if artifact_name in CRITICAL_FILES:
             raise KernelViolationError(
-                f"❌ KERNEL VIOLATION: Cannot overwrite critical file: {artifact_name}\n"
-                f"\n"
-                f"Remediation:\n"
-                f"  - For manifest: Use save_project_manifest() method\n"
-                f"  - For handoff: Use dedicated handoff creation method\n"
-                f"\n"
-                f"Critical files must be updated through designated methods to ensure integrity."
+                operation=f"You tried to overwrite {artifact_name}",
+                why="This file tracks critical project state and must be protected.",
+                remediation=[
+                    "Use: orchestrator.save_project_manifest(data) for manifest",
+                    "Use: dedicated handoff creation method for handoff",
+                    "If stuck, ask operator: 'How do I update critical files?'"
+                ],
+                example_good="orchestrator.save_project_manifest({'phase': 'CODING'})",
+                example_bad=f"save_artifact('{artifact_name}', data)  # ← Blocked"
             )
 
         logger.debug(f"✓ Kernel check passed: save_artifact({artifact_name})")
@@ -840,14 +878,15 @@ class CoreOrchestrator:
         if linting.get("status") == "failing":
             errors_count = linting.get("errors_count", 0)
             raise KernelViolationError(
-                f"❌ KERNEL VIOLATION: Cannot commit with linting errors\n"
-                f"\n"
-                f"Errors: {errors_count} linting error(s) detected\n"
-                f"\n"
-                f"Remediation:\n"
-                f"  1. Run: uv run ruff check . --fix\n"
-                f"  2. Review remaining errors: uv run ruff check .\n"
-                f"  3. Re-run this operation after fixing all errors"
+                operation=f"You tried to commit with {errors_count} linting error(s)",
+                why="Commits must pass linting to maintain code quality.",
+                remediation=[
+                    "Run: uv run ruff check . --fix (auto-fixes most issues)",
+                    "Review remaining: uv run ruff check . (shows what's left)",
+                    "After fixing: re-run your commit command"
+                ],
+                example_good="./bin/pre-push-check.sh && git commit -m 'message'",
+                example_bad="git commit -m 'message'  # ← Blocked by linting errors"
             )
 
         logger.debug("✓ Kernel check passed: git_commit()")

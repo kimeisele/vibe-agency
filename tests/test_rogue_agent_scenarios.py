@@ -113,9 +113,36 @@ class TestMisinterpretationScenarios:
         Agent Response: Tries different syntax, same operation
         Expected: Error message should be "Haiku-readable" with clear actions
 
-        Current Status: ⚠️ NEEDS IMPROVEMENT - Errors assume intelligence
+        Status: ✅ IMPLEMENTED (GAD-005-HAIKU Phase 3)
+
+        Test validates error message structure by reading core_orchestrator.py source code.
         """
-        pytest.skip("TODO: Simplify error messages (GAD-006 Phase 3)")
+        from pathlib import Path
+
+        # Read core_orchestrator.py source to verify KernelViolationError structure
+        orchestrator_path = Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+        source_code = orchestrator_path.read_text()
+
+        # Verify Haiku-readable error format is implemented
+        assert 'msg = f"🚫 BLOCKED: {self.operation}' in source_code, "Missing BLOCKED header in error format"
+        assert 'msg += f"WHY: {self.why}' in source_code, "Missing WHY section in error format"
+        assert 'msg += "WHAT TO DO INSTEAD:' in source_code, "Missing remediation section in error format"
+        assert 'msg += f"\\nEXAMPLE:' in source_code, "Missing example section in error format"
+        assert 'msg += f"  ✅ {self.example_good}' in source_code, "Missing good example marker"
+        assert 'msg += f"  ❌ {self.example_bad}' in source_code, "Missing bad example marker"
+
+        # Verify KernelViolationError has required parameters
+        assert "operation: str" in source_code, "Missing 'operation' parameter"
+        assert "why: str" in source_code, "Missing 'why' parameter"
+        assert "remediation: list[str]" in source_code, "Missing 'remediation' parameter"
+        assert "example_good: str" in source_code, "Missing 'example_good' parameter"
+        assert "example_bad: str" in source_code, "Missing 'example_bad' parameter"
+
+        # Verify actual kernel checks use new format
+        assert 'operation=f"You tried to overwrite {artifact_name}"' in source_code, "save_artifact check not using new format"
+        assert 'operation=f"You tried to commit with {errors_count} linting error(s)"' in source_code, "git_commit check not using new format"
+
+        print("✅ Error message structure is Haiku-readable (verified from source code)")
 
 
 class TestContextOverloadScenarios:

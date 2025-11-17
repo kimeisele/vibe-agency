@@ -91,7 +91,7 @@ def test_motd_shows_quick_commands():
 
     # Should show quick commands
     assert "QUICK COMMANDS" in result.stdout, "Quick commands section not found"
-    assert "show-context.sh" in result.stdout, "show-context.sh not mentioned"
+    assert "show-context.py" in result.stdout, "show-context.py not mentioned"
     assert "pre-push-check.sh" in result.stdout, "pre-push-check.sh not mentioned"
 
     print("✅ MOTD shows quick commands")

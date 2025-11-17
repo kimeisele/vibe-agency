@@ -33,7 +33,7 @@ These 25 claims are accurate and properly backed by tests:
 - ✅ Workflow-Scoped Quality Gates (4/4 tests pass)
 - ✅ Deployment-Scoped Validation E2E (3/3 tests pass)
 - ✅ Multi-Layer Integration (all 3 GAD-004 layers verified)
-- ✅ Session Handoff Integration (show-context.sh works)
+- ✅ Session Handoff Integration (show-context.py works)
 - ✅ TODO-Based Handoffs (handoff.json created correctly)
 - ✅ vibe-cli has tool loop (code exists lines 422-471)
 - ✅ Pre-push-check script (exists and works)
@@ -178,7 +178,7 @@ These commands are used in CLAUDE.md to verify claims:
 | `python tests/test_quality_gate_recording.py` | ✅ PASS | 4/4 tests pass |
 | `python3 tests/e2e/test_orchestrator_e2e.py` | ✅ PASS | 3/3 tests pass |
 | `python3 tests/test_multi_layer_integration.py` | ✅ PASS | 1/1 test pass |
-| `./bin/show-context.sh` | ✅ PASS | Works correctly |
+| `./bin/show-context.py` | ✅ PASS | Works correctly |
 | `grep -n "tool_use\|tool_result" vibe-cli` | ✅ PASS | Multiple matches |
 | `python3 manual_planning_test.py` | ❌ FAILS | AUDITOR metadata missing |
 | `python3 -c "import bs4"` | ❌ FAILS | Module not installed |

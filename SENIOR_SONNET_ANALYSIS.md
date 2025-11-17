@@ -13,7 +13,7 @@
 ### Current System State
 - **Health:** ✅ 95% Operational (17/18 verification tests passing)
 - **Blocking Issues:** 1 (test/code mismatch - easily fixable)
-- **Critical Hooks:** 1 (show-context.sh → show-context.py file rename not synchronized)
+- **Critical Hooks:** 1 (show-context.py → show-context.py file rename not synchronized)
 - **Test Coverage:** 107/108 tests passing across all components
 - **Architecture:** Stable and well-documented (See ARCHITECTURE_V2.md)
 
@@ -28,8 +28,8 @@
 6. ✅ Zero regressions in last 30 commits - all legacy tests still passing
 
 **RED FLAGS:**
-1. ⚠️ Test/code mismatch: test expects `show-context.sh`, code has `show-context.py`
-2. ⚠️ Documentation drift: 8+ files reference non-existent `show-context.sh`
+1. ⚠️ Test/code mismatch: test expects `show-context.py`, code has `show-context.py`
+2. ⚠️ Documentation drift: 8+ files reference non-existent `show-context.py`
 3. ⚠️ CLAUDE.md META-TEST #11 will fail (expects "ALL MOTD TESTS PASSED", gets test failure)
 4. ⚠️ verify-all.sh shows failure even though actual code works (test framework issue, not code)
 
@@ -143,7 +143,7 @@ TOTAL: 107/108 ✅ (99.1% pass rate)
 
 ### The Issue
 During the "BURN THE GHEE" optimization (commits f826f07-88db783), the file:
-- `bin/show-context.sh` → **renamed/refactored to** → `bin/show-context.py`
+- `bin/show-context.py` → **renamed/refactored to** → `bin/show-context.py`
 
 This refactoring updated the code in 3 places but missed the test:
 
@@ -151,15 +151,15 @@ This refactoring updated the code in 3 places but missed the test:
 |-----------|---------------|----------|
 | vibe-cli (MOTD output) | ✅ Updated | Line 413: `show-context.py` |
 | bin/show-context.py | ✅ Created | 126 LOC Python version working |
-| tests/test_motd.py | ❌ NOT UPDATED | Line 94: still expects `show-context.sh` |
-| CLAUDE.md docs | ❌ NOT UPDATED | 8 references to `show-context.sh` |
-| Arch docs (GAD-004/005) | ❌ NOT UPDATED | Multiple files reference `show-context.sh` |
+| tests/test_motd.py | ❌ NOT UPDATED | Line 94: still expects `show-context.py` |
+| CLAUDE.md docs | ❌ NOT UPDATED | 8 references to `show-context.py` |
+| Arch docs (GAD-004/005) | ❌ NOT UPDATED | Multiple files reference `show-context.py` |
 
 ### Impact Chain
 1. **Direct:** Test `test_motd_shows_quick_commands()` fails (line 94 assertion)
 2. **Secondary:** `./bin/verify-all.sh` shows "❌ FAILED" for MOTD component
 3. **Tertiary:** CLAUDE.md META-TEST #11 fails (expects all tests to pass)
-4. **UX:** Users reading docs try to run `show-context.sh` which doesn't exist
+4. **UX:** Users reading docs try to run `show-context.py` which doesn't exist
 
 ### Root Cause
 The refactoring commit (f826f07 "BURN THE GHEE Phase 1") changed vibe-cli to use the Python version but did NOT:
@@ -177,13 +177,13 @@ This is a **synchronization failure**, not a code failure. It reveals:
 ```bash
 # Option A: Update test (1 line change) - SIMPLEST
 # tests/test_motd.py line 94
-assert "show-context.py" in result.stdout  # was: show-context.sh
+assert "show-context.py" in result.stdout  # was: show-context.py
 
 # Option B: Update documentation (8+ files) - NECESSARY FOR UX
-# All references to show-context.sh → show-context.py
+# All references to show-context.py → show-context.py
 
 # Option C: Create symlink (1 command) - BANDAID
-ln -s show-context.py bin/show-context.sh
+ln -s show-context.py bin/show-context.py
 ```
 
 **RECOMMENDATION:** Option A + B (fix test AND update docs)
@@ -222,13 +222,13 @@ ln -s show-context.py bin/show-context.sh
 
 **1. TESTING FRAMEWORK NOT SELF-HEALING**
 - Issue: Tests expect literal strings that can change in code
-- Evidence: MOTD test hardcodes "show-context.sh" expectation
+- Evidence: MOTD test hardcodes "show-context.py" expectation
 - Impact: Manual sync required between test + code
 - Fix: Make tests parameterized or code-generated from actual output
 
 **2. DOCUMENTATION DRIFT RISK**
-- Issue: 8+ files reference show-context.sh (only 1 file is canonical)
-- Evidence: All files found via `grep -r "show-context.sh"`
+- Issue: 8+ files reference show-context.py (only 1 file is canonical)
+- Evidence: All files found via `grep -r "show-context.py"`
 - Impact: Users see contradictory information
 - Fix: Single source of truth for tool references (e.g., JSON config)
 
@@ -266,7 +266,7 @@ uv run python tests/test_motd.py
 ```
 
 **P1 - UPDATE DOCUMENTATION (Parallel Track)**
-Update these 8 files to reference `show-context.py` instead of `show-context.sh`:
+Update these 8 files to reference `show-context.py` instead of `show-context.py`:
 1. `CLAUDE.md` (8 references on lines 64, 65, 175, 315, 525, 536, 539, 541)
 2. `bin/README.md` (4 references)
 3. `docs/architecture/GAD-004_Multi_Layered_Quality_Enforcement.md` (7 refs)
@@ -283,7 +283,7 @@ Update these 8 files to reference `show-context.py` instead of `show-context.sh`
 Current problem: Tests assert literal strings that can change
 ```python
 # BAD - brittle
-assert "show-context.sh" in result.stdout
+assert "show-context.py" in result.stdout
 
 # GOOD - self-documenting
 assert "show-context" in result.stdout  # tool name
@@ -333,7 +333,7 @@ for tool_name, tool_path in QUICK_COMMANDS.items():
 ## DECISION POINTS FOR SENIOR SONNET
 
 ### Decision 1: MOTD Test/Code Sync
-**Question:** How should we resolve the show-context.sh vs show-context.py mismatch?
+**Question:** How should we resolve the show-context.py vs show-context.py mismatch?
 
 **Options:**
 1. **Update Test Only** (1 line change, simplest)
@@ -477,7 +477,7 @@ uv run pytest tests/test_kernel_checks.py tests/test_layer0_integrity.py tests/t
 - Planning framework: `docs/architecture/ARCHITECTURE_MAP.md`
 
 ### HOOKS TO WATCH
-1. **show-context file refactor** (show-context.sh → show-context.py)
+1. **show-context file refactor** (show-context.py → show-context.py)
    - Requires: Test update + doc audit
    - Risk level: LOW (working code, just misaligned docs)
 

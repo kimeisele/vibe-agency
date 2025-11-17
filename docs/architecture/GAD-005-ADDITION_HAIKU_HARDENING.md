@@ -381,7 +381,7 @@ def test_kernel_error_is_haiku_readable():
   📋 TODOs (3): Select modules, Design extensions, ...
 
 ⚡ Quick Commands
-  ./bin/show-context.sh    # Full context
+  ./bin/show-context.py    # Full context
   ./bin/pre-push-check.sh  # Run all checks
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
