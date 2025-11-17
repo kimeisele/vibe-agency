@@ -313,6 +313,54 @@ def verify_system_integrity() -> bool:
         return True  # Non-fatal exception
 
 
+def install_git_hooks() -> None:
+    """
+    Auto-install git hooks on first run.
+
+    GAD-004-ADDITION: Mandatory Git Hooks
+
+    This function:
+    1. Checks if git hooks are already installed
+    2. If not, configures git to use .githooks directory
+    3. Non-fatal - warns if installation fails
+    """
+    import subprocess
+
+    try:
+        # Check if hooks are already configured
+        result = subprocess.run(
+            ["git", "config", "core.hooksPath"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        if result.returncode == 0 and result.stdout.strip() == ".githooks":
+            print("   ✅ Git hooks already installed")
+            return
+
+        # Install hooks by configuring git
+        result = subprocess.run(
+            ["git", "config", "core.hooksPath", ".githooks"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        if result.returncode == 0:
+            print("   ✅ Git hooks installed (.githooks)")
+            print("      • pre-commit: Fast checks (<1s)")
+            print("      • pre-push: Full checks (~5s)")
+        else:
+            print("   ⚠️  Git hooks installation failed (non-critical)", file=sys.stderr)
+            if result.stderr:
+                print(f"      {result.stderr}", file=sys.stderr)
+
+    except Exception as e:
+        # Non-fatal - continue without hooks
+        print(f"   ⚠️  Git hooks setup error: {e}", file=sys.stderr)
+
+
 def display_motd():
     """
     Display Message of the Day before any vibe-cli execution.
@@ -952,6 +1000,11 @@ def main():
         sys.exit(1)
 
     print("   ✅ System integrity verified")
+    print()
+
+    # Install git hooks (GAD-004-ADDITION: Mandatory Git Hooks)
+    print("[Layer 0.5] Installing git hooks...")
+    install_git_hooks()
     print()
 
     # LAYER 1: Display MOTD (GAD-005: Unavoidable MOTD)

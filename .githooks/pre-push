@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# pre-push hook - Medium Layer
+# Runs: bin/pre-push-check.sh
+# Time: 5-10s
+#
+# Auto-installed by vibe-cli on first run
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Delegate to pre-push-check.sh (single source of truth for pre-push logic)
+exec "$REPO_ROOT/bin/pre-push-check.sh"

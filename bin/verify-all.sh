@@ -10,6 +10,14 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+# Source check functions (SSOT)
+source "$REPO_ROOT/lib/checks/linting.sh"
+source "$REPO_ROOT/lib/checks/formatting.sh"
+source "$REPO_ROOT/lib/checks/tests.sh"
+
 echo "🔍 VIBE AGENCY - COMPLETE VERIFICATION SUITE"
 echo "===================================================================="
 echo ""
@@ -81,8 +89,8 @@ echo ""
 # System Health (from health-check.sh)
 echo "━━━ SYSTEM HEALTH ━━━"
 run_test "System Integrity" "python scripts/verify-system-integrity.py"
-run_test "Linting" "uv run ruff check . --quiet"
-run_test "Formatting" "uv run ruff format --check . --quiet"
+run_test "Linting" "check_linting check"
+run_test "Formatting" "check_formatting check"
 echo ""
 
 echo "===================================================================="

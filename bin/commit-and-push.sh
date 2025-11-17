@@ -19,6 +19,13 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+# Source check functions (SSOT)
+source "$REPO_ROOT/lib/checks/linting.sh"
+source "$REPO_ROOT/lib/checks/formatting.sh"
+
 # Check if commit message provided
 if [ $# -eq 0 ]; then
   echo "❌ Error: Commit message required"
@@ -35,7 +42,7 @@ echo ""
 
 # Step 1: Check linting (with auto-fix)
 echo "🔍 Step 1/4: Running linting check..."
-if uv run ruff check . --fix; then
+if check_linting fix; then
   echo "✅ Linting: Clean"
 else
   echo ""
@@ -56,13 +63,8 @@ echo ""
 
 # Step 2: Format check
 echo "🎨 Step 2/4: Checking code formatting..."
-if ! uv run ruff format --check . &>/dev/null; then
-  echo "⚠️  Auto-formatting code..."
-  uv run ruff format .
-  echo "✅ Formatting: Fixed"
-else
-  echo "✅ Formatting: Clean"
-fi
+check_formatting fix
+echo "✅ Formatting: Clean"
 echo ""
 
 # Step 3: Git add, commit, push

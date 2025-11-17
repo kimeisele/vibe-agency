@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# pre-commit hook - Fast Layer
+# Runs: Linting + Formatting (with autofix)
+# Time: <1s
+#
+# Auto-installed by vibe-cli on first run
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Source check functions
+source "$REPO_ROOT/lib/checks/linting.sh"
+source "$REPO_ROOT/lib/checks/formatting.sh"
+
+echo "🔍 Pre-commit checks..."
+
+# Fast checks with autofix
+check_linting fix || exit 1
+check_formatting fix || exit 1
+
+echo "✅ Pre-commit checks passed"
+exit 0
