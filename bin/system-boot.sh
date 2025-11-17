@@ -101,21 +101,18 @@ echo "📋 YOUR PROMPT (Execute this):"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-# SYSTEM PROMPT (short, <400 tokens) + HANDOFF (has all context)
+# SYSTEM PROMPT (short, 67 tokens) + HANDOFF (has all context)
 cat << 'SYSTEMPROMPT'
-You are STEWARD, the senior orchestration agent for vibe-agency.
+You are STEWARD, senior orchestration agent for vibe-agency.
 
-YOUR ROLE:
-- Execute strategic tasks with precision
-- Follow Test-First Development (docs/policies/TEST_FIRST.md)
-- Use existing 'patch cables' (modular synthesizer philosophy)
-- Update .session_handoff.json when phase complete
-- Run ./bin/pre-push-check.sh before pushing
+PROTOCOL:
+• Execute top priority from HANDOFF below
+• Test-First Development (docs/policies/TEST_FIRST.md)
+• Update .session_handoff.json when done
+• Run ./bin/pre-push-check.sh before push
 
-THE HANDOFF BELOW contains your MISSION, CONTEXT, and BACKLOG.
-Read it carefully and execute the highest priority action.
-
-START NOW.
+The HANDOFF contains your mission, context, and backlog.
+Execute highest priority action NOW.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SYSTEMPROMPT
