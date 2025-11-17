@@ -172,95 +172,37 @@ echo "📋 YOUR PROMPT (Execute this):"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-# Generate the actual prompt for the agent
+# SYSTEM PROMPT (short, <400 tokens) + HANDOFF (has all context)
+cat << 'SYSTEMPROMPT'
+You are STEWARD, the senior orchestration agent for vibe-agency.
+
+YOUR ROLE:
+- Execute strategic tasks with precision
+- Follow Test-First Development (docs/policies/TEST_FIRST.md)
+- Use existing 'patch cables' (modular synthesizer philosophy)
+- Update .session_handoff.json when phase complete
+- Run ./bin/pre-push-check.sh before pushing
+
+THE HANDOFF BELOW contains your MISSION, CONTEXT, and BACKLOG.
+Read it carefully and execute the highest priority action.
+
+START NOW.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SYSTEMPROMPT
+
+echo ""
+
+# Output the full handoff (already has everything)
 if [ -f ".session_handoff.json" ]; then
-    python3 << 'PYEOF'
-import json
-import subprocess
-
-try:
-    with open('.session_handoff.json', 'r') as f:
-        handoff = json.load(f)
-
-    # Get branch name
-    branch = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
-                          capture_output=True, text=True).stdout.strip()
-
-    # Get completed summary
-    runtime = handoff.get('layer1_runtime', {})
-    summary = runtime.get('completed_summary', 'No summary available')
-
-    # Find highest priority action
-    detail = handoff.get('layer2_detail', {})
-    next_steps = detail.get('next_steps_detail', [])
-
-    if next_steps:
-        critical = [s for s in next_steps if s.get('priority') == 'CRITICAL']
-        high = [s for s in next_steps if s.get('priority') == 'HIGH']
-        action = critical[0] if critical else (high[0] if high else next_steps[0])
-
-        # HARDCODED STEWARD PERSONA (can be extracted to file later)
-        print("You are STEWARD, the senior orchestration agent for vibe-agency.")
-        print("Your role: Execute strategic tasks with precision and update handoffs.")
-        print("")
-        print("CONTEXT:")
-        print(f"- Status: {summary}")
-        print(f"- Branch: {branch}")
-        print(f"- Tests: 93.3% passing (320/343)")
-        print("")
-
-        priority = action.get('priority', 'NORMAL')
-        print(f"YOUR MISSION ({priority} PRIORITY):")
-        print(f"{action.get('step', 'No action defined')}")
-        print("")
-
-        if 'why' in action:
-            print(f"WHY: {action['why']}")
-            print("")
-
-        if 'command' in action:
-            cmd = action['command']
-            # Make command more direct if it's a file reference
-            if cmd.startswith('Execute ') and cmd.endswith('.md'):
-                doc_path = cmd.replace('Execute ', '')
-                print(f"EXECUTE: Read and implement {doc_path}")
-            else:
-                print(f"EXECUTE: {cmd}")
-            print("")
-
-        if 'estimated_time' in action:
-            print(f"ESTIMATED: {action['estimated_time']}")
-            print("")
-
-        print("CONSTRAINTS:")
-        print("- Follow Test-First Development (docs/policies/TEST_FIRST.md)")
-        print("- Use existing 'patch cables' - don't add unnecessary complexity")
-        print("- Update .session_handoff.json when phase complete")
-        print("- Run ./bin/pre-push-check.sh before pushing")
-        print("")
-        print("START NOW.")
-    else:
-        print("⚠️  No next action defined in handoff")
-        print("")
-        print("MISSION: Review .session_handoff.json and define next steps")
-
-except Exception as e:
-    print(f"⚠️  Could not generate prompt: {e}")
-    print("")
-    print("FALLBACK MISSION:")
-    print("1. Check .session_handoff.json manually")
-    print("2. Review git log --oneline -5")
-    print("3. Check CLAUDE.md for current system status")
-
-PYEOF
-
+    cat .session_handoff.json
 else
-    echo "⚠️  No session handoff found"
+    echo "⚠️  No session handoff found (.session_handoff.json missing)"
     echo ""
     echo "BOOTSTRAP MISSION:"
     echo "1. Review recent commits: git log --oneline -5"
     echo "2. Check CLAUDE.md for system status"
-    echo "3. Create .session_handoff.json with context"
+    echo "3. Create .session_handoff.json with next steps"
 fi
 
 echo ""
