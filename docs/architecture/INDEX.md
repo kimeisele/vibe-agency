@@ -34,13 +34,13 @@
 
 ---
 
-## Layers (LAD) - Coming in PR 2
+## Layers (LAD) ✅
 
 The Layer Architecture Documents provide horizontal views across all pillars:
 
-- **LAD-1**: Browser Layer (prompt-only, $0 cost) - Coming Soon
-- **LAD-2**: Claude Code Layer (tool-based, $20/mo) - Coming Soon
-- **LAD-3**: Runtime Layer (API-based, $50-200/mo) - Coming Soon
+- **[LAD-1](LAD/LAD-1.md)**: Browser Layer (prompt-only, $0 cost)
+- **[LAD-2](LAD/LAD-2.md)**: Claude Code Layer (tool-based, $20/mo)
+- **[LAD-3](LAD/LAD-3.md)**: Runtime Layer (API-based, $50-200/mo)
 
 ---
 
@@ -89,10 +89,10 @@ These files remain at the root level pending further review and consolidation:
 1. **Start with STRUCTURE.md** to understand the 3-tier system
 2. **Use ARCHITECTURE_MAP.md** for the big picture
 3. **Browse by pillar** (GAD-XXX) for vertical slices
-4. **Browse by layer** (LAD-X) for horizontal views (coming in PR 2)
+4. **Browse by layer** (LAD-X) for horizontal views ✅
 5. **Check VAD** for integration tests (coming in PR 3)
 
 ---
 
 **Last Updated**: 2025-11-17  
-**Version**: 1.0 (Week 1 PR 1)
+**Version**: 2.0 (Week 2 PR 2 - LAD Documents Complete)
