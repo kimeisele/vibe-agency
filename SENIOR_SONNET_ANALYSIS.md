@@ -270,8 +270,8 @@ Update these 8 files to reference `show-context.py` instead of `show-context.sh`
 1. `CLAUDE.md` (8 references on lines 64, 65, 175, 315, 525, 536, 539, 541)
 2. `bin/README.md` (4 references)
 3. `docs/architecture/GAD-004_Multi_Layered_Quality_Enforcement.md` (7 refs)
-4. `docs/architecture/GAD-005_Runtime_Engineering.md` (5 refs)
-5. `docs/architecture/GAD-005-ADDITION_Haiku_Hardening.md` (3+ refs)
+4. `docs/architecture/GAD-5XX/GAD-500.md` (5 refs)
+5. `docs/architecture/GAD-5XX/GAD-502.md` (3+ refs)
 6. `docs/architecture/ARCHITECTURE_MAP.md` (check for refs)
 7. `.github/PR_BODY.md` (if exists)
 8. Any other architecture docs mentioning the tool

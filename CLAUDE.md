@@ -245,7 +245,7 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 **Issue:** GAD-005-ADDITION Haiku Hardening has 700-line plan + 13 tests, but only 10.5% implemented
 **Impact:** System is NOT Haiku-proof (only 2/19 scenarios protected)
 **Current State:**
-- ✅ Plan complete: `docs/architecture/GAD-005-ADDITION_HAIKU_HARDENING.md` (700 lines)
+- ✅ Plan complete: `docs/architecture/GAD-5XX/GAD-502.md` (700 lines)
 - ✅ Tests written: `tests/test_rogue_agent_scenarios.py` (13 scenarios)
 - ❌ Implementation: 11/13 tests still `pytest.skip()` (Phases 2-5 pending)
 - ⚠️ Protection coverage: 10.5% (2/19 scenarios)

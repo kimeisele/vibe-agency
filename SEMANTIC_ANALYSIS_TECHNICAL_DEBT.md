@@ -11,7 +11,7 @@
 
 ### What We See (Syntactic View)
 ```
-✅ GAD-005-ADDITION_HAIKU_HARDENING.md exists
+✅ GAD-5XX/GAD-502.md exists
 ✅ Implementation plan documented (6 phases)
 ✅ Test framework created (19 test scenarios)
 ✅ Some scenarios passing (2/19)
@@ -54,7 +54,7 @@ pytest.skip("TODO: Implement shell command kernel checks (GAD-006 Phase 2)")
 # - Status: Looks green (file exists), is red (skipped)
 ```
 
-**File: `GAD-005-ADDITION_HAIKU_HARDENING.md`**
+**File: `GAD-5XX/GAD-502.md`**
 ```markdown
 ### Phase 2: Shell-Level Guardrails (Week 3)
 **Status:** NOT STARTED
@@ -63,9 +63,9 @@ Phases 3-6 follow similar pattern: Documented → NOT STARTED
 ```
 
 **Files with Similar Debt:**
-- `docs/architecture/GAD-006_KNOWLEDGE_DEPT_VISION.md` - Vision doc, no code
-- `docs/architecture/GAD-007_STEWARD_GOVERNANCE_VISION.md` - Vision doc, no code
-- `docs/architecture/GAD-008_INTEGRATION_MATRIX_VISION.md` - Vision doc, no code
+- `docs/architecture/GAD-6XX/GAD-600.md` - Vision doc, no code
+- `docs/architecture/GAD-7XX/GAD-700.md` - Vision doc, no code
+- `docs/architecture/GAD-8XX/GAD-800.md` - Vision doc, no code
 
 **Pattern:** Many files marked PARTIAL or TODO with grand visions, minimal implementation.
 
@@ -79,7 +79,7 @@ Exists: YES ✅
 Code: NO ❌
 Tests: NO ❌
 Regression Risk: ZERO (no code to break)
-Example: GAD-006_KNOWLEDGE_DEPT_VISION.md (architectural vision)
+Example: GAD-6XX/GAD-600.md (architectural vision)
 ```
 
 ### Level 2: Code Exists, Untested ⚙️
@@ -347,7 +347,7 @@ Do Phase 2 + 3 first (12 hours → 52.6% protection) before:
     ]
   },
   "git_reality": {
-    "last_commit": "33b1d12 Update GAD-005-ADDITION_HAIKU_HARDENING.md",
+    "last_commit": "33b1d12 Update GAD-5XX/GAD-502.md",
     "semantic_gap": "Phase 1 complete, Phases 2-6 documented but not implemented",
     "commits_since_phase1": 12,
     "commits_that_touched_phase2_code": 0,
