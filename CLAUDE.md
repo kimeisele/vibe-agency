@@ -71,6 +71,7 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 | **GAD-005 Integration (HARNESS)** | **✅ Works (tested)** | **MOTD + Kernel work together (0.827s MOTD, 0.00ms kernel)** | `uv run python tests/test_runtime_engineering.py` |
 | **GAD-005-ADDITION Layer 0** | **✅ Works (tested)** | **System Integrity Verification (0.80ms check, 17/17 tests passing)** | `uv run pytest tests/test_layer0_integrity.py -v` |
 | **GAD-005-ADDITION Layer 1** | **✅ Works (tested)** | **Session Shell Boot Integration (Layer 0 runs before MOTD, 24/24 tests passing)** | `uv run pytest tests/test_layer1_boot_integration.py -v` |
+| **Canonical Schemas (GAD-100 Phase 2)** | **✅ Works (tested)** | **JSON Schema validation for state files (14/14 tests passing)** | `uv run pytest tests/test_canonical_schemas.py -v` |
 | Prompt Registry | ✅ Works | 9 governance rules injected | `uv run pytest tests/test_prompt_registry.py -v` |
 | vibe-cli | ✅ MOTD integrated | vibe-cli (862 lines, +191 LOC for MOTD) | `wc -l vibe-cli` |
 | vibe-cli Tool Loop | ⚠️ Code exists, untested E2E | vibe-cli:426-497 | `grep -A 20 "def _execute_prompt" vibe-cli \| grep tool_use` |
@@ -215,6 +216,10 @@ uv run pytest tests/test_layer0_integrity.py tests/performance/test_layer0_perfo
 # Test 16: GAD-005-ADDITION Layer 1 (Session Shell Boot Integration)
 uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed" && \
   echo "✅ Layer 1 verified (10/10 tests)" || echo "❌ Layer 1 tests failing"
+
+# Test 17: GAD-100 Phase 2 (Canonical Schema Definition)
+uv run pytest tests/test_canonical_schemas.py -v 2>&1 | grep -q "14 passed" && \
+  echo "✅ Canonical schemas verified (14/14 tests)" || echo "❌ Schema tests failing"
 ```
 
 **If ANY test fails, CLAUDE.md is out of date or system is broken.**
@@ -482,21 +487,24 @@ uv run ruff format .
 
 ---
 
-**Last Updated:** 2025-11-16 22:30 UTC (GAD-005-ADDITION Layer 1 COMPLETE)
-**Updated By:** Claude Code (Session: claude/continue-gad-0-01HG5Xtu2uCYsHjavRiZMLiz)
+**Last Updated:** 2025-11-17 19:00 UTC (GAD-100 Phase 2 COMPLETE)
+**Updated By:** Claude Code (Session: claude/schema-auditor-phase-2-01PuiCz3B42y8jY9mvt8F4gc)
 **Current Update:**
-- ✅ **GAD-005-ADDITION Layer 1 COMPLETE** - Session Shell Boot Integration
-- ✅ Added verify_system_integrity() function to vibe-cli (52 LOC)
-- ✅ Added format_integrity_status() helper function for MOTD display (23 LOC)
-- ✅ Integrated Layer 0 verification into main() boot sequence (runs BEFORE MOTD)
-- ✅ Added boot messages: "🔐 VIBE AGENCY - SYSTEM BOOT" → Layer 0 check → MOTD
-- ✅ Boot halts on integrity failure with actionable remediation steps
-- ✅ MOTD now displays "System Integrity: ✅ Verified" in System Health section
-- ✅ Created 10 unit tests - all passing (boot sequence, error handling, requirements validation)
-- ✅ Total: 24/24 tests passing (10 Layer 1 + 14 Layer 0 from previous session)
-- ✅ Zero regressions: All GAD-005 and core workflow tests still pass
-- ✅ Updated CLAUDE.md with Layer 1 verification section and META-TEST entry (Test 16)
-- ✅ Benefits: Complete boot-time integrity verification, unavoidable Layer 0 check, production-ready
+- ✅ **GAD-100 Phase 2 COMPLETE** - Canonical Schema Definition
+- ✅ Created config/schemas/project_manifest.schema.json (268 lines) - Canonical schema for project manifests
+- ✅ Created config/schemas/session_handoff.schema.json (92 lines) - Canonical schema for session handoffs
+- ✅ Created tests/test_canonical_schemas.py (389 lines) - 14 tests validating schemas (14/14 passing)
+- ✅ Added jsonschema>=4.17.0 to pyproject.toml dev dependencies
+- ✅ Schema validates ALL 7 existing project_manifest.json files successfully
+- ✅ Schema validates .session_handoff.json successfully
+- ✅ Schema supports flexible spec.vibe (additionalProperties: true) - intentionally freeform
+- ✅ Schema supports both file-based and git-based artifact references
+- ✅ Schema handles special case: artifacts.code.mainRepository (git repo metadata, not artifact)
+- ✅ Added AWAITING_CODE_GENERATION to projectPhase enum (transition state)
+- ✅ Added planning_complete to roadmap status enum (found in wild)
+- ✅ Zero regressions: All existing tests still pass
+- ✅ Updated CLAUDE.md with verification commands
+- ✅ Benefits: Structural consistency enforced, drift prevention, validation layer for state files
 
 **Previous Update:** 2025-11-16 21:36 UTC (GAD-005-ADDITION Layer 0 COMPLETE)
 **Updated By:** Claude Code (Session: claude/add-show-context-script-01BJiAxBtZVGfxBtXWTjXekX)
