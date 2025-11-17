@@ -14,8 +14,9 @@ User nugget: "kann nicht wieder irgendwas sein dass wieder was nicht installiert
 """
 
 import subprocess
-import sys
 from pathlib import Path
+
+import pytest
 
 
 def pytest_configure(config):
@@ -42,20 +43,18 @@ def pytest_configure(config):
                 cwd=project_root,
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
             print("   ✅ Virtual environment created")
         except subprocess.CalledProcessError as e:
             pytest.exit(
-                f"❌ BOOTSTRAP FAILED: Could not create .venv\n"
-                f"   Error: {e.stderr}",
-                returncode=1
+                f"❌ BOOTSTRAP FAILED: Could not create .venv\n   Error: {e.stderr}", returncode=1
             )
         except FileNotFoundError:
             pytest.exit(
                 "❌ BOOTSTRAP FAILED: uv not found\n"
                 "   Install: curl -LsSf https://astral.sh/uv/install.sh | sh",
-                returncode=1
+                returncode=1,
             )
 
     # Check 3: Can we import core dependencies?
@@ -72,12 +71,11 @@ def pytest_configure(config):
                 cwd=project_root,
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
             print("   ✅ Dependencies synced")
         except subprocess.CalledProcessError as sync_error:
             pytest.exit(
-                f"❌ BOOTSTRAP FAILED: Could not sync dependencies\n"
-                f"   Error: {sync_error.stderr}",
-                returncode=1
+                f"❌ BOOTSTRAP FAILED: Could not sync dependencies\n   Error: {sync_error.stderr}",
+                returncode=1,
             )

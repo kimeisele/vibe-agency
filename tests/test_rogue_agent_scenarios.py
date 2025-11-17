@@ -120,13 +120,23 @@ class TestMisinterpretationScenarios:
         from pathlib import Path
 
         # Read core_orchestrator.py source to verify KernelViolationError structure
-        orchestrator_path = Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+        orchestrator_path = (
+            Path(__file__).parent.parent
+            / "agency_os"
+            / "00_system"
+            / "orchestrator"
+            / "core_orchestrator.py"
+        )
         source_code = orchestrator_path.read_text()
 
         # Verify Haiku-readable error format is implemented
-        assert 'msg = f"🚫 BLOCKED: {self.operation}' in source_code, "Missing BLOCKED header in error format"
+        assert 'msg = f"🚫 BLOCKED: {self.operation}' in source_code, (
+            "Missing BLOCKED header in error format"
+        )
         assert 'msg += f"WHY: {self.why}' in source_code, "Missing WHY section in error format"
-        assert 'msg += "WHAT TO DO INSTEAD:' in source_code, "Missing remediation section in error format"
+        assert 'msg += "WHAT TO DO INSTEAD:' in source_code, (
+            "Missing remediation section in error format"
+        )
         assert 'msg += f"\\nEXAMPLE:' in source_code, "Missing example section in error format"
         assert 'msg += f"  ✅ {self.example_good}' in source_code, "Missing good example marker"
         assert 'msg += f"  ❌ {self.example_bad}' in source_code, "Missing bad example marker"
@@ -139,8 +149,12 @@ class TestMisinterpretationScenarios:
         assert "example_bad: str" in source_code, "Missing 'example_bad' parameter"
 
         # Verify actual kernel checks use new format
-        assert 'operation=f"You tried to overwrite {artifact_name}"' in source_code, "save_artifact check not using new format"
-        assert 'operation=f"You tried to commit with {errors_count} linting error(s)"' in source_code, "git_commit check not using new format"
+        assert 'operation=f"You tried to overwrite {artifact_name}"' in source_code, (
+            "save_artifact check not using new format"
+        )
+        assert (
+            'operation=f"You tried to commit with {errors_count} linting error(s)"' in source_code
+        ), "git_commit check not using new format"
 
         print("✅ Error message structure is Haiku-readable (verified from source code)")
 

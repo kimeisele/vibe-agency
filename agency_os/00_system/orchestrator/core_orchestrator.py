@@ -151,12 +151,12 @@ class KernelViolationError(OrchestratorError):
 
     def __init__(
         self,
-        operation: str,          # What they tried to do
-        why: str,                # Simple 1-sentence explanation
+        operation: str,  # What they tried to do
+        why: str,  # Simple 1-sentence explanation
         remediation: list[str],  # Numbered action steps
-        example_good: str,       # Working code
-        example_bad: str,        # What they tried
-        learn_more: str | None = None   # Optional doc link
+        example_good: str,  # Working code
+        example_bad: str,  # What they tried
+        learn_more: str | None = None,  # Optional doc link
     ):
         self.operation = operation
         self.why = why
@@ -835,10 +835,10 @@ class CoreOrchestrator:
                 remediation=[
                     "Use: orchestrator.save_project_manifest(data) for manifest",
                     "Use: dedicated handoff creation method for handoff",
-                    "If stuck, ask operator: 'How do I update critical files?'"
+                    "If stuck, ask operator: 'How do I update critical files?'",
                 ],
                 example_good="orchestrator.save_project_manifest({'phase': 'CODING'})",
-                example_bad=f"save_artifact('{artifact_name}', data)  # ← Blocked"
+                example_bad=f"save_artifact('{artifact_name}', data)  # ← Blocked",
             )
 
         logger.debug(f"✓ Kernel check passed: save_artifact({artifact_name})")
@@ -883,10 +883,10 @@ class CoreOrchestrator:
                 remediation=[
                     "Run: uv run ruff check . --fix (auto-fixes most issues)",
                     "Review remaining: uv run ruff check . (shows what's left)",
-                    "After fixing: re-run your commit command"
+                    "After fixing: re-run your commit command",
                 ],
                 example_good="./bin/pre-push-check.sh && git commit -m 'message'",
-                example_bad="git commit -m 'message'  # ← Blocked by linting errors"
+                example_bad="git commit -m 'message'  # ← Blocked by linting errors",
             )
 
         logger.debug("✓ Kernel check passed: git_commit()")
