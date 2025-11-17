@@ -56,9 +56,7 @@ class TestProjectManifestValidation:
         """Find all project_manifest.json files."""
         return list(repo_root.glob("workspaces/*/project_manifest.json"))
 
-    def test_all_manifests_validate(
-        self, project_manifests, project_manifest_schema
-    ):
+    def test_all_manifests_validate(self, project_manifests, project_manifest_schema):
         """All existing project_manifest.json files validate against schema."""
         validator = Draft7Validator(project_manifest_schema)
         errors = []
@@ -109,9 +107,7 @@ class TestSessionHandoffValidation:
         if errors:
             error_msg = "Session handoff validation failed:\n"
             for err in errors:
-                error_msg += (
-                    f"  - {err.message} (at {'.'.join(map(str, err.path))})\n"
-                )
+                error_msg += f"  - {err.message} (at {'.'.join(map(str, err.path))})\n"
             pytest.fail(error_msg)
 
 

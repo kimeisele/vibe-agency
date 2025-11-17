@@ -14,11 +14,7 @@ from typing import Optional
 class DatabaseConfig:
     """Database configuration settings."""
 
-    url: str = field(
-        default_factory=lambda: os.getenv(
-            "DATABASE_URL", "sqlite:///app.db"
-        )
-    )
+    url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", "sqlite:///app.db"))
     echo: bool = False
     pool_size: int = 5
     max_overflow: int = 10

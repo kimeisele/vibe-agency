@@ -22,7 +22,7 @@ from .validators import ConfigurationError
 __all__ = [
     "UniversalConfig",
     "DatabaseConfig",
-    "APIConfig", 
+    "APIConfig",
     "ShellConfig",
     "LoggingConfig",
     "SecurityConfig",
@@ -32,6 +32,7 @@ __all__ = [
     "ConfigLoader",
     "ConfigurationError",
 ]
+
 
 # Convenience functions for backward compatibility
 def load_config(config_path=None):

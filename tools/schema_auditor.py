@@ -12,7 +12,6 @@ for human review. The human then defines canonical schemas based on the audit.
 
 import json
 import sys
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -174,9 +173,7 @@ class SchemaAuditor:
                             fields=field_set,
                             sample_file=str(file_path.relative_to(self.repo_root)),
                         )
-                    structures[field_set].files.append(
-                        str(file_path.relative_to(self.repo_root))
-                    )
+                    structures[field_set].files.append(str(file_path.relative_to(self.repo_root)))
             except (json.JSONDecodeError, OSError) as e:
                 print(f"  ⚠️  Error reading {file_path}: {e}")
 
@@ -200,17 +197,13 @@ class SchemaAuditor:
                             fields=field_set,
                             sample_file=str(file_path.relative_to(self.repo_root)),
                         )
-                    structures[field_set].files.append(
-                        str(file_path.relative_to(self.repo_root))
-                    )
+                    structures[field_set].files.append(str(file_path.relative_to(self.repo_root)))
             except (yaml.YAMLError, OSError) as e:
                 print(f"  ⚠️  Error reading {file_path}: {e}")
 
         return list(structures.values())
 
-    def _get_all_field_paths(
-        self, data: dict[str, Any], prefix: str = ""
-    ) -> list[str]:
+    def _get_all_field_paths(self, data: dict[str, Any], prefix: str = "") -> list[str]:
         """Get all nested field paths from a dict (e.g., 'metadata.name')."""
         fields = []
         for key, value in data.items():
@@ -220,9 +213,7 @@ class SchemaAuditor:
                 fields.extend(self._get_all_field_paths(value, field_path))
         return fields
 
-    def _analyze_fields(
-        self, files: list[Path], file_type: str
-    ) -> dict[str, FieldInfo]:
+    def _analyze_fields(self, files: list[Path], file_type: str) -> dict[str, FieldInfo]:
         """Analyze field presence and types across files."""
         field_info: dict[str, FieldInfo] = {}
 
@@ -253,9 +244,7 @@ class SchemaAuditor:
 
         return field_info
 
-    def _get_field_values(
-        self, data: dict[str, Any], prefix: str = ""
-    ) -> list[tuple[str, Any]]:
+    def _get_field_values(self, data: dict[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
         """Get all field paths and their values."""
         items = []
         for key, value in data.items():
@@ -265,9 +254,7 @@ class SchemaAuditor:
                 items.extend(self._get_field_values(value, field_path))
         return items
 
-    def _find_type_mismatches(
-        self, field_info: dict[str, FieldInfo]
-    ) -> list[tuple[str, str, str]]:
+    def _find_type_mismatches(self, field_info: dict[str, FieldInfo]) -> list[tuple[str, str, str]]:
         """Find fields with multiple types across files."""
         mismatches = []
         for field_name, info in field_info.items():
@@ -320,7 +307,7 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
             # Structure variations
             f.write(f"### Structural Variations ({len(result.variations)})\n\n")
             for i, variation in enumerate(result.variations, 1):
-                f.write(f"#### Structure {chr(64+i)}\n\n")
+                f.write(f"#### Structure {chr(64 + i)}\n\n")
                 f.write(f"**Files:** {len(variation.files)}\n\n")
                 f.write("**Fields:**\n")
                 for field in sorted(variation.fields):
@@ -332,9 +319,7 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
             # Missing fields
             if result.missing_in_files:
                 f.write("### Missing Fields\n\n")
-                f.write(
-                    "Fields that appear in SOME files but not ALL files:\n\n"
-                )
+                f.write("Fields that appear in SOME files but not ALL files:\n\n")
                 for field, present_files in sorted(result.missing_in_files.items()):
                     missing_count = len(result.files_scanned) - len(present_files)
                     f.write(
@@ -362,16 +347,12 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
                 types_str = ", ".join(sorted(info.types))
                 present_count = len(info.present_in)
                 total_count = len(result.files_scanned)
-                f.write(
-                    f"| `{field_name}` | {types_str} | {present_count}/{total_count} |\n"
-                )
+                f.write(f"| `{field_name}` | {types_str} | {present_count}/{total_count} |\n")
             f.write("\n")
 
         # Recommendations
         f.write("## 🎯 Recommendations\n\n")
-        f.write(
-            "Based on this audit, the following canonical schemas should be defined:\n\n"
-        )
+        f.write("Based on this audit, the following canonical schemas should be defined:\n\n")
 
         for file_type, result in results.items():
             if result.variations:
@@ -382,21 +363,15 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
                 )
                 f.write("**Required fields:**\n")
                 # Fields present in ALL files
-                all_fields = set.intersection(
-                    *[set(v.fields) for v in result.variations]
-                )
+                all_fields = set.intersection(*[set(v.fields) for v in result.variations])
                 for field in sorted(all_fields):
                     f.write(f"- `{field}` (present in all files)\n")
                 f.write("\n")
                 f.write("**Optional fields:**\n")
                 # Fields present in SOME files
-                some_fields = set.union(
-                    *[set(v.fields) for v in result.variations]
-                ) - all_fields
+                some_fields = set.union(*[set(v.fields) for v in result.variations]) - all_fields
                 for field in sorted(some_fields):
-                    present_count = sum(
-                        1 for v in result.variations if field in v.fields
-                    )
+                    present_count = sum(1 for v in result.variations if field in v.fields)
                     f.write(
                         f"- `{field}` (present in {present_count}/{len(result.variations)} structures)\n"
                     )
@@ -408,9 +383,7 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
         f.write("   - Which structure should be canonical?\n")
         f.write("   - Which fields are required vs optional?\n")
         f.write("   - Which inconsistencies are bugs vs intentional?\n\n")
-        f.write(
-            "2. **Define Schemas** - Create JSON Schema files in `config/schemas/`:\n"
-        )
+        f.write("2. **Define Schemas** - Create JSON Schema files in `config/schemas/`:\n")
         for file_type in results.keys():
             schema_name = file_type.replace("_", "_")
             f.write(f"   - `config/schemas/{schema_name}.schema.json`\n")

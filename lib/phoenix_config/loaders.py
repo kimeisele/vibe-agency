@@ -20,7 +20,7 @@ class ConfigLoader:
     """Universal configuration loader."""
 
     @staticmethod
-    def from_file(config_path: Union[str, Path]) -> 'UniversalConfig':
+    def from_file(config_path: Union[str, Path]) -> "UniversalConfig":
         """Load configuration from YAML file."""
         config_path = Path(config_path)
 
@@ -38,7 +38,7 @@ class ConfigLoader:
         return ConfigLoader._from_dict(data)
 
     @staticmethod
-    def from_env() -> 'UniversalConfig':
+    def from_env() -> "UniversalConfig":
         """Load configuration from environment variables."""
         config_data = {
             "environment": os.getenv("APP_ENV", "production"),
@@ -66,7 +66,8 @@ class ConfigLoader:
                 "log_file": os.getenv("LOG_FILE"),
             },
             "security": {
-                "enable_session_persistence": os.getenv("ENABLE_SESSIONS", "true").lower() == "true",
+                "enable_session_persistence": os.getenv("ENABLE_SESSIONS", "true").lower()
+                == "true",
                 "audit_log_retention_days": int(os.getenv("AUDIT_LOG_RETENTION_DAYS", "90")),
             },
             "performance": {
@@ -88,11 +89,17 @@ class ConfigLoader:
         return ConfigLoader._from_dict(config_data)
 
     @staticmethod
-    def _from_dict(data: Dict[str, Any]) -> 'UniversalConfig':
+    def _from_dict(data: Dict[str, Any]) -> "UniversalConfig":
         """Create configuration from dictionary data."""
         from .config_classes import (
-            DatabaseConfig, APIConfig, ShellConfig, LoggingConfig,
-            SecurityConfig, PerformanceConfig, CacheConfig, TaskConfig
+            DatabaseConfig,
+            APIConfig,
+            ShellConfig,
+            LoggingConfig,
+            SecurityConfig,
+            PerformanceConfig,
+            CacheConfig,
+            TaskConfig,
         )
         from .core import UniversalConfig
 

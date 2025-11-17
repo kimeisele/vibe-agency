@@ -37,45 +37,45 @@ class ConfigurationError(Exception):
 def validate_database_config(config: DatabaseConfig) -> List[str]:
     """Validate database configuration."""
     errors = []
-    
+
     if not config.url:
         errors.append("Database URL is required")
-    
+
     if config.pool_size <= 0:
         errors.append("Database pool_size must be positive")
-    
+
     if config.max_overflow < 0:
         errors.append("Database max_overflow cannot be negative")
-    
+
     return errors
 
 
 def validate_api_config(config: APIConfig) -> List[str]:
     """Validate API configuration."""
     errors = []
-    
+
     if config.port < 1 or config.port > 65535:
         errors.append("API port must be between 1 and 65535")
-    
+
     if config.workers < 1:
         errors.append("API workers must be at least 1")
-    
+
     return errors
 
 
 def validate_logging_config(config: LoggingConfig) -> List[str]:
     """Validate logging configuration."""
     errors = []
-    
+
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     if config.level.upper() not in valid_levels:
         errors.append(f"Log level must be one of: {valid_levels}")
-    
+
     valid_formats = ["json", "console", "structured"]
     if config.format not in valid_formats:
         errors.append(f"Log format must be one of: {valid_formats}")
-    
+
     if config.max_file_size <= 0:
         errors.append("Log max_file_size must be positive")
-    
+
     return errors

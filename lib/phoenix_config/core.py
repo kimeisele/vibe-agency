@@ -12,10 +12,21 @@ from typing import Any, Dict, Optional, Union
 import yaml
 
 from .config_classes import (
-    DatabaseConfig, APIConfig, ShellConfig, LoggingConfig,
-    SecurityConfig, PerformanceConfig, CacheConfig, TaskConfig
+    DatabaseConfig,
+    APIConfig,
+    ShellConfig,
+    LoggingConfig,
+    SecurityConfig,
+    PerformanceConfig,
+    CacheConfig,
+    TaskConfig,
 )
-from .validators import ConfigurationError, validate_database_config, validate_api_config, validate_logging_config
+from .validators import (
+    ConfigurationError,
+    validate_database_config,
+    validate_api_config,
+    validate_logging_config,
+)
 
 
 @dataclass
@@ -110,9 +121,7 @@ class UniversalConfig:
             logging=LoggingConfig(level="INFO", format="json"),
             api=APIConfig(debug=False, workers=4),
             performance=PerformanceConfig(
-                enable_caching=True,
-                max_concurrent_operations=20,
-                max_worker_threads=8
+                enable_caching=True, max_concurrent_operations=20, max_worker_threads=8
             ),
         )
 
@@ -137,12 +146,12 @@ class UniversalConfig:
             performance=PerformanceConfig(enable_caching=False),
             cache=CacheConfig(backend="memory"),
         )
-        
+
         # Apply any overrides
         for key, value in overrides.items():
             if hasattr(test_config, key):
                 setattr(test_config, key, value)
-        
+
         return test_config
 
     def to_dict(self) -> Dict[str, Any]:
@@ -164,10 +173,10 @@ class UniversalConfig:
     def save_to_file(self, file_path: Union[str, Path]) -> None:
         """Save configuration to YAML file."""
         file_path = Path(file_path)
-        
+
         # Create directory if it doesn't exist
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(file_path, "w") as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, indent=2)
 
@@ -175,12 +184,14 @@ class UniversalConfig:
     def load_from_file(cls, file_path: Union[str, Path]) -> "UniversalConfig":
         """Load configuration from YAML file."""
         from .loaders import ConfigLoader
+
         return ConfigLoader.from_file(file_path)
 
     @classmethod
     def load_from_env(cls) -> "UniversalConfig":
         """Load configuration from environment variables."""
         from .loaders import ConfigLoader
+
         return ConfigLoader.from_env()
 
     def get_database_url(self) -> str:
@@ -189,10 +200,12 @@ class UniversalConfig:
         if url and "${" in url:
             # Simple environment variable substitution
             import re
+
             def replace_env_var(match):
                 var_name = match.group(1)
                 return os.getenv(var_name, match.group(0))
-            url = re.sub(r'\$\{([^}]+)\}', replace_env_var, url)
+
+            url = re.sub(r"\$\{([^}]+)\}", replace_env_var, url)
         return url
 
     def is_production(self) -> bool:
