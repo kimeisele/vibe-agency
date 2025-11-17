@@ -100,294 +100,45 @@ See: docs/architecture/EXECUTION_MODE_STRATEGY.md
 
 ## 🔍 HOW TO VERIFY CLAIMS
 
-### Verify File-Based Delegation Works (GAD-003)
+**BURN THE GHEE Phase 3: Single source of truth for all verifications**
+
+Run the complete verification suite:
+
 ```bash
-uv run python manual_planning_test.py
-# Expected: All 3 PLANNING sub-states complete successfully
-# - BUSINESS_VALIDATION (3 LEAN_CANVAS_VALIDATOR tasks)
-# - FEATURE_SPECIFICATION (VIBE_ALIGNER task)
-# - ARCHITECTURE_DESIGN (GENESIS_BLUEPRINT task)
-# Note: NOW FIXED - AUDITOR task metadata created
+./bin/verify-all.sh
 ```
 
-### Verify TODO-Based Handoffs Work
+This checks **18 verification suites** across all components:
+- ✅ Layer 0: System Integrity (14 tests)
+- ✅ Layer 1: Boot Integration (10 tests)
+- ✅ GAD-005: Runtime Engineering (MOTD, Kernel, Integration, Performance)
+- ✅ Core Workflows (Planning, Coding, Deployment)
+- ✅ GAD-004: Quality Enforcement (Gates, Integration, E2E)
+- ✅ Prompt Registry
+- ✅ File-Based Delegation (GAD-003)
+- ✅ System Health (Integrity, Linting, Formatting)
+
+**Quick health check** (subset of verify-all.sh):
+
 ```bash
-# Run PLANNING workflow
-uv run python manual_planning_test.py
-
-# Check handoff.json was created
-cat workspaces/manual-test-project/handoff.json
-
-# Expected: JSON with structure:
-# {
-#   "from_agent": "VIBE_ALIGNER",
-#   "to_agent": "GENESIS_BLUEPRINT",
-#   "completed": "Feature specification and scope negotiation",
-#   "todos": [
-#     "Select core modules from feature_spec.json",
-#     "Design extension modules for complex features",
-#     ...
-#   ],
-#   "timestamp": "2025-11-16T..."
-# }
+./bin/health-check.sh
 ```
 
-### Verify Session Handoff Integration Works
+**Individual component verification** (if needed):
+
 ```bash
-# ONE COMMAND to get full session context
-./bin/show-context.sh
-
-# Expected output:
-# - Session handoff (from previous agent)
-# - System status (current branch, commits, tests)
-# - Quick commands for deeper inspection
-
-# Update system status manually
-./bin/update-system-status.sh
-
-# Expected: Creates/updates .system_status.json
-
-# Optional: Install git hooks for auto-updates
-git config core.hooksPath .githooks
-# Now .system_status.json auto-updates on commit/push
-```
-
-### Verify PLANNING Phase Works
-```bash
-python tests/test_planning_workflow.py
-# Expected: All tests pass (state machine + transitions)
-```
-
-### Verify CODING Handler Works (E2E Tests Pass)
-```bash
-python3 -m pytest tests/test_coding_workflow.py -v
-# Expected: 3 tests pass (test_coding_phase_execution, test_missing_feature_spec, test_quality_gates_failure)
-```
-
-### Verify DEPLOYMENT Handler Works (E2E Tests Pass)
-```bash
-uv run pytest tests/test_deployment_workflow.py -v
-# Expected: 5 tests pass
-# - test_deployment_phase_execution (success scenario)
-# - test_missing_qa_report (error handling)
-# - test_qa_not_approved (QA status validation)
-# - test_deployment_failure_with_rollback (deployment failure handling)
-# - test_post_deployment_validation_failure (health check failure handling)
-
-# What this validates:
-# ✅ DEPLOY_MANAGER agent executes 4-phase workflow
-# ✅ Pre-deployment checks validate QA approval
-# ✅ Deployment execution creates deploy_receipt.json
-# ✅ Post-deployment validation runs health checks
-# ✅ Failed deployments trigger rollback and bug report
-# ✅ Phase transitions to PRODUCTION on success
-```
-
-### Verify vibe-cli Has Tool Use Loop
-```bash
-grep -n "tool_use\|tool_result" vibe-cli | head -10
-# Expected: Multiple matches in lines 426-497
-```
-
-### Verify Research Tools Dependencies
-```bash
-uv run python -c "import bs4; print('✅ bs4 installed')" 2>/dev/null || echo "❌ bs4 missing (run: uv sync --all-extras)"
-# Expected: ✅ bs4 installed
-```
-
-### Verify Prompt Registry Works
-```bash
-python tests/test_prompt_registry.py
-# Expected: All tests pass (governance injection)
-```
-
-### Verify Workflow-Scoped Quality Gates Work (GAD-004 Phase 2)
-```bash
-python3 tests/test_quality_gate_recording.py
-# Expected: All tests pass (4 tests)
-# - test_quality_gate_result_recorded_in_manifest
-# - test_multiple_gate_results_accumulated
-# - test_get_transition_config
-# - test_failed_gate_recorded_before_exception
-
-# What this validates:
-# ✅ Quality gate results are recorded in manifest.status.qualityGates
-# ✅ Multiple gate results accumulate (not replaced)
-# ✅ Failed gates record results before blocking transition
-# ✅ Duration tracking works (duration_ms in results)
-# ✅ Optional fields (message, remediation) are captured
-```
-
-### Verify Deployment-Scoped Validation Works (GAD-004 Phase 3)
-```bash
-# Run E2E tests
-python3 tests/e2e/test_orchestrator_e2e.py
-# Expected: All tests pass (3 tests)
-# - test_orchestrator_initialization
-# - test_workflow_yaml_loaded
-# - test_prompt_registry_available
-
-# Run performance tests (non-blocking)
-python3 tests/performance/test_orchestrator_performance.py
-# Expected: All tests complete (non-blocking, always exits 0)
-
-# Verify GitHub Actions workflow exists
-ls -la .github/workflows/post-merge-validation.yml
-# Expected: File exists and is readable
-
-# What this validates:
-# ✅ E2E tests validate orchestrator initialization and workflow loading
-# ✅ Performance tests provide non-blocking metrics
-# ✅ GitHub Actions workflow will run E2E tests on push to main/develop
-# ✅ Post-merge validation provides final production readiness gate
-```
-
-### Verify Multi-Layer Integration Works (GAD-004 Phase 4)
-```bash
-# Run integration test (tests all 3 layers together)
-python3 tests/test_multi_layer_integration.py
-# Expected: All tests pass
-# - Layer 1: Session-scoped enforcement (pre-push checks)
-# - Layer 2: Workflow-scoped quality gates (manifest recording)
-# - Layer 3: Deployment-scoped validation (GitHub Actions)
-
-# What this validates:
-# ✅ All 3 GAD-004 layers work independently
-# ✅ All 3 layers are properly integrated
-# ✅ No conflicts between layers
-# ✅ Complete defense-in-depth quality enforcement
-```
-
-### Verify Unavoidable MOTD Works (GAD-005 Week 1)
-```bash
-# Run MOTD tests
-uv run python tests/test_motd.py
-# Expected: All 5 tests pass
-# - test_motd_displays (MOTD shown before execution)
-# - test_motd_shows_system_status (Git, Linting, Tests)
-# - test_motd_shows_session_handoff (From agent, TODOs)
-# - test_motd_shows_quick_commands (show-context, pre-push-check)
-# - test_motd_non_fatal (MOTD failure doesn't block execution)
-
-# Manual test: Verify MOTD displays
-uv run ./vibe-cli --help
-# Expected: MOTD appears BEFORE help text
-# - System Health (Git, Linting, Tests)
-# - Session Handoff (if .session_handoff.json exists)
-# - Quick Commands
-
-# What this validates:
-# ✅ MOTD is UNAVOIDABLE (shown in stdout before any execution)
-# ✅ System status auto-updated and displayed
-# ✅ Session handoff shown if exists
-# ✅ MOTD failure is non-fatal (program continues)
-# ✅ Critical context visible to agents without manual commands
-```
-
-### Verify Pre-Action Kernel Works (GAD-005 Week 2)
-```bash
-# Run Pre-Action Kernel tests
-uv run python tests/test_kernel_checks.py
-# Expected: All 10 tests pass
-# - test_kernel_blocks_manifest_overwrite (blocks critical file overwrites)
-# - test_kernel_blocks_handoff_overwrite (blocks session handoff overwrites)
-# - test_kernel_allows_safe_artifacts (allows normal artifact saves)
-# - test_kernel_warns_on_dirty_git (warns on uncommitted changes)
-# - test_kernel_blocks_commit_with_linting_errors (blocks commits with linting errors)
-# - test_kernel_allows_commit_with_passing_linting (allows commits when linting passes)
-# - test_get_git_status_clean (git status detection works)
-# - test_get_git_status_dirty (detects uncommitted changes)
-# - test_get_system_status_exists (loads system status file)
-# - test_get_system_status_missing (handles missing status file)
-
-# What this validates:
-# ✅ Kernel prevents overwriting critical files (manifest, handoff)
-# ✅ Kernel warns on dirty git during state transitions
-# ✅ Kernel blocks commits with linting errors
-# ✅ Helper methods (_get_system_status, _get_git_status) work correctly
-# ✅ Kernel provides actionable remediation steps on violations
-```
-
-### Verify GAD-005 Integration Works (HARNESS)
-```bash
-# Run Integration Test (MOTD + Kernel together)
-uv run python tests/test_runtime_engineering.py
-# Expected: Both components work together
-# - MOTD displays before execution
-# - Kernel blocks critical operations
-
-# Run Performance Benchmarks (non-blocking)
-uv run python tests/performance/test_runtime_performance.py
-# Expected: All targets met
-# - MOTD Display: <1.0s (actual: 0.827s)
-# - Kernel Check: <50ms (actual: 0.00ms)
-# - System Status: <200ms (actual: 0.16ms)
-
-# What this validates:
-# ✅ MOTD and Kernel work together end-to-end
-# ✅ Performance targets met (MOTD fast, kernel checks instant)
-# ✅ Non-blocking benchmarks (always exit 0)
-# ✅ Complete GAD-005 implementation verified
-```
-
-### Verify Layer 0 Works (GAD-005-ADDITION - System Integrity)
-```bash
-# Run Layer 0 unit tests (14 tests)
+# See bin/verify-all.sh for all commands
+# Example: Layer 0 integrity
 uv run pytest tests/test_layer0_integrity.py -v
-# Expected: All 14 tests pass
-# - Checksum calculation
-# - Manifest generation
-# - Integrity verification (clean/tampered/missing files)
-# - Attack simulation (modify verification script/generator)
 
-# Run Layer 0 performance tests (3 tests)
-uv run pytest tests/performance/test_layer0_performance.py -v
-# Expected: All 3 tests pass
-# - Integrity verification: 0.80ms (target: <100ms) ✅
-# - Manifest generation: 2.16ms (target: <500ms) ✅
-
-# Manual verification
-python scripts/generate-integrity-manifest.py
-# Expected: Creates .vibe/system_integrity_manifest.json with 9 critical files
-
-python scripts/verify-system-integrity.py
-# Expected: ✅ SYSTEM INTEGRITY: VERIFIED (7 critical files verified)
-
-# What this validates:
-# ✅ "Who watches the watchmen?" - regulatory framework verified
-# ✅ Checksums detect tampering of critical files
-# ✅ Missing files detected and reported
-# ✅ Attack simulation: modifying Layer 0 scripts is detected
-# ✅ Performance: <1ms integrity check (125x faster than target)
+# Example: MOTD display
+uv run python tests/test_motd.py
 ```
 
-### Verify Layer 1 Works (GAD-005-ADDITION - Session Shell Boot Integration)
+**Session context** (handoff + system status):
+
 ```bash
-# Run Layer 1 unit tests (10 tests)
-uv run pytest tests/test_layer1_boot_integration.py -v
-# Expected: All 10 tests pass
-# - Boot sequence runs Layer 0 verification first
-# - Boot messages display correctly
-# - MOTD includes system integrity status
-# - Error handling (missing script, integrity failure)
-
-# Manual verification - Test boot sequence
-uv run ./vibe-cli --help
-# Expected output (in order):
-# 1. 🔐 VIBE AGENCY - SYSTEM BOOT
-# 2. [Layer 0] Verifying system integrity...
-# 3.    ✅ System integrity verified
-# 4. [Layer 1] Loading session context...
-# 5. MOTD displays with "System Integrity: ✅ Verified"
-# 6. ✅ SYSTEM BOOT COMPLETE
-
-# What this validates:
-# ✅ Layer 0 verification integrated into vibe-cli boot sequence
-# ✅ Boot-time integrity check runs BEFORE MOTD display
-# ✅ Boot halts on integrity failure (with remediation steps)
-# ✅ MOTD displays system integrity status in System Health section
-# ✅ Non-fatal handling when verification script is missing
-# ✅ Complete boot sequence works end-to-end
+./bin/show-context.py
 ```
 
 ---
