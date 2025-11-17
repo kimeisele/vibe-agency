@@ -428,18 +428,19 @@ GOOD: "As the Claude Code operator, you will:"
 
 ## 🚀 THE ONE COMMAND (For Next Session)
 
-**To start a new session with full context:**
+**Give this prompt to Claude Code to start a new session:**
 
-```bash
-./bin/system-boot.sh
+```
+You are STEWARD. Run ./bin/system-boot.sh and follow the instructions.
 ```
 
-This outputs THE PROMPT for the next agent:
-- **STEWARD persona** (system prompt <100 tokens)
-- **Full session handoff** (context + backlog + priorities)
-- **Ready to execute** - just read and do
+**That's it.** Claude Code will:
+1. Execute the script
+2. See the STEWARD persona + full handoff JSON
+3. Read the mission and backlog
+4. Start working
 
-**Copy the output and give it to the next agent as their initial prompt.**
+No manual steps. No copy-paste. Just give that one prompt.
 
 ---
 
