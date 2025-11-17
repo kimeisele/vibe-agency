@@ -64,7 +64,7 @@ LAD/
 - Layer 2: Claude Code (Tool-based, $20/mo)
 - Layer 3: Runtime (API-based, $50-200/mo)
 
-**Status**: Coming in PR 2 (Week 2)
+**Status**: ✅ Complete (See LAD/ directory)
 
 ---
 
@@ -84,7 +84,7 @@ VAD/
 
 **Purpose**: The "security matrix" between pillars - verifies that different architectural components integrate correctly.
 
-**Status**: Coming in PR 3 (Week 3)
+**Status**: ✅ Complete (See VAD/ directory)
 
 ---
 
@@ -173,12 +173,12 @@ docs/architecture/
 ├─ GAD-8XX/              # Integration Matrix
 │  └─ GAD-800.md         # EPIC
 │
-├─ LAD/                  # Layer overviews (Coming in PR 2)
+├─ LAD/                  # Layer overviews (horizontal views)
 │  ├─ LAD-1.md           # Browser Layer
 │  ├─ LAD-2.md           # Claude Code Layer
 │  └─ LAD-3.md           # Runtime Layer
 │
-├─ VAD/                  # Verification tests (Coming in PR 3)
+├─ VAD/                  # Verification tests (cross-pillar integration)
 │  ├─ VAD-001_Core_Workflow.md
 │  ├─ VAD-002_Knowledge_Integration.md
 │  └─ VAD-003_Layer_Degradation.md
@@ -211,8 +211,9 @@ docs/architecture/
 
 **Start here**: [INDEX.md](INDEX.md)  
 **Big picture**: [ARCHITECTURE_MAP.md](ARCHITECTURE_MAP.md)  
-**Understand layers**: [LAD/](LAD/) (Coming in PR 2)  
-**Browse pillars**: [GAD-5XX/](GAD-5XX/), [GAD-6XX/](GAD-6XX/), etc.
+**Understand layers**: [LAD/](LAD/)  
+**Browse pillars**: [GAD-5XX/](GAD-5XX/), [GAD-6XX/](GAD-6XX/), etc.  
+**Check integration**: [VAD/](VAD/)
 
 ---
 
@@ -236,7 +237,7 @@ docs/architecture/
 
 **2025-11-17 (Week 1 PR 1)**: Initial structure established
 - Created 8 pillar directories (GAD-1XX through GAD-8XX)
-- Created LAD/ and VAD/ directories
+- Created LAD/ and VAD/ directories (placeholders)
 - Migrated GAD-005 → GAD-500, GAD-501, GAD-502
 - Migrated GAD-006 → GAD-600
 - Migrated GAD-007 → GAD-700
@@ -244,6 +245,17 @@ docs/architecture/
 - Created placeholders for GAD-1XX through GAD-4XX
 - Established 3-document-type system
 - Created INDEX.md and STRUCTURE.md
+
+**2025-11-17 (Final PR - Weeks 2 & 3 Combined)**: LAD and VAD implementation
+- ✅ Created LAD-1.md (Browser Layer)
+- ✅ Created LAD-2.md (Claude Code Layer)
+- ✅ Created LAD-3.md (Runtime Layer)
+- ✅ Created VAD-001_Core_Workflow.md
+- ✅ Created VAD-002_Knowledge_Integration.md
+- ✅ Created VAD-003_Layer_Degradation.md
+- ✅ Created test skeletons in tests/architecture/
+- ✅ Updated INDEX.md to reflect completion
+- ✅ Updated STRUCTURE.md to reflect completion
 
 **Pending migrations**:
 - GAD-001 files (Research Integration) → Determine target pillar
