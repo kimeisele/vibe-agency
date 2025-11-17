@@ -14,6 +14,10 @@
   "layer1_runtime": {
     "current_status": "System operational. Kernel tests + dependency regression fixed. Test suite at 95.7% passing.",
     "todos": [
+      "CRITICAL (P0): Create Cold Boot Test (catches session-only fixes, 1h effort)",
+      "CRITICAL (P0): Add Persistence Checklist to CLAUDE.md (prevents rogue agent behavior, 15min)",
+      "HIGH (P1): Document Agent Policies in docs/policies/AGENT_DECISIONS.md (stops thrashing, 30min)",
+      "HIGH (P1): Create bin/verify-claude-md.sh (catches doc drift, 2h effort)",
       "Optional: Fix 2 remaining test failures (E2E vibe_aligner, session_handoff schema validation)",
       "Optional: Reduce TODO count in docs (currently 27 docs with TODO/FIXME/WIP)"
     ],
@@ -82,6 +86,46 @@
     ],
     "warnings": [],
     "next_steps_detail": [
+      {
+        "step": "AUDIT COMPLETE: Hidden Dependencies Identified",
+        "why": "Found pattern: agents claim 'fixed' but changes don't persist across sessions",
+        "priority": "P0",
+        "estimated_time": "DONE",
+        "command": "cat docs/architecture/HIDDEN_DEPENDENCIES_AUDIT.md",
+        "impact": "Identified 4 cases: yaml dependency (FIXED), doc drift, pytest thrashing, pre-commit thrashing"
+      },
+      {
+        "step": "Create Cold Boot Test",
+        "why": "Prevents session-only fixes. Deletes .venv, runs boot, runs core tests",
+        "priority": "P0",
+        "estimated_time": "1 hour",
+        "command": "Create tests/test_cold_boot.sh that simulates fresh session",
+        "impact": "Catches ALL future regressions like yaml dependency"
+      },
+      {
+        "step": "Add Persistence Checklist to CLAUDE.md",
+        "why": "Makes agents self-audit before claiming 'fixed' or 'complete'",
+        "priority": "P0",
+        "estimated_time": "15 minutes",
+        "command": "Add checklist section: Is change in git? Works in fresh session? Docs updated?",
+        "impact": "Stops rogue agent behavior at source"
+      },
+      {
+        "step": "Document Agent Policies",
+        "why": "Stop thrashing - agents need reference for common decisions",
+        "priority": "P1",
+        "estimated_time": "30 minutes",
+        "command": "Create docs/policies/AGENT_DECISIONS.md with policies: How to run tests, How to enforce linting, etc",
+        "impact": "Eliminates fix/revert cycles"
+      },
+      {
+        "step": "Create CLAUDE.md Verification Script",
+        "why": "Catch doc drift automatically (like show-context.sh → .py)",
+        "priority": "P1",
+        "estimated_time": "2 hours",
+        "command": "Create bin/verify-claude-md.sh that parses and executes all verification commands",
+        "impact": "Documentation stays accurate, no manual hunting"
+      },
       {
         "step": "Optional: Fix remaining 2 test failures",
         "why": "E2E and schema validation - not blocking, can defer",
