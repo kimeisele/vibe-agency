@@ -11,41 +11,45 @@
 ```
 -> status TODO: GAD-001 to GAD-004 need REFRAMING to fit into "PILLARS of GAD" (add to `ARCHITECTURE_MAP.md` when approved) 
 -> fit into `Dependency Graph`
--> GAD-005 as FOUNDATION is SECURED
+-> GAD-5 (Runtime Engineering) as FOUNDATION is SECURED
 ┌────────────────────────────────────────────────────────────┐
 │                    VIBE AGENCY ARCHITECTURE                │
 │                                                            │
 │  ┌──────────────────────────────────────────────────────┐ │
-│  │ GAD-005: CONTEXT INJECTION (Foundation)             │ │
+│  │ GAD-5: RUNTIME ENGINEERING (Foundation)             │ │
 │  │ • Layer 0: System Integrity                         │ │
-│  │ • Layer 1: Session Shell                            │ │
+│  │ • Layer 1: Session Shell (MOTD + Kernel)            │ │
 │  │ • Layer 2: Ambient Context                          │ │
 │  │ • Layer 3: Commit Watermarking                      │ │
 │  │ • Layer 4: Remote Validation                        │ │
+│  │ Docs: GAD-5XX/ (GAD-500, GAD-501, GAD-502)         │ │
 │  └──────────────────────────────────────────────────────┘ │
 │                          ↕                                 │
 │  ┌──────────────────────────────────────────────────────┐ │
-│  │ GAD-006: KNOWLEDGE DEPARTMENT (Knowledge Services)  │ │
+│  │ GAD-6: KNOWLEDGE DEPARTMENT (Knowledge Services)    │ │
 │  │ • Research Division                                 │ │
 │  │ • Domain Knowledge                                  │ │
 │  │ • Semantic Graph                                    │ │
 │  │ • 3-Layer Deployment                                │ │
+│  │ Docs: GAD-6XX/ (GAD-600)                            │ │
 │  └──────────────────────────────────────────────────────┘ │
 │                          ↕                                 │
 │  ┌──────────────────────────────────────────────────────┐ │
-│  │ GAD-007: STEWARD (Governance)                       │ │
+│  │ GAD-7: STEWARD GOVERNANCE                           │ │
 │  │ • Hybrid Governance (Prompt + Runtime)              │ │
 │  │ • Policy Management                                 │ │
 │  │ • Access Control                                    │ │
 │  │ • Mod Registry                                      │ │
+│  │ Docs: GAD-7XX/ (GAD-700)                            │ │
 │  └──────────────────────────────────────────────────────┘ │
 │                          ↕                                 │
 │  ┌──────────────────────────────────────────────────────┐ │
-│  │ GAD-008: INTEGRATION MATRIX (Orchestration)         │ │
+│  │ GAD-8: INTEGRATION MATRIX (Orchestration)           │ │
 │  │ • Cross-System Communication                        │ │
 │  │ • Graceful Degradation                              │ │
 │  │ • Component Compatibility                           │ │
 │  │ • Knowledge Graph Binding                           │ │
+│  │ Docs: GAD-8XX/ (GAD-800)                            │ │
 │  └──────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -144,27 +148,28 @@ use_case: "Agencies, teams, production deployments, client work"
 
 ```
 ┌─────────────┐
-│  GAD-005    │  ← Foundation (must exist first)
-│  Context    │
+│   GAD-5     │  ← Foundation (must exist first)
+│  Runtime    │     (Docs: GAD-5XX/)
 └─────────────┘
        ↓ provides context to
 ┌─────────────┐     ┌─────────────┐
-│  GAD-006    │     │  GAD-007    │
+│   GAD-6     │     │   GAD-7     │
 │  Knowledge  │  ←→ │  STEWARD    │
+│(GAD-6XX/)   │     │ (GAD-7XX/)  │
 └─────────────┘     └─────────────┘
        ↓                   ↓
        └────────┬──────────┘
                 ↓
         ┌─────────────┐
-        │  GAD-008    │  ← Orchestrates all
-        │ Integration │
+        │   GAD-8     │  ← Orchestrates all
+        │ Integration │     (Docs: GAD-8XX/)
         └─────────────┘
 
 Dependencies:
-- GAD-006 needs GAD-005 (uses receipts, integrity)
-- GAD-007 needs GAD-005 (governs context layers)
-- GAD-006 ↔ GAD-007 (bidirectional - knowledge needs governance, governance uses knowledge)
-- GAD-008 needs all (orchestrates everything)
+- GAD-6 needs GAD-5 (uses receipts, integrity)
+- GAD-7 needs GAD-5 (governs context layers)
+- GAD-6 ↔ GAD-7 (bidirectional - knowledge needs governance, governance uses knowledge)
+- GAD-8 needs all (orchestrates everything)
 ```
 
 ---
@@ -208,12 +213,12 @@ semi_intelligent_components:
     purpose: "State management and prompt composition"
     
   - name: "ReceiptManager"
-    system: "GAD-005"
+    system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
     purpose: "Receipt generation and validation"
     
   - name: "IntegrityChecker"
-    system: "GAD-005"
+    system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
     purpose: "System integrity verification"
     
@@ -239,7 +244,7 @@ mechanical_components:
     purpose: "Project state storage"
     
   - name: "system_integrity_manifest.json"
-    system: "GAD-005"
+    system: "GAD-5 (Runtime Engineering)"
     layers: [1, 2, 3]
     purpose: "Trusted baseline checksums"
     
@@ -254,7 +259,7 @@ mechanical_components:
     purpose: "Policy definitions"
     
   - name: "receipts/*.json"
-    system: "GAD-005"
+    system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
     purpose: "Work accountability"
 ```
@@ -266,7 +271,7 @@ mechanical_components:
 ```
 vibe-agency/
 │
-├── .vibe/                              # GAD-005 Runtime artifacts
+├── .vibe/                              # GAD-5 Runtime artifacts
 │   ├── system_integrity_manifest.json  # Layer 0
 │   ├── state.json                      # Symbiotic state
 │   ├── receipts/                       # Layer 2+3
@@ -285,7 +290,7 @@ vibe-agency/
 │   ├── 04_deploy_framework/
 │   └── 05_maintenance_framework/
 │
-├── knowledge_department/               # GAD-006
+├── knowledge_department/               # GAD-6 (Knowledge Department)
 │   ├── domain_knowledge/
 │   │   ├── industry_patterns/
 │   │   ├── client_domains/            # Confidential
@@ -300,7 +305,7 @@ vibe-agency/
 │       ├── indexing/                  # Layer 3
 │       └── query_interface/
 │
-├── steward/                            # GAD-007
+├── steward/                            # GAD-7 (STEWARD Governance)
 │   ├── core/
 │   │   ├── _steward_prompt_core.md    # Layer 1
 │   │   ├── decision_engine.py         # Layer 2+3
@@ -315,7 +320,7 @@ vibe-agency/
 │   └── integrations/
 │       └── mod_registry/
 │
-├── integration/                        # GAD-008
+├── integration/                        # GAD-8 (Integration Matrix)
 │   ├── config/
 │   │   ├── integration_config.yaml
 │   │   └── degradation_rules.yaml
@@ -333,17 +338,17 @@ vibe-agency/
 │       ├── project_manifest.json
 │       └── artifacts/
 │
-├── scripts/                            # GAD-005 scripts
+├── scripts/                            # GAD-5 scripts
 │   ├── verify-system-integrity.py
 │   ├── generate-integrity-manifest.py
 │   ├── update-system-status.sh
 │   ├── validate_receipts.py
 │   └── check_watermarks.py
 │
-├── .git/hooks/                         # GAD-005 Layer 3
+├── .git/hooks/                         # GAD-5 Layer 3
 │   └── pre-commit
 │
-├── .github/workflows/                  # GAD-005 Layer 4
+├── .github/workflows/                  # GAD-5 Layer 4
 │   └── pr-validation.yml
 │
 ├── config/                             # System-wide config
@@ -354,7 +359,7 @@ vibe-agency/
 │   │
 │   └── kernel_rules.yaml
 │
-└── vibe-cli                            # GAD-005 Session Shell
+└── vibe-cli                            # GAD-5 Session Shell
 ```
 
 ---
@@ -367,19 +372,19 @@ vibe-agency/
 └─────────────┘
        ↓ interacts with
 ┌─────────────┐
-│  vibe-cli   │  (GAD-005 Layer 1)
+│  vibe-cli   │  (GAD-5 Layer 1)
 │ Session     │
 │  Shell      │
 └─────────────┘
        ↓ boots system
 ┌─────────────┐
-│  Layer 0    │  (GAD-005)
+│  Layer 0    │  (GAD-5)
 │  Integrity  │
 │   Check     │
 └─────────────┘
        ↓ if verified
 ┌─────────────┐     ┌─────────────┐
-│   Agent     │────▶│  STEWARD    │  (GAD-007)
+│   Agent     │────▶│  STEWARD    │  (GAD-7)
 │VIBE_ALIGNER │     │ Governance  │
 └─────────────┘     └─────────────┘
        ↓                   ↓
@@ -395,7 +400,7 @@ vibe-agency/
        ┌──────────┴──────────┐
        ↓                     ↓
 ┌─────────────┐      ┌─────────────┐
-│  Knowledge  │      │   Receipt   │  (GAD-005)
+│  Knowledge  │      │   Receipt   │  (GAD-5)
 │   Query     │      │   Create    │
 └─────────────┘      └─────────────┘
        ↓                     ↓
@@ -417,7 +422,7 @@ vibe-agency/
 └─────────────┘
        ↓
 ┌─────────────┐
-│  Pre-commit │  (GAD-005 Layer 3)
+│  Pre-commit │  (GAD-5 Layer 3)
 │    Hook     │
 └─────────────┘
        ↓
@@ -436,7 +441,7 @@ vibe-agency/
 └─────────────┘
        ↓
 ┌─────────────┐
-│   CI/CD     │  (GAD-005 Layer 4)
+│   CI/CD     │  (GAD-5 Layer 4)
 │ Validation  │
 └─────────────┘
        ↓
@@ -471,7 +476,7 @@ vibe-agency/
 ## 8. Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-2)
-**Goal:** GAD-005 Layer 1-2 working
+**Goal:** GAD-5 (Runtime Engineering) Layer 1-2 working
 
 ```yaml
 deliverables:
@@ -489,7 +494,7 @@ completion_criteria:
 ```
 
 ### Phase 2: Knowledge Foundation (Weeks 3-4)
-**Goal:** GAD-006 Layer 1-2 working
+**Goal:** GAD-6 (Knowledge Department) Layer 1-2 working
 
 ```yaml
 deliverables:
@@ -507,7 +512,7 @@ completion_criteria:
 ```
 
 ### Phase 3: Governance Foundation (Weeks 5-6)
-**Goal:** GAD-007 Layer 1-2 working
+**Goal:** GAD-7 (STEWARD Governance) Layer 1-2 working
 
 ```yaml
 deliverables:
@@ -525,7 +530,7 @@ completion_criteria:
 ```
 
 ### Phase 4: Integration (Weeks 7-8)
-**Goal:** GAD-008 working, all systems integrated
+**Goal:** GAD-8 (Integration Matrix) working, all systems integrated
 
 ```yaml
 deliverables:
@@ -729,10 +734,10 @@ python scripts/setup-layer3.py
 ```
 Read order:
 1. This document (ARCHITECTURE_MAP.md)
-2. GAD-005 (Context Injection)
-3. GAD-006 (Knowledge Department)
-4. GAD-007 (STEWARD Governance)
-5. GAD-008 (Integration Matrix)
+2. GAD-5XX/ (Runtime Engineering - GAD-500, GAD-501, GAD-502)
+3. GAD-6XX/ (Knowledge Department - GAD-600)
+4. GAD-7XX/ (STEWARD Governance - GAD-700)
+5. GAD-8XX/ (Integration Matrix - GAD-800)
 ```
 
 ### For Users
@@ -757,11 +762,11 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 5. **Proves its work** - Receipt-based accountability
 6. **Degrades gracefully** - Each layer is fully functional
 
-**Four GADs:**
-- GAD-005: Context injection & integrity
-- GAD-006: Knowledge department & research
-- GAD-007: STEWARD governance
-- GAD-008: Integration & orchestration
+**Four GAD Pillars:**
+- GAD-5 (Pillar 5): Runtime Engineering & context integrity (Docs: GAD-5XX/)
+- GAD-6 (Pillar 6): Knowledge department & research (Docs: GAD-6XX/)
+- GAD-7 (Pillar 7): STEWARD governance (Docs: GAD-7XX/)
+- GAD-8 (Pillar 8): Integration & orchestration (Docs: GAD-8XX/)
 
 **Three Layers:**
 - Layer 1: Prompt-only (browser, $0)
@@ -778,9 +783,9 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 
 ## 15. Next Steps
 
-1. ✅ **Review all 4 GAD vision documents**
+1. ✅ **Review all 4 GAD vision documents** (GAD-5XX, GAD-6XX, GAD-7XX, GAD-8XX)
 2. **Approve or revise architecture**
-3. **Begin Phase 1 implementation** (GAD-005 Layer 1-2)
+3. **Begin Phase 1 implementation** (GAD-5 Layer 1-2)
 4. **Iterate based on learnings**
 
 ---
@@ -790,8 +795,10 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 *This map provides the complete overview. Each GAD has its own detailed vision document.*
 
 **Documents:**
-- GAD-005: Context Injection (FINAL v2.0)
-- GAD-006: Knowledge Department (VISION)
-- GAD-007: STEWARD Governance (VISION)
-- GAD-008: Integration Matrix (VISION)
+- GAD-500: Runtime Engineering EPIC (COMPLETE v2.0)
+- GAD-501: Layer 0 and Layer 1 (COMPLETE)
+- GAD-502: Haiku Hardening (PLAN)
+- GAD-600: Knowledge Department (VISION)
+- GAD-700: STEWARD Governance (VISION)
+- GAD-800: Integration Matrix (VISION)
 - ARCHITECTURE_MAP: This document

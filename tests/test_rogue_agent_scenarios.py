@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GAD-005-ADDITION: Haiku Hardening - Rogue Agent Behavior Tests
+GAD-502: Haiku Hardening - Rogue Agent Behavior Tests
 
 Tests scenarios where less capable agents (Haiku or dumber) might:
 1. Hallucinate commands/files
@@ -10,6 +10,16 @@ Tests scenarios where less capable agents (Haiku or dumber) might:
 5. Ignore critical context
 
 Purpose: Ensure system is "Haiku-proof" - even dumb agents can't break it.
+
+SEMANTIC CLARIFICATION (2025-11-17):
+"Haiku" in this context means:
+- ✅ Claude Code operator using Haiku model (less capable than Sonnet)
+- ✅ Testing delegation architecture with cheaper/faster models
+- ❌ NOT direct Haiku API integration (forbidden in MVP)
+
+The system delegates to Claude Code operator - the operator chooses their model.
+These tests validate that the DELEGATION architecture works regardless of
+which model the operator chooses.
 
 This work package spans the spectrum:
 - GAD-004: Validates quality enforcement works (adversarial testing)

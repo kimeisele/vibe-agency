@@ -221,7 +221,7 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 
 ---
 
-## ⚠️ KNOWN ISSUES (As of 2025-11-17 02:00 UTC)
+## ⚠️ KNOWN ISSUES (As of 2025-11-17 12:00 UTC)
 
 ### 1. No vibe-cli End-to-End Test
 **Issue:** Tool use loop (Lines 426-497) never tested with real API
@@ -241,8 +241,8 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 **Fix:** Update archive documentation files
 **Status:** Deferred until after portfolio test
 
-### 4. Haiku Hardening - Planned, Not Implemented
-**Issue:** GAD-005-ADDITION Haiku Hardening has 700-line plan + 13 tests, but only 10.5% implemented
+### 4. Haiku Hardening - Planned, Not Implemented ✅ CLARIFIED
+**Issue:** GAD-502 Haiku Hardening has 700-line plan + 13 tests, but only 10.5% implemented
 **Impact:** System is NOT Haiku-proof (only 2/19 scenarios protected)
 **Current State:**
 - ✅ Plan complete: `docs/architecture/GAD-5XX/GAD-502.md` (700 lines)
@@ -252,6 +252,12 @@ uv run pytest tests/test_layer1_boot_integration.py -v 2>&1 | grep -q "10 passed
 **Remaining Work:** ~11 hours (Phases 2-5)
 **Recommendation:** Use ONLY Sonnet/Opus until 79% coverage achieved
 **Verify:** `uv run pytest tests/test_rogue_agent_scenarios.py -v`
+
+**SEMANTIC CLARIFICATION (2025-11-17):**
+"Haiku" in GAD-502 means "Claude Code operator using Haiku model" NOT "Haiku API integration".
+Per EXECUTION_MODE_STRATEGY.md, vibe-cli MUST NOT make API calls in MVP (delegation only).
+The operator chooses their model, not vibe-agency.
+See: `docs/architecture/GAD-5XX/GAD-502-SEMANTIC-CLARIFICATION.md`
 
 ---
 
