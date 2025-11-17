@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GAD-006 Phase 1: Rogue Agent Behavior Tests
+GAD-005-ADDITION: Haiku Hardening - Rogue Agent Behavior Tests
 
 Tests scenarios where less capable agents (Haiku or dumber) might:
 1. Hallucinate commands/files
@@ -10,6 +10,11 @@ Tests scenarios where less capable agents (Haiku or dumber) might:
 5. Ignore critical context
 
 Purpose: Ensure system is "Haiku-proof" - even dumb agents can't break it.
+
+This work package spans the spectrum:
+- GAD-004: Validates quality enforcement works (adversarial testing)
+- GAD-005: Hardens runtime guardrails (kernel, MOTD, errors)
+- Final enforcement: CI/CD wipe if runtime fails
 """
 
 import subprocess
