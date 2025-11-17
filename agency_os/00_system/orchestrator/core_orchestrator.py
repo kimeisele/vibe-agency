@@ -139,9 +139,46 @@ class StateTransitionError(OrchestratorError):
 
 
 class KernelViolationError(OrchestratorError):
-    """Raised when Pre-Action Kernel check fails (GAD-005)"""
+    """
+    Raised when Pre-Action Kernel check fails (GAD-005/GAD-502 Phase 3).
 
-    pass
+    Kernel violation with Haiku-readable error message.
+
+    All errors MUST include:
+    - Simple explanation (1 sentence, no jargon)
+    - Actionable remediation (numbered steps)
+    - Working example (copy-pasteable)
+    """
+
+    def __init__(
+        self,
+        operation: str,  # What they tried to do
+        why: str,  # Simple 1-sentence explanation
+        remediation: list[str],  # Numbered action steps
+        example_good: str,  # Working code
+        example_bad: str,  # What they tried
+        learn_more: str = None,  # Optional doc link
+    ):
+        self.operation = operation
+        self.why = why
+        self.remediation = remediation
+        self.example_good = example_good
+        self.example_bad = example_bad
+        self.learn_more = learn_more
+
+        # Build formatted error message
+        msg = f"🚫 BLOCKED: {self.operation}\n\n"
+        msg += f"WHY: {self.why}\n\n"
+        msg += "WHAT TO DO INSTEAD:\n"
+        for i, step in enumerate(self.remediation, 1):
+            msg += f"  {i}. {step}\n"
+        msg += "\nEXAMPLE:\n"
+        msg += f"  ✅ {self.example_good}\n"
+        msg += f"  ❌ {self.example_bad}\n"
+        if self.learn_more:
+            msg += f"\n📚 LEARN MORE: {self.learn_more}\n"
+
+        super().__init__(msg)
 
 
 class SchemaValidationError(OrchestratorError):
@@ -288,6 +325,9 @@ class CoreOrchestrator:
 
         # Paths
         self.workspaces_dir = self.repo_root / "workspaces"
+
+        # Violation tracking (GAD-502 Phase 5)
+        self._kernel_violations: dict[str, int] = {}
 
         # Lazy-load handlers
         self._handlers = {}
@@ -831,7 +871,7 @@ class CoreOrchestrator:
 
     def _kernel_check_save_artifact(self, artifact_name: str) -> None:
         """
-        Kernel check: Prevent overwriting critical files.
+        Kernel check: Prevent overwriting critical files (GAD-502 Phase 3).
 
         Args:
             artifact_name: Name of artifact being saved
@@ -843,13 +883,15 @@ class CoreOrchestrator:
 
         if artifact_name in CRITICAL_FILES:
             raise KernelViolationError(
-                f"❌ KERNEL VIOLATION: Cannot overwrite critical file: {artifact_name}\n"
-                f"\n"
-                f"Remediation:\n"
-                f"  - For manifest: Use save_project_manifest() method\n"
-                f"  - For handoff: Use dedicated handoff creation method\n"
-                f"\n"
-                f"Critical files must be updated through designated methods to ensure integrity."
+                operation=f"You tried to overwrite {artifact_name}",
+                why="This file tracks critical project state. Overwriting breaks the system.",
+                remediation=[
+                    "Use: orchestrator.save_project_manifest(updated_data)",
+                    f"Or check current: cat {artifact_name} | jq .",
+                    "If stuck, ask operator: 'How do I update manifest?'",
+                ],
+                example_good="orchestrator.save_project_manifest({'phase': 'CODING'})",
+                example_bad=f"with open('{artifact_name}', 'w'): ...",
             )
 
         logger.debug(f"✓ Kernel check passed: save_artifact({artifact_name})")
@@ -878,7 +920,7 @@ class CoreOrchestrator:
 
     def _kernel_check_git_commit(self) -> None:
         """
-        Kernel check: Block git commits if linting errors exist.
+        Kernel check: Block git commits if linting errors exist (GAD-502 Phase 3).
 
         Raises:
             KernelViolationError: If linting errors detected
@@ -889,17 +931,119 @@ class CoreOrchestrator:
         if linting.get("status") == "failing":
             errors_count = linting.get("errors_count", 0)
             raise KernelViolationError(
-                f"❌ KERNEL VIOLATION: Cannot commit with linting errors\n"
-                f"\n"
-                f"Errors: {errors_count} linting error(s) detected\n"
-                f"\n"
-                f"Remediation:\n"
-                f"  1. Run: uv run ruff check . --fix\n"
-                f"  2. Review remaining errors: uv run ruff check .\n"
-                f"  3. Re-run this operation after fixing all errors"
+                operation=f"You tried to commit with {errors_count} linting error(s)",
+                why="Commits must pass linting to maintain code quality.",
+                remediation=[
+                    "Run: uv run ruff check . --fix",
+                    "Review remaining errors: uv run ruff check .",
+                    "Re-run this operation after fixing all errors",
+                ],
+                example_good="uv run ruff check . --fix && git commit -m 'message'",
+                example_bad="git commit -m 'message' # (with linting errors)",
             )
 
         logger.debug("✓ Kernel check passed: git_commit()")
+
+    def _kernel_check_shell_command(self, command: str) -> None:
+        """
+        Kernel check: Block dangerous shell operations (GAD-502 Phase 2).
+
+        Prevents shell-based bypasses of Python kernel checks.
+        Runs BEFORE executing any shell command.
+
+        Args:
+            command: Shell command to validate
+
+        Raises:
+            KernelViolationError: If command attempts dangerous operation
+        """
+        import re
+        import shlex
+
+        # Parse command safely (validate but don't use tokens)
+        try:
+            shlex.split(command)
+        except ValueError:
+            return  # Malformed command - let shell handle error
+
+        # Dangerous patterns (regex, why, remediation, example_good, example_bad)
+        patterns = [
+            # Critical file overwrites via redirection
+            (
+                r"(echo|cat|sed|awk|printf).*>\s*(manifest\.json|\.session_handoff\.json|project_manifest\.json)",
+                "Critical files track project state. Shell redirection bypasses validation.",
+                [
+                    "Use: orchestrator.save_project_manifest(updated_data)",
+                    "Or check current: cat manifest.json | jq .",
+                    "If stuck, ask operator: 'How do I update manifest?'",
+                ],
+                "orchestrator.save_project_manifest({'phase': 'CODING'})",
+                "echo '{}' > manifest.json",
+            ),
+            # Git operations without checks
+            (
+                r"git\s+push(?!\s+.*--dry-run)",
+                "Pushes must pass linting, tests, and formatting checks.",
+                [
+                    "Run: ./bin/pre-push-check.sh && git push",
+                    "Or use: ./bin/commit-and-push.sh 'message' (runs checks automatically)",
+                ],
+                "./bin/pre-push-check.sh && git push origin branch",
+                "git push origin main",
+            ),
+            # System integrity violations
+            (
+                r"(rm|mv|cp|chmod|rmdir)\s+.*\.vibe",
+                "The .vibe/ directory contains system integrity manifests. Modifying it breaks Layer 0 verification.",
+                [
+                    "Do NOT modify .vibe/ directory",
+                    "If integrity is broken, regenerate: python scripts/generate-integrity-manifest.py",
+                ],
+                "python scripts/generate-integrity-manifest.py",
+                "rm -rf .vibe/",
+            ),
+            # Direct manifest edits via editors
+            (
+                r"(vim|nano|emacs|ed|vi)\s+.*manifest\.json",
+                "Direct text edits bypass validation. Use programmatic updates.",
+                [
+                    "Use: orchestrator.save_project_manifest(updated_data)",
+                    "Or view current: cat manifest.json | jq .",
+                ],
+                "orchestrator.save_project_manifest(data)",
+                "vim manifest.json",
+            ),
+        ]
+
+        for pattern, why, remediation_steps, example_good, example_bad in patterns:
+            if re.search(pattern, command, re.IGNORECASE):
+                raise KernelViolationError(
+                    operation=f"Shell command: {command}",
+                    why=why,
+                    remediation=remediation_steps,
+                    example_good=example_good,
+                    example_bad=example_bad,
+                )
+
+        logger.debug(f"✓ Kernel check passed: shell_command({command[:50]}...)")
+
+    def _record_kernel_violation(self, violation_type: str) -> int:
+        """
+        Record violation attempt, return count (1-indexed) (GAD-502 Phase 5).
+
+        This enables escalation on repeated failures:
+        - 1st attempt: Helpful error
+        - 2nd attempt: Explicit warning
+        - 3rd+ attempt: Suggest operator help
+
+        Args:
+            violation_type: Type of violation (e.g., "overwrite_manifest")
+
+        Returns:
+            Number of times this violation has occurred (1-indexed)
+        """
+        self._kernel_violations[violation_type] = self._kernel_violations.get(violation_type, 0) + 1
+        return self._kernel_violations[violation_type]
 
     def _get_system_status(self) -> Dict[str, Any]:
         """

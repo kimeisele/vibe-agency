@@ -28,8 +28,15 @@ This work package spans the spectrum:
 """
 
 import subprocess
+import sys
+from pathlib import Path
 
 import pytest
+
+# Add orchestrator to path for imports (Python can't import from '00_system' directly)
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
+
+from core_orchestrator import CoreOrchestrator, KernelViolationError
 
 
 class TestHallucinationScenarios:
@@ -70,28 +77,69 @@ class TestBypassAttempts:
         Scenario: Agent uses 'echo "{}" > manifest.json' to bypass kernel
         Expected: System blocks shell command before execution
 
-        Current Status: ❌ VULNERABLE - Kernel only checks Python paths
+        Current Status: ✅ PROTECTED - Shell command kernel checks (GAD-502 Phase 2)
         """
-        pytest.skip("TODO: Implement shell command kernel checks (GAD-006 Phase 2)")
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # Agent tries to overwrite manifest via shell
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("echo '{}' > manifest.json")
+
+        # Verify error is Haiku-readable (GAD-502 Phase 3 format)
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "WHY:" in error_msg
+        assert "WHAT TO DO INSTEAD:" in error_msg
+        assert "EXAMPLE:" in error_msg
+        assert "✅" in error_msg  # Good example
+        assert "❌" in error_msg  # Bad example
+        assert "save_project_manifest" in error_msg
 
     def test_agent_pushes_without_precheck(self):
         """
         Scenario: Agent runs 'git push' directly instead of './bin/pre-push-check.sh'
         Expected: System blocks git push, requires pre-push-check.sh
 
-        Current Status: ⚠️ PARTIAL - Git hooks can block, but not always available
+        Current Status: ✅ PROTECTED - Shell command kernel checks (GAD-502 Phase 2-3)
         """
-        pytest.skip("TODO: Implement git push kernel check (GAD-006 Phase 2)")
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # Agent tries to push without pre-push checks
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("git push origin main")
+
+        # Verify error is Haiku-readable (GAD-502 Phase 3 format)
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "WHY:" in error_msg
+        assert "WHAT TO DO INSTEAD:" in error_msg
+        assert "EXAMPLE:" in error_msg
+        assert "✅" in error_msg
+        assert "❌" in error_msg
+        assert "pre-push-check.sh" in error_msg
 
     def test_agent_modifies_vibe_directory(self):
         """
         Scenario: Agent tries 'rm -rf .vibe/' or modifies system integrity files
         Expected: System blocks any .vibe/ modifications
 
-        Current Status: ✅ PROTECTED - Layer 0 integrity checks will detect tampering
-        Note: But can we PREVENT instead of just DETECT?
+        Current Status: ✅ PROTECTED - Preventive shell checks (GAD-502 Phase 2-3)
         """
-        pytest.skip("TODO: Add preventive check (current: detective only)")
+        orchestrator = CoreOrchestrator(repo_root=Path.cwd())
+
+        # Agent tries to delete .vibe/ directory
+        with pytest.raises(KernelViolationError) as exc:
+            orchestrator._kernel_check_shell_command("rm -rf .vibe/")
+
+        # Verify error is Haiku-readable (GAD-502 Phase 3 format)
+        error_msg = str(exc.value)
+        assert "🚫 BLOCKED:" in error_msg
+        assert "WHY:" in error_msg
+        assert "WHAT TO DO INSTEAD:" in error_msg
+        assert "EXAMPLE:" in error_msg
+        assert "✅" in error_msg
+        assert "❌" in error_msg
+        assert "integrity" in error_msg
 
 
 class TestMisinterpretationScenarios:

@@ -313,6 +313,48 @@ def verify_system_integrity() -> bool:
         return True  # Non-fatal exception
 
 
+def get_critical_alerts(status: dict) -> list[str]:
+    """
+    Extract top 3 critical alerts that agent MUST see (GAD-502 Phase 4).
+
+    Priority:
+    1. System integrity failures (CRITICAL - system compromised)
+    2. Linting errors (blocks commits)
+    3. Test failures (indicates broken code)
+    4. Dirty git (warns before transitions)
+
+    Returns:
+        List of critical alert messages (max 3)
+    """
+    alerts = []
+
+    # System integrity (highest priority)
+    integrity_result = run_system_integrity_check()
+    if not integrity_result:
+        alerts.append("❌ SYSTEM INTEGRITY FAILED - Run: python scripts/verify-system-integrity.py")
+
+    # Linting (blocks commits)
+    linting = status.get("linting", {})
+    if linting.get("status") == "failing":
+        count = linting.get("errors_count", 0)
+        alerts.append(f"❌ LINTING FAILED ({count} errors) - Run: uv run ruff check . --fix")
+
+    # Tests (broken code)
+    tests = status.get("tests", {})
+    if tests.get("status") == "failed":
+        failed = tests.get("failed_count", 0)
+        alerts.append(f"❌ TESTS FAILING ({failed} failed) - Run: uv run pytest")
+
+    # Git (warns before operations)
+    git = status.get("git", {})
+    if git.get("status") == "dirty":
+        uncommitted = git.get("uncommitted_files", [])
+        count = len(uncommitted)
+        alerts.append(f"⚠️  DIRTY GIT ({count} files uncommitted) - Run: git status")
+
+    return alerts[:3]  # Max 3 alerts
+
+
 def display_motd():
     """
     Display Message of the Day before any vibe-cli execution.
@@ -336,6 +378,19 @@ def display_motd():
     print("🚀 VIBE AGENCY - RUNTIME ENGINEERING SESSION")
     print("═" * 60)
     print()
+
+    # Critical alerts (GAD-502 Phase 4 - ALWAYS shown first)
+    critical_alerts = get_critical_alerts(status)
+    if critical_alerts:
+        print("🚨 CRITICAL ALERTS (READ THIS FIRST!)")
+        print("─" * 60)
+        for alert in critical_alerts:
+            print(f"  {alert}")
+        print()
+    else:
+        print("✅ No critical alerts - system healthy")
+        print("─" * 60)
+        print()
 
     # System health
     print("📊 SYSTEM HEALTH")
