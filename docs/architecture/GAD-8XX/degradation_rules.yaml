@@ -1,0 +1,486 @@
+# GAD-800: Degradation Rules - Executable Decision Trees
+#
+# This file defines executable degradation paths for all system components.
+# Each rule specifies how a component degrades from Layer 3 → 2 → 1.
+#
+# USAGE:
+#   from pathlib import Path
+#   import yaml
+#
+#   rules = yaml.safe_load(Path('degradation_rules.yaml').read_text())
+#   component = 'knowledge_query'
+#
+#   # Check if Layer 3 available
+#   if layer_detector.detect_layer() == 3:
+#       action = rules['degradation_rules'][component]['layer3_available']['action']
+#   else:
+#       # Degrade to Layer 2
+#       action = rules['degradation_rules'][component]['layer3_fails']['action']
+
+schema_version: "1.0"
+last_updated: "2025-11-17"
+description: "Executable degradation decision trees for GAD-800 Integration Matrix"
+
+# =============================================================================
+# DEGRADATION RULES: How components degrade across layers
+# =============================================================================
+
+degradation_rules:
+
+  # ---------------------------------------------------------------------------
+  # KNOWLEDGE QUERY DEGRADATION
+  # ---------------------------------------------------------------------------
+  knowledge_query:
+    description: "How knowledge query operations degrade across layers"
+
+    layer3_available:
+      condition: "runtime_services_up AND research_engine_available"
+      action: "use_research_engine"
+      implementation: "ResearchEngine.research(query, sources=['internal', 'external', 'client'])"
+      capabilities:
+        - multi_source_search
+        - semantic_expansion
+        - client_research_apis
+        - web_search_integration
+        - synthesized_reports
+      response_format: "comprehensive_report"
+      expected_quality: "high"
+
+    layer3_fails:
+      trigger: "runtime_services_down OR research_engine_timeout"
+      degrade_to: "layer2"
+      condition: "tools_available AND file_system_access"
+      action: "use_knowledge_query_tool"
+      implementation: "knowledge_query(query='...', scope='public', expand_graph=True)"
+      capabilities:
+        - local_yaml_search
+        - knowledge_graph_expansion
+        - pattern_matching
+        - file_snippet_extraction
+      response_format: "structured_results"
+      expected_quality: "medium"
+      notify: "⚠️ Degraded to Layer 2: Limited to local knowledge base"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tool_execution_fails OR file_access_denied"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "prompt_user"
+      implementation: "Agent prompts: 'Please check knowledge_department/domain_knowledge/{topic}.yaml'"
+      capabilities:
+        - manual_file_check
+        - user_copy_paste
+        - guided_search
+      response_format: "manual_text"
+      expected_quality: "low"
+      notify: "⚠️ Degraded to Layer 1: Manual operation required"
+      preserve_state: true
+
+  # ---------------------------------------------------------------------------
+  # STEWARD VALIDATION DEGRADATION
+  # ---------------------------------------------------------------------------
+  steward_validation:
+    description: "How governance validation degrades across layers"
+
+    layer3_available:
+      condition: "governance_engine_up AND audit_service_available"
+      action: "governance_engine_enforce"
+      implementation: "GovernanceEngine.enforce_policy(operation, resource, context)"
+      capabilities:
+        - runtime_blocking
+        - audit_logging
+        - policy_enforcement
+        - database_checks
+        - real_time_validation
+      enforcement: "blocking"
+      audit: "automatic"
+
+    layer3_fails:
+      trigger: "governance_engine_down OR database_unavailable"
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "steward_validate_tool"
+      implementation: "steward_validate(operation='...', resource='...', context={...})"
+      capabilities:
+        - validation_checks
+        - manifest_file_checks
+        - policy_rule_evaluation
+        - recommendation_only
+      enforcement: "recommendation"
+      audit: "file_based"
+      notify: "⚠️ Degraded to Layer 2: Validation only, no runtime enforcement"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tool_execution_fails OR manifest_missing"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "steward_guidance"
+      implementation: "Agent asks STEWARD personality for guidance via prompt"
+      capabilities:
+        - policy_explanation
+        - user_decision
+        - manual_validation
+        - guidance_only
+      enforcement: "none"
+      audit: "manual"
+      notify: "⚠️ Degraded to Layer 1: Guidance only, user must validate manually"
+      preserve_state: false
+
+  # ---------------------------------------------------------------------------
+  # AGENT EXECUTION DEGRADATION
+  # ---------------------------------------------------------------------------
+  agent_execution:
+    description: "How intelligent agents degrade across layers"
+
+    layer3_available:
+      condition: "api_services_up AND orchestrator_running"
+      action: "autonomous_agent_api"
+      implementation: "AgentAPI.execute(agent='VIBE_ALIGNER', task={...})"
+      capabilities:
+        - autonomous_execution
+        - multi_agent_coordination
+        - service_integration
+        - background_processing
+        - result_callbacks
+      mode: "autonomous"
+
+    layer3_fails:
+      trigger: "api_down OR orchestrator_unreachable"
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "delegated_agent_execution"
+      implementation: "orchestrator.get_next_prompt() → operator executes → orchestrator.process_result()"
+      capabilities:
+        - tool_based_execution
+        - operator_in_loop
+        - file_based_delegation
+        - manual_coordination
+      mode: "delegated"
+      notify: "⚠️ Degraded to Layer 2: Operator-in-loop mode activated"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tools_unavailable OR orchestrator_broken"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "prompt_based_agent"
+      implementation: "Agent personality injected via prompt, user executes manually"
+      capabilities:
+        - guidance_only
+        - prompt_templates
+        - manual_execution
+      mode: "manual"
+      notify: "⚠️ Degraded to Layer 1: Full manual mode, no orchestration"
+      preserve_state: false
+
+  # ---------------------------------------------------------------------------
+  # RESEARCH ENGINE DEGRADATION
+  # ---------------------------------------------------------------------------
+  research_engine:
+    description: "How research operations degrade across layers"
+
+    layer3_available:
+      condition: "research_api_up AND external_apis_accessible"
+      action: "full_research_engine"
+      implementation: "ResearchEngine.comprehensive_research(query, depth='deep')"
+      capabilities:
+        - multi_source_aggregation
+        - external_api_calls
+        - web_scraping
+        - semantic_synthesis
+        - citation_tracking
+      sources:
+        - internal_knowledge
+        - client_apis
+        - web_search
+        - academic_databases
+
+    layer3_fails:
+      trigger: "research_api_down OR external_apis_blocked"
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "limited_research_tool"
+      implementation: "research_tool(query='...', sources=['local'])"
+      capabilities:
+        - local_knowledge_only
+        - basic_aggregation
+        - simple_synthesis
+      sources:
+        - internal_knowledge
+      notify: "⚠️ Degraded to Layer 2: External sources unavailable, local only"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tools_fail"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "manual_research"
+      implementation: "Agent guides user through manual research process"
+      capabilities:
+        - guided_questions
+        - manual_web_search
+        - user_synthesis
+      sources:
+        - user_provided
+      notify: "⚠️ Degraded to Layer 1: Manual research required"
+      preserve_state: false
+
+  # ---------------------------------------------------------------------------
+  # RECEIPT MANAGEMENT DEGRADATION
+  # ---------------------------------------------------------------------------
+  receipt_management:
+    description: "How receipt/artifact tracking degrades across layers"
+
+    layer3_available:
+      condition: "receipt_service_up AND database_available"
+      action: "receipt_service_api"
+      implementation: "ReceiptService.create(artifact={...}, metadata={...})"
+      capabilities:
+        - automated_generation
+        - database_storage
+        - search_indexing
+        - audit_trail
+        - analytics
+      storage: "database"
+
+    layer3_fails:
+      trigger: "receipt_service_down OR database_unavailable"
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "receipt_tool"
+      implementation: "receipt_create(artifact={...})"
+      capabilities:
+        - file_based_generation
+        - local_storage
+        - basic_tracking
+      storage: "file_system"
+      notify: "⚠️ Degraded to Layer 2: File-based receipt storage"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tool_fails OR file_write_denied"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "manual_receipt"
+      implementation: "Agent guides user to manually document work"
+      capabilities:
+        - manual_documentation
+        - user_tracking
+      storage: "user_managed"
+      notify: "⚠️ Degraded to Layer 1: Manual documentation required"
+      preserve_state: false
+
+  # ---------------------------------------------------------------------------
+  # INTEGRITY CHECKS DEGRADATION
+  # ---------------------------------------------------------------------------
+  integrity_checks:
+    description: "How system integrity verification degrades across layers"
+
+    layer3_available:
+      condition: "integrity_service_up"
+      action: "automated_integrity_service"
+      implementation: "IntegrityService.verify_system()"
+      capabilities:
+        - continuous_monitoring
+        - automated_verification
+        - anomaly_detection
+        - automated_remediation
+      frequency: "continuous"
+
+    layer3_fails:
+      trigger: "integrity_service_down"
+      degrade_to: "layer2"
+      condition: "tools_available"
+      action: "integrity_check_tool"
+      implementation: "integrity_check()"
+      capabilities:
+        - on_demand_verification
+        - file_hash_checks
+        - schema_validation
+      frequency: "on_demand"
+      notify: "⚠️ Degraded to Layer 2: On-demand integrity checks only"
+      preserve_state: true
+
+    layer2_fails:
+      trigger: "tool_fails"
+      degrade_to: "layer1"
+      condition: "always"
+      action: "manual_verification"
+      implementation: "Agent guides user through manual verification steps"
+      capabilities:
+        - guided_verification
+        - user_inspection
+      frequency: "manual"
+      notify: "⚠️ Degraded to Layer 1: Manual verification required"
+      preserve_state: false
+
+# =============================================================================
+# DEGRADATION STRATEGIES: When to trigger degradation
+# =============================================================================
+
+degradation_strategies:
+
+  automatic_degradation:
+    enabled: true
+    timeout_threshold: 5  # seconds
+    retry_attempts: 3
+    backoff_multiplier: 2
+    notify_user: true
+    log_degradation: true
+
+  manual_degradation:
+    allow_user_override: true
+    require_confirmation: false
+    preserve_user_preference: true
+
+  upgrade_strategy:
+    auto_upgrade_enabled: true
+    health_check_interval: 30  # seconds
+    stability_threshold: 3  # successful checks before upgrade
+    notify_on_upgrade: true
+
+# =============================================================================
+# FAILURE DETECTION: How to detect layer failures
+# =============================================================================
+
+failure_detection:
+
+  layer3_service_health:
+    method: "http_health_check"
+    endpoint: "http://localhost:8000/health"
+    timeout: 1.0  # seconds
+    expected_status: 200
+    retry_count: 2
+
+  layer2_tool_availability:
+    method: "capability_check"
+    checks:
+      - "file_system_access"
+      - "tool_execution_context"
+      - "workspace_presence"
+    require_all: false  # At least one must pass
+
+  layer1_fallback:
+    method: "always_available"
+    description: "Layer 1 is always available as it requires no infrastructure"
+
+# =============================================================================
+# STATE PRESERVATION: What to preserve during degradation
+# =============================================================================
+
+state_preservation:
+
+  layer3_to_layer2:
+    preserve:
+      - "current_task_context"
+      - "agent_state"
+      - "partial_results"
+      - "user_preferences"
+    discard:
+      - "active_api_connections"
+      - "background_jobs"
+      - "real_time_subscriptions"
+    transform:
+      api_results_to_file_cache: true
+      service_state_to_manifest: true
+
+  layer2_to_layer1:
+    preserve:
+      - "task_description"
+      - "user_inputs"
+      - "file_paths"
+    discard:
+      - "automated_tool_state"
+      - "file_watchers"
+      - "cached_results"
+    transform:
+      tool_results_to_manual_instructions: true
+      file_refs_to_copy_paste_prompts: true
+
+# =============================================================================
+# NOTIFICATION TEMPLATES
+# =============================================================================
+
+notification_templates:
+
+  degradation_warning:
+    layer3_to_layer2: |
+      ⚠️ DEGRADATION NOTICE: Layer 3 → Layer 2
+
+      Reason: {reason}
+      Component: {component}
+
+      Impact:
+      - Lost capabilities: {lost_capabilities}
+      - Remaining capabilities: {remaining_capabilities}
+
+      System continues operating with reduced functionality.
+      Work will be preserved.
+
+    layer2_to_layer1: |
+      ⚠️ DEGRADATION NOTICE: Layer 2 → Layer 1
+
+      Reason: {reason}
+      Component: {component}
+
+      Impact:
+      - Automated operations disabled
+      - Manual intervention required
+
+      Please follow manual instructions to continue.
+
+  upgrade_success:
+    template: |
+      ✅ UPGRADE NOTICE: Layer {from_layer} → Layer {to_layer}
+
+      Component: {component}
+      Additional capabilities now available: {new_capabilities}
+
+      System operating at enhanced capacity.
+
+# =============================================================================
+# USAGE EXAMPLE
+# =============================================================================
+
+usage_example: |
+  # Python example: Loading and using degradation rules
+
+  from pathlib import Path
+  import yaml
+  from docs.architecture.GAD_8XX.layer_detection import LayerDetector
+
+  # Load rules
+  rules = yaml.safe_load(
+      Path('docs/architecture/GAD-8XX/degradation_rules.yaml').read_text()
+  )
+
+  # Detect current layer
+  detector = LayerDetector()
+  current_layer = detector.detect_layer()
+
+  # Get degradation path for knowledge query
+  component = 'knowledge_query'
+
+  if current_layer == 3:
+      # Try Layer 3
+      rule = rules['degradation_rules'][component]['layer3_available']
+      action = rule['action']
+      # Execute: use_research_engine
+
+  elif current_layer == 2:
+      # Layer 3 failed, use Layer 2
+      rule = rules['degradation_rules'][component]['layer3_fails']
+      action = rule['action']
+      notify = rule['notify']
+      print(notify)  # Warn user about degradation
+      # Execute: use_knowledge_query_tool
+
+  else:  # Layer 1
+      # Layer 2 failed, use Layer 1
+      rule = rules['degradation_rules'][component]['layer2_fails']
+      action = rule['action']
+      notify = rule['notify']
+      print(notify)
+      # Execute: prompt_user

@@ -1,0 +1,648 @@
+# GAD-800: Knowledge Graph Schema v1.0
+#
+# This file defines the semantic knowledge graph that binds all vibe-agency
+# concepts together. It connects:
+# - Project types to domain concepts
+# - Domain concepts to tech stacks
+# - Agents to their knowledge requirements
+# - Everything to governance rules
+#
+# The graph enables:
+# 1. Query expansion (booking → reservation → calendar → payment)
+# 2. Semantic search (find related concepts)
+# 3. Access control (which knowledge requires which permissions)
+# 4. Agent orchestration (which agents need which knowledge)
+
+schema_version: "1.0"
+last_updated: "2025-11-17"
+description: "Semantic knowledge graph for vibe-agency integration"
+
+# =============================================================================
+# GRAPH SCHEMA DEFINITION
+# =============================================================================
+
+schema:
+
+  # ---------------------------------------------------------------------------
+  # NODE TYPES: What kinds of entities exist in the graph
+  # ---------------------------------------------------------------------------
+  node_types:
+
+    - id: "project_type"
+      description: "High-level project categories (e.g., booking_system, saas_app)"
+      properties:
+        - name: "string (required)"
+        - description: "string (required)"
+        - typical_duration_days: "integer (optional)"
+        - complexity_score: "integer 1-10 (optional)"
+        - industry: "string (optional)"
+
+    - id: "domain_concept"
+      description: "Core domain patterns and concepts (e.g., payment_processing, auth)"
+      properties:
+        - name: "string (required)"
+        - definition: "string (required)"
+        - related_industries: "list[string] (optional)"
+        - complexity: "string: simple|medium|complex (optional)"
+
+    - id: "tech_stack"
+      description: "Technology stack configurations (e.g., next_fullstack, django_backend)"
+      properties:
+        - name: "string (required)"
+        - primary_language: "string (required)"
+        - frameworks: "list[string] (required)"
+        - maturity_level: "string: experimental|stable|mature (optional)"
+
+    - id: "agent"
+      description: "Intelligent agents in the system (e.g., VIBE_ALIGNER, GENESIS_BLUEPRINT)"
+      properties:
+        - name: "string (required)"
+        - purpose: "string (required)"
+        - input_requirements: "list[string] (optional)"
+        - output_artifacts: "list[string] (optional)"
+
+    - id: "governance_rule"
+      description: "STEWARD governance policies (e.g., access_control, pci_compliance)"
+      properties:
+        - name: "string (required)"
+        - policy_type: "string: confidentiality|integrity|availability (required)"
+        - severity: "string: info|warning|critical (required)"
+        - enforcement_layer: "integer: 1|2|3 (required)"
+
+    - id: "knowledge_file"
+      description: "Physical knowledge files (YAML, MD) in knowledge_department"
+      properties:
+        - path: "string (required)"
+        - scope: "string: public|confidential|client_specific (required)"
+        - last_updated: "date (optional)"
+
+    - id: "tool"
+      description: "Layer 2 tools available (e.g., knowledge_query, steward_validate)"
+      properties:
+        - name: "string (required)"
+        - layer: "integer: 2|3 (required)"
+        - purpose: "string (required)"
+
+  # ---------------------------------------------------------------------------
+  # EDGE TYPES: How nodes relate to each other
+  # ---------------------------------------------------------------------------
+  edge_types:
+
+    - id: "requires"
+      description: "Project type requires domain concept or tech stack"
+      from: ["project_type"]
+      to: ["domain_concept", "tech_stack"]
+      properties:
+        - priority: "string: required|recommended|optional (optional)"
+
+    - id: "implements"
+      description: "Tech stack implements domain concept"
+      from: ["tech_stack"]
+      to: ["domain_concept"]
+      properties:
+        - implementation_quality: "string: basic|full|advanced (optional)"
+
+    - id: "uses"
+      description: "Agent uses knowledge, tools, or concepts"
+      from: ["agent"]
+      to: ["domain_concept", "tech_stack", "tool", "knowledge_file"]
+      properties:
+        - usage_frequency: "string: always|often|sometimes (optional)"
+
+    - id: "governed_by"
+      description: "Entity is subject to governance rule"
+      from: ["project_type", "domain_concept", "agent", "knowledge_file"]
+      to: ["governance_rule"]
+      properties:
+        - compliance_required: "boolean (optional)"
+
+    - id: "defined_in"
+      description: "Concept is defined in knowledge file"
+      from: ["domain_concept", "tech_stack"]
+      to: ["knowledge_file"]
+      properties: []
+
+    - id: "related_to"
+      description: "General semantic relationship between concepts"
+      from: ["domain_concept"]
+      to: ["domain_concept"]
+      properties:
+        - relationship_type: "string: depends_on|similar_to|part_of (optional)"
+
+# =============================================================================
+# GRAPH INSTANCE: Concrete example graph with real vibe-agency data
+# =============================================================================
+
+graph:
+
+  # ---------------------------------------------------------------------------
+  # NODES: Actual entities in the graph
+  # ---------------------------------------------------------------------------
+  nodes:
+
+    # --- PROJECT TYPES ---
+
+    booking_system:
+      type: "project_type"
+      name: "Booking System"
+      description: "Reservation and scheduling platform with calendar, payments, and availability management"
+      typical_duration_days: 60
+      complexity_score: 7
+      industry: "hospitality"
+
+    saas_application:
+      type: "project_type"
+      name: "SaaS Application"
+      description: "Multi-tenant software-as-a-service platform with subscriptions and user management"
+      typical_duration_days: 90
+      complexity_score: 8
+      industry: "technology"
+
+    marketplace:
+      type: "project_type"
+      name: "Marketplace"
+      description: "Multi-sided platform connecting buyers and sellers with transactions and ratings"
+      typical_duration_days: 120
+      complexity_score: 9
+      industry: "e-commerce"
+
+    # --- DOMAIN CONCEPTS ---
+
+    reservation_management:
+      type: "domain_concept"
+      name: "Reservation Management"
+      definition: "Core booking workflow including availability checks, reservation creation, modification, and cancellation"
+      related_industries: ["hospitality", "healthcare", "transportation"]
+      complexity: "medium"
+
+    payment_processing:
+      type: "domain_concept"
+      name: "Payment Processing"
+      definition: "Secure payment handling including card processing, refunds, and transaction tracking"
+      related_industries: ["e-commerce", "fintech", "hospitality"]
+      complexity: "complex"
+
+    user_authentication:
+      type: "domain_concept"
+      name: "User Authentication"
+      definition: "User identity verification and session management with security best practices"
+      related_industries: ["all"]
+      complexity: "medium"
+
+    availability_calendar:
+      type: "domain_concept"
+      name: "Availability Calendar"
+      definition: "Time slot management with booking conflicts prevention and scheduling logic"
+      related_industries: ["hospitality", "healthcare", "education"]
+      complexity: "medium"
+
+    multi_tenancy:
+      type: "domain_concept"
+      name: "Multi-Tenancy"
+      definition: "Data isolation and resource sharing for multiple customers in single application instance"
+      related_industries: ["saas", "enterprise"]
+      complexity: "complex"
+
+    # --- TECH STACKS ---
+
+    next_fullstack:
+      type: "tech_stack"
+      name: "Next.js Full Stack"
+      primary_language: "TypeScript"
+      frameworks: ["Next.js 14", "React", "Prisma", "tRPC"]
+      maturity_level: "stable"
+
+    django_backend:
+      type: "tech_stack"
+      name: "Django Backend"
+      primary_language: "Python"
+      frameworks: ["Django 4.x", "Django REST Framework", "Celery"]
+      maturity_level: "mature"
+
+    rails_fullstack:
+      type: "tech_stack"
+      name: "Rails Full Stack"
+      primary_language: "Ruby"
+      frameworks: ["Rails 7", "Hotwire", "Sidekiq"]
+      maturity_level: "mature"
+
+    # --- AGENTS ---
+
+    VIBE_ALIGNER:
+      type: "agent"
+      name: "VIBE_ALIGNER"
+      purpose: "Feature specification and business validation against user vision"
+      input_requirements: ["user_vision", "project_context"]
+      output_artifacts: ["feature_specification", "validation_report"]
+
+    GENESIS_BLUEPRINT:
+      type: "agent"
+      name: "GENESIS_BLUEPRINT"
+      purpose: "Technical architecture design and implementation planning"
+      input_requirements: ["feature_specification", "tech_preferences"]
+      output_artifacts: ["architecture_document", "implementation_plan"]
+
+    MARKET_RESEARCHER:
+      type: "agent"
+      name: "MARKET_RESEARCHER"
+      purpose: "Market analysis and competitive intelligence gathering"
+      input_requirements: ["project_type", "target_market"]
+      output_artifacts: ["market_analysis", "competitive_landscape"]
+
+    TECH_RESEARCHER:
+      type: "agent"
+      name: "TECH_RESEARCHER"
+      purpose: "Technology stack research and evaluation"
+      input_requirements: ["project_requirements", "constraints"]
+      output_artifacts: ["tech_evaluation", "stack_recommendation"]
+
+    # --- GOVERNANCE RULES ---
+
+    access_control:
+      type: "governance_rule"
+      name: "Access Control Policy"
+      policy_type: "confidentiality"
+      severity: "critical"
+      enforcement_layer: 2
+      description: "Prevents unauthorized access to client-specific knowledge"
+
+    pci_compliance:
+      type: "governance_rule"
+      name: "PCI DSS Compliance"
+      policy_type: "confidentiality"
+      severity: "critical"
+      enforcement_layer: 3
+      description: "Payment card industry data security standards"
+
+    receipt_accountability:
+      type: "governance_rule"
+      name: "Receipt Accountability"
+      policy_type: "integrity"
+      severity: "warning"
+      enforcement_layer: 2
+      description: "All agent work must generate receipts for audit trail"
+
+    integrity_verification:
+      type: "governance_rule"
+      name: "System Integrity Verification"
+      policy_type: "integrity"
+      severity: "critical"
+      enforcement_layer: 1
+      description: "Core system files must not be corrupted"
+
+    # --- KNOWLEDGE FILES ---
+
+    booking_systems_yaml:
+      type: "knowledge_file"
+      path: "knowledge_department/domain_knowledge/industry_patterns/booking_systems.yaml"
+      scope: "public"
+
+    payment_patterns_yaml:
+      type: "knowledge_file"
+      path: "knowledge_department/domain_knowledge/patterns/payment_patterns.yaml"
+      scope: "public"
+
+    next_stack_yaml:
+      type: "knowledge_file"
+      path: "knowledge_department/domain_knowledge/tech_stacks/next_fullstack.yaml"
+      scope: "public"
+
+    # --- TOOLS ---
+
+    knowledge_query:
+      type: "tool"
+      name: "knowledge_query"
+      layer: 2
+      purpose: "Search and retrieve knowledge from YAML knowledge base"
+
+    steward_validate:
+      type: "tool"
+      name: "steward_validate"
+      layer: 2
+      purpose: "Validate operations against governance policies"
+
+    receipt_create:
+      type: "tool"
+      name: "receipt_create"
+      layer: 2
+      purpose: "Generate receipt for completed agent work"
+
+  # ---------------------------------------------------------------------------
+  # EDGES: Relationships between nodes
+  # ---------------------------------------------------------------------------
+  edges:
+
+    # PROJECT TYPE → DOMAIN CONCEPT relationships
+
+    - from: "booking_system"
+      to: "reservation_management"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "booking_system"
+      to: "availability_calendar"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "booking_system"
+      to: "payment_processing"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "booking_system"
+      to: "user_authentication"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "saas_application"
+      to: "multi_tenancy"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "saas_application"
+      to: "user_authentication"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "saas_application"
+      to: "payment_processing"
+      type: "requires"
+      properties:
+        priority: "recommended"
+
+    - from: "marketplace"
+      to: "payment_processing"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    - from: "marketplace"
+      to: "user_authentication"
+      type: "requires"
+      properties:
+        priority: "required"
+
+    # PROJECT TYPE → TECH STACK relationships
+
+    - from: "booking_system"
+      to: "next_fullstack"
+      type: "requires"
+      properties:
+        priority: "recommended"
+
+    - from: "booking_system"
+      to: "rails_fullstack"
+      type: "requires"
+      properties:
+        priority: "optional"
+
+    - from: "saas_application"
+      to: "next_fullstack"
+      type: "requires"
+      properties:
+        priority: "recommended"
+
+    - from: "saas_application"
+      to: "django_backend"
+      type: "requires"
+      properties:
+        priority: "optional"
+
+    - from: "marketplace"
+      to: "next_fullstack"
+      type: "requires"
+      properties:
+        priority: "recommended"
+
+    - from: "marketplace"
+      to: "django_backend"
+      type: "requires"
+      properties:
+        priority: "recommended"
+
+    # TECH STACK → DOMAIN CONCEPT (implements) relationships
+
+    - from: "next_fullstack"
+      to: "reservation_management"
+      type: "implements"
+      properties:
+        implementation_quality: "full"
+
+    - from: "next_fullstack"
+      to: "payment_processing"
+      type: "implements"
+      properties:
+        implementation_quality: "full"
+
+    - from: "django_backend"
+      to: "multi_tenancy"
+      type: "implements"
+      properties:
+        implementation_quality: "advanced"
+
+    - from: "rails_fullstack"
+      to: "reservation_management"
+      type: "implements"
+      properties:
+        implementation_quality: "full"
+
+    # AGENT → DOMAIN CONCEPT (uses) relationships
+
+    - from: "VIBE_ALIGNER"
+      to: "reservation_management"
+      type: "uses"
+      properties:
+        usage_frequency: "often"
+
+    - from: "VIBE_ALIGNER"
+      to: "payment_processing"
+      type: "uses"
+      properties:
+        usage_frequency: "often"
+
+    - from: "GENESIS_BLUEPRINT"
+      to: "multi_tenancy"
+      type: "uses"
+      properties:
+        usage_frequency: "sometimes"
+
+    - from: "TECH_RESEARCHER"
+      to: "next_fullstack"
+      type: "uses"
+      properties:
+        usage_frequency: "always"
+
+    # AGENT → TOOL (uses) relationships
+
+    - from: "VIBE_ALIGNER"
+      to: "knowledge_query"
+      type: "uses"
+      properties:
+        usage_frequency: "always"
+
+    - from: "VIBE_ALIGNER"
+      to: "steward_validate"
+      type: "uses"
+      properties:
+        usage_frequency: "often"
+
+    - from: "VIBE_ALIGNER"
+      to: "receipt_create"
+      type: "uses"
+      properties:
+        usage_frequency: "always"
+
+    - from: "MARKET_RESEARCHER"
+      to: "knowledge_query"
+      type: "uses"
+      properties:
+        usage_frequency: "always"
+
+    - from: "TECH_RESEARCHER"
+      to: "knowledge_query"
+      type: "uses"
+      properties:
+        usage_frequency: "always"
+
+    # DOMAIN CONCEPT → KNOWLEDGE FILE (defined_in) relationships
+
+    - from: "reservation_management"
+      to: "booking_systems_yaml"
+      type: "defined_in"
+
+    - from: "payment_processing"
+      to: "payment_patterns_yaml"
+      type: "defined_in"
+
+    - from: "next_fullstack"
+      to: "next_stack_yaml"
+      type: "defined_in"
+
+    # GOVERNANCE RULE relationships (governed_by)
+
+    - from: "booking_system"
+      to: "access_control"
+      type: "governed_by"
+      properties:
+        compliance_required: true
+
+    - from: "payment_processing"
+      to: "pci_compliance"
+      type: "governed_by"
+      properties:
+        compliance_required: true
+
+    - from: "payment_patterns_yaml"
+      to: "access_control"
+      type: "governed_by"
+      properties:
+        compliance_required: true
+
+    - from: "VIBE_ALIGNER"
+      to: "receipt_accountability"
+      type: "governed_by"
+      properties:
+        compliance_required: true
+
+    - from: "GENESIS_BLUEPRINT"
+      to: "receipt_accountability"
+      type: "governed_by"
+      properties:
+        compliance_required: true
+
+    # DOMAIN CONCEPT relationships (related_to)
+
+    - from: "reservation_management"
+      to: "availability_calendar"
+      type: "related_to"
+      properties:
+        relationship_type: "depends_on"
+
+    - from: "reservation_management"
+      to: "payment_processing"
+      type: "related_to"
+      properties:
+        relationship_type: "depends_on"
+
+    - from: "multi_tenancy"
+      to: "user_authentication"
+      type: "related_to"
+      properties:
+        relationship_type: "depends_on"
+
+# =============================================================================
+# GRAPH QUERY EXAMPLES
+# =============================================================================
+
+query_examples:
+
+  expand_concept:
+    description: "Find all concepts related to booking_system"
+    query: |
+      from knowledge_graph import KnowledgeGraph
+      graph = KnowledgeGraph()
+      results = graph.expand('booking_system', depth=2)
+
+    expected_result:
+      concepts:
+        - reservation_management
+        - availability_calendar
+        - payment_processing
+        - user_authentication
+      stacks:
+        - next_fullstack
+        - rails_fullstack
+      agents:
+        - VIBE_ALIGNER
+        - GENESIS_BLUEPRINT
+
+  find_governance_rules:
+    description: "Find all governance rules for payment_processing"
+    query: |
+      from knowledge_graph import KnowledgeGraph
+      graph = KnowledgeGraph()
+      rules = graph.find_edges('payment_processing', edge_type='governed_by')
+
+    expected_result:
+      rules:
+        - pci_compliance
+        - access_control
+
+  find_agent_requirements:
+    description: "Find all knowledge requirements for VIBE_ALIGNER"
+    query: |
+      from knowledge_graph import KnowledgeGraph
+      graph = KnowledgeGraph()
+      requirements = graph.find_edges('VIBE_ALIGNER', edge_type='uses')
+
+    expected_result:
+      concepts:
+        - reservation_management
+        - payment_processing
+      tools:
+        - knowledge_query
+        - steward_validate
+        - receipt_create
+
+# =============================================================================
+# USAGE NOTES
+# =============================================================================
+
+usage_notes:
+  layer1_usage: "Parse YAML manually and traverse 'edges' list to find relationships"
+  layer2_usage: "Use KnowledgeGraph Python class to query and expand concepts"
+  layer3_usage: "Query vector database for semantic search across all nodes"
+
+  expansion_strategy: |
+    When a user queries "booking systems", the graph expansion:
+    1. Finds 'booking_system' node
+    2. Traverses 'requires' edges to find domain concepts
+    3. Traverses 'defined_in' edges to find knowledge files
+    4. Traverses 'governed_by' edges to check access rules
+    5. Returns expanded query covering all related knowledge
