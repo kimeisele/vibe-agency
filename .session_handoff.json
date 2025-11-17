@@ -1,107 +1,134 @@
 {
   "_schema_version": "2.0_4layer",
   "_token_budget": 450,
-  "_optimization": "Foundation Closure Phases 1-4 COMPLETE",
+  "_verified_date": "2025-11-17",
+  "_note": "GROUND TRUTH - Verified by running actual tests and git commands",
 
   "layer0_bedrock": {
-    "from": "Claude Code - claude/setup-senior-workflow-01UWyFUC85X7BXnwx9Zhrb2w",
+    "from": "STEWARD - claude/system-boot-setup-01LGuumKs6oYVM7111oaBe5Z",
     "date": "2025-11-17",
-    "state": "complete",
+    "state": "operational",
     "blocker": null
   },
 
   "layer1_runtime": {
-    "completed_summary": "Foundation Closure: ALL 4 PHASES COMPLETE (Test Suite 93.3% passing, Architecture Migrated, ZERO FRICTION Achieved, Zero Regressions)",
+    "current_status": "System operational. All major work merged. Minor test assertion updates needed.",
     "todos": [
-      "GAD-502: Haiku Hardening Phases 2-5 (~11h) - CRITICAL PRIORITY per HIL - Make system 100% Haiku-compatible",
-      "Review & Merge current PR to main",
-      "Optional: Fix 3 expected test failures (documented in CLAUDE.md section 5)"
+      "Fix 3 kernel test assertions (expect old error format, got improved format with emojis)",
+      "Optional: Fix 2 remaining test failures (E2E vibe_aligner, session_handoff schema validation)",
+      "Optional: Reduce TODO count in docs (currently 27 docs with TODO/FIXME/WIP)"
     ],
     "critical_files": [
-      "docs/architecture/Masterprompt-SENIOR-WORKFLOW-FOUNDATION.md",
-      "docs/templates/MASTER_PROMPT_TEMPLATE.md",
+      "CLAUDE.md",
+      ".session_handoff.json",
+      ".system_status.json",
       "bin/show-status.sh",
-      "bin/show-context.py",
-      "docs/architecture/GAD-1XX/GAD-100.md",
-      "docs/architecture/GAD-2XX/GAD-200.md",
-      "docs/architecture/GAD-3XX/GAD-300.md",
-      "docs/architecture/GAD-4XX/GAD-400.md"
+      "bin/show-context.py"
     ]
   },
 
   "layer2_detail": {
-    "completed": [
+    "verified_status": [
       {
-        "phase": "Phase 1: Emergency Repair",
-        "what": "Fixed test_prompt_composition.py (sys.exit() → pytest-style)",
-        "result": "Test collection: 19 errors → 0 errors. 24 tests collected, 18 smoke tests passing",
-        "verification": "uv run pytest tests/test_prompt_composition.py --co -q"
+        "component": "Test Suite",
+        "status": "✅ 94.8% passing (331/349 tests)",
+        "failures": "5 tests failing (3 are test assertion updates needed)",
+        "verification": "uv run pytest tests/ -v --tb=no -q | tail -5",
+        "verified_at": "2025-11-17"
       },
       {
-        "phase": "Phase 2: Architecture Migration",
-        "what": "Migrated GAD-001 through GAD-004 to new 8-pillar structure",
-        "result": "Created GAD-100, GAD-200, GAD-300 (NEW!), GAD-400. Archived 8 old files. All pillars named.",
-        "verification": "ls docs/architecture/GAD-{1,2,3,4}XX/*.md && grep 'Planning & Research' docs/architecture/INDEX.md"
+        "component": "GAD-502 Haiku Hardening",
+        "status": "✅ COMPLETE (merged in PR #99)",
+        "tests": "15 passed, 4 skipped",
+        "verification": "uv run pytest tests/test_rogue_agent_scenarios.py -v",
+        "verified_at": "2025-11-17"
       },
       {
-        "phase": "Phase 3: Close the Loop (Automation)",
-        "what": "Enhanced show-context.py, created show-status.sh master command",
-        "result": "ZERO FRICTION: ONE COMMAND (./bin/show-status.sh) shows everything (tests, TODOs, architecture, commits)",
-        "verification": "./bin/show-status.sh"
+        "component": "Foundation Closure Phases 1-4",
+        "status": "✅ COMPLETE (merged in PR #98)",
+        "details": "Test repair, architecture migration, automation, regression repair",
+        "verification": "git log --oneline --grep='Foundation' -5",
+        "verified_at": "2025-11-17"
       },
       {
-        "phase": "Phase 4: Regression Repair",
-        "what": "Fixed yaml dependency, verified test suite health, documented expected failures",
-        "result": "Test collection: 123 tests (24 errors) → 343 tests (0 errors). Success rate: 93.3% (320/343 passing). Zero import errors.",
-        "verification": "uv run pytest tests/ -v --tb=no -q | tail -5"
+        "component": "Current Branch vs Main",
+        "status": "✅ IN SYNC",
+        "details": "No difference between claude/system-boot-setup-01LGuumKs6oYVM7111oaBe5Z and origin/main",
+        "verification": "git log origin/main..HEAD",
+        "verified_at": "2025-11-17"
       }
     ],
-    "key_decisions": [
+    "test_failures_detail": [
       {
-        "decision": "GAD-3XX = Agent Framework & Runtime",
-        "rationale": "Most architecturally significant gap. Covers prompt registry, runtime, LLM client, tool orchestration",
-        "impact": "All 8 GAD pillars now defined and documented"
+        "test": "test_kernel_blocks_manifest_overwrite",
+        "reason": "Test expects old error format, kernel now returns improved error with emojis",
+        "severity": "low",
+        "action": "Update test assertion to match new error message format",
+        "file": "tests/test_kernel_checks.py:20"
       },
       {
-        "decision": "show-status.sh as master command",
-        "rationale": "Consolidates 6 manual commands into ONE. Auto-triggered by commit-and-push.sh",
-        "impact": "Agents see full context without manual checks. ZERO FRICTION achieved."
+        "test": "test_kernel_blocks_handoff_overwrite",
+        "reason": "Same as above - expects old error format",
+        "severity": "low",
+        "action": "Update test assertion",
+        "file": "tests/test_kernel_checks.py"
+      },
+      {
+        "test": "test_kernel_blocks_commit_with_linting_errors",
+        "reason": "Same as above - expects old error format",
+        "severity": "low",
+        "action": "Update test assertion",
+        "file": "tests/test_kernel_checks.py"
+      },
+      {
+        "test": "test_vibe_aligner_full_system_flow",
+        "reason": "E2E test requires complete artifact fixtures",
+        "severity": "low",
+        "action": "Defer until artifact schema stabilization",
+        "file": "tests/e2e/test_vibe_aligner_system_e2e.py"
+      },
+      {
+        "test": "test_session_handoff_validates",
+        "reason": "Session handoff uses richer structure than strict schema",
+        "severity": "low",
+        "action": "Schema update or handoff simplification",
+        "file": "tests/test_canonical_schemas.py"
       }
+    ],
+    "completed_work": [
+      "PR #98: Foundation Closure Phases 1-4",
+      "PR #99: GAD-502 Haiku Hardening (15 tests passing)",
+      "PR #100: system-boot.sh performance optimization (< 0.2s)"
     ],
     "warnings": [
       {
-        "warning": "3 expected test failures documented (not bugs - see CLAUDE.md section 5)",
-        "impact": "93.3% pass rate still exceeds ≥75% target",
-        "mitigation": "Optional: Fix after GAD-502 Haiku Hardening (higher priority)",
-        "severity": "low"
+        "warning": "Handoff was STALE (claimed GAD-502 TODO, actually merged)",
+        "impact": "Could have caused duplicate work",
+        "resolution": "Handoff cleaned and verified against reality",
+        "severity": "medium"
       },
       {
-        "warning": "212 TODOs in codebase (25 code, 187 docs)",
-        "impact": "Technical debt tracked but not blocking",
-        "mitigation": "Address incrementally during feature work",
+        "warning": "Test assertions outdated (expect old error format)",
+        "impact": "3 test failures (not actual bugs)",
+        "resolution": "Update test assertions to match improved error messages",
         "severity": "low"
       }
     ],
     "next_steps_detail": [
       {
-        "step": "IMMEDIATE: Review & Merge PR",
-        "why": "Foundation Closure Phases 1-4 ALL COMPLETE. Clean PR boundary. Test suite healthy (93.3%).",
-        "command": "Review https://github.com/kimeisele/vibe-agency/pull/new/claude/setup-senior-workflow-01UWyFUC85X7BXnwx9Zhrb2w"
-      },
-      {
-        "step": "NEXT SESSION: GAD-502 Haiku Hardening Phases 2-5",
-        "why": "Make system 100% Haiku-compatible (currently 10.5% coverage). CRITICAL STRATEGIC PRIORITY per HIL.",
-        "priority": "CRITICAL",
-        "estimated_time": "11 hours",
-        "command": "Execute docs/architecture/GAD-5XX/GAD-502.md Phases 2-5",
-        "context": "User emphasized: 'System muss komplett 100% Haiku kompatibel werden' - highest priority"
-      },
-      {
-        "step": "OPTIONAL: Fix Expected Test Failures",
-        "why": "3 documented failures (schema validation, E2E fixtures, test implementation). Not blocking.",
+        "step": "Fix kernel test assertions",
+        "why": "Tests expect old error format, kernel now returns improved messages with emojis and guidance",
         "priority": "LOW",
-        "estimated_time": "2-3 hours",
-        "command": "See CLAUDE.md section 5 'Expected Test Failures' for details"
+        "estimated_time": "15 minutes",
+        "command": "Update tests/test_kernel_checks.py assertions to match new KernelViolationError format",
+        "test_verification": "uv run pytest tests/test_kernel_checks.py -v"
+      },
+      {
+        "step": "Optional: Fix remaining 2 test failures",
+        "why": "E2E and schema validation - not blocking, can defer",
+        "priority": "LOW",
+        "estimated_time": "1-2 hours",
+        "command": "See layer2_detail.test_failures_detail for specifics"
       }
     ]
   }
