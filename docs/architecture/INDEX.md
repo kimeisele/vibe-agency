@@ -34,23 +34,23 @@
 
 ---
 
-## Layers (LAD) - Coming in PR 2
+## Layers (LAD) ✅
 
 The Layer Architecture Documents provide horizontal views across all pillars:
 
-- **LAD-1**: Browser Layer (prompt-only, $0 cost) - Coming Soon
-- **LAD-2**: Claude Code Layer (tool-based, $20/mo) - Coming Soon
-- **LAD-3**: Runtime Layer (API-based, $50-200/mo) - Coming Soon
+- [**LAD-1**: Browser Layer](LAD/LAD-1.md) - Prompt-only, $0 cost
+- [**LAD-2**: Claude Code Layer](LAD/LAD-2.md) - Tool-based, $20/mo
+- [**LAD-3**: Runtime Layer](LAD/LAD-3.md) - API-based, $50-200/mo
 
 ---
 
-## Verification (VAD) - Coming in PR 3
+## Verification (VAD) ✅
 
 The Verification Architecture Documents test cross-pillar integration:
 
-- **VAD-001**: Core Workflow Verification - Coming Soon
-- **VAD-002**: Knowledge Integration - Coming Soon
-- **VAD-003**: Layer Degradation - Coming Soon
+- [**VAD-001**: Core Workflow Verification](VAD/VAD-001_Core_Workflow.md) - Tests SDLC + Quality + Runtime
+- [**VAD-002**: Knowledge Integration](VAD/VAD-002_Knowledge_Integration.md) - Tests Knowledge + STEWARD
+- [**VAD-003**: Layer Degradation](VAD/VAD-003_Layer_Degradation.md) - Tests graceful degradation
 
 ---
 
@@ -89,10 +89,10 @@ These files remain at the root level pending further review and consolidation:
 1. **Start with STRUCTURE.md** to understand the 3-tier system
 2. **Use ARCHITECTURE_MAP.md** for the big picture
 3. **Browse by pillar** (GAD-XXX) for vertical slices
-4. **Browse by layer** (LAD-X) for horizontal views (coming in PR 2)
-5. **Check VAD** for integration tests (coming in PR 3)
+4. **Browse by layer** (LAD-X) for horizontal views across pillars
+5. **Check VAD** for cross-pillar integration tests
 
 ---
 
 **Last Updated**: 2025-11-17  
-**Version**: 1.0 (Week 1 PR 1)
+**Version**: 2.0 (Final - Week 3 Complete)
