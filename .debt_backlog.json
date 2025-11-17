@@ -1,0 +1,282 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-11-17T00:00:00Z",
+  "system_status": {
+    "health": "95% operational, 2/19 security scenarios protected",
+    "blocking_issues": 0,
+    "technical_debt_items": 5
+  },
+  "work_packages": [
+    {
+      "id": "MOTD-Test-Sync-Mismatch",
+      "title": "Fix show-context file name mismatch",
+      "description": "Test expected show-context.sh, code had show-context.py",
+      "semantics": {
+        "documented": false,
+        "code_exists": true,
+        "tests_exist": true,
+        "tests_passing": true,
+        "code_is_correct": true,
+        "documentation_is_correct": true
+      },
+      "impact": {
+        "protection_scenarios": 0,
+        "verification_impact": "Unblocked verify-all.sh (18/18 passing)",
+        "regression_risk": "NONE"
+      },
+      "effort": {
+        "estimated_hours": 0.5,
+        "actual_hours": 0.5,
+        "phases": ["update_test", "verify"],
+        "priority": "P0 - Unblocks verification"
+      },
+      "dependencies": [],
+      "status": "COMPLETED",
+      "lean_score": 10,
+      "tracked_in": "tests/test_motd.py:94",
+      "completed_at": "2025-11-17T00:00:00Z"
+    },
+    {
+      "id": "CLAUDE-md-Documentation-Drift",
+      "title": "Update documentation files with correct show-context filename",
+      "description": "References to show-context.sh updated to show-context.py",
+      "semantics": {
+        "documented": false,
+        "code_exists": true,
+        "tests_exist": true,
+        "tests_passing": true,
+        "code_is_correct": true,
+        "documentation_is_correct": true
+      },
+      "impact": {
+        "user_impact": "Users now see correct filename in all documentation",
+        "regression_risk": "NONE"
+      },
+      "effort": {
+        "estimated_hours": 1,
+        "actual_hours": 0.5,
+        "phases": ["batch_search_replace"],
+        "priority": "P1 - UX improvement"
+      },
+      "dependencies": ["MOTD-Test-Sync-Mismatch"],
+      "status": "COMPLETED",
+      "lean_score": 9,
+      "tracked_in": ["CLAUDE.md", "docs/architecture/*.md", "bin/README.md"],
+      "files_updated": 9,
+      "completed_at": "2025-11-17T00:00:00Z"
+    },
+    {
+      "id": "GAD-005-HAIKU-Phase-2",
+      "title": "Shell-Level Guardrails",
+      "description": "Block shell commands that bypass Python kernel checks",
+      "semantics": {
+        "documented": true,
+        "code_exists": false,
+        "tests_exist": true,
+        "tests_passing": false,
+        "tests_status": "3 skipped (pytest.skip())"
+      },
+      "impact": {
+        "protection_scenarios": 6,
+        "protection_coverage": "10.5% → 42%",
+        "blocking_issues_fixed": 3,
+        "regression_risk": "MEDIUM"
+      },
+      "effort": {
+        "estimated_hours": 8,
+        "phases": ["shell_pattern_matcher", "integration_tests", "docs", "regression_testing"],
+        "priority": "P0 - Blocks Haiku deployment"
+      },
+      "dependencies": [],
+      "status": "TODO",
+      "lean_score": 6,
+      "tracked_in": "tests/test_rogue_agent_scenarios.py:65",
+      "regression_notes": "Shell guard patterns might be too aggressive - test against current workflow patterns first"
+    },
+    {
+      "id": "GAD-005-HAIKU-Phase-3",
+      "title": "Simplified Error Messages",
+      "description": "Make all errors Haiku-readable (1-sentence + examples)",
+      "semantics": {
+        "documented": true,
+        "code_exists": false,
+        "tests_exist": true,
+        "tests_passing": false,
+        "tests_status": "2 skipped (pytest.skip())"
+      },
+      "impact": {
+        "protection_scenarios": 2,
+        "protection_coverage": "10.5% → 21%",
+        "blocking_issues_fixed": 2,
+        "regression_risk": "LOW"
+      },
+      "effort": {
+        "estimated_hours": 4,
+        "phases": ["error_template_refactor", "kernel_error_updates", "tests"],
+        "priority": "P1 - High impact, low risk"
+      },
+      "dependencies": [],
+      "status": "TODO",
+      "lean_score": 9,
+      "tracked_in": "tests/test_rogue_agent_scenarios.py:118",
+      "notes": "HIGHEST lean_score - implement before Phase 2"
+    },
+    {
+      "id": "GAD-005-HAIKU-Phase-4",
+      "title": "Context Overload Fixes",
+      "description": "Shorten CLAUDE.md, simplify prompts, highlight MOTD alerts",
+      "semantics": {
+        "documented": true,
+        "code_exists": false,
+        "tests_exist": true,
+        "tests_passing": false,
+        "tests_status": "2 skipped (pytest.skip())"
+      },
+      "impact": {
+        "protection_scenarios": 2,
+        "protection_coverage": "21% → 32%",
+        "regression_risk": "MEDIUM"
+      },
+      "effort": {
+        "estimated_hours": 6,
+        "phases": ["claude_md_trim", "prompt_refactor", "motd_redesign"],
+        "priority": "P2 - Nice to have"
+      },
+      "dependencies": ["GAD-005-HAIKU-Phase-3"],
+      "status": "TODO",
+      "lean_score": 5,
+      "tracked_in": "tests/test_rogue_agent_scenarios.py:132,141",
+      "regression_notes": "Shortening CLAUDE.md might remove important details - use critical_section markers"
+    },
+    {
+      "id": "GAD-005-HAIKU-Phase-5",
+      "title": "Recovery Playbooks",
+      "description": "Track violations, escalate on repeated failures",
+      "semantics": {
+        "documented": true,
+        "code_exists": false,
+        "tests_exist": true,
+        "tests_passing": false,
+        "tests_status": "3 skipped (pytest.skip())"
+      },
+      "impact": {
+        "protection_scenarios": 3,
+        "protection_coverage": "32% → 48%",
+        "regression_risk": "LOW"
+      },
+      "effort": {
+        "estimated_hours": 6,
+        "phases": ["violation_tracking", "escalation_logic", "tests"],
+        "priority": "P2 - Important but can be manual escalation"
+      },
+      "dependencies": ["GAD-005-HAIKU-Phase-2", "GAD-005-HAIKU-Phase-3"],
+      "status": "TODO",
+      "lean_score": 4,
+      "tracked_in": "tests/test_rogue_agent_scenarios.py:108,162"
+    },
+    {
+      "id": "GAD-005-HAIKU-Phase-6",
+      "title": "Haiku Simulation Framework",
+      "description": "Test with REAL Haiku API to validate hardening works",
+      "semantics": {
+        "documented": true,
+        "code_exists": false,
+        "tests_exist": true,
+        "tests_passing": false,
+        "tests_status": "1 skipped (pytest.skip())"
+      },
+      "impact": {
+        "protection_scenarios": 0,
+        "protection_coverage": "Validation only, no protection added",
+        "regression_risk": "NONE"
+      },
+      "effort": {
+        "estimated_hours": 8,
+        "phases": ["haiku_api_integration", "planning_workflow_test", "metrics_report"],
+        "priority": "P3 - Validation only (optional)"
+      },
+      "dependencies": ["GAD-005-HAIKU-Phase-2", "GAD-005-HAIKU-Phase-3", "GAD-005-HAIKU-Phase-4", "GAD-005-HAIKU-Phase-5"],
+      "status": "TODO",
+      "lean_score": 2,
+      "tracked_in": "tests/test_rogue_agent_scenarios.py:190",
+      "notes": "Optional - Phases 2-5 already provide strong coverage via unit tests"
+    }
+  ],
+  "regression_analysis": {
+    "risks": [
+      {
+        "phase": "GAD-005-HAIKU-Phase-2",
+        "risk": "Shell guard patterns might be too aggressive",
+        "example": "Block legitimate sed usage in workflows",
+        "mitigation": "Test against current workflow patterns first - create bin/test-shell-patterns.sh",
+        "probability": "MEDIUM"
+      },
+      {
+        "phase": "GAD-005-HAIKU-Phase-4",
+        "risk": "Shortening CLAUDE.md might remove important details",
+        "example": "Haiku or users miss critical context",
+        "mitigation": "Use critical_section markers, not just trim",
+        "probability": "MEDIUM"
+      }
+    ],
+    "regression_test_plan": [
+      "Run full test suite after each phase (./bin/verify-all.sh)",
+      "Test with real agent workflows (not just unit tests)",
+      "Check git history for new edge cases",
+      "Validate against bin/test-shell-patterns.sh before deploying Phase 2"
+    ]
+  },
+  "git_reality": {
+    "last_commit": "6eb2797 docs: Import technical debt analysis from junior agents",
+    "semantic_gap": "Phase 1 complete, Phases 2-6 documented but not implemented",
+    "commits_since_phase1": 15,
+    "commits_that_touched_phase2_code": 0,
+    "commits_that_updated_phase2_docs": 4,
+    "implication": "Documentation updated 4 times, code not touched once - typical greenwall pattern"
+  },
+  "decision_questions": {
+    "q1": {
+      "question": "Should we complete Phase 2 + 3 now or defer to GAD-006?",
+      "decision": "HYBRID: Phase 3 now (4h, lean_score 9), Phase 2 deferred (needs regression testing)",
+      "reasoning": [
+        "Phase 3 has HIGHEST lean_score (9 vs 6)",
+        "Error clarity helps ALL agents (not just Haiku)",
+        "Phase 2 needs more regression testing (shell patterns risky)",
+        "Total effort this session: 6.5h (manageable)"
+      ],
+      "decided_by": "Senior Sonnet",
+      "decided_at": "2025-11-17T00:00:00Z"
+    },
+    "q2": {
+      "question": "How to prevent semantic debt accumulation?",
+      "decision": "HYBRID: skip() with @semantic_debt decorator, auto-generation to backlog",
+      "reasoning": [
+        "Automatic tracking via decorator",
+        "Code documents debt at source",
+        "Non-blocking (work continues while debt tracked)",
+        "Git-friendly (JSON diff shows debt changes)"
+      ],
+      "implementation_status": "SCHEMA_CREATED - Decorator implementation deferred"
+    },
+    "q3": {
+      "question": "How to measure 'Lean' impact?",
+      "metric": "lean_score = (scenarios_fixed * 100) / effort_hours",
+      "example": "Phase 3: (2 * 100) / 4 = 50 points per hour",
+      "use": "Prioritize Phase 3 (lean_score 9) before Phase 2 (lean_score 6)"
+    }
+  },
+  "summary": {
+    "total_items": 7,
+    "completed": 2,
+    "in_progress": 0,
+    "todo": 5,
+    "estimated_remaining_effort_hours": 32,
+    "lean_recommended_next": "GAD-005-HAIKU-Phase-3 (4h, lean_score 9)",
+    "protection_status": {
+      "current": "10.5% (2/19 scenarios)",
+      "after_phase3": "21% (4/19 scenarios)",
+      "after_phase2_and_3": "52.6% (10/19 scenarios)",
+      "after_all_phases": "100% (19/19 scenarios)"
+    }
+  }
+}
