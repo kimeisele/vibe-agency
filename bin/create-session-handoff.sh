@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
 #
 # create-session-handoff.sh
-# Interactive helper to create .session_handoff.json
+# Automated session handoff creation (4-layer format v2.0)
 #
-# Usage: ./bin/create-session-handoff.sh
-# Prompts for key information and generates handoff file
+# Usage: ./bin/create-session-handoff.sh [--auto]
+#
+# Options:
+#   --auto    Non-interactive mode (extract from git + receipts)
+#
+# Related: GAD-100 Phase 3, config/schemas/session_handoff.schema.json
 
 set -euo pipefail
 
 HANDOFF_FILE=".session_handoff.json"
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+DATE=$(date -u +"%Y-%m-%d")
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Parse arguments
+AUTO_MODE=false
+if [[ "${1:-}" == "--auto" ]]; then
+  AUTO_MODE=true
+fi
 
 echo "════════════════════════════════════════════════════════════════"
-echo "📝 CREATE SESSION HANDOFF"
+echo "📝 CREATE SESSION HANDOFF (v2.0 - 4-layer format)"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
@@ -21,116 +32,139 @@ echo ""
 if [ -f "$HANDOFF_FILE" ]; then
   echo "⚠️  $HANDOFF_FILE already exists!"
   echo ""
-  read -p "Overwrite? (y/N): " -n 1 -r
-  echo ""
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 1
+  if [ "$AUTO_MODE" = true ]; then
+    echo "Auto-mode: Overwriting existing handoff..."
+  else
+    read -p "Overwrite? (y/N): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      echo "Aborted."
+      exit 1
+    fi
   fi
   echo ""
 fi
 
 # Gather information
-echo "Current branch: $CURRENT_BRANCH"
-echo ""
+if [ "$AUTO_MODE" = true ]; then
+  # AUTO MODE: Extract from git + .vibe/
+  echo "[Auto Mode] Extracting session info..."
 
-read -p "From session (branch name): " FROM_SESSION
-FROM_SESSION=${FROM_SESSION:-$CURRENT_BRANCH}
+  FROM_AGENT="Claude Code - ${CURRENT_BRANCH}"
 
-read -p "From agent (who is handing off): " FROM_AGENT
-FROM_AGENT=${FROM_AGENT:-"Claude Code"}
+  # Extract completed work from recent commits
+  COMPLETED_SUMMARY=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "Session work completed")
 
-read -p "Date (YYYY-MM-DD): " DATE
-DATE=${DATE:-$(date -u +"%Y-%m-%d")}
+  # Extract TODOs from git grep (look for TODO comments in changed files)
+  TODOS=$(git diff --name-only HEAD~1..HEAD 2>/dev/null | xargs grep -h "TODO:" 2>/dev/null | head -n 3 || echo "")
 
-echo ""
-echo "What was completed? (comma-separated, press Enter when done)"
-read -p "> " COMPLETED_INPUT
-IFS=',' read -ra COMPLETED_ARRAY <<< "$COMPLETED_INPUT"
-
-echo ""
-echo "What artifacts were created? (comma-separated, press Enter when done)"
-read -p "> " ARTIFACTS_INPUT
-IFS=',' read -ra ARTIFACTS_ARRAY <<< "$ARTIFACTS_INPUT"
-
-echo ""
-echo "Next session TODOs (one per line, empty line to finish):"
-TODOS_JSON="["
-FIRST_TODO=true
-while true; do
-  read -p "> " TODO
-  if [ -z "$TODO" ]; then
-    break
-  fi
-  if [ "$FIRST_TODO" = true ]; then
-    TODOS_JSON="$TODOS_JSON\n    \"$TODO\""
-    FIRST_TODO=false
+  # Get state from git status
+  if git diff-index --quiet HEAD -- 2>/dev/null; then
+    STATE="complete"
+    BLOCKER="null"
   else
-    TODOS_JSON="$TODOS_JSON,\n    \"$TODO\""
+    STATE="in-progress"
+    BLOCKER="null"
   fi
-done
-TODOS_JSON="$TODOS_JSON\n  ]"
 
-# Build completed array JSON
-COMPLETED_JSON="["
-FIRST=true
-for item in "${COMPLETED_ARRAY[@]}"; do
-  # Trim whitespace
-  item=$(echo "$item" | xargs)
-  if [ "$FIRST" = true ]; then
-    COMPLETED_JSON="$COMPLETED_JSON\n    \"$item\""
-    FIRST=false
-  else
-    COMPLETED_JSON="$COMPLETED_JSON,\n    \"$item\""
-  fi
-done
-COMPLETED_JSON="$COMPLETED_JSON\n  ]"
+  # Get critical files from recent commits
+  CRITICAL_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null | head -n 5 || echo "")
 
-# Build artifacts array JSON
-ARTIFACTS_JSON="["
-FIRST=true
-for item in "${ARTIFACTS_ARRAY[@]}"; do
-  # Trim whitespace
-  item=$(echo "$item" | xargs)
-  if [ "$FIRST" = true ]; then
-    ARTIFACTS_JSON="$ARTIFACTS_JSON\n    \"$item\""
-    FIRST=false
-  else
-    ARTIFACTS_JSON="$ARTIFACTS_JSON,\n    \"$item\""
-  fi
-done
-ARTIFACTS_JSON="$ARTIFACTS_JSON\n  ]"
+else
+  # INTERACTIVE MODE
+  echo "Current branch: $CURRENT_BRANCH"
+  echo ""
 
-# Create handoff file
+  read -p "From agent (e.g., 'Claude Code - Feature Work'): " FROM_AGENT
+  FROM_AGENT=${FROM_AGENT:-"Claude Code - ${CURRENT_BRANCH}"}
+
+  read -p "State (complete/blocked/in-progress): " STATE
+  STATE=${STATE:-"complete"}
+
+  read -p "Blocker (or press Enter if none): " BLOCKER
+  BLOCKER=${BLOCKER:-"null"}
+
+  echo ""
+  echo "What was completed? (one-line summary)"
+  read -p "> " COMPLETED_SUMMARY
+  COMPLETED_SUMMARY=${COMPLETED_SUMMARY:-"Work completed in this session"}
+
+  echo ""
+  echo "Next session TODOs (one per line, empty line to finish):"
+  TODOS=""
+  while true; do
+    read -p "> " TODO
+    if [ -z "$TODO" ]; then
+      break
+    fi
+    if [ -z "$TODOS" ]; then
+      TODOS="$TODO"
+    else
+      TODOS="$TODOS
+$TODO"
+    fi
+  done
+
+  echo ""
+  echo "Critical files (one per line, empty line to finish):"
+  CRITICAL_FILES=""
+  while true; do
+    read -p "> " FILE
+    if [ -z "$FILE" ]; then
+      break
+    fi
+    if [ -z "$CRITICAL_FILES" ]; then
+      CRITICAL_FILES="$FILE"
+    else
+      CRITICAL_FILES="$CRITICAL_FILES
+$FILE"
+    fi
+  done
+fi
+
+# Convert to JSON arrays
+TODOS_JSON="[]"
+if [ -n "$TODOS" ]; then
+  TODOS_JSON=$(echo "$TODOS" | python3 -c "import sys, json; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))")
+fi
+
+CRITICAL_FILES_JSON="[]"
+if [ -n "$CRITICAL_FILES" ]; then
+  CRITICAL_FILES_JSON=$(echo "$CRITICAL_FILES" | python3 -c "import sys, json; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))")
+fi
+
+# Convert blocker to JSON null if needed
+if [ "$BLOCKER" = "null" ]; then
+  BLOCKER_JSON="null"
+else
+  BLOCKER_JSON="\"$BLOCKER\""
+fi
+
+# Create handoff file (4-layer format)
 cat > "$HANDOFF_FILE" <<EOF
 {
-  "from_session": "$FROM_SESSION",
-  "from_agent": "$FROM_AGENT",
-  "date": "$DATE",
-  "branch": "$CURRENT_BRANCH",
+  "_schema_version": "2.0_4layer",
+  "_token_budget": 450,
+  "_optimization": "Automated handoff creation",
 
-  "completed": $(echo -e "$COMPLETED_JSON"),
-
-  "artifacts_created": $(echo -e "$ARTIFACTS_JSON"),
-
-  "next_session_todos": $(echo -e "$TODOS_JSON"),
-
-  "context_for_next_session": {
-    "system_state": "TODO: Describe system state",
-    "critical_insight": "TODO: Key insight for next agent",
-    "known_issues": [],
-    "key_decisions": []
+  "layer0_bedrock": {
+    "from": "$FROM_AGENT",
+    "date": "$DATE",
+    "state": "$STATE",
+    "blocker": $BLOCKER_JSON
   },
 
-  "critical_files_to_understand": [],
+  "layer1_runtime": {
+    "completed_summary": "$COMPLETED_SUMMARY",
+    "todos": $TODOS_JSON,
+    "critical_files": $CRITICAL_FILES_JSON
+  },
 
-  "anti_patterns_to_avoid": [],
-
-  "meta": {
-    "handoff_type": "session_handoff",
-    "scope": "project_development",
-    "created": "$TIMESTAMP",
-    "format_version": "1.0"
+  "layer2_detail": {
+    "completed": [],
+    "key_decisions": [],
+    "warnings": [],
+    "next_steps_detail": []
   }
 }
 EOF
@@ -138,10 +172,49 @@ EOF
 echo ""
 echo "✅ Session handoff created: $HANDOFF_FILE"
 echo ""
-echo "⚠️  IMPORTANT: Edit the file to add:"
-echo "   - context_for_next_session details"
-echo "   - critical_files_to_understand"
-echo "   - anti_patterns_to_avoid"
+
+if [ "$AUTO_MODE" = false ]; then
+  echo "⚠️  IMPORTANT: Edit the file to add layer2_detail:"
+  echo "   - completed (detailed work items)"
+  echo "   - key_decisions (architectural choices)"
+  echo "   - warnings (gotchas for next agent)"
+  echo "   - next_steps_detail (expanded TODOs)"
+  echo ""
+fi
+
+# Validate against schema
+if command -v python3 &> /dev/null; then
+  echo "Validating against schema..."
+  python3 -c "
+import json, sys
+from pathlib import Path
+
+# Load handoff
+with open('$HANDOFF_FILE') as f:
+    handoff = json.load(f)
+
+# Load schema
+schema_file = Path('config/schemas/session_handoff.schema.json')
+if schema_file.exists():
+    with open(schema_file) as f:
+        schema = json.load(f)
+
+    # Basic validation (check required fields)
+    required = schema.get('required', [])
+    missing = [r for r in required if r not in handoff]
+
+    if missing:
+        print(f'❌ Validation failed: Missing required fields: {missing}')
+        sys.exit(1)
+
+    print('✅ Schema validation passed')
+else:
+    print('⚠️  Schema file not found, skipping validation')
+" || echo "⚠️  Validation skipped (Python error)"
+fi
+
 echo ""
 echo "Preview:"
-./bin/show-context.sh
+echo "────────────────────────────────────────────────────────────────"
+cat "$HANDOFF_FILE"
+echo "────────────────────────────────────────────────────────────────"
