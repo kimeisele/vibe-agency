@@ -1,32 +1,29 @@
 {
+  "version": "1.0",
   "canvas_type": "quick_research",
   "project_type": "nonprofit",
   "mode": "QUICK_RESEARCH_MODE_v1.1",
   "duration_minutes": 7,
-  "research_sources": [
-    "WebSearch: Srila Prabhupada books digital preservation",
-    "WebSearch: Hare Krishna devotional apps pain points",
-    "WebSearch: Religious text authenticity EPUB parsing"
-  ],
-
-  "lean_canvas": {
+  "canvas_fields": {
     "problem": [
       "Fragmented devotional app ecosystem (150+ standalone apps) lacks cohesive modular platform",
       "Sanskrit diacritical marks display incorrectly across different EPUB readers/devices",
       "Authenticity concerns: No verification system for unmodified original texts",
       "Technology addiction concerns vs. authentic spiritual practice balance"
     ],
-
     "customer_segments": [
       "Hare Krishna devotees seeking authentic original texts",
       "ISKCON communities worldwide (International Society for Krishna Consciousness)",
       "Spiritual seekers studying Vedic literature",
       "Translators and scholars needing verified source texts"
     ],
-
     "unique_value_proposition": "Modular CLI platform delivering 100% authentic Srila Prabhupada texts with verified EPUB parsing, extensible for devotional tools, prioritizing text integrity over convenience"
   },
-
+  "research_sources": [
+    "WebSearch: Srila Prabhupada books digital preservation",
+    "WebSearch: Hare Krishna devotional apps pain points",
+    "WebSearch: Religious text authenticity EPUB parsing"
+  ],
   "riskiest_assumptions": [
     {
       "id": "RA-001",
@@ -47,7 +44,7 @@
       "risk_level": "MEDIUM"
     }
   ],
-
+  "readiness": "low",
   "research_insights": {
     "existing_solutions": [
       "PrabhupadaBooks.com - Original books repository",
@@ -66,7 +63,6 @@
       "Need for original unedited Prabhupada versions"
     ]
   },
-
   "validation_notes": {
     "user_confidence": "LOW - User stated 'so viele Fragezeichen, die ich nicht beantworten kann'",
     "websearch_triggered": true,

@@ -114,15 +114,6 @@ class ContextLoader:
     def _load_test_status(self) -> Dict[str, Any]:
         """Check test status - safe defaults if pytest unavailable"""
         try:
-            # Quick collection (no execution)
-            collect = subprocess.run(
-                ['pytest', '--collect-only', '--quiet'],
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
             # Check for last failed tests
             cache_file = self.project_root / '.pytest_cache' / 'v' / 'cache' / 'lastfailed'
             if cache_file.exists():
