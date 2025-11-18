@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# system-boot.sh - THE ONE COMMAND (INSTANT)
+# system-boot.sh - STEWARD Boot Sequence
 #
-# Purpose: Show session handoff + current branch (< 1 second)
+# Purpose: Initialize STEWARD with session context (< 1 second)
 # Usage: ./bin/system-boot.sh
 #
-# For full system status (tests, linting, etc): ./bin/show-status.sh
+# Full system diagnostics: ./bin/show-status.sh
 #
 
 set -euo pipefail
@@ -14,26 +14,28 @@ VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
 
 # ============================================================================
-# DEPENDENCY CHECK - Ensure venv is ready (fast when cached)
+# DEPENDENCY CHECK
 # ============================================================================
 if [ ! -d ".venv" ] || ! python3 -c "import yaml" 2>/dev/null; then
     echo "📦 Installing dependencies..."
     uv sync --all-extras > /dev/null 2>&1
 fi
 
+# ============================================================================
+# BOOT HEADER
+# ============================================================================
 echo "════════════════════════════════════════════════════════════════"
-echo "🚀 VIBE-AGENCY SYSTEM BOOT"
+echo "⚡ STEWARD BOOT SEQUENCE"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
 # ============================================================================
-# SESSION HANDOFF - Context + Backlog
+# SESSION CONTEXT
 # ============================================================================
-echo "━━━ SESSION HANDOFF ━━━"
+echo "━━━ SESSION CONTEXT ━━━"
 echo ""
 
 if [ -f ".session_handoff.json" ]; then
-    # Extract key information using Python (no jq dependency)
     python3 << 'PYEOF'
 import json
 import sys
@@ -42,74 +44,71 @@ try:
     with open('.session_handoff.json', 'r') as f:
         handoff = json.load(f)
 
-    # Layer 0
+    # Session metadata
     bedrock = handoff.get('layer0_bedrock', {})
     print(f"From: {bedrock.get('from', 'Unknown')}")
     print(f"Date: {bedrock.get('date', 'Unknown')}")
     print(f"State: {bedrock.get('state', 'Unknown')}")
 
-    # Layer 1
+    # Current status
     runtime = handoff.get('layer1_runtime', {})
-    print(f"\nSummary: {runtime.get('completed_summary', 'No summary')}")
+    summary = runtime.get('completed_summary', 'No summary available')
+    print(f"\nCurrent Status:\n  {summary}")
 
-    # Backlog (TODOs)
-    print("\n📋 BACKLOG:")
+    # Backlog
     todos = runtime.get('todos', [])
-    for i, todo in enumerate(todos, 1):
-        # Handle both string and dict formats
-        if isinstance(todo, str):
-            print(f"  {i}. {todo}")
-        else:
+    if todos:
+        print("\n📋 BACKLOG:")
+        for i, todo in enumerate(todos, 1):
             print(f"  {i}. {todo}")
 
-    # Next steps
+    # Priority actions
     detail = handoff.get('layer2_detail', {})
     next_steps = detail.get('next_steps_detail', [])
-
     if next_steps:
-        print("\n🎯 NEXT ACTIONS:")
-        for step in next_steps[:2]:  # Show top 2 priorities
+        print("\n🎯 PRIORITY ACTIONS:")
+        for step in next_steps[:2]:
             step_name = step.get('step', 'Unknown')
             priority = step.get('priority', '')
-            if priority:
-                print(f"  [{priority}] {step_name}")
-            else:
-                print(f"  • {step_name}")
+            print(f"  [{priority}] {step_name}" if priority else f"  • {step_name}")
 
 except Exception as e:
-    print(f"⚠️  Could not parse session handoff: {e}", file=sys.stderr)
-    sys.exit(0)  # Non-fatal, continue boot
+    print(f"⚠️  Could not parse handoff: {e}", file=sys.stderr)
+    sys.exit(0)
 
 PYEOF
 
 else
-    echo "⚠️  No session handoff found (.session_handoff.json missing)"
-    echo "   This is a fresh session."
+    echo "⚠️  No session handoff found"
+    echo ""
+    echo "BOOTSTRAP MODE:"
+    echo "  1. Review recent commits: git log --oneline -5"
+    echo "  2. Check system status: CLAUDE.md"
+    echo "  3. Initialize handoff: .session_handoff.json"
 fi
 
 echo ""
 
 # ============================================================================
-# CURRENT BRANCH (instant, no git status)
+# ENVIRONMENT
 # ============================================================================
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    echo "Branch: $BRANCH"
+    echo "Current Branch: $BRANCH"
 else
-    echo "Git: Not a git repository"
+    echo "Git: Not a repository"
 fi
 
 echo ""
 
 # ============================================================================
-# THE AGENT PROMPT - Ready to execute
+# STEWARD OPERATIONAL PROTOCOL
 # ============================================================================
 echo "════════════════════════════════════════════════════════════════"
-echo "📋 YOUR PROMPT (Execute this):"
+echo "📋 OPERATIONAL PROTOCOL"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-# SYSTEM PROMPT (short, 67 tokens) + HANDOFF (has all context)
 cat << 'SYSTEMPROMPT'
 STEWARD OPERATIONAL PROTOCOL
 
@@ -129,30 +128,29 @@ Output Standard (Client is strategic operator):
 
 Tone: Senior consultant. Clarity over explanation. Action over analysis.
 
-Your mission begins with the HANDOFF below.
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HANDOFF DATA (Complete session context):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 SYSTEMPROMPT
 
-echo ""
-
-# Output the full handoff (already has everything)
+# Output handoff JSON
 if [ -f ".session_handoff.json" ]; then
     cat .session_handoff.json
 else
-    echo "⚠️  No session handoff found (.session_handoff.json missing)"
-    echo ""
-    echo "BOOTSTRAP MISSION:"
-    echo "1. Review recent commits: git log --oneline -5"
-    echo "2. Check CLAUDE.md for system status"
-    echo "3. Create .session_handoff.json with next steps"
+    echo '{"status": "bootstrap", "message": "No handoff found - initialize session"}'
 fi
 
 echo ""
-echo "════════════════════════════════════════════════════════════════"
-echo "💡 Quick Commands:"
-echo "   Full status:     ./bin/show-status.sh"
-echo "   Pre-push check:  ./bin/pre-push-check.sh"
-echo "   Run all tests:   uv run pytest tests/ -v"
-echo "════════════════════════════════════════════════════════════════"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+
+# ============================================================================
+# QUICK REFERENCE
+# ============================================================================
+echo "💡 Quick Commands:"
+echo "   Full diagnostics:  ./bin/show-status.sh"
+echo "   Pre-push check:    ./bin/pre-push-check.sh"
+echo "   Run tests:         uv run pytest tests/ -v"
+echo ""
+echo "════════════════════════════════════════════════════════════════"
