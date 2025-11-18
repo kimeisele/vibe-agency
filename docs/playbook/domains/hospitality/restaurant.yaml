@@ -1,0 +1,242 @@
+# RESTAURANT APP PLAYBOOK
+# Domain: Hospitality
+# Route: domains/hospitality/restaurant
+
+version: "1.0"
+name: "restaurant_workflow"
+description: "Specialized workflow for restaurant/food service applications"
+
+# ============================================================================
+# METADATA
+# ============================================================================
+
+metadata:
+  domain: "hospitality"
+  subdomain: "restaurant"
+  complexity: "medium"
+  typical_duration: "20-30 min"
+  created: "2025-11-18"
+  maintainer: "vibe-agency"
+
+# ============================================================================
+# CONTEXT INJECTION (JIT)
+# ============================================================================
+
+context_sources:
+  required:
+    - "agency_os/01_planning_framework/knowledge/FAE_constraints.yaml"
+    - "agency_os/01_planning_framework/knowledge/FDG_dependencies.yaml"
+    - "agency_os/01_planning_framework/knowledge/APCE_rules.yaml"
+  
+  domain_specific:
+    - "knowledge/domains/HOSPITALITY_constraints.yaml"
+    - "knowledge/domains/RESTAURANT_tech_stack.yaml"
+    - "knowledge/domains/POS_integrations.yaml"
+  
+  optional:
+    - ".session_handoff.json"
+    - "project_manifest.json"
+
+# ============================================================================
+# ROUTING TARGET
+# ============================================================================
+
+target_agent: "VIBE_ALIGNER"
+execution_mode: "QUICK_RESEARCH"  # Uses WebSearch for unknowns
+
+# ============================================================================
+# PRE-ENRICHMENT (Domain Context)
+# ============================================================================
+
+pre_enrichment:
+  system_prompt_addition: |
+    You are VIBE_ALIGNER, specialized for **Restaurant Domain**.
+    
+    **Domain Expertise:**
+    - Table reservation systems (OpenTable, Resy, Yelp Reservations)
+    - Online ordering (DoorDash, UberEats, direct integration)
+    - POS systems (Square, Toast, Clover, Lightspeed)
+    - Menu management & digital menus
+    - Kitchen display systems (KDS)
+    - Delivery fleet management
+    - Customer loyalty programs
+    
+    **Common Requirements:**
+    - Peak hours: High concurrency (Friday/Saturday nights)
+    - Payment processing: PCI-DSS compliance
+    - Multi-location support (chains vs. single restaurant)
+    - Mobile-first design (customers on phones)
+    
+  
+  pre_questions:
+    # Instead of generic "describe your app", ask domain-specific questions
+    - question: "Is this for a single restaurant or a chain?"
+      variable: "business_scope"
+      options: ["single_location", "multi_location", "franchise"]
+    
+    - question: "Primary revenue model?"
+      variable: "revenue_model"
+      options: ["dine_in", "takeout", "delivery", "hybrid"]
+    
+    - question: "Current POS system (if any)?"
+      variable: "existing_pos"
+      examples: ["Square", "Toast", "Clover", "None", "Paper-based"]
+    
+    - question: "Online ordering preference?"
+      variable: "ordering_channel"
+      options: ["third_party_only", "direct_only", "both"]
+
+# ============================================================================
+# TRANSFORMATION LOGIC
+# ============================================================================
+
+transformation:
+  # Step 1: Inject domain context
+  step_1_context_load:
+    action: "load_knowledge"
+    sources: "{{context_sources.domain_specific}}"
+    inject_into: "system_prompt"
+  
+  # Step 2: Ask pre-questions (if user input is vague)
+  step_2_clarification:
+    condition: "user_input_length < 50 words"
+    action: "execute_pre_questions"
+    questions: "{{pre_enrichment.pre_questions}}"
+  
+  # Step 3: Enrich user input with domain assumptions
+  step_3_enrichment:
+    action: "append_to_user_input"
+    content: |
+      
+      **Assumed Restaurant Requirements:**
+      - Table reservation system
+      - Online ordering capability
+      - Menu management
+      - POS integration ({{existing_pos}} or recommendation needed)
+      - Payment processing
+      - Customer data management
+      
+      Please validate or correct these assumptions.
+  
+  # Step 4: Route to VIBE_ALIGNER with enriched context
+  step_4_route:
+    target: "VIBE_ALIGNER"
+    mode: "QUICK_RESEARCH"
+    override_knowledge:
+      - "HOSPITALITY_constraints.yaml"
+      - "RESTAURANT_tech_stack.yaml"
+
+# ============================================================================
+# EXECUTION PARAMETERS (DLOL)
+# ============================================================================
+
+execution:
+  model: "claude-sonnet-4"
+  max_tokens: 4000
+  temperature: 0.7
+  
+  tools_available:
+    - "web_search"    # For researching POS systems, integrations
+    - "create_file"   # For generating feature_spec.json
+    - "view"          # For reading knowledge files
+  
+  fallback_strategy:
+    if_websearch_unavailable: "use_cached_knowledge"
+    if_knowledge_missing: "proceed_with_generic_vibe_aligner"
+
+# ============================================================================
+# EXPECTED OUTPUT
+# ============================================================================
+
+output_schema:
+  artifact: "feature_spec.json"
+  location: "artifacts/planning/"
+  
+  required_fields:
+    - "restaurant_name"
+    - "business_scope"  # single/multi location
+    - "core_features":
+        - "reservation_system"
+        - "online_ordering"
+        - "menu_management"
+        - "pos_integration"
+        - "payment_processing"
+    - "tech_stack":
+        - "frontend"
+        - "backend"
+        - "database"
+        - "pos_system"
+        - "payment_provider"
+    - "nfr_requirements":
+        - "peak_concurrency"
+        - "pci_dss_compliance"
+        - "mobile_optimization"
+
+# ============================================================================
+# QUALITY GATES
+# ============================================================================
+
+quality_gates:
+  - gate: "gate_pos_integration_specified"
+    description: "POS system must be defined (existing or recommended)"
+    validation: "feature_spec.tech_stack.pos_system != null"
+  
+  - gate: "gate_payment_compliance"
+    description: "PCI-DSS compliance acknowledged"
+    validation: "feature_spec.nfr_requirements.pci_dss_compliance == true"
+  
+  - gate: "gate_mobile_first"
+    description: "Mobile optimization required for restaurant apps"
+    validation: "feature_spec.nfr_requirements.mobile_optimization == true"
+
+# ============================================================================
+# GRACEFUL DEGRADATION
+# ============================================================================
+
+degradation:
+  layer_1_browser:
+    description: "Browser-only mode (no tools)"
+    behavior: |
+      VIBE_ALIGNER operates in manual mode:
+      - Ask all pre_questions upfront
+      - Provide copy-paste research links for POS systems
+      - User manually confirms domain knowledge
+      - Generate feature_spec.json as text output (user saves manually)
+  
+  layer_2_claude_code:
+    description: "Claude Code mode (with tools)"
+    behavior: |
+      VIBE_ALIGNER operates normally:
+      - Auto-load knowledge files
+      - WebSearch for missing POS/integration info
+      - Auto-generate feature_spec.json file
+  
+  layer_3_runtime:
+    description: "Full automation (API access)"
+    behavior: |
+      VIBE_ALIGNER operates with full capability:
+      - Real-time API checks (Stripe availability, OpenTable API)
+      - Dynamic knowledge updates
+      - Automated handoff to GENESIS_BLUEPRINT
+
+# ============================================================================
+# USAGE NOTES
+# ============================================================================
+
+# How this playbook gets triggered:
+# 1. User says "I want to build a restaurant app"
+# 2. Semantic router matches: similarity > 0.80
+# 3. DLOL loads this playbook
+# 4. Context sources loaded (JIT)
+# 5. Pre-questions asked (if needed)
+# 6. User input enriched with domain assumptions
+# 7. VIBE_ALIGNER executed with restaurant specialization
+# 8. Output: feature_spec.json with restaurant-specific modules
+
+# How to customize:
+# - Add more pre_questions for your specific restaurant type
+# - Modify context_sources to include your own knowledge files
+# - Adjust quality_gates for your compliance requirements
+# - Update tech_stack recommendations in RESTAURANT_tech_stack.yaml
+
+# ============================================================================
