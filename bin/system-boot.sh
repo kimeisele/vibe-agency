@@ -121,6 +121,12 @@ Core Protocol:
 • Update .session_handoff.json when phase complete
 • Run ./bin/pre-push-check.sh before push
 
+Entry Point Awareness:
+• If user request is vague, suggest optimal entry point
+• Reference: docs/playbook/ENTRY_POINTS.md (9 specialized modes)
+• Route to correct GAD pillar automatically
+• Proactively suggest 2-3 relevant options when unclear
+
 Output Standard (Client is strategic operator):
 • Status: 2-3 sentences, business terms
 • Actions: 2-3 concrete next steps, prioritized with time estimates
@@ -152,5 +158,7 @@ echo "💡 Quick Commands:"
 echo "   Full diagnostics:  ./bin/show-status.sh"
 echo "   Pre-push check:    ./bin/pre-push-check.sh"
 echo "   Run tests:         uv run pytest tests/ -v"
+echo ""
+echo "📚 Entry Points:     docs/playbook/USER_PLAYBOOK.md"
 echo ""
 echo "════════════════════════════════════════════════════════════════"
