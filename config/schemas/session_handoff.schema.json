@@ -2,15 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://agency.os/schemas/session_handoff.json",
   "title": "Session Handoff",
-  "description": "Canonical schema for session handoff files (.session_handoff.json)",
+  "description": "Canonical schema for session handoff files (.session_handoff.json). Supports 2.0_4layer rich structure with extended details.",
   "type": "object",
   "required": [
     "_schema_version",
     "_token_budget",
-    "_optimization",
     "layer0_bedrock",
-    "layer1_runtime",
-    "layer2_detail"
+    "layer1_runtime"
   ],
   "properties": {
     "_schema_version": {
@@ -23,29 +21,32 @@
       "minimum": 1,
       "description": "Token budget for handoff message (must be positive)"
     },
-    "_optimization": {
+    "_verified_date": {
       "type": "string",
-      "minLength": 1,
-      "description": "Summary of what was optimized/achieved in this session"
+      "description": "Timestamp when status was verified"
+    },
+    "_note": {
+      "type": "string",
+      "description": "Verification note or metadata"
     },
     "layer0_bedrock": {
       "type": "object",
-      "description": "Layer 0: High-level state (complete/blocked/needs-input)",
-      "required": ["from", "date", "state", "blocker"],
+      "description": "Layer 0: High-level state (complete/blocked/needs-input/in-progress)",
+      "required": ["from", "date", "state"],
       "properties": {
         "from": {
           "type": "string",
           "minLength": 1,
-          "description": "Who/what created this handoff (e.g., 'Claude Code - Session XYZ')"
+          "description": "Who/what created this handoff (e.g., 'STEWARD - Session XYZ')"
         },
         "date": {
           "type": "string",
-          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-          "description": "Date in YYYY-MM-DD format"
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+          "description": "Date in YYYY-MM-DD format (or ISO 8601)"
         },
         "state": {
           "type": "string",
-          "enum": ["complete", "blocked", "needs-input", "in-progress"],
+          "enum": ["operational", "complete", "blocked", "needs-input", "in-progress"],
           "description": "Current session state"
         },
         "blocker": {
@@ -53,77 +54,82 @@
           "description": "What is blocking progress (null if none)"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "layer1_runtime": {
       "type": "object",
-      "description": "Layer 1: Runtime context (summary, todos, critical files)",
-      "required": ["completed_summary", "todos", "critical_files"],
+      "description": "Layer 1: Runtime context (status summary, todos, critical files)",
       "properties": {
+        "current_status": {
+          "type": "string",
+          "description": "Current operational status"
+        },
         "completed_summary": {
           "type": "string",
-          "minLength": 1,
-          "description": "What was completed in this session (1-2 sentences)"
+          "description": "What was completed in this session"
         },
         "todos": {
           "type": "array",
-          "description": "Remaining tasks (empty array if all complete)",
+          "description": "Remaining tasks",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           }
         },
         "critical_files": {
           "type": "array",
           "description": "Files the next agent should read first",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "layer2_detail": {
       "type": "object",
-      "description": "Layer 2: Technical details (for agents who need full context)",
-      "required": ["completed", "key_decisions", "warnings", "next_steps_detail"],
+      "description": "Layer 2: Technical details (verified status, test results, decisions, next steps)",
       "properties": {
-        "completed": {
+        "verified_status": {
           "type": "array",
-          "description": "Detailed list of completed work items",
+          "description": "Verified component status with evidence",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": true
           }
         },
-        "key_decisions": {
+        "test_failures_detail": {
           "type": "array",
-          "description": "Important architectural/design decisions made",
+          "description": "Details about expected/known test failures",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "completed_work": {
+          "type": "array",
+          "description": "List of completed work items (PRs, commits, etc.)",
+          "items": {
+            "type": "string"
           }
         },
         "warnings": {
           "type": "array",
-          "description": "Warnings, gotchas, or things to watch out for",
+          "description": "Warnings, gotchas, things to watch",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           }
         },
         "next_steps_detail": {
           "type": "array",
-          "description": "Detailed next steps (expands layer1_runtime.todos)",
+          "description": "Detailed breakdown of next actions (step, why, priority, time, command, impact)",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }
