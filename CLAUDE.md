@@ -40,7 +40,7 @@ Claude Code (operator) ← file-based delegation (.delegation/) ← vibe-cli →
 | TESTING | ⚠️ Stub | Minimal implementation |
 | MAINTENANCE | ⚠️ Stub | Minimal implementation |
 
-**Test Health:** 335/349 passing (97.1%)
+**Test Health:** 369/383 passing (96.3%)
 **Expected Failures:** 1 (documented in INDEX.md)
 
 **Full verification (39 tests):**
@@ -102,9 +102,9 @@ Quick links:
 
 ## 📊 GAD Implementation Status
 
-**Complete:** 7/15 GADs (47%)  
-**Partial:** 4/15 GADs (27%)  
-**Recent:** GAD-501 Layer 0 (System Integrity) completed 2025-11-18
+**Complete:** 9/15 GADs (60%)
+**Partial:** 2/15 GADs (13%)
+**Recent:** GAD-500 Week 1 & GAD-501 Layer 0-1 completed 2025-11-18
 
 See full registry: `docs/architecture/GAD_IMPLEMENTATION_STATUS.md`
 
