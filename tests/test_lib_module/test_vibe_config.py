@@ -6,7 +6,9 @@ and provides the expected API.
 """
 
 import json
+
 import pytest
+
 from lib.vibe_config import VibeConfig
 
 

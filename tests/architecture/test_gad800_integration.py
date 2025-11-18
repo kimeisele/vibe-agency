@@ -15,11 +15,12 @@ Test coverage includes:
 - Layer 3 (runtime services, full automation) - skipped if unavailable
 """
 
+import importlib.util
 import sys
 from pathlib import Path
+
 import pytest
 import yaml
-import importlib.util
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent

@@ -29,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "config"))
 
 from legacy_config_loader import LegacyConfigLoader
 
-
 # =============================================================================
 # FIXTURES
 # =============================================================================

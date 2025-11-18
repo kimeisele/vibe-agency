@@ -2,13 +2,12 @@
 
 import requests
 from bs4 import BeautifulSoup
-from typing import Dict
 
 
 class WebFetchClient:
     """Safe web content fetcher with robots.txt respect"""
 
-    def fetch(self, url: str) -> Dict:
+    def fetch(self, url: str) -> dict:
         """
         Fetch and extract text content from URL
 

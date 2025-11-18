@@ -4,9 +4,9 @@ Universal Configuration Validation
 Configuration validation utilities and error definitions.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .config_classes import DatabaseConfig, APIConfig, LoggingConfig
+from .config_classes import APIConfig, DatabaseConfig, LoggingConfig
 
 
 class ConfigurationError(Exception):
@@ -15,8 +15,8 @@ class ConfigurationError(Exception):
     def __init__(
         self,
         message: str,
-        config_path: Optional[str] = None,
-        validation_errors: Optional[List[str]] = None,
+        config_path: str | None = None,
+        validation_errors: list[str] | None = None,
         **kwargs,
     ):
         super().__init__(message)
@@ -24,7 +24,7 @@ class ConfigurationError(Exception):
         self.config_path = config_path
         self.validation_errors = validation_errors or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert error to dictionary for structured logging."""
         return {
             "error_type": self.__class__.__name__,
@@ -34,7 +34,7 @@ class ConfigurationError(Exception):
         }
 
 
-def validate_database_config(config: DatabaseConfig) -> List[str]:
+def validate_database_config(config: DatabaseConfig) -> list[str]:
     """Validate database configuration."""
     errors = []
 
@@ -50,7 +50,7 @@ def validate_database_config(config: DatabaseConfig) -> List[str]:
     return errors
 
 
-def validate_api_config(config: APIConfig) -> List[str]:
+def validate_api_config(config: APIConfig) -> list[str]:
     """Validate API configuration."""
     errors = []
 
@@ -63,7 +63,7 @@ def validate_api_config(config: APIConfig) -> List[str]:
     return errors
 
 
-def validate_logging_config(config: LoggingConfig) -> List[str]:
+def validate_logging_config(config: LoggingConfig) -> list[str]:
     """Validate logging configuration."""
     errors = []
 

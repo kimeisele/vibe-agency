@@ -384,7 +384,7 @@ def generate_report(results: dict[str, AuditResult], output_path: Path) -> None:
         f.write("   - Which fields are required vs optional?\n")
         f.write("   - Which inconsistencies are bugs vs intentional?\n\n")
         f.write("2. **Define Schemas** - Create JSON Schema files in `config/schemas/`:\n")
-        for file_type in results.keys():
+        for file_type in results:
             schema_name = file_type.replace("_", "_")
             f.write(f"   - `config/schemas/{schema_name}.schema.json`\n")
         f.write("\n")

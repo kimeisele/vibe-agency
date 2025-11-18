@@ -11,16 +11,16 @@ Loads project context from multiple sources:
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ContextLoader:
     """Loads project context from multiple sources"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """Load all context sources with robust error handling"""
         return {
             "session": self._load_session_handoff(),
@@ -30,7 +30,7 @@ class ContextLoader:
             "environment": self._load_environment(),
         }
 
-    def _load_session_handoff(self) -> Dict[str, Any]:
+    def _load_session_handoff(self) -> dict[str, Any]:
         """Read .session_handoff.json - safe defaults if missing"""
         try:
             handoff_file = self.project_root / ".session_handoff.json"
@@ -56,12 +56,12 @@ class ContextLoader:
             return {
                 "phase": "PLANNING",
                 "last_task": "none",
-                "blockers": [f"Error loading session: {str(e)}"],
+                "blockers": [f"Error loading session: {e!s}"],
                 "backlog": [],
                 "backlog_item": "",
             }
 
-    def _load_git_status(self) -> Dict[str, Any]:
+    def _load_git_status(self) -> dict[str, Any]:
         """Get git status - safe defaults if git unavailable"""
         try:
             # Get current branch
@@ -108,10 +108,10 @@ class ContextLoader:
                 "uncommitted_files": [],
                 "recent_commits": [],
                 "last_commit": "none",
-                "status": f"git_unavailable: {str(e)}",
+                "status": f"git_unavailable: {e!s}",
             }
 
-    def _load_test_status(self) -> Dict[str, Any]:
+    def _load_test_status(self) -> dict[str, Any]:
         """Check test status - safe defaults if pytest unavailable"""
         try:
             # Check for last failed tests
@@ -131,13 +131,13 @@ class ContextLoader:
             }
         except Exception as e:
             return {
-                "status": f"pytest_unavailable: {str(e)}",
+                "status": f"pytest_unavailable: {e!s}",
                 "failing": [],
                 "failing_count": 0,
                 "errors": [],
             }
 
-    def _load_project_manifest(self) -> Dict[str, Any]:
+    def _load_project_manifest(self) -> dict[str, Any]:
         """Read project_manifest.json - safe defaults if missing"""
         try:
             manifest_file = self.project_root / "project_manifest.json"
@@ -172,7 +172,7 @@ class ContextLoader:
                 "error": str(e),
             }
 
-    def _load_environment(self) -> Dict[str, Any]:
+    def _load_environment(self) -> dict[str, Any]:
         """Check environment setup - safe defaults"""
         try:
             venv_exists = (self.project_root / ".venv").exists()
@@ -194,5 +194,5 @@ class ContextLoader:
                 "venv_exists": False,
                 "in_venv": False,
                 "python_version": "unknown",
-                "status": f"error: {str(e)}",
+                "status": f"error: {e!s}",
             }

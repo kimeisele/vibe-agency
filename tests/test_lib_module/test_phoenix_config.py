@@ -1,16 +1,17 @@
 """Tests for Universal Configuration."""
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
 
+import pytest
+import yaml
+
 from lib.phoenix_config import (
-    UniversalConfig,
-    DatabaseConfig,
     APIConfig,
-    LoggingConfig,
     ConfigurationError,
+    DatabaseConfig,
+    LoggingConfig,
+    UniversalConfig,
 )
 
 

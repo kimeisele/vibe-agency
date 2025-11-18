@@ -10,22 +10,24 @@ This test goes beyond workspace path resolution and looks for:
 5. Circular dependencies
 """
 
-import os
-import sys
-import json
-from pathlib import Path
-
 # Import utilities
 import importlib.util
+import json
+import os
+import sys
+from pathlib import Path
+
+# Navigate to repo root from tests/ directory
+repo_root = Path(__file__).parent.parent
 
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", repo_root / "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 
-sys.path.insert(0, str(Path(__file__).parent / "scripts"))
-from workspace_utils import load_workspace_manifest, list_active_workspaces
+sys.path.insert(0, str(repo_root / "scripts"))
+from workspace_utils import list_active_workspaces, load_workspace_manifest
 
 
 def test_manifest_schema_consistency():

@@ -135,7 +135,7 @@ try:
 
     result = client.fetch(test_url)
 
-    if "error" in result and result["error"]:
+    if result.get("error"):
         print(f"⚠️  Fetch returned error: {result['error']}")
         print("   (This might be expected - some sites block bots)")
         print("✅ WebFetchClient is callable and functional")

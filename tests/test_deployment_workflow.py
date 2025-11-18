@@ -10,12 +10,13 @@ Tests the complete DEPLOYMENT phase execution:
 5. Verify phase transition to PRODUCTION
 """
 
-import sys
 import json
-import pytest
+import sys
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-from datetime import datetime
+
+import pytest
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -196,7 +197,7 @@ class TestDeploymentWorkflow:
             # Verify manifest exists and is readable
             manifest_path = dest_project / "project_manifest.json"
             assert manifest_path.exists(), f"Manifest not found at {manifest_path}"
-            with open(manifest_path, "r") as f:
+            with open(manifest_path) as f:
                 manifest_data = json.load(f)
             print(f"✓ Manifest loaded: projectId={manifest_data['metadata']['projectId']}")
 
@@ -248,7 +249,7 @@ class TestDeploymentWorkflow:
                     print(f"   ✓ deploy_receipt.json created at {deploy_receipt_path}")
 
                     # Load and validate artifact
-                    with open(deploy_receipt_path, "r") as f:
+                    with open(deploy_receipt_path) as f:
                         deploy_receipt = json.load(f)
 
                     # Validate structure
@@ -298,7 +299,7 @@ class TestDeploymentWorkflow:
         temp_workspace["qa_report_path"].unlink()
 
         # Update manifest to remove qa_report artifact
-        with open(temp_workspace["manifest_path"], "r") as f:
+        with open(temp_workspace["manifest_path"]) as f:
             manifest_data = json.load(f)
         manifest_data["artifacts"].pop("qa_report", None)
         with open(temp_workspace["manifest_path"], "w") as f:
@@ -347,7 +348,7 @@ class TestDeploymentWorkflow:
         print("=" * 60)
 
         # Update qa_report.json to have REJECTED status
-        with open(temp_workspace["qa_report_path"], "r") as f:
+        with open(temp_workspace["qa_report_path"]) as f:
             qa_report = json.load(f)
 
         qa_report["status"] = "REJECTED"  # Not approved!
@@ -447,7 +448,7 @@ class TestDeploymentWorkflow:
                 # Verify bug report was created
                 bug_report_path = dest_project / "artifacts" / "deployment" / "bug_report.json"
                 if bug_report_path.exists():
-                    with open(bug_report_path, "r") as f:
+                    with open(bug_report_path) as f:
                         bug_report = json.load(f)
 
                     assert bug_report["severity"] == "P1_CRITICAL"
@@ -528,7 +529,7 @@ class TestDeploymentWorkflow:
                 # Verify rollback artifact was created
                 rollback_path = dest_project / "artifacts" / "deployment" / "rollback_info.json"
                 if rollback_path.exists():
-                    with open(rollback_path, "r") as f:
+                    with open(rollback_path) as f:
                         rollback_info = json.load(f)
 
                     assert rollback_info["rollback_status"] == "INITIATED"

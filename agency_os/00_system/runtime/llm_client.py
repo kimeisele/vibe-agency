@@ -15,12 +15,12 @@ Features:
 Version: 1.0 (Phase 3 - GAD-002)
 """
 
+import logging
 import os
 import time
-import logging
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ class CostTracker:
 
         return usage
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get cost summary"""
         return {
             "total_cost_usd": round(self.total_cost, 4),
@@ -215,7 +215,7 @@ class LLMClient:
         print(f"Cost: ${response.usage.cost_usd:.4f}")
     """
 
-    def __init__(self, budget_limit: Optional[float] = None):
+    def __init__(self, budget_limit: float | None = None):
         """
         Initialize LLM client.
 
@@ -333,16 +333,16 @@ class LLMClient:
                     time.sleep(wait_time)
                 else:
                     # Non-retryable error or max retries reached
-                    logger.error(f"LLM invocation failed: {error_name} - {str(e)}")
+                    logger.error(f"LLM invocation failed: {error_name} - {e!s}")
                     break
 
         # All retries failed
         raise LLMInvocationError(
             f"LLM invocation failed after {max_retries} attempts. "
-            f"Last error: {type(last_error).__name__} - {str(last_error)}"
+            f"Last error: {type(last_error).__name__} - {last_error!s}"
         )
 
-    def get_cost_summary(self) -> Dict[str, Any]:
+    def get_cost_summary(self) -> dict[str, Any]:
         """Get cost tracking summary"""
         summary = self.cost_tracker.get_summary()
         if self.budget_limit:

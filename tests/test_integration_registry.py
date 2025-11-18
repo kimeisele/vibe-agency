@@ -23,8 +23,8 @@ sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_RUNTIME_PATH))
 sys.path.insert(0, str(_ORCHESTRATOR_PATH))
 
+from core_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator
 from prompt_registry import PromptRegistry
-from core_orchestrator import CoreOrchestrator, PROMPT_REGISTRY_AVAILABLE
 
 
 def test_prompt_registry_integration():

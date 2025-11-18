@@ -7,24 +7,24 @@ Core configuration classes and constants for universal application configuration
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import yaml
 
 from .config_classes import (
-    DatabaseConfig,
     APIConfig,
-    ShellConfig,
-    LoggingConfig,
-    SecurityConfig,
-    PerformanceConfig,
     CacheConfig,
+    DatabaseConfig,
+    LoggingConfig,
+    PerformanceConfig,
+    SecurityConfig,
+    ShellConfig,
     TaskConfig,
 )
 from .validators import (
     ConfigurationError,
-    validate_database_config,
     validate_api_config,
+    validate_database_config,
     validate_logging_config,
 )
 
@@ -43,7 +43,7 @@ class UniversalConfig:
 
     # Core paths
     project_root: Path = field(default_factory=Path.cwd)
-    config_file: Optional[Path] = None
+    config_file: Path | None = None
 
     # Component configurations
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
@@ -113,7 +113,7 @@ class UniversalConfig:
         return cls()
 
     @classmethod
-    def create_for_production(cls, project_root: Optional[Path] = None) -> "UniversalConfig":
+    def create_for_production(cls, project_root: Path | None = None) -> "UniversalConfig":
         """Create production-optimized configuration."""
         return cls(
             environment="production",
@@ -154,7 +154,7 @@ class UniversalConfig:
 
         return test_config
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "environment": self.environment,
@@ -170,7 +170,7 @@ class UniversalConfig:
             "task": self.task.__dict__,
         }
 
-    def save_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_to_file(self, file_path: str | Path) -> None:
         """Save configuration to YAML file."""
         file_path = Path(file_path)
 
@@ -181,7 +181,7 @@ class UniversalConfig:
             yaml.dump(self.to_dict(), f, default_flow_style=False, indent=2)
 
     @classmethod
-    def load_from_file(cls, file_path: Union[str, Path]) -> "UniversalConfig":
+    def load_from_file(cls, file_path: str | Path) -> "UniversalConfig":
         """Load configuration from YAML file."""
         from .loaders import ConfigLoader
 

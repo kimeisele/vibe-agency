@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -89,10 +89,10 @@ class ProjectManifest:
     project_id: str
     name: str
     current_phase: ProjectPhase
-    current_sub_state: Optional[PlanningSubState] = None
-    artifacts: Dict[str, Any] = field(default_factory=dict)
-    budget: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    current_sub_state: PlanningSubState | None = None
+    artifacts: dict[str, Any] = field(default_factory=dict)
+    budget: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -101,12 +101,12 @@ class WorkflowState:
 
     name: str
     description: str
-    responsible_agents: List[str]
-    input_artifact: Optional[str] = None
-    output_artifact: Optional[str] = None
+    responsible_agents: list[str]
+    input_artifact: str | None = None
+    output_artifact: str | None = None
     optional: bool = False
     input_artifact_optional: bool = False
-    state_machine_ref: Optional[str] = None
+    state_machine_ref: str | None = None
 
 
 # =============================================================================
@@ -153,10 +153,10 @@ class KernelViolationError(OrchestratorError):
         self,
         operation: str,  # What they tried to do
         why: str,  # Simple 1-sentence explanation
-        remediation: List[str],  # Numbered action steps
+        remediation: list[str],  # Numbered action steps
         example_good: str,  # Working code
         example_bad: str,  # What they tried
-        learn_more: Optional[str] = None,  # Optional doc link
+        learn_more: str | None = None,  # Optional doc link
     ):
         self.operation = operation
         self.why = why
@@ -207,14 +207,14 @@ class SchemaValidator:
             self.contracts = None
             return
 
-        with open(contracts_yaml_path, "r") as f:
+        with open(contracts_yaml_path) as f:
             self.contracts = yaml.safe_load(f)
 
         logger.info(
             f"Schema validator initialized with {len(self.contracts.get('schemas', []))} schemas"
         )
 
-    def validate_artifact(self, artifact_name: str, data: Dict[str, Any]) -> None:
+    def validate_artifact(self, artifact_name: str, data: dict[str, Any]) -> None:
         """
         Validate artifact against schema.
 
@@ -323,7 +323,7 @@ class CoreOrchestrator:
             logger.warning("⚠️  Using PromptRuntime (fallback, no governance)")
 
         # Kernel violation tracking (GAD-502 Phase 5: Escalation)
-        self._kernel_violations: Dict[str, int] = {}
+        self._kernel_violations: dict[str, int] = {}
 
         # Paths
         self.workspaces_dir = self.repo_root / "workspaces"
@@ -348,12 +348,12 @@ class CoreOrchestrator:
     # WORKFLOW LOADING
     # -------------------------------------------------------------------------
 
-    def _load_workflow(self) -> Dict[str, Any]:
+    def _load_workflow(self) -> dict[str, Any]:
         """Load workflow design from YAML"""
         if not self.workflow_yaml_path.exists():
             raise FileNotFoundError(f"Workflow YAML not found: {self.workflow_yaml_path}")
 
-        with open(self.workflow_yaml_path, "r") as f:
+        with open(self.workflow_yaml_path) as f:
             return yaml.safe_load(f)
 
     def get_phase_handler(self, phase: ProjectPhase):
@@ -412,7 +412,7 @@ class CoreOrchestrator:
             logger.warning(f"Health check failed: {e}")
             return True  # Fail open (don't block work)
 
-    def get_system_status_summary(self) -> Dict[str, Any]:
+    def get_system_status_summary(self) -> dict[str, Any]:
         """
         Get full system status for logging/debugging.
 
@@ -438,7 +438,7 @@ class CoreOrchestrator:
         if not manifest_path.exists():
             raise FileNotFoundError(f"Project manifest not found: {manifest_path}")
 
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             data = json.load(f)
 
         # Validate manifest against schema (CRITICAL: Do this BEFORE accessing fields)
@@ -532,7 +532,7 @@ class CoreOrchestrator:
             for manifest_path in base.rglob("project_manifest.json"):
                 searched_paths.append(str(manifest_path))
                 try:
-                    with open(manifest_path, "r") as f:
+                    with open(manifest_path) as f:
                         data = json.load(f)
                 except (json.JSONDecodeError, OSError) as e:
                     logger.warning(f"Skipping invalid manifest {manifest_path}: {e}")
@@ -558,7 +558,7 @@ class CoreOrchestrator:
             f"(examples: {searched_paths[:5]})"
         )
 
-    def _validate_manifest_structure(self, data: Dict[str, Any], project_id: str) -> None:
+    def _validate_manifest_structure(self, data: dict[str, Any], project_id: str) -> None:
         """
         Validate project manifest structure against required schema.
 
@@ -630,7 +630,7 @@ class CoreOrchestrator:
     # ARTIFACT MANAGEMENT (with Schema Validation)
     # -------------------------------------------------------------------------
 
-    def load_artifact(self, project_id: str, artifact_name: str) -> Optional[Dict[str, Any]]:
+    def load_artifact(self, project_id: str, artifact_name: str) -> dict[str, Any] | None:
         """Load artifact from project workspace"""
         artifact_paths = {
             "research_brief.json": "artifacts/planning/research_brief.json",
@@ -655,11 +655,11 @@ class CoreOrchestrator:
         if not artifact_path.exists():
             return None
 
-        with open(artifact_path, "r") as f:
+        with open(artifact_path) as f:
             return json.load(f)
 
     def save_artifact(
-        self, project_id: str, artifact_name: str, data: Dict[str, Any], validate: bool = True
+        self, project_id: str, artifact_name: str, data: dict[str, Any], validate: bool = True
     ) -> None:
         """
         Save artifact to project workspace (with schema validation).
@@ -708,8 +708,8 @@ class CoreOrchestrator:
     # -------------------------------------------------------------------------
 
     def execute_agent(
-        self, agent_name: str, task_id: str, inputs: Dict[str, Any], manifest: ProjectManifest
-    ) -> Dict[str, Any]:
+        self, agent_name: str, task_id: str, inputs: dict[str, Any], manifest: ProjectManifest
+    ) -> dict[str, Any]:
         """
         Execute agent by composing prompt and delegating to appropriate executor.
 
@@ -764,7 +764,7 @@ class CoreOrchestrator:
 
     def _request_intelligence(
         self, agent_name: str, task_id: str, prompt: str, manifest: ProjectManifest
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Request intelligence from external operator (Claude Code) via file-based delegation.
 
@@ -1059,7 +1059,7 @@ class CoreOrchestrator:
         self._kernel_violations[violation_type] = self._kernel_violations.get(violation_type, 0) + 1
         return self._kernel_violations[violation_type]
 
-    def _get_system_status(self) -> Dict[str, Any]:
+    def _get_system_status(self) -> dict[str, Any]:
         """
         Get current system status from .system_status.json
 
@@ -1072,7 +1072,7 @@ class CoreOrchestrator:
                 return json.load(f)
         return {}
 
-    def _get_git_status(self) -> Dict[str, Any]:
+    def _get_git_status(self) -> dict[str, Any]:
         """
         Get git working directory status.
 
@@ -1098,7 +1098,7 @@ class CoreOrchestrator:
             logger.warning(f"Failed to get git status: {e}")
             return {"status": {"clean": False}, "error": str(e)}
 
-    def _parse_tool_use(self, text: str) -> Optional[Dict[str, Any]]:
+    def _parse_tool_use(self, text: str) -> dict[str, Any] | None:
         """
         Parse tool use XML from agent response (GAD-003)
 
@@ -1157,7 +1157,7 @@ class CoreOrchestrator:
 
     def _execute_autonomous(
         self, agent_name: str, prompt: str, manifest: ProjectManifest
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute agent autonomously (legacy mode) via direct LLM invocation.
 
@@ -1219,7 +1219,7 @@ class CoreOrchestrator:
         manifest: ProjectManifest,
         severity: str = "info",
         blocking: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Invoke AUDITOR agent for quality gate checks.
 
@@ -1323,7 +1323,7 @@ class CoreOrchestrator:
                     "duration_ms": duration_ms,  # GAD-004 Phase 2
                 }
 
-    def _build_audit_context(self, check_type: str, manifest: ProjectManifest) -> Dict[str, Any]:
+    def _build_audit_context(self, check_type: str, manifest: ProjectManifest) -> dict[str, Any]:
         """
         Build audit context for specific check type.
 
@@ -1490,7 +1490,7 @@ class CoreOrchestrator:
 
         logger.info(f"✅ Quality gates passed for: {transition_name}")
 
-    def run_horizontal_audits(self, manifest: ProjectManifest) -> List[Dict[str, Any]]:
+    def run_horizontal_audits(self, manifest: ProjectManifest) -> list[dict[str, Any]]:
         """
         Run horizontal audits for current phase.
 
@@ -1559,7 +1559,7 @@ class CoreOrchestrator:
     # GAD-004: Layer 2 - Workflow-Scoped Quality Gate Recording
     # -------------------------------------------------------------------------
 
-    def _get_transition_config(self, transition_name: str) -> Dict[str, Any]:
+    def _get_transition_config(self, transition_name: str) -> dict[str, Any]:
         """
         Get transition configuration from workflow YAML.
 
@@ -1584,8 +1584,8 @@ class CoreOrchestrator:
         self,
         manifest: ProjectManifest,
         transition_name: str,
-        gate: Dict[str, Any],
-        audit_report: Dict[str, Any],
+        gate: dict[str, Any],
+        audit_report: dict[str, Any],
     ) -> None:
         """
         Record quality gate result in manifest for auditability.

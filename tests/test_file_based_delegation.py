@@ -192,9 +192,8 @@ def test_file_based_delegation_invalid_json():
             f.write("{ this is not valid json }")
 
         # Simulate reading response
-        with pytest.raises(json.JSONDecodeError):
-            with open(response_file) as f:
-                json.load(f)
+        with pytest.raises(json.JSONDecodeError), open(response_file) as f:
+            json.load(f)
 
         # Cleanup
         if request_file.exists():

@@ -6,7 +6,7 @@ Configuration loading utilities for YAML files and environment variables.
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -20,7 +20,7 @@ class ConfigLoader:
     """Universal configuration loader."""
 
     @staticmethod
-    def from_file(config_path: Union[str, Path]) -> "UniversalConfig":
+    def from_file(config_path: str | Path) -> "UniversalConfig":
         """Load configuration from YAML file."""
         config_path = Path(config_path)
 
@@ -28,7 +28,7 @@ class ConfigLoader:
             raise ConfigurationError(f"Configuration file not found: {config_path}")
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
             raise ConfigurationError(f"Invalid YAML in config file: {e}") from e
@@ -89,16 +89,16 @@ class ConfigLoader:
         return ConfigLoader._from_dict(config_data)
 
     @staticmethod
-    def _from_dict(data: Dict[str, Any]) -> "UniversalConfig":
+    def _from_dict(data: dict[str, Any]) -> "UniversalConfig":
         """Create configuration from dictionary data."""
         from .config_classes import (
-            DatabaseConfig,
             APIConfig,
-            ShellConfig,
-            LoggingConfig,
-            SecurityConfig,
-            PerformanceConfig,
             CacheConfig,
+            DatabaseConfig,
+            LoggingConfig,
+            PerformanceConfig,
+            SecurityConfig,
+            ShellConfig,
             TaskConfig,
         )
         from .core import UniversalConfig

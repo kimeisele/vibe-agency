@@ -1,8 +1,8 @@
 """Google Custom Search API client for research agents."""
 
 import os
+
 import requests
-from typing import List, Dict
 
 # Load .env file if it exists
 try:
@@ -25,7 +25,7 @@ class GoogleSearchClient:
 
         self.base_url = "https://www.googleapis.com/customsearch/v1"
 
-    def search(self, query: str, num_results: int = 10) -> List[Dict]:
+    def search(self, query: str, num_results: int = 10) -> list[dict]:
         """
         Execute Google search
 

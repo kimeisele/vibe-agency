@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "config"))
 
 # Check if phoenix_config is available
 try:
-    from vibe_config import VibeConfig, PHOENIX_AVAILABLE
+    from vibe_config import PHOENIX_AVAILABLE, VibeConfig
 except ImportError:
     PHOENIX_AVAILABLE = False
 

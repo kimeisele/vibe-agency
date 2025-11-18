@@ -7,15 +7,14 @@ the regulatory framework itself has not been tampered with.
 Part of: GAD-005-ADDITION Layer 0
 """
 
+# Import functions from the scripts using importlib (scripts have hyphens in names)
+import importlib.util
 import os
 import shutil
 import tempfile
 from pathlib import Path
 
 import pytest
-
-# Import functions from the scripts using importlib (scripts have hyphens in names)
-import importlib.util
 
 
 def load_script_module(script_name: str):

@@ -8,12 +8,12 @@ This bridges the gap between GitHub Secrets (CI/CD) and Claude Code sessions (de
 """
 
 import os
-import requests
 import subprocess
-from typing import Optional, Dict
+
+import requests
 
 
-def get_github_token() -> Optional[str]:
+def get_github_token() -> str | None:
     """Get GitHub token from available sources"""
 
     # Try environment variable
@@ -32,7 +32,7 @@ def get_github_token() -> Optional[str]:
     return None
 
 
-def fetch_repository_secrets(owner: str, repo: str, token: str) -> Dict[str, str]:
+def fetch_repository_secrets(owner: str, repo: str, token: str) -> dict[str, str]:
     """
     Fetch repository secrets via GitHub API.
 

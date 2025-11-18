@@ -3,8 +3,8 @@
 Quick test: Can we compose VIBE_ALIGNER prompt?
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add current dir to path

@@ -8,7 +8,6 @@ Orchestrates the conveyor belt:
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 from context_loader import ContextLoader
 from playbook_engine import PlaybookEngine
@@ -18,13 +17,13 @@ from prompt_composer import PromptComposer
 class BootSequence:
     """Main entry point for system boot"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
         self.context_loader = ContextLoader(self.project_root)
         self.playbook_engine = PlaybookEngine()
         self.prompt_composer = PromptComposer()
 
-    def run(self, user_input: Optional[str] = None):
+    def run(self, user_input: str | None = None):
         """Execute the boot sequence"""
 
         # PRE-FLIGHT: Check for uncommitted changes (graceful guardrail)
@@ -218,12 +217,12 @@ DO:
 
     def _display_dashboard(self, context: dict, route) -> None:
         """Display kernel-style boot output (lean, visual, actionable)"""
-        
+
         git = context.get("git", {})
         tests = context.get("tests", {})
         env = context.get("environment", {})
         sync_status = self._check_git_sync()
-        
+
         # Kernel-style output - clean, scannable, actionable
         dashboard = f"""
 ╔════════════════════════════════════════════════════════════╗
@@ -238,10 +237,10 @@ DO:
   [✓] Prompt composed
 
 [SYSTEM STATUS]
-  Git:    {'✓' if git.get('uncommitted', 0) == 0 else '⚠'} clean ({git.get('branch', 'unknown')})
-  Tests:  {'✓' if tests.get('failing_count', 0) == 0 else '⚠'} {tests.get('failing_count', 0)} failing
-  Sync:   {'✓' if not sync_status.get('behind') else '⚠'} {sync_status.get('commits_behind', 0)} behind
-  Env:    {'✓' if env.get('status') == 'ready' else '⚠'} {env.get('status')}
+  Git:    {"✓" if git.get("uncommitted", 0) == 0 else "⚠"} clean ({git.get("branch", "unknown")})
+  Tests:  {"✓" if tests.get("failing_count", 0) == 0 else "⚠"} {tests.get("failing_count", 0)} failing
+  Sync:   {"✓" if not sync_status.get("behind") else "⚠"} {sync_status.get("commits_behind", 0)} behind
+  Env:    {"✓" if env.get("status") == "ready" else "⚠"} {env.get("status")}
 
 [NEXT ACTION]
   TASK:       {route.task.upper()}
@@ -264,7 +263,7 @@ DO:
 ════════════════════════════════════════════════════════════
 🚀 Ready. Executing {route.task.upper()} task now.
 """
-        
+
         print(dashboard, file=sys.stderr)
 
     def show_routes(self) -> None:

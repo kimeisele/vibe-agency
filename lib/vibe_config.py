@@ -16,15 +16,15 @@ Related: GAD-500 (defines .vibe/ structure), GAD-800 (integration matrix)
 """
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timezone
+from typing import Any
 
 
 class VibeConfig:
     """Unified access to .vibe/ state and session data."""
 
-    def __init__(self, repo_root: Optional[Path] = None):
+    def __init__(self, repo_root: Path | None = None):
         """
         Initialize VibeConfig.
 
@@ -45,7 +45,7 @@ class VibeConfig:
     # SYSTEM INTEGRITY (GAD-500 Layer 0)
     # ========================================
 
-    def get_system_integrity(self) -> Dict[str, Any]:
+    def get_system_integrity(self) -> dict[str, Any]:
         """
         Get system integrity status from .vibe/system_integrity_manifest.json
 
@@ -103,7 +103,7 @@ class VibeConfig:
     # RECEIPTS (GAD-500 Layer 2)
     # ========================================
 
-    def get_recent_receipts(self, limit: int = 5) -> List[Dict[str, Any]]:
+    def get_recent_receipts(self, limit: int = 5) -> list[dict[str, Any]]:
         """
         Get recent receipts from .vibe/receipts/
 
@@ -138,7 +138,7 @@ class VibeConfig:
 
         return receipts
 
-    def get_last_receipt(self) -> Optional[Dict[str, Any]]:
+    def get_last_receipt(self) -> dict[str, Any] | None:
         """Get most recent receipt (convenience method)."""
         receipts = self.get_recent_receipts(limit=1)
         return receipts[0] if receipts else None
@@ -147,7 +147,7 @@ class VibeConfig:
     # SESSION HANDOFF
     # ========================================
 
-    def get_session_handoff(self) -> Optional[Dict[str, Any]]:
+    def get_session_handoff(self) -> dict[str, Any] | None:
         """
         Get current session handoff from .session_handoff.json
 
@@ -168,7 +168,7 @@ class VibeConfig:
             print(f"Warning: Invalid handoff JSON: {e}")
             return None
 
-    def get_handoff_summary(self) -> Dict[str, Any]:
+    def get_handoff_summary(self) -> dict[str, Any]:
         """
         Get human-friendly summary of session handoff.
 
@@ -204,7 +204,7 @@ class VibeConfig:
     # COMBINED STATUS (The "One Command" Query)
     # ========================================
 
-    def get_full_status(self) -> Dict[str, Any]:
+    def get_full_status(self) -> dict[str, Any]:
         """
         Get complete system status (integrity + receipts + handoff).
 
@@ -224,5 +224,5 @@ class VibeConfig:
             "receipts": self.get_recent_receipts(limit=3),
             "handoff": self.get_handoff_summary(),
             "healthy": self.is_system_healthy(),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

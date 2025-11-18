@@ -23,14 +23,13 @@ Version: 1.0.0
 Date: 2025-11-12
 """
 
-import os
 import json
-import yaml
-from pathlib import Path
+import os
 from datetime import datetime
-from typing import Optional, Dict, List
+from pathlib import Path
 from uuid import UUID
 
+import yaml
 
 # =================================================================
 # WORKSPACE CONTEXT RESOLUTION
@@ -92,7 +91,7 @@ def set_active_workspace(workspace_name: str):
     os.environ["ACTIVE_WORKSPACE"] = workspace_name
 
 
-def resolve_manifest_path(workspace_name: Optional[str] = None) -> Path:
+def resolve_manifest_path(workspace_name: str | None = None) -> Path:
     """
     Resolves workspace name to project_manifest.json path.
 
@@ -125,7 +124,7 @@ def resolve_manifest_path(workspace_name: Optional[str] = None) -> Path:
         return Path(f"workspaces/{workspace_name}/project_manifest.json")
 
 
-def resolve_artifact_base_path(workspace_name: Optional[str] = None) -> Path:
+def resolve_artifact_base_path(workspace_name: str | None = None) -> Path:
     """
     Resolves workspace name to artifacts/ base directory.
 
@@ -158,7 +157,7 @@ def resolve_artifact_base_path(workspace_name: Optional[str] = None) -> Path:
 # =================================================================
 
 
-def load_workspace_manifest(workspace_name: Optional[str] = None) -> Dict:
+def load_workspace_manifest(workspace_name: str | None = None) -> dict:
     """
     Loads project manifest for given workspace.
 
@@ -187,11 +186,11 @@ def load_workspace_manifest(workspace_name: Optional[str] = None) -> Dict:
             f"Workspace '{workspace_name or get_active_workspace()}' may not exist."
         )
 
-    with open(manifest_path, "r") as f:
+    with open(manifest_path) as f:
         return json.load(f)
 
 
-def save_workspace_manifest(manifest: Dict, workspace_name: Optional[str] = None):
+def save_workspace_manifest(manifest: dict, workspace_name: str | None = None):
     """
     Saves project manifest to workspace.
 
@@ -221,7 +220,7 @@ def save_workspace_manifest(manifest: Dict, workspace_name: Optional[str] = None
 # =================================================================
 
 
-def load_workspace_registry() -> Dict:
+def load_workspace_registry() -> dict:
     """
     Loads the workspace registry from .workspace_index.yaml.
 
@@ -239,11 +238,11 @@ def load_workspace_registry() -> Dict:
             "Repository may not be properly initialized."
         )
 
-    with open(registry_path, "r") as f:
+    with open(registry_path) as f:
         return yaml.safe_load(f)
 
 
-def save_workspace_registry(registry: Dict):
+def save_workspace_registry(registry: dict):
     """
     Saves workspace registry to .workspace_index.yaml.
 
@@ -261,7 +260,7 @@ def save_workspace_registry(registry: Dict):
         yaml.dump(registry, f, sort_keys=False, default_flow_style=False)
 
 
-def get_workspace_by_name(workspace_name: str) -> Optional[Dict]:
+def get_workspace_by_name(workspace_name: str) -> dict | None:
     """
     Looks up workspace entry in registry by name.
 
@@ -293,7 +292,7 @@ def get_workspace_by_name(workspace_name: str) -> Optional[Dict]:
     return None
 
 
-def get_workspace_by_project_id(project_id: str) -> Optional[Dict]:
+def get_workspace_by_project_id(project_id: str) -> dict | None:
     """
     Looks up workspace by project UUID (for AOS Orchestrator).
 
@@ -339,7 +338,7 @@ def get_workspace_by_project_id(project_id: str) -> Optional[Dict]:
     return None
 
 
-def list_active_workspaces() -> List[Dict]:
+def list_active_workspaces() -> list[dict]:
     """
     Returns list of all active workspaces from registry.
 
@@ -357,7 +356,7 @@ def list_active_workspaces() -> List[Dict]:
     return registry.get("workspaces", [])
 
 
-def list_archived_workspaces() -> List[Dict]:
+def list_archived_workspaces() -> list[dict]:
     """
     Returns list of all archived workspaces from registry.
 
@@ -379,7 +378,7 @@ def register_workspace(
     project_name: str,
     project_description: str,
     owner_email: str,
-) -> Dict:
+) -> dict:
     """
     Adds new workspace to registry (called by SOP_007).
 
@@ -436,7 +435,7 @@ def register_workspace(
     return new_entry
 
 
-def archive_workspace(workspace_name: str, reason: str = "Project delivered") -> Dict:
+def archive_workspace(workspace_name: str, reason: str = "Project delivered") -> dict:
     """
     Moves workspace from active to archived in registry (called by SOP_009).
 

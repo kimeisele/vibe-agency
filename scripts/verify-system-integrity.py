@@ -23,7 +23,6 @@ import hashlib
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Tuple
 
 
 class SystemIntegrityError(Exception):
@@ -51,7 +50,7 @@ def calculate_sha256(file_path: str) -> str:
 
 def verify_system_integrity(
     manifest_path: str = ".vibe/system_integrity_manifest.json",
-) -> Tuple[bool, Dict]:
+) -> tuple[bool, dict]:
     """
     Verify that all critical system files match their trusted checksums.
 
@@ -114,7 +113,7 @@ def verify_system_integrity(
     return success, report
 
 
-def print_integrity_report(success: bool, report: Dict) -> None:
+def print_integrity_report(success: bool, report: dict) -> None:
     """
     Print human-readable integrity report.
 

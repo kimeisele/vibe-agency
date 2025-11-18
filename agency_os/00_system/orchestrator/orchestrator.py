@@ -16,12 +16,12 @@ Version: 2.0 (Phase 2 Implementation)
 """
 
 import json
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
+import yaml
 
 # =============================================================================
 # DATA STRUCTURES
@@ -55,9 +55,9 @@ class ProjectManifest:
     project_id: str
     name: str
     current_phase: ProjectPhase
-    current_sub_state: Optional[PlanningSubState] = None
-    artifacts: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    current_sub_state: PlanningSubState | None = None
+    artifacts: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -66,23 +66,23 @@ class WorkflowState:
 
     name: str
     description: str
-    responsible_agents: List[str]
-    input_artifact: Optional[str] = None
-    output_artifact: Optional[str] = None
+    responsible_agents: list[str]
+    input_artifact: str | None = None
+    output_artifact: str | None = None
     optional: bool = False
     input_artifact_optional: bool = False
-    state_machine_ref: Optional[str] = None
+    state_machine_ref: str | None = None
 
 
 @dataclass
 class ResearchBrief:
     """Output from RESEARCH phase"""
 
-    market_analysis: Dict[str, Any]
-    tech_analysis: Dict[str, Any]
-    fact_validation: Dict[str, Any]
-    user_insights: Optional[Dict[str, Any]] = None
-    handoff_to_lean_canvas: Dict[str, Any] = field(default_factory=dict)
+    market_analysis: dict[str, Any]
+    tech_analysis: dict[str, Any]
+    fact_validation: dict[str, Any]
+    user_insights: dict[str, Any] | None = None
+    handoff_to_lean_canvas: dict[str, Any] = field(default_factory=dict)
 
 
 # =============================================================================
@@ -151,15 +151,15 @@ class Orchestrator:
     # WORKFLOW LOADING
     # -------------------------------------------------------------------------
 
-    def _load_workflow(self) -> Dict[str, Any]:
+    def _load_workflow(self) -> dict[str, Any]:
         """Load workflow design from YAML"""
         if not self.workflow_yaml_path.exists():
             raise FileNotFoundError(f"Workflow YAML not found: {self.workflow_yaml_path}")
 
-        with open(self.workflow_yaml_path, "r") as f:
+        with open(self.workflow_yaml_path) as f:
             return yaml.safe_load(f)
 
-    def get_planning_substates(self) -> List[WorkflowState]:
+    def get_planning_substates(self) -> list[WorkflowState]:
         """Get PLANNING sub-states from workflow"""
         for state in self.workflow.get("states", []):
             if state["name"] == "PLANNING":
@@ -167,7 +167,7 @@ class Orchestrator:
                 return [self._parse_substate(s) for s in sub_states]
         return []
 
-    def _parse_substate(self, state_dict: Dict[str, Any]) -> WorkflowState:
+    def _parse_substate(self, state_dict: dict[str, Any]) -> WorkflowState:
         """Parse sub-state dictionary into WorkflowState object"""
         return WorkflowState(
             name=state_dict["name"],
@@ -193,7 +193,7 @@ class Orchestrator:
         if not manifest_path.exists():
             raise FileNotFoundError(f"Project manifest not found: {manifest_path}")
 
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             data = json.load(f)
 
         # Parse planning sub-state (if exists and not null)
@@ -231,7 +231,7 @@ class Orchestrator:
             if workspace_dir.is_dir():
                 manifest_path = workspace_dir / "project_manifest.json"
                 if manifest_path.exists():
-                    with open(manifest_path, "r") as f:
+                    with open(manifest_path) as f:
                         data = json.load(f)
                         if data["metadata"]["projectId"] == project_id:
                             return manifest_path
@@ -242,7 +242,7 @@ class Orchestrator:
     # ARTIFACT MANAGEMENT
     # -------------------------------------------------------------------------
 
-    def load_artifact(self, project_id: str, artifact_name: str) -> Optional[Dict[str, Any]]:
+    def load_artifact(self, project_id: str, artifact_name: str) -> dict[str, Any] | None:
         """Load artifact from project workspace"""
         # Determine artifact path based on type
         artifact_paths = {
@@ -261,10 +261,10 @@ class Orchestrator:
         if not artifact_path.exists():
             return None
 
-        with open(artifact_path, "r") as f:
+        with open(artifact_path) as f:
             return json.load(f)
 
-    def save_artifact(self, project_id: str, artifact_name: str, data: Dict[str, Any]) -> None:
+    def save_artifact(self, project_id: str, artifact_name: str, data: dict[str, Any]) -> None:
         """Save artifact to project workspace"""
         artifact_paths = {
             "research_brief.json": "artifacts/planning/research_brief.json",
@@ -406,7 +406,7 @@ class Orchestrator:
 
         print("✅ RESEARCH phase complete → research_brief.json")
 
-    def _load_research_workflow(self) -> Dict[str, Any]:
+    def _load_research_workflow(self) -> dict[str, Any]:
         """Load RESEARCH_workflow_design.yaml"""
         research_yaml = (
             self.repo_root
@@ -419,7 +419,7 @@ class Orchestrator:
         if not research_yaml.exists():
             raise FileNotFoundError(f"Research workflow not found: {research_yaml}")
 
-        with open(research_yaml, "r") as f:
+        with open(research_yaml) as f:
             return yaml.safe_load(f)
 
     def _ask_user_researcher(self) -> bool:
@@ -492,7 +492,7 @@ class Orchestrator:
     # AGENT EXECUTION (PLACEHOLDER FOR PHASE 2)
     # -------------------------------------------------------------------------
 
-    def _execute_agent_placeholder(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_agent_placeholder(self, agent_name: str, inputs: dict[str, Any]) -> dict[str, Any]:
         """
         PLACEHOLDER: Execute agent by loading prompt and calling LLM.
 

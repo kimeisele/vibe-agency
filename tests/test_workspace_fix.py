@@ -13,8 +13,11 @@ os.environ["ACTIVE_WORKSPACE"] = "prabhupad_os"
 # Import runtime (use same method as vibe-cli.py)
 import importlib.util
 
+# Navigate to repo root from tests/ directory
+repo_root = Path(__file__).parent.parent
+
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", repo_root / "agency_os/00_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)

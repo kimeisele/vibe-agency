@@ -7,8 +7,9 @@ No LLM calls - just validates that composition works.
 """
 
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture(scope="module")

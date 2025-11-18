@@ -9,8 +9,9 @@ Tests:
 """
 
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent

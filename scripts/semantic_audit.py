@@ -29,12 +29,12 @@ Exit Codes:
     2: Validation warnings (non-blockers)
 """
 
-import sys
-import yaml
 import argparse
-from pathlib import Path
-from typing import Dict, List, Set, Optional
+import sys
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 
 class SemanticAudit:
@@ -43,17 +43,17 @@ class SemanticAudit:
     def __init__(self, ontology_path: str = None, verbose: bool = False):
         self.ontology_path = ontology_path or "agency_os/00_system/knowledge/AOS_Ontology.yaml"
         self.verbose = verbose
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.info: List[str] = []
-        self.ontology: Dict = {}
-        self.all_terms: Dict = {}
-        self.term_usage: Dict[str, List[str]] = defaultdict(list)
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
+        self.info: list[str] = []
+        self.ontology: dict = {}
+        self.all_terms: dict = {}
+        self.term_usage: dict[str, list[str]] = defaultdict(list)
 
     def load_ontology(self) -> bool:
         """Load and parse the AOS_Ontology.yaml file."""
         try:
-            with open(self.ontology_path, "r") as f:
+            with open(self.ontology_path) as f:
                 data = yaml.safe_load(f)
             self.ontology = data
             self.all_terms = data.get("terms", {})
@@ -67,10 +67,10 @@ class SemanticAudit:
             self.errors.append(f"FATAL: Failed to parse ontology YAML: {e}")
             return False
 
-    def load_kb_file(self, kb_path: str) -> Optional[Dict]:
+    def load_kb_file(self, kb_path: str) -> dict | None:
         """Load a KB YAML file (supports multi-document YAML with --- separators)."""
         try:
-            with open(kb_path, "r") as f:
+            with open(kb_path) as f:
                 # Use safe_load_all to handle multi-document YAML files
                 documents = list(yaml.safe_load_all(f))
 
@@ -125,7 +125,7 @@ class SemanticAudit:
             self.errors.append(f"Failed to parse KB YAML '{kb_path}': {e}")
             return None
 
-    def extract_terms_from_kb(self, kb_data: Dict, kb_path: str) -> Set[str]:
+    def extract_terms_from_kb(self, kb_data: dict, kb_path: str) -> set[str]:
         """Extract all semantic terms referenced in a KB file."""
         terms_found = set()
 
@@ -219,7 +219,7 @@ class SemanticAudit:
 
         return not has_errors
 
-    def _find_all_kb_files(self) -> List[str]:
+    def _find_all_kb_files(self) -> list[str]:
         """Find all KB files in the repository."""
         kb_files = []
 

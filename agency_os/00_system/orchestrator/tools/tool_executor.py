@@ -1,6 +1,6 @@
 """Tool executor for dispatching tool calls from Claude Code."""
 
-from typing import Dict, Any
+from typing import Any
 
 # Support both relative and absolute imports
 try:
@@ -35,7 +35,7 @@ class ToolExecutor:
 
         self._initialized = True
 
-    def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Dict:
+    def execute_tool(self, tool_name: str, parameters: dict[str, Any]) -> dict:
         """
         Execute a tool call
 

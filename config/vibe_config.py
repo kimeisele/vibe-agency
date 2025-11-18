@@ -45,7 +45,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -93,8 +93,8 @@ class VibeConfig(ConfigLoaderInterface):
     def __init__(
         self,
         env: str = "development",
-        repo_root: Optional[Path] = None,
-        config_path: Optional[Path] = None,
+        repo_root: Path | None = None,
+        config_path: Path | None = None,
         validate_schemas: bool = True,
     ):
         if not PHOENIX_AVAILABLE:
@@ -127,7 +127,7 @@ class VibeConfig(ConfigLoaderInterface):
                 f"Run GAD-100 Phase 3 setup to create config files"
             )
 
-        with open(self.config_path, "r") as f:
+        with open(self.config_path) as f:
             self.vibe_config = yaml.safe_load(f)
 
         logger.debug(f"Loaded vibe config: {self.config_path}")
@@ -163,7 +163,7 @@ class VibeConfig(ConfigLoaderInterface):
     # PROJECT MANIFEST (implements ConfigLoaderInterface)
     # -------------------------------------------------------------------------
 
-    def get_project_manifest(self, project_id: str) -> Dict[str, Any]:
+    def get_project_manifest(self, project_id: str) -> dict[str, Any]:
         """
         Load project manifest using phoenix config layer
 
@@ -175,7 +175,7 @@ class VibeConfig(ConfigLoaderInterface):
         if not manifest_path.exists():
             raise FileNotFoundError(f"Project manifest not found: {manifest_path}")
 
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             data = json.load(f)
 
         # Validate against schema (if enabled)
@@ -185,7 +185,7 @@ class VibeConfig(ConfigLoaderInterface):
         logger.info(f"Loaded project manifest (phoenix): {project_id}")
         return data
 
-    def save_project_manifest(self, project_id: str, manifest: Dict[str, Any]) -> None:
+    def save_project_manifest(self, project_id: str, manifest: dict[str, Any]) -> None:
         """
         Save project manifest using phoenix config layer
 
@@ -228,7 +228,7 @@ class VibeConfig(ConfigLoaderInterface):
     def _manifest_matches_project_id(self, manifest_path: Path, project_id: str) -> bool:
         """Check if manifest matches project_id"""
         try:
-            with open(manifest_path, "r") as f:
+            with open(manifest_path) as f:
                 data = json.load(f)
             manifest_project_id = data.get("metadata", {}).get("projectId", "")
             parent_dir = manifest_path.parent.name
@@ -240,7 +240,7 @@ class VibeConfig(ConfigLoaderInterface):
     # SESSION HANDOFF (implements ConfigLoaderInterface)
     # -------------------------------------------------------------------------
 
-    def get_session_handoff(self) -> Optional[Dict[str, Any]]:
+    def get_session_handoff(self) -> dict[str, Any] | None:
         """Load session handoff using phoenix config layer"""
         handoff_path = self.repo_root / ".session_handoff.json"
 
@@ -248,7 +248,7 @@ class VibeConfig(ConfigLoaderInterface):
             logger.debug("Session handoff not found (phoenix)")
             return None
 
-        with open(handoff_path, "r") as f:
+        with open(handoff_path) as f:
             data = json.load(f)
 
         # Validate against schema (if enabled)
@@ -262,12 +262,12 @@ class VibeConfig(ConfigLoaderInterface):
     # SYSTEM STATUS (implements ConfigLoaderInterface)
     # -------------------------------------------------------------------------
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get system status (load or generate)"""
         status_path = self.repo_root / ".system_status.json"
 
         if status_path.exists():
-            with open(status_path, "r") as f:
+            with open(status_path) as f:
                 data = json.load(f)
             logger.info("Loaded system status (phoenix)")
             return data
@@ -276,7 +276,7 @@ class VibeConfig(ConfigLoaderInterface):
         logger.debug("System status not found, generating (phoenix)")
         return self._generate_system_status()
 
-    def _generate_system_status(self) -> Dict[str, Any]:
+    def _generate_system_status(self) -> dict[str, Any]:
         """
         Generate system status (fallback)
 
@@ -292,7 +292,7 @@ class VibeConfig(ConfigLoaderInterface):
     # ARTIFACT LOADING (implements ConfigLoaderInterface)
     # -------------------------------------------------------------------------
 
-    def load_artifact(self, project_id: str, artifact_name: str) -> Optional[Dict[str, Any]]:
+    def load_artifact(self, project_id: str, artifact_name: str) -> dict[str, Any] | None:
         """Load artifact file from workspace"""
         manifest_path = self._get_manifest_path(project_id)
         workspace_root = manifest_path.parent
@@ -304,26 +304,26 @@ class VibeConfig(ConfigLoaderInterface):
 
         # Determine file type and load accordingly
         if artifact_path.suffix == ".json":
-            with open(artifact_path, "r") as f:
+            with open(artifact_path) as f:
                 return json.load(f)
         elif artifact_path.suffix in [".yaml", ".yml"]:
-            with open(artifact_path, "r") as f:
+            with open(artifact_path) as f:
                 return yaml.safe_load(f)
         else:
             # Text file - return as string
-            with open(artifact_path, "r") as f:
+            with open(artifact_path) as f:
                 return {"content": f.read()}
 
     # -------------------------------------------------------------------------
     # WORKFLOW LOADING (implements ConfigLoaderInterface)
     # -------------------------------------------------------------------------
 
-    def load_workflow(self, workflow_path: Path) -> Dict[str, Any]:
+    def load_workflow(self, workflow_path: Path) -> dict[str, Any]:
         """Load workflow YAML"""
         if not workflow_path.exists():
             raise FileNotFoundError(f"Workflow not found: {workflow_path}")
 
-        with open(workflow_path, "r") as f:
+        with open(workflow_path) as f:
             data = yaml.safe_load(f)
 
         logger.info(f"Loaded workflow (phoenix): {workflow_path}")
@@ -333,7 +333,7 @@ class VibeConfig(ConfigLoaderInterface):
     # SCHEMA VALIDATION (GAD-100 Phase 2 integration)
     # -------------------------------------------------------------------------
 
-    def _validate_against_schema(self, data: Dict[str, Any], schema_name: str):
+    def _validate_against_schema(self, data: dict[str, Any], schema_name: str):
         """
         Validate data against canonical schema
 
@@ -358,7 +358,7 @@ class VibeConfig(ConfigLoaderInterface):
             logger.warning("jsonschema not installed (skipping validation)")
             return
 
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema = json.load(f)
 
         try:

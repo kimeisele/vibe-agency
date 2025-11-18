@@ -319,8 +319,8 @@ class TestVibeAlignerSystemE2E:
                     response_data = lean_canvas_summary
 
                 # Create mock response object with .content attribute
-                from unittest.mock import MagicMock
                 import json
+                from unittest.mock import MagicMock
 
                 mock_response = MagicMock()
                 mock_response.content = json.dumps(response_data)
@@ -379,7 +379,7 @@ class TestVibeAlignerSystemE2E:
             print(f"✓ feature_spec.json exists: {feature_spec_path}")
 
             # Load and validate feature_spec.json
-            with open(feature_spec_path, "r") as f:
+            with open(feature_spec_path) as f:
                 feature_spec = json.load(f)
 
             # Validate structure
@@ -455,7 +455,7 @@ class TestVibeAlignerSystemE2E:
 
             # Check that manifest was updated correctly
             updated_manifest_path = project_dir / "project_manifest.json"
-            with open(updated_manifest_path, "r") as f:
+            with open(updated_manifest_path) as f:
                 updated_manifest = json.load(f)
 
             # Verify phase transition (should be in CODING or still PLANNING if quality gates blocked)

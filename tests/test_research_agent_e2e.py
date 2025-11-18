@@ -145,7 +145,7 @@ I will analyze the results to identify key competitors.
             executor = ToolExecutor()
             result = executor.execute(tool_call["name"], tool_call["parameters"])
 
-            if "error" in result and result["error"]:
+            if result.get("error"):
                 print(f"⚠️  Tool execution returned error: {result['error']}")
                 print("   (This is expected if Google API credentials not configured)")
             else:

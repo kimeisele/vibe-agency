@@ -19,9 +19,10 @@ Created: 2025-11-15
 Version: 1.0
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add repo root and runtime directory to path
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -31,7 +32,7 @@ sys.path.insert(0, str(_RUNTIME_PATH))
 
 # Import directly from the runtime directory (since folder starts with number)
 from prompt_registry import PromptRegistry
-from prompt_runtime import PromptRuntime, AgentNotFoundError
+from prompt_runtime import AgentNotFoundError, PromptRuntime
 
 
 class TestGovernanceInjection:

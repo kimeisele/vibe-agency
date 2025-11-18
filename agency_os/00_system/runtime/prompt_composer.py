@@ -4,7 +4,7 @@ Composes task playbook + context → enriched prompt for STEWARD
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
 class PromptComposer:
@@ -13,7 +13,7 @@ class PromptComposer:
     def __init__(self, playbook_tasks_dir: Path = None):
         self.tasks_dir = playbook_tasks_dir or Path(__file__).parent.parent / "playbook" / "tasks"
 
-    def compose(self, task: str, context: Dict[str, Any]) -> str:
+    def compose(self, task: str, context: dict[str, Any]) -> str:
         """Compose final enriched prompt"""
 
         # Load base task playbook
@@ -52,7 +52,7 @@ Execute {task} task.
         with open(task_file) as f:
             return f.read()
 
-    def _inject_context(self, task_md: str, context: Dict[str, Any]) -> str:
+    def _inject_context(self, task_md: str, context: dict[str, Any]) -> str:
         """Replace context placeholders in task markdown"""
 
         # Build replacement map
@@ -106,7 +106,7 @@ Execute {task} task.
 
         return result
 
-    def _format_context_section(self, context: Dict[str, Any]) -> str:
+    def _format_context_section(self, context: dict[str, Any]) -> str:
         """Format current context as markdown section"""
         session = context.get("session", {})
         git = context.get("git", {})
@@ -159,7 +159,7 @@ Execute {task} task.
             return "- (no commits)"
         return "\n".join([f"- {commit}" for commit in commits[:3]])
 
-    def _add_boot_prompt(self, enriched_task: str, context: Dict[str, Any]) -> str:
+    def _add_boot_prompt(self, enriched_task: str, context: dict[str, Any]) -> str:
         """Add STEWARD boot prompt wrapper"""
 
         return f"""⚡ **STEWARD OPERATIONAL MODE**

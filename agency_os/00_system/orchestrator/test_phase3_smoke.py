@@ -87,8 +87,9 @@ def test_llm_client_failover():
 
     try:
         print("🔌 Testing LLM client initialization...")
-        from runtime.llm_client import LLMClient
         import os
+
+        from runtime.llm_client import LLMClient
 
         # Temporarily remove API key to test failover
         api_key_backup = os.environ.get("ANTHROPIC_API_KEY")
@@ -204,7 +205,7 @@ def test_knowledge_metadata():
         for file_path in test_files:
             full_path = Path.cwd() / file_path
             if full_path.exists():
-                with open(full_path, "r") as f:
+                with open(full_path) as f:
                     content = yaml.safe_load(f)
 
                 if "metadata" in content:

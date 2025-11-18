@@ -11,9 +11,9 @@ Usage in Claude Code:
     # Now Claude can work with the prompt directly!
 """
 
+import importlib.util
 import sys
 from pathlib import Path
-import importlib.util
 
 # Load prompt runtime
 spec = importlib.util.spec_from_file_location(

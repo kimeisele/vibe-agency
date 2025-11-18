@@ -4,17 +4,21 @@ Test script: Run orchestrator in delegated mode and capture INTELLIGENCE_REQUEST
 This proves the Prompt Registry integration works end-to-end.
 """
 
+import os
 import subprocess
 import time
-import os
+from pathlib import Path
+
+# Get repo root
+repo_root = Path(__file__).parent.parent
 
 print("=" * 80)
 print("RUNNING CORE ORCHESTRATOR - DELEGATED MODE TEST")
 print("=" * 80)
 print()
 
-# Set up environment
-os.chdir("/home/user/vibe-agency")
+# Set up environment - use actual current working directory
+os.chdir(str(repo_root))
 
 # Run orchestrator in delegated mode
 print("Starting orchestrator...")
@@ -25,8 +29,8 @@ print()
 
 cmd = [
     "python3",
-    "agency_os/00_system/orchestrator/core_orchestrator.py",
-    "/home/user/vibe-agency",
+    str(repo_root / "agency_os/00_system/orchestrator/core_orchestrator.py"),
+    str(repo_root),
     "golden-test-registry",
     "--mode=delegated",
     "--log-level=INFO",

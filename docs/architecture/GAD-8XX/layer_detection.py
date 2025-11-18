@@ -13,7 +13,7 @@ This module provides runtime layer detection with graceful degradation support.
 
 import sys
 from pathlib import Path
-from typing import Literal, Dict, List, Optional
+from typing import Literal
 
 try:
     import requests
@@ -46,7 +46,7 @@ class LayerDetector:
         """
         self.runtime_health_url = runtime_health_url
         self.timeout = timeout
-        self._cached_layer: Optional[LayerType] = None
+        self._cached_layer: LayerType | None = None
 
     def detect_layer(self, use_cache: bool = True) -> LayerType:
         """
@@ -144,7 +144,7 @@ class LayerDetector:
 
         return False
 
-    def get_capabilities(self, layer: Optional[LayerType] = None) -> List[str]:
+    def get_capabilities(self, layer: LayerType | None = None) -> list[str]:
         """
         Get list of capabilities available at a specific layer.
 
@@ -157,7 +157,7 @@ class LayerDetector:
         if layer is None:
             layer = self.detect_layer()
 
-        capabilities_map: Dict[LayerType, List[str]] = {
+        capabilities_map: dict[LayerType, list[str]] = {
             1: [
                 "guidance",
                 "manual_operations",
@@ -196,7 +196,7 @@ class LayerDetector:
 
         return all_capabilities
 
-    def has_capability(self, capability: str, layer: Optional[LayerType] = None) -> bool:
+    def has_capability(self, capability: str, layer: LayerType | None = None) -> bool:
         """
         Check if a specific capability is available.
 
@@ -224,7 +224,7 @@ class LayerAdapter:
     Use this as a base class for components that need layer-aware behavior.
     """
 
-    def __init__(self, detector: Optional[LayerDetector] = None):
+    def __init__(self, detector: LayerDetector | None = None):
         """
         Initialize layer adapter.
 

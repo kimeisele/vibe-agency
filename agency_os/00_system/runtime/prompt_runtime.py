@@ -20,12 +20,13 @@ Error Handling:
     - CompositionError: Failed to compose prompt
 """
 
-import yaml
 import logging
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 # Configure logging early (before any logger usage)
 logging.basicConfig(
@@ -39,7 +40,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 try:
-    from workspace_utils import resolve_artifact_base_path, get_active_workspace
+    from workspace_utils import get_active_workspace, resolve_artifact_base_path
 
     WORKSPACE_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -85,11 +86,11 @@ class CompositionSpec:
     composition_version: str
     agent_id: str
     agent_version: str
-    composition_order: List[Dict]
-    variables: Dict[str, str]
-    conflict_resolution: Dict
-    metadata: Dict
-    tools: List[str] = None  # GAD-003: List of available tool names
+    composition_order: list[dict]
+    variables: dict[str, str]
+    conflict_resolution: dict
+    metadata: dict
+    tools: list[str] = None  # GAD-003: List of available tool names
 
 
 @dataclass
@@ -99,10 +100,10 @@ class TaskMetadata:
     task_id: str
     phase: int
     description: str
-    dependencies: List[str]
-    inputs: List[Dict]
-    outputs: List[Dict]
-    validation_gates: List[str]
+    dependencies: list[str]
+    inputs: list[dict]
+    outputs: list[dict]
+    validation_gates: list[str]
     estimated_complexity: str
     estimated_tokens: int
 
@@ -115,7 +116,7 @@ class PromptRuntime:
     Production version would integrate with actual LLM API.
     """
 
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: str | None = None):
         if base_path is None:
             # Auto-detect repo root (4 levels up from prompt_runtime.py)
             # agency_os/00_system/runtime/prompt_runtime.py -> vibe-agency/
@@ -124,7 +125,7 @@ class PromptRuntime:
             self.base_path = Path(base_path)
         self.knowledge_cache = {}  # Cache loaded YAML files
 
-    def execute_task(self, agent_id: str, task_id: str, context: Dict[str, Any]) -> str:
+    def execute_task(self, agent_id: str, task_id: str, context: dict[str, Any]) -> str:
         """
         Compose and execute an atomized task.
 
@@ -349,7 +350,7 @@ class PromptRuntime:
             estimated_tokens=data.get("estimated_tokens", 0),
         )
 
-    def _resolve_knowledge_deps(self, agent_id: str, task_meta: TaskMetadata) -> List[str]:
+    def _resolve_knowledge_deps(self, agent_id: str, task_meta: TaskMetadata) -> list[str]:
         """
         Resolve which knowledge YAML files to load for this task.
 
@@ -400,8 +401,8 @@ class PromptRuntime:
         composition_spec: CompositionSpec,
         task_id: str,
         task_meta: TaskMetadata,
-        knowledge_files: List[str],
-        runtime_context: Dict[str, Any],
+        knowledge_files: list[str],
+        runtime_context: dict[str, Any],
     ) -> str:
         """
         Compose the final prompt by combining fragments according to composition_order.
@@ -463,7 +464,7 @@ class PromptRuntime:
 
         return final_prompt
 
-    def _format_runtime_context(self, context: Dict[str, Any]) -> str:
+    def _format_runtime_context(self, context: dict[str, Any]) -> str:
         """Format runtime context as markdown"""
         lines = ["**Runtime Context:**\n"]
         for key, value in context.items():
@@ -540,7 +541,7 @@ class PromptRuntime:
             return f.read()
 
     def _compose_tools_section(
-        self, source: str, available_tools: List[str], agent_path: Path
+        self, source: str, available_tools: list[str], agent_path: Path
     ) -> str:
         """
         Compose the tools section of the prompt (GAD-003 Phase 2)

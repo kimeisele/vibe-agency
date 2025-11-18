@@ -7,7 +7,6 @@ These are designed to be reusable across different types of applications.
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -47,7 +46,7 @@ class LoggingConfig:
     include_logger_name: bool = True
     include_log_level: bool = True
     include_stack_info: bool = False
-    log_file: Optional[str] = None
+    log_file: str | None = None
     max_file_size: int = 10 * 1024 * 1024  # 10MB
     backup_count: int = 5
 
@@ -92,7 +91,7 @@ class CacheConfig:
     """Cache configuration."""
 
     backend: str = "memory"  # memory, redis, memcached
-    url: Optional[str] = None
+    url: str | None = None
     ttl_seconds: int = 300
     max_size: int = 1000
     prefix: str = "app"

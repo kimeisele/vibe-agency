@@ -4,9 +4,10 @@ Validation script for .knowledge_index.yaml
 Verifies that all referenced files exist and paths are correct.
 """
 
-import yaml
 import sys
 from pathlib import Path
+
+import yaml
 
 
 def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
@@ -29,7 +30,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
 
     # Load YAML
     try:
-        with open(index_file, "r") as f:
+        with open(index_file) as f:
             index_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"❌ ERROR: Invalid YAML syntax: {e}")

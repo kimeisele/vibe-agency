@@ -13,8 +13,8 @@ Usage:
     python test_phase3_sdlc_flow.py
 """
 
-import sys
 import shutil
+import sys
 from pathlib import Path
 
 # Add parent directory to path for imports

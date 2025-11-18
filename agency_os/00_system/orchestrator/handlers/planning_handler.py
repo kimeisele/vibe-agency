@@ -11,7 +11,6 @@ Extracted from original orchestrator.py for GAD-002 hierarchical architecture.
 """
 
 import logging
-from typing import Dict
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ class PlanningHandler:
                 return state.get("sub_states", [])
         return []
 
-    def _should_execute_optional_state(self, state: Dict) -> bool:
+    def _should_execute_optional_state(self, state: dict) -> bool:
         """
         Determine if optional state should be executed.
 

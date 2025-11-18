@@ -34,7 +34,7 @@ def test_vibe_cli_no_anthropic_imports():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, "r") as f:
+    with open(vibe_cli_path) as f:
         content = f.read()
 
     # Check for anthropic imports
@@ -78,7 +78,7 @@ def test_vibe_cli_no_anthropic_client():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, "r") as f:
+    with open(vibe_cli_path) as f:
         content = f.read()
 
     # Check for Anthropic client usage
@@ -122,7 +122,7 @@ def test_vibe_cli_no_api_key_usage():
     """
     vibe_cli_path = REPO_ROOT / "vibe-cli"
 
-    with open(vibe_cli_path, "r") as f:
+    with open(vibe_cli_path) as f:
         content = f.read()
 
     # Check for API key usage
@@ -173,7 +173,7 @@ def test_execution_mode_strategy_exists():
     )
 
     # Verify it contains key terms
-    with open(strategy_doc, "r") as f:
+    with open(strategy_doc) as f:
         content = f.read()
 
     required_terms = [

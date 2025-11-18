@@ -8,9 +8,9 @@ LEAN_CANVAS_VALIDATOR → VIBE_ALIGNER → GENESIS_BLUEPRINT
 This validates that the hardened planning framework works end-to-end.
 """
 
+import importlib.util
 import sys
 from pathlib import Path
-import importlib.util
 
 # Load prompt runtime
 spec = importlib.util.spec_from_file_location(

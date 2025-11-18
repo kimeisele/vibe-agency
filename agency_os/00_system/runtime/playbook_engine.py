@@ -6,7 +6,7 @@ Uses LEAN logic (simple if/else, no ML for MVP)
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -24,13 +24,13 @@ class PlaybookRoute:
 class PlaybookEngine:
     """Routes user intent + context → task playbook"""
 
-    def __init__(self, registry_path: Optional[Path] = None):
+    def __init__(self, registry_path: Path | None = None):
         self.registry_path = (
             registry_path or Path(__file__).parent.parent / "playbook" / "_registry.yaml"
         )
         self.registry = self._load_registry()
 
-    def _load_registry(self) -> Dict[str, Any]:
+    def _load_registry(self) -> dict[str, Any]:
         """Load playbook registry"""
         try:
             with open(self.registry_path) as f:
@@ -39,7 +39,7 @@ class PlaybookEngine:
             # Fallback minimal registry
             return {"routes": [], "config": {"fallback_strategy": "suggest_options"}}
 
-    def route(self, user_input: str, context: Dict) -> PlaybookRoute:
+    def route(self, user_input: str, context: dict) -> PlaybookRoute:
         """Main routing logic: Tier 1 → Tier 2 → Tier 3"""
 
         # TIER 1: Explicit user intent (keyword matching)
@@ -53,7 +53,7 @@ class PlaybookEngine:
         # TIER 3: Suggest options (inspiration mode)
         return self._suggest_options(context)
 
-    def _match_keywords(self, user_input: str) -> Optional[PlaybookRoute]:
+    def _match_keywords(self, user_input: str) -> PlaybookRoute | None:
         """Match against registry intent patterns (Tier 1)"""
         user_lower = user_input.lower().strip()
 
@@ -77,7 +77,7 @@ class PlaybookEngine:
 
         return None
 
-    def _infer_from_context(self, context: Dict) -> Optional[PlaybookRoute]:
+    def _infer_from_context(self, context: dict) -> PlaybookRoute | None:
         """Infer task from context signals (Tier 2 - LEAN rules!)"""
 
         # Rule 1: Tests failing → debug
@@ -122,7 +122,7 @@ class PlaybookEngine:
 
         return None
 
-    def _suggest_options(self, context: Dict) -> PlaybookRoute:
+    def _suggest_options(self, context: dict) -> PlaybookRoute:
         """Suggest relevant tasks based on context (Tier 3)"""
         suggestions = []
 
@@ -166,7 +166,7 @@ class PlaybookEngine:
         # Default
         return "analyze"
 
-    def list_available_routes(self) -> List[Dict[str, str]]:
+    def list_available_routes(self) -> list[dict[str, str]]:
         """List all available routes from registry"""
         routes = []
         for route in self.registry.get("routes", []):

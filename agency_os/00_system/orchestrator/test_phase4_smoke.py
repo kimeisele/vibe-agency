@@ -13,9 +13,9 @@ Run:
     python test_phase4_smoke.py
 """
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -138,7 +138,7 @@ def test_data_contracts_has_audit_schema():
 
     import yaml
 
-    with open(contracts_path, "r") as f:
+    with open(contracts_path) as f:
         contracts = yaml.safe_load(f)
 
     # Check if audit_report.schema.json exists
@@ -170,10 +170,10 @@ def test_coding_handler_has_code_generator():
     logger.info("\nTest 6: CodingHandler CODE_GENERATOR integration")
 
     # Import CodingHandler
-    from handlers.coding_handler import CodingHandler
-
     # Verify it's not the stub version
     import inspect
+
+    from handlers.coding_handler import CodingHandler
 
     source = inspect.getsource(CodingHandler.execute)
 

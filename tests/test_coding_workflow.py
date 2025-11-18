@@ -10,12 +10,13 @@ Tests the complete CODING phase execution:
 5. Verify phase transition to TESTING
 """
 
-import sys
 import json
-import pytest
+import sys
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-from datetime import datetime
+
+import pytest
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -198,7 +199,7 @@ class TestCodingWorkflow:
             # Verify manifest exists and is readable
             manifest_path = dest_project / "project_manifest.json"
             assert manifest_path.exists(), f"Manifest not found at {manifest_path}"
-            with open(manifest_path, "r") as f:
+            with open(manifest_path) as f:
                 manifest_data = json.load(f)
             print(f"✓ Manifest loaded: projectId={manifest_data['metadata']['projectId']}")
 
@@ -251,7 +252,7 @@ class TestCodingWorkflow:
                     print(f"   ✓ code_gen_spec.json created at {code_gen_spec_path}")
 
                     # Load and validate artifact
-                    with open(code_gen_spec_path, "r") as f:
+                    with open(code_gen_spec_path) as f:
                         code_gen_spec = json.load(f)
 
                     # Validate structure
@@ -303,7 +304,7 @@ class TestCodingWorkflow:
         temp_workspace["feature_spec_path"].unlink()
 
         # Update manifest to remove feature_spec artifact
-        with open(temp_workspace["manifest_path"], "r") as f:
+        with open(temp_workspace["manifest_path"]) as f:
             manifest_data = json.load(f)
         manifest_data["artifacts"].pop("feature_spec", None)
         with open(temp_workspace["manifest_path"], "w") as f:

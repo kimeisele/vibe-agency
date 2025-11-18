@@ -30,11 +30,12 @@ Created: 2025-11-15
 Version: 1.0 (MVP)
 """
 
-import yaml
-import sys
 import logging
+import sys
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
+
+import yaml
 
 # Import PromptRuntime (same directory)
 # Use try/except to handle both direct execution and module import
@@ -49,7 +50,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 try:
-    from workspace_utils import resolve_manifest_path, load_workspace_manifest, get_active_workspace
+    from workspace_utils import get_active_workspace, load_workspace_manifest, resolve_manifest_path
 
     WORKSPACE_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -87,18 +88,18 @@ class PromptRegistry:
     """
 
     # Class-level cache for Guardian Directives (loaded once)
-    _guardian_directives_cache: Optional[str] = None
+    _guardian_directives_cache: str | None = None
 
     @classmethod
     def compose(
         cls,
         agent: str,
-        task: Optional[str] = None,  # Optional for meta-agents like SSF_ROUTER
-        workspace: Optional[str] = None,
+        task: str | None = None,  # Optional for meta-agents like SSF_ROUTER
+        workspace: str | None = None,
         inject_governance: bool = True,
-        inject_tools: Optional[List[str]] = None,
-        inject_sops: Optional[List[str]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        inject_tools: list[str] | None = None,
+        inject_sops: list[str] | None = None,
+        context: dict[str, Any] | None = None,
     ) -> str:
         """
         Compose a governed prompt with all injections.
@@ -228,7 +229,7 @@ class PromptRegistry:
         return cls._guardian_directives_cache
 
     @classmethod
-    def _enrich_context(cls, workspace: str, context: Dict[str, Any]) -> str:
+    def _enrich_context(cls, workspace: str, context: dict[str, Any]) -> str:
         """
         Enrich context with workspace manifest and runtime state.
 
@@ -293,7 +294,7 @@ class PromptRegistry:
         return "\n".join(lines)
 
     @classmethod
-    def _inject_tools(cls, tool_names: List[str]) -> str:
+    def _inject_tools(cls, tool_names: list[str]) -> str:
         """
         Inject tool definitions.
 
@@ -359,7 +360,7 @@ class PromptRegistry:
         return "\n".join(lines)
 
     @classmethod
-    def _inject_sops(cls, sop_ids: List[str]) -> str:
+    def _inject_sops(cls, sop_ids: list[str]) -> str:
         """
         Inject Standard Operating Procedures.
 

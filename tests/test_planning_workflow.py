@@ -11,8 +11,9 @@ Tests:
 """
 
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -63,7 +64,7 @@ def test_state_machine_yaml():
         return False
 
     try:
-        with open(yaml_path, "r") as f:
+        with open(yaml_path) as f:
             data = yaml.safe_load(f)
         print_success("YAML is valid and parseable")
     except yaml.YAMLError as e:
@@ -114,7 +115,7 @@ def test_transitions():
         PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
 
-    with open(yaml_path, "r") as f:
+    with open(yaml_path) as f:
         data = yaml.safe_load(f)
 
     transitions = data.get("transitions", [])
@@ -204,7 +205,7 @@ def test_data_contracts():
         print_error(f"Data contracts file not found at {contracts_path}")
         return False
 
-    with open(contracts_path, "r") as f:
+    with open(contracts_path) as f:
         data = yaml.safe_load(f)
 
     schemas = data.get("schemas", [])
@@ -251,7 +252,7 @@ def test_agent_integrations():
         print_error("VIBE_ALIGNER _prompt_core.md not found")
         return False
 
-    with open(vibe_prompt, "r") as f:
+    with open(vibe_prompt) as f:
         content = f.read()
 
     if "lean_canvas_summary.json" in content:
@@ -275,7 +276,7 @@ def test_agent_integrations():
         print_error("VIBE_ALIGNER task_01 not found")
         return False
 
-    with open(vibe_task01, "r") as f:
+    with open(vibe_task01) as f:
         content = f.read()
 
     if "INPUT CONTEXT CHECK" in content:
@@ -294,7 +295,7 @@ def test_agent_integrations():
         print_error("LEAN_CANVAS_VALIDATOR task_03 not found")
         return False
 
-    with open(lcv_task03, "r") as f:
+    with open(lcv_task03) as f:
         content = f.read()
 
     if "VIBE_ALIGNER" in content:
@@ -313,7 +314,7 @@ def test_agent_integrations():
         print_error("ORCHESTRATOR task_01_handle_planning.md not found")
         return False
 
-    with open(orch_task01, "r") as f:
+    with open(orch_task01) as f:
         content = f.read()
 
     if "BUSINESS_VALIDATION" in content and "FEATURE_SPECIFICATION" in content:
