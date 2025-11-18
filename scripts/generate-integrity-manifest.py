@@ -19,7 +19,7 @@ Part of: GAD-005-ADDITION Layer 0 (System Integrity Verification)
 
 import hashlib
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Critical files to include in integrity manifest
@@ -38,7 +38,7 @@ CRITICAL_FILES = {
         ),
         ("bin/update-system-status.sh", "Updates system health status", True),
         ("bin/pre-push-check.sh", "Pre-push quality checks", True),
-        ("bin/show-context.sh", "Displays session context", True),
+        ("bin/show-context.py", "Displays session context", True),
     ],
     "configs": [
         (
@@ -97,7 +97,7 @@ def generate_manifest(
     """
     manifest = {
         "manifestVersion": "1.0.0",
-        "generatedAt": datetime.utcnow().isoformat() + "Z",
+        "generatedAt": datetime.now(UTC).isoformat(),
         "trustedBaseline": {},
     }
 
