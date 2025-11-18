@@ -89,13 +89,29 @@ EOF
     fi
 }
 
-# Log command execution
+# Log command execution with context (GAD-503: Logging Kernel)
 log_command() {
     local cmd="$*"
     local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     local exit_code=$?
 
-    echo "[$timestamp] COMMAND: $cmd (exit_code: $exit_code)" >> "$VIBE_COMMAND_LOG"
+    # Ensure logs directory exists
+    mkdir -p "$VIBE_LOGS_DIR"
+
+    # Extract context metadata if available
+    local layer="RUNTIME"
+    local user="$(whoami)"
+    local hostname="$(hostname)"
+
+    if [ -f "$VIBE_CONTEXT_FILE" ]; then
+        layer=$(grep -o '"layer":"[^"]*' "$VIBE_CONTEXT_FILE" | cut -d'"' -f4 || echo "RUNTIME")
+        user=$(grep -o '"user":"[^"]*' "$VIBE_CONTEXT_FILE" | cut -d'"' -f4 || echo "$(whoami)")
+    fi
+
+    # Write structured log entry (JSON for parsing)
+    cat >> "$VIBE_COMMAND_LOG" << EOF
+{"timestamp":"$timestamp","layer":"$layer","user":"$user","hostname":"$hostname","command":"$cmd","exit_code":$exit_code}
+EOF
 }
 
 # Inject context into environment (GAD-502: Context Projection)
