@@ -64,10 +64,16 @@ make verify  # or ./bin/verify-claude-md.sh
 ./bin/show-context.py
 ```
 
-**Bootstrap a new session:**
+**Bootstrap a new session (recommended):**
 ```bash
 ./bin/system-boot.sh
 ```
+
+This will:
+- Run pre-flight checks
+- Display system health and session context
+- Show available playbook routes for domain-specific workflows
+- Initialize STEWARD with full context
 
 **Before committing:**
 ```bash
