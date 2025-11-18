@@ -56,6 +56,77 @@ uv run pytest --cov=module_name --cov-fail-under=80
 
 **See policy document for full details, examples, and enforcement.**
 
+### Persistence Checklist (MANDATORY BEFORE CLAIMING "FIXED" OR "COMPLETE")
+
+**Problem:** Agents claim fixes work in-session, but changes don't persist to next session (e.g., yaml dependency, doc drift).
+
+**Solution:** Use this checklist to self-audit before claiming completion:
+
+```
+🔍 BEFORE CLAIMING "FIXED" OR "COMPLETE", answer ALL:
+
+1. ✅ Is the change committed to git?
+   - Run: git status
+   - Expect: "nothing to commit, working tree clean" or "ahead of 'origin/branch'"
+   - If NOT: Your work isn't saved. Commit before claiming complete.
+
+2. ✅ Does it work in FRESH environment (Cold Boot)?
+   - Run: ./tests/test_cold_boot.sh
+   - Expect: "✅ ALL TESTS PASSED"
+   - If NOT: Fix will regress in next session. Keep working.
+
+3. ✅ Are tests passing?
+   - Run: uv run pytest tests/ -v
+   - Expect: 95%+ of tests passing, no import errors
+   - If NOT: Tests broke. You're not done.
+
+4. ✅ Did pre-push check pass?
+   - Run: ./bin/pre-push-check.sh
+   - Expect: "✅ All checks passed"
+   - If NOT: Linting/formatting issues block push. Fix first.
+
+5. ✅ Are docs updated (if docs changed)?
+   - Files changed? → Update CLAUDE.md section
+   - Component added? → Document in ARCHITECTURE_V2.md
+   - Command added? → Update relevant bin/ scripts
+   - If NOT: Knowledge drifts from code. Update now.
+
+6. ✅ Can next session resume with this work?
+   - Is context in .session_handoff.json? (See: bin/create-session-handoff.sh)
+   - Are critical files documented? (See: layer1_runtime.critical_files)
+   - Are next steps clear? (See: layer2_detail.next_steps_detail)
+   - If NOT: Next agent will be lost. Add context.
+```
+
+**When to use:**
+- EVERY time you claim "fixed" or "complete"
+- BEFORE running `git push`
+- WHENEVER you're unsure if work is really done
+
+**Impact:**
+- ✅ Prevents session-only fixes
+- ✅ Catches regressions before push
+- ✅ Makes work resumable
+- ✅ Stops "fix/revert" cycles
+
+**Example usage:**
+```bash
+# Made changes, tests pass
+uv run pytest tests/ -v  # ✅ 95.7% passing
+
+# Check cold boot (fresh environment)
+./tests/test_cold_boot.sh  # ✅ ALL TESTS PASSED
+
+# Check pre-push
+./bin/pre-push-check.sh  # ✅ All checks passed
+
+# Check git
+git status  # ✅ No uncommitted changes
+
+# NOW you can claim "fixed"
+# BEFORE you run: git push
+```
+
 ---
 
 ## 📖 What This Repo Is
