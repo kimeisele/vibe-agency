@@ -1,6 +1,5 @@
 """Web content fetcher for research agents."""
 
-
 import requests
 from bs4 import BeautifulSoup
 
