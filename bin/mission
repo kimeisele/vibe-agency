@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""
+Mission Control Dashboard - Simple view of task state
+
+This reads the JSON state files directly without complex imports.
+It demonstrates the system is live and manages itself.
+"""
+
+import sys
+import json
+from pathlib import Path
+from datetime import datetime
+
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+except ImportError:
+    Console = None
+
+
+def load_mission_state(vibe_root):
+    """Load mission state from JSON file"""
+    state_file = vibe_root / ".vibe" / "state" / "active_mission.json"
+    if not state_file.exists():
+        return None
+
+    with open(state_file) as f:
+        return json.load(f)
+
+
+def load_roadmap(vibe_root):
+    """Load roadmap from YAML file"""
+    try:
+        import yaml
+        roadmap_file = vibe_root / ".vibe" / "config" / "roadmap.yaml"
+        if not roadmap_file.exists():
+            return None
+
+        with open(roadmap_file) as f:
+            return yaml.safe_load(f)
+    except ImportError:
+        return None
+
+
+def show_status_text(mission, roadmap):
+    """Show status using plain text"""
+    print()
+    print("=" * 70)
+    print("🎯 MISSION CONTROL DASHBOARD")
+    print("=" * 70)
+    print()
+
+    if not mission or not mission.get("current_task"):
+        print("ℹ️  No active task")
+        return
+
+    current_task = mission["current_task"]
+
+    print(f"📋 CURRENT TASK")
+    print(f"   Name: {current_task['name']}")
+    print(f"   ID: {current_task['id']}")
+    print(f"   Status: {current_task['status']}")
+    print(f"   Description: {current_task['description']}")
+    print()
+
+    # Validation checks
+    checks = current_task.get("validation_checks", [])
+    if checks:
+        print(f"📊 VALIDATION CHECKS ({len(checks)} total)")
+        for check in checks:
+            icon = "✅" if check.get("status") else "❌"
+            print(f"   {icon} {check['description']}")
+        print()
+
+    # Mission stats
+    print(f"📈 MISSION STATS")
+    print(f"   Tasks Completed: {mission.get('total_tasks_completed', 0)}")
+    print(f"   Total Time Spent: {mission.get('total_time_spent_mins', 0)} mins")
+    print(f"   Current Phase: {mission.get('current_phase', 'Unknown')}")
+    print()
+
+    # Roadmap overview (if available)
+    if roadmap:
+        tasks = roadmap.get("tasks", {})
+        phases = roadmap.get("phases", [])
+
+        if phases:
+            phase = phases[0]
+            print(f"🗺️  ROADMAP OVERVIEW")
+            print(f"   Phase: {phase.get('name')}")
+            print(f"   Status: {phase.get('status')}")
+            print(f"   Progress: {phase.get('progress')}%")
+            print()
+
+        if tasks:
+            print(f"📋 PHASE TASKS")
+            for task_id, task in list(tasks.items())[:3]:  # Show first 3 tasks
+                status_icon = {
+                    "DONE": "✅",
+                    "IN_PROGRESS": "🚀",
+                    "TODO": "⏳",
+                    "BLOCKED": "🚫"
+                }.get(task.get("status"), "❓")
+                print(f"   {status_icon} {task['name']} (ID: {task_id})")
+
+    print()
+    print("=" * 70)
+    print()
+
+
+def show_status_rich(mission, roadmap):
+    """Show status using rich formatting"""
+    if not Console:
+        return show_status_text(mission, roadmap)
+
+    console = Console()
+    console.clear()
+    console.print()
+
+    # Header
+    from rich.align import Align
+    from rich.text import Text
+
+    console.print(
+        Align.center(Text("🎯 MISSION CONTROL", style="bold cyan"))
+    )
+    console.print(Align.center("─" * 60))
+    console.print()
+
+    if not mission or not mission.get("current_task"):
+        console.print(Panel("[yellow]No active task[/yellow]", border_style="yellow"))
+        return
+
+    current_task = mission["current_task"]
+
+    # Current Task Panel
+    task_info = f"""[bold]{current_task['name']}[/bold]
+{current_task['description']}
+
+[dim]ID:[/dim] {current_task['id']}
+[dim]Status:[/dim] {current_task['status']}
+[dim]Priority:[/dim] {current_task.get('priority', 'N/A')}/10
+[dim]Time Budget:[/dim] {current_task.get('time_used_mins', 0)}/{current_task.get('time_budget_mins', 0)} mins"""
+
+    console.print(
+        Panel(task_info, border_style="blue", title="[bold]CURRENT TASK[/bold]")
+    )
+    console.print()
+
+    # Validation Checks
+    checks = current_task.get("validation_checks", [])
+    if checks:
+        validation_table = Table(title="Validation Checks", show_header=True, header_style="bold")
+        validation_table.add_column("Status")
+        validation_table.add_column("Check")
+
+        for check in checks:
+            icon = "✅" if check.get("status") else "❌"
+            status = "PASS" if check.get("status") else "FAIL"
+            validation_table.add_row(f"{icon} {status}", check['description'])
+
+        console.print(validation_table)
+        console.print()
+
+    # Stats
+    stats_table = Table(show_header=False, box=None)
+    stats_table.add_row("[dim]Tasks Completed:[/dim]", f"[bold]{mission.get('total_tasks_completed', 0)}[/bold]")
+    stats_table.add_row("[dim]Total Time Spent:[/dim]", f"[bold]{mission.get('total_time_spent_mins', 0)} mins[/bold]")
+    stats_table.add_row("[dim]Current Phase:[/dim]", f"[bold]{mission.get('current_phase', 'Unknown')}[/bold]")
+
+    console.print(stats_table)
+    console.print()
+
+    # Available commands
+    console.print("💡 Commands:")
+    console.print("  [dim]python bin/mission status  [/dim] - Show this dashboard")
+    console.print()
+
+
+def main():
+    """Main entry point"""
+    vibe_root = Path(__file__).parent.parent
+
+    command = sys.argv[1] if len(sys.argv) > 1 else "status"
+
+    if command == "status":
+        mission = load_mission_state(vibe_root)
+        roadmap = load_roadmap(vibe_root)
+
+        if not mission:
+            print("❌ No mission state found. Run: python scripts/bootstrap_mission.py")
+            sys.exit(1)
+
+        try:
+            show_status_rich(mission, roadmap)
+        except Exception:
+            # Fallback to text if rich fails
+            show_status_text(mission, roadmap)
+    else:
+        print("Usage: mission status")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
