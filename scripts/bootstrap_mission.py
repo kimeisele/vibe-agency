@@ -171,10 +171,10 @@ def create_roadmap(vibe_root: Path) -> None:
         yaml.dump(roadmap, f, default_flow_style=False, sort_keys=False)
 
     print(f"   ✅ Roadmap created: {roadmap_file}")
-    print(f"      - 3 tasks defined")
-    print(f"      - Task 1: DONE")
-    print(f"      - Task 2: IN_PROGRESS (current)")
-    print(f"      - Task 3: TODO")
+    print("      - 3 tasks defined")
+    print("      - Task 1: DONE")
+    print("      - Task 2: IN_PROGRESS (current)")
+    print("      - Task 3: TODO")
     print()
 
 
@@ -200,9 +200,9 @@ def create_mission_state(vibe_root: Path, task_002: dict) -> None:
         json.dump(mission, f, indent=2)
 
     print(f"   ✅ Mission state created: {state_file}")
-    print(f"      - Current task: Task 2 (INTEGRATE_CLI_DASHBOARD)")
-    print(f"      - Tasks completed: 1")
-    print(f"      - Total time spent: 120 mins")
+    print("      - Current task: Task 2 (INTEGRATE_CLI_DASHBOARD)")
+    print("      - Tasks completed: 1")
+    print("      - Total time spent: 120 mins")
     print()
 
 
@@ -246,7 +246,7 @@ def bootstrap_mission(vibe_root: Path) -> None:
     print("      cat .vibe/state/active_mission.json | python -m json.tool")
     print()
     print("   3. Or directly check files:")
-    print(f"      ls -la .vibe/")
+    print("      ls -la .vibe/")
     print()
 
 

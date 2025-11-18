@@ -6,10 +6,9 @@ This reads the JSON state files directly without complex imports.
 It demonstrates the system is live and manages itself.
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
-from datetime import datetime
 
 try:
     from rich.console import Console
@@ -57,7 +56,7 @@ def show_status_text(mission, roadmap):
 
     current_task = mission["current_task"]
 
-    print(f"📋 CURRENT TASK")
+    print("📋 CURRENT TASK")
     print(f"   Name: {current_task['name']}")
     print(f"   ID: {current_task['id']}")
     print(f"   Status: {current_task['status']}")
@@ -74,7 +73,7 @@ def show_status_text(mission, roadmap):
         print()
 
     # Mission stats
-    print(f"📈 MISSION STATS")
+    print("📈 MISSION STATS")
     print(f"   Tasks Completed: {mission.get('total_tasks_completed', 0)}")
     print(f"   Total Time Spent: {mission.get('total_time_spent_mins', 0)} mins")
     print(f"   Current Phase: {mission.get('current_phase', 'Unknown')}")
@@ -87,14 +86,14 @@ def show_status_text(mission, roadmap):
 
         if phases:
             phase = phases[0]
-            print(f"🗺️  ROADMAP OVERVIEW")
+            print("🗺️  ROADMAP OVERVIEW")
             print(f"   Phase: {phase.get('name')}")
             print(f"   Status: {phase.get('status')}")
             print(f"   Progress: {phase.get('progress')}%")
             print()
 
         if tasks:
-            print(f"📋 PHASE TASKS")
+            print("📋 PHASE TASKS")
             for task_id, task in list(tasks.items())[:3]:  # Show first 3 tasks
                 status_icon = {
                     "DONE": "✅",

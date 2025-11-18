@@ -1,11 +1,11 @@
 """Mission Control CLI interface for GAD-701"""
 
-from .cmd_mission import mission_status, mission_start, mission_validate, mission_complete, main
+from .cmd_mission import main, mission_complete, mission_start, mission_status, mission_validate
 
 __all__ = [
-    "mission_status",
-    "mission_start",
-    "mission_validate",
-    "mission_complete",
     "main",
+    "mission_complete",
+    "mission_start",
+    "mission_status",
+    "mission_validate",
 ]

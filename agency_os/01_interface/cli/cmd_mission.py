@@ -9,18 +9,25 @@ Features:
 - mission complete -> Complete current task (hard validation)
 """
 
+import importlib.util
 import sys
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
 
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.align import Align
-from rich.layout import Layout
 
-from agency_os.00_system.task_management import TaskManager, TaskStatus
+# Load task_management module dynamically to handle 00_system directory name
+_task_mgmt_path = Path(__file__).parent.parent.parent / "00_system" / "task_management" / "__init__.py"
+_spec = importlib.util.spec_from_file_location("task_management", _task_mgmt_path)
+_task_mgmt = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_task_mgmt)
+
+TaskManager = _task_mgmt.TaskManager
+TaskStatus = _task_mgmt.TaskStatus
 
 
 console = Console()
@@ -67,7 +74,6 @@ def mission_status(manager: TaskManager) -> None:
     # Load mission state
     try:
         mission = manager.get_active_mission()
-        roadmap = manager.get_roadmap()
     except Exception as e:
         console.print(
             Panel(
@@ -240,7 +246,7 @@ def mission_complete(manager: TaskManager) -> None:
             console.print("[yellow]ℹ️  No more tasks in roadmap[/yellow]")
 
     except RuntimeError as e:
-        console.print(f"[red]❌ Task validation failed:[/red]")
+        console.print("[red]❌ Task validation failed:[/red]")
         console.print(f"[red]{e}[/red]")
         console.print()
         console.print("[yellow]Fix validation errors and try again[/yellow]")
