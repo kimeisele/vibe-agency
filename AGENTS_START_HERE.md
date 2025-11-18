@@ -17,11 +17,11 @@ Human → ./vibe-cli run project → vibe-cli does work autonomously → outputs
 
 ### Correct Mental Model ✅
 ```
-Claude Code (YOU) → ./vibe-cli run project → vibe-cli returns PROMPTS via STDOUT
+Claude Code (YOU) → ./vibe-cli run project → vibe-cli writes prompt to .delegation/request_*.json
                                               ↓
-                      YOU read prompts → YOU execute tasks → YOU provide results
-                                                              ↓
-                                                    vibe-cli saves artifacts
+                      YOU read request file → YOU execute task → YOU write result to .delegation/response_*.json
+                                                                 ↓
+                                                       vibe-cli reads & saves artifacts
 ```
 
 **You are not a "service" that vibe-cli calls. You are the OPERATOR using vibe-cli as a tool.**
@@ -135,9 +135,9 @@ def test_yoga_mvp():
 ## How To Use This System As An AI Operator
 
 1. You execute: `./vibe-cli run project-id`
-2. You receive: A prompt via STDOUT
+2. You receive: A prompt file at `.delegation/request_*.json`
 3. You do: The task described in the prompt
-4. You return: Results via STDIN or next command
+4. You write: Results to `.delegation/response_*.json`
 ```
 
 ### ❌ Anti-Pattern 3: Trusting Docs Without Verification
@@ -184,14 +184,9 @@ def test_yoga_mvp():
 # - Make decisions
 # - Compose response
 
-# 3. Provide results back (implementation varies)
-# - Via STDIN to vibe-cli
-# - Or via file write to artifacts/
-# - Or via next vibe-cli command with results
-
-# 4. Get next prompt
-./vibe-cli next  # (hypothetical - actual API may differ)
-# → Outputs: "You are GENESIS_BLUEPRINT. Create feature spec..."
+# 3. Provide results back
+# - Write to .delegation/response_*.json in the workspace directory
+# - vibe-cli polls, reads the file, and processes results
 
 # Repeat until project complete
 ```

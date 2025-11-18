@@ -12,12 +12,12 @@
 
 ### TL;DR for AI Agents:
 - **You are the OPERATOR** of this system, not an external service
-- vibe-cli is NOT autonomous - it returns **prompts** for YOU to execute
-- Architecture: `You → vibe-cli → prompts back to you → you do work → save results`
+- vibe-cli is NOT autonomous - it writes **prompts** to `.delegation/` for YOU to execute
+- Architecture: `You → vibe-cli → writes request file → you do work → write response file → save results`
 - **Read [CLAUDE.md](./CLAUDE.md)** for operational status (what actually works)
 - **Read [AGENTS_START_HERE.md](./AGENTS_START_HERE.md)** for detailed onboarding
 
-**Common mistake:** Treating vibe-cli as an autonomous system that "delegates to Claude Code". **Wrong.** You use vibe-cli as a tool to get structured prompts.
+**Common mistake:** Treating vibe-cli as an autonomous system that "delegates to Claude Code". **Wrong.** You use vibe-cli as a tool to get structured prompts via file-based delegation.
 
 ---
 
@@ -179,7 +179,7 @@ Vibe Agency uses a **Brain-Arm architecture**:
 │  • All LLM calls & intelligence          │
 │  • Full visibility into workflow         │
 └──────────────────────────────────────────┘
-           │ calls        ▲ returns prompt
+           │ calls        ▲ writes/reads .delegation/
            ▼              │
 ┌──────────────────────────────────────────┐
 │  core_orchestrator.py (The Arm)          │

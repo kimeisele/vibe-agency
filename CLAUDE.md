@@ -20,7 +20,7 @@
 
 Core flow (MVP - DELEGATION ONLY):
 ```
-Claude Code (operator) ← STDOUT/STDIN → vibe-cli → Core Orchestrator → SDLC Phases → Agents
+Claude Code (operator) ← file-based delegation (.delegation/) ← vibe-cli → Core Orchestrator → SDLC Phases → Agents
 ```
 
 **See also:**
