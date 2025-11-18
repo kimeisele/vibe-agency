@@ -1203,7 +1203,12 @@ class CoreOrchestrator:
         try:
             # Defensive: ensure response.content is a string (not MagicMock in tests)
             content = str(response.content) if response.content else "{}"
-            return json.loads(content)
+            result = json.loads(content)
+
+            # DEBUG: Log what we're returning for validation debugging
+            logger.debug(f"🐛 execute_agent({agent_name}) returning keys={list(result.keys())}")
+
+            return result
         except json.JSONDecodeError:
             # If not JSON, return as text
             logger.warning(f"Agent {agent_name} returned non-JSON response")

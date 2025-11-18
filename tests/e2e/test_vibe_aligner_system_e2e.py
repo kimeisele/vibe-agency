@@ -92,7 +92,6 @@ class TestVibeAlignerSystemE2E:
         """Mock lean_canvas_summary.json (prerequisite for VIBE_ALIGNER)"""
         return {
             "version": "1.0",
-            "canvas_type": "quick_research",
             "canvas_fields": {
                 "problem": [
                     "Yoga studios lose 30% revenue from no-shows",
@@ -109,14 +108,16 @@ class TestVibeAlignerSystemE2E:
             },
             "riskiest_assumptions": [
                 {
-                    "id": "RA-001",
                     "assumption": "Studios will adopt mobile-first solution",
-                    "risk_level": "HIGH",
+                    "why_risky": "Studios may prefer desktop/web solutions over mobile apps",
+                    "validation_method": "User interviews with 5 yoga studio owners",
                 }
             ],
-            "readiness": "medium",
-            "research_insights": {},
-            "validation_notes": {},
+            "readiness": {
+                "status": "READY",
+                "confidence_level": "medium",
+                "missing_inputs": [],
+            },
         }
 
     @pytest.fixture
@@ -299,33 +300,6 @@ class TestVibeAlignerSystemE2E:
         with patch("core_orchestrator.LLMClient") as MockLLMClient:
             mock_llm = MockLLMClient.return_value
 
-            # Configure mock to return appropriate responses based on task_id
-            def mock_invoke(prompt, model=None, max_tokens=4096):
-                # Detect which task from the prompt
-                if "task_01_education" in prompt.lower() or "education" in prompt.lower():
-                    response_data = mock_llm_responses["task_01_education_calibration"]
-                elif "task_02_feature" in prompt.lower() or "extraction" in prompt.lower():
-                    response_data = mock_llm_responses["task_02_feature_extraction"]
-                elif "task_03_feasibility" in prompt.lower() or "fae" in prompt.lower():
-                    response_data = mock_llm_responses["task_03_feasibility_validation"]
-                elif "task_04_gap" in prompt.lower() or "fdg" in prompt.lower():
-                    response_data = mock_llm_responses["task_04_gap_detection"]
-                elif "task_05_scope" in prompt.lower() or "negotiation" in prompt.lower():
-                    response_data = mock_llm_responses["task_05_scope_negotiation"]
-                elif "task_06_output" in prompt.lower() or "generation" in prompt.lower():
-                    response_data = mock_llm_responses["task_06_output_generation"]
-                else:
-                    # Default response for LEAN_CANVAS_VALIDATOR
-                    response_data = lean_canvas_summary
-
-                # Create mock response object with .content attribute
-                import json
-                from unittest.mock import MagicMock
-
-                mock_response = MagicMock()
-                mock_response.content = json.dumps(response_data)
-                return mock_response
-
             # Mock get_cost_summary to return proper cost data
             mock_llm.get_cost_summary.return_value = {
                 "total_cost_usd": 0.50,
@@ -334,10 +308,54 @@ class TestVibeAlignerSystemE2E:
 
             # Track prompts for Guardian Directive verification
             executed_prompts = []
+            task_call_counter = {"LEAN_CANVAS_VALIDATOR": 0, "VIBE_ALIGNER": 0}
 
             def track_and_invoke(prompt, model=None, max_tokens=4096):
                 executed_prompts.append({"prompt": prompt, "length": len(prompt)})
-                return mock_invoke(prompt, model, max_tokens)
+
+                # Enhanced detection: Use agent name to determine which mock response to return
+                p_lower = prompt.lower()
+
+                # DEBUG: Print first 200 chars to see what we're matching
+                print(f"\n🔍 MOCK MATCHING: {p_lower[:200]}...")
+
+                # LEAN_CANVAS_VALIDATOR tasks (sequential counter-based)
+                if "lean_canvas_validator" in p_lower:
+                    print("  → Matched: LEAN_CANVAS_VALIDATOR")
+                    task_num = task_call_counter["LEAN_CANVAS_VALIDATOR"]
+                    task_call_counter["LEAN_CANVAS_VALIDATOR"] += 1
+
+                    if task_num == 0:  # First call = 01_canvas_interview
+                        response_data = lean_canvas_summary["canvas_fields"]
+                    elif task_num == 1:  # Second call = 02_risk_analysis
+                        response_data = {
+                            "riskiest_assumptions": lean_canvas_summary["riskiest_assumptions"]
+                        }
+                    else:  # Third+ call = 03_handoff
+                        response_data = lean_canvas_summary
+
+                # VIBE_ALIGNER tasks (sequential counter-based)
+                elif "vibe_aligner" in p_lower:
+                    print("  → Matched: VIBE_ALIGNER")
+                    task_num = task_call_counter["VIBE_ALIGNER"]
+                    task_call_counter["VIBE_ALIGNER"] += 1
+
+                    # In FEATURE_SPECIFICATION sub-state, planning_handler calls task_05_scope_negotiation
+                    # which should return the complete feature_spec (task_06 output in test fixture)
+                    response_data = mock_llm_responses["task_06_output_generation"]
+
+                else:
+                    # Fallback: empty response
+                    print("  → NO MATCH - using fallback")
+                    response_data = {}
+
+                # Create mock response
+                import json
+                from unittest.mock import MagicMock
+
+                mock_response = MagicMock()
+                mock_response.content = json.dumps(response_data)
+                return mock_response
 
             mock_llm.invoke.side_effect = track_and_invoke
 
