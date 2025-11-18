@@ -14,21 +14,18 @@
 
 ## EXECUTION INSTRUCTIONS
 
-### Generate JSON Artifact
+### Generate JSON Artifact (CRITICAL: This must be valid JSON matching schema below)
 
-Create a file named `lean_canvas_summary.json` with the following structure:
+Create a file named `lean_canvas_summary.json` with the following **exact structure**. All fields are required:
 
 ```json
 {
-  "schema_version": "1.0.0",
-  "generated_at": "<ISO 8601 timestamp>",
-  "project_id": "<from runtime context>",
-  "
-": {
+  "version": "1.0",
+  "canvas_fields": {
     "problem": "<Field 1 response>",
     "customer_segments": "<Field 2 response>",
     "unique_value_proposition": "<Field 3 response>",
-    "solution_mvp": "<Field 4 response>",
+    "solution": "<Field 4 response>",
     "channels": "<Field 5 response>",
     "revenue_streams": "<Field 6 response>",
     "cost_structure": "<Field 7 response>",
@@ -37,12 +34,26 @@ Create a file named `lean_canvas_summary.json` with the following structure:
   },
   "riskiest_assumptions": [
     {
-      "category": "<problem|customer|uvp|solution|channel|revenue|cost|metrics|advantage>",
       "assumption": "<specific assumption text>",
-      "validation_approach": "<how MVP should test this>"
+      "why_risky": "<why this is a critical risk>",
+      "validation_method": "<how MVP should test this>"
+    },
+    {
+      "assumption": "<assumption 2>",
+      "why_risky": "<why risky>",
+      "validation_method": "<validation approach>"
+    },
+    {
+      "assumption": "<assumption 3>",
+      "why_risky": "<why risky>",
+      "validation_method": "<validation approach>"
     }
   ],
-  "validation_focus": "<1-2 sentence summary of what MVP must prove>"
+  "readiness": {
+    "status": "READY",
+    "confidence_level": "high",
+    "missing_inputs": []
+  }
 }
 ```
 
