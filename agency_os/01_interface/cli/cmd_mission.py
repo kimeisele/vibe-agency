@@ -28,6 +28,14 @@ _spec.loader.exec_module(_task_mgmt)
 
 TaskManager = _task_mgmt.TaskManager
 TaskStatus = _task_mgmt.TaskStatus
+Roadmap = _task_mgmt.Roadmap
+
+# Load metrics module dynamically
+_metrics_path = Path(__file__).parent.parent.parent / "00_system" / "task_management" / "metrics.py"
+_metrics_spec = importlib.util.spec_from_file_location("metrics", _metrics_path)
+_metrics_module = importlib.util.module_from_spec(_metrics_spec)
+_metrics_spec.loader.exec_module(_metrics_module)
+MetricsCalculator = _metrics_module.MetricsCalculator
 
 
 console = Console()
@@ -256,6 +264,152 @@ def mission_complete(manager: TaskManager) -> None:
         sys.exit(1)
 
 
+def mission_metrics(manager: TaskManager, phase_name: str | None = None) -> None:
+    """Display project metrics and progress analytics"""
+    try:
+        roadmap = manager.load_roadmap()
+        calc = MetricsCalculator(roadmap)
+
+        console.clear()
+        console.print()
+        console.print(
+            Align.center(
+                Text("📊 PROJECT METRICS", style="bold cyan", justify="center")
+            )
+        )
+        console.print(Align.center("─" * 60))
+        console.print()
+
+        if phase_name:
+            # Show metrics for specific phase
+            metrics = calc.get_phase_metrics(phase_name)
+            if not metrics:
+                console.print(f"[red]❌ Phase not found: {phase_name}[/red]")
+                return
+
+            console.print(f"[bold cyan]Phase: {metrics['phase_name']}[/bold cyan]")
+            console.print(f"[dim]Status: {metrics['phase_status']}[/dim]")
+            console.print()
+
+            metrics_table = Table(show_header=False, box=None)
+            metrics_table.add_row("[dim]Total Tasks:[/dim]", f"[bold]{metrics['total_tasks']}[/bold]")
+            metrics_table.add_row("[dim]Completed:[/dim]", f"[green]{metrics['completed_tasks']}[/green]")
+            metrics_table.add_row("[dim]In Progress:[/dim]", f"[blue]{metrics['in_progress_tasks']}[/blue]")
+            metrics_table.add_row("[dim]Todo:[/dim]", f"[yellow]{metrics['todo_tasks']}[/yellow]")
+            metrics_table.add_row("[dim]Blocked:[/dim]", f"[red]{metrics['blocked_tasks']}[/red]")
+            metrics_table.add_row("[dim]Progress:[/dim]", f"[bold]{metrics['progress_percent']}%[/bold]")
+
+            console.print(metrics_table)
+        else:
+            # Show overall metrics
+            overall = calc.get_overall_progress()
+            time_metrics = calc.get_time_metrics()
+            validation_metrics = calc.get_validation_metrics()
+
+            # Overall Progress
+            console.print("[bold cyan]OVERALL PROGRESS[/bold cyan]")
+            progress_table = Table(show_header=False, box=None)
+            progress_table.add_row(
+                "[dim]Total Tasks:[/dim]",
+                f"[bold]{overall['total_tasks']}[/bold]"
+            )
+            progress_table.add_row(
+                "[dim]Completed:[/dim]",
+                f"[green]{overall['completed_tasks']}[/green]"
+            )
+            progress_table.add_row(
+                "[dim]In Progress:[/dim]",
+                f"[blue]{overall['in_progress_tasks']}[/blue]"
+            )
+            progress_table.add_row(
+                "[dim]Todo:[/dim]",
+                f"[yellow]{overall['todo_tasks']}[/yellow]"
+            )
+            progress_table.add_row(
+                "[dim]Blocked:[/dim]",
+                f"[red]{overall['blocked_tasks']}[/red]"
+            )
+            progress_table.add_row(
+                "[dim]Progress:[/dim]",
+                f"[bold]{overall['progress_percent']}%[/bold]"
+            )
+            console.print(progress_table)
+            console.print()
+
+            # Time Metrics
+            console.print("[bold cyan]TIME METRICS[/bold cyan]")
+            time_table = Table(show_header=False, box=None)
+            time_table.add_row(
+                "[dim]Total Budgeted:[/dim]",
+                f"[bold]{time_metrics['total_time_budgeted_mins']} mins[/bold]"
+            )
+            time_table.add_row(
+                "[dim]Total Used:[/dim]",
+                f"[bold]{time_metrics['total_time_used_mins']} mins[/bold]"
+            )
+            time_table.add_row(
+                "[dim]Utilization:[/dim]",
+                f"[bold]{time_metrics['time_utilization_percent']}%[/bold]"
+            )
+            console.print(time_table)
+            console.print()
+
+            # Validation Metrics
+            console.print("[bold cyan]VALIDATION CHECKS[/bold cyan]")
+            validation_table = Table(show_header=False, box=None)
+            validation_table.add_row(
+                "[dim]Total Checks:[/dim]",
+                f"[bold]{validation_metrics['total_checks']}[/bold]"
+            )
+            validation_table.add_row(
+                "[dim]Passing:[/dim]",
+                f"[green]{validation_metrics['passing_checks']}[/green]"
+            )
+            validation_table.add_row(
+                "[dim]Failing:[/dim]",
+                f"[red]{validation_metrics['failing_checks']}[/red]"
+            )
+            validation_table.add_row(
+                "[dim]Pass Rate:[/dim]",
+                f"[bold]{validation_metrics['check_pass_percent']}%[/bold]"
+            )
+            console.print(validation_table)
+            console.print()
+
+            # Phase Metrics
+            console.print("[bold cyan]PHASE BREAKDOWN[/bold cyan]")
+            phases = calc.get_all_phase_metrics()
+            phase_table = Table(
+                title="Phase Metrics",
+                show_header=True,
+                header_style="bold"
+            )
+            phase_table.add_column("Phase", style="bold")
+            phase_table.add_column("Status", style="dim")
+            phase_table.add_column("Tasks", justify="right")
+            phase_table.add_column("Done", justify="right", style="green")
+            phase_table.add_column("Progress", justify="right", style="bold")
+
+            for phase_metrics in phases:
+                phase_table.add_row(
+                    phase_metrics["phase_name"],
+                    phase_metrics["phase_status"],
+                    str(phase_metrics["total_tasks"]),
+                    str(phase_metrics["completed_tasks"]),
+                    f"{phase_metrics['progress_percent']}%"
+                )
+
+            console.print(phase_table)
+
+        console.print()
+        console.print(Align.center("─" * 60))
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]❌ Error generating metrics: {e}[/red]")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point for mission control"""
     import argparse
@@ -287,14 +441,14 @@ Related:
     parser.add_argument(
         "command",
         type=str,
-        choices=["status", "start", "validate", "complete"],
+        choices=["status", "start", "validate", "complete", "metrics"],
         help="Mission control command"
     )
     parser.add_argument(
         "task_id",
         type=str,
         nargs="?",
-        help="Task ID (required for 'start' command)"
+        help="Task ID (required for 'start' command) or phase name (optional for 'metrics')"
     )
 
     args = parser.parse_args()
@@ -320,6 +474,9 @@ Related:
 
     elif args.command == "complete":
         mission_complete(manager)
+
+    elif args.command == "metrics":
+        mission_metrics(manager, args.task_id)
 
     else:
         parser.print_help()
