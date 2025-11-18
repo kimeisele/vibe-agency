@@ -79,8 +79,8 @@ def verify_system_integrity(
     baseline = manifest["trustedBaseline"]
     report = {"verified": [], "failed": [], "missing": []}
 
-    # Verify each category
-    for category in ["scripts", "configs", "hooks"]:
+    # Verify each category (scripts, configs, core - not "hooks" as it's not in manifest)
+    for category in ["scripts", "configs", "core"]:
         for name, spec in baseline.get(category, {}).items():
             file_path = spec["path"]
             expected_checksum = spec["sha256"]
