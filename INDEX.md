@@ -30,6 +30,7 @@ make test            # Run test suite
 - `docs/GETTING_STARTED.md` — For new agents
 - `docs/TROUBLESHOOTING.md` — Something broken?
 - `docs/playbook/USER_PLAYBOOK.md` — Entry points by request type
+- `docs/STRATEGIC_PLAN_2025-11-18.md` — **NEW:** 4-week roadmap for core stability
 
 ### **Policies & Standards**
 - `docs/policies/AGENT_DECISIONS.md` — Decision reference (15 questions)
@@ -40,6 +41,7 @@ make test            # Run test suite
 ### **Architecture & Design**
 - `ARCHITECTURE_V2.md` — System conceptual model (the big picture)
 - `SSOT.md` — Single source of truth (implementation decisions)
+- `docs/architecture/GAD_IMPLEMENTATION_STATUS.md` — **NEW:** All 15 GADs status tracking
 - `docs/architecture/EXECUTION_MODE_STRATEGY.md` — How vibe-cli delegates to Claude Code
 - `docs/architecture/HIDDEN_DEPENDENCIES_AUDIT.md` — Dependency analysis
 - `docs/architecture/GAD-5XX/` — Improvement initiatives:
@@ -65,6 +67,12 @@ make test            # Run test suite
 
 ### "I'm a new agent"
 → `docs/GETTING_STARTED.md`
+
+### "What's the strategic direction?"
+→ `docs/STRATEGIC_PLAN_2025-11-18.md` (4-week roadmap)
+
+### "Which GADs are implemented?"
+→ `docs/architecture/GAD_IMPLEMENTATION_STATUS.md` (15 GADs tracked)
 
 ### "How do I know if code is ready to commit?"
 → `docs/policies/DEVELOPMENT_STANDARDS.md` (persistence checklist: git? tests? linting? pre-push? docs?)

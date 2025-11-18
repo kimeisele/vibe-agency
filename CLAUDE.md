@@ -100,7 +100,13 @@ Quick links:
 
 **Currently blocking:** None (all core workflows passing)
 
-See full registry: `docs/architecture/GAD-5XX/KNOWN_ISSUES_REGISTRY.md`
+## 📊 GAD Implementation Status
+
+**Complete:** 7/15 GADs (47%)  
+**Partial:** 4/15 GADs (27%)  
+**Recent:** GAD-501 Layer 0 (System Integrity) completed 2025-11-18
+
+See full registry: `docs/architecture/GAD_IMPLEMENTATION_STATUS.md`
 
 ---
 
