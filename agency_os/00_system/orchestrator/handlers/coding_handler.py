@@ -181,12 +181,21 @@ class CodingHandler:
         }
 
         # Save code_gen_spec artifact
-        self.orchestrator.save_artifact(
-            manifest.project_id,
-            "code_gen_spec.json",
-            code_gen_spec,
-            validate=False,  # TODO: Add schema validation in Phase 4
-        )
+        try:
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "code_gen_spec.json",
+                code_gen_spec,
+                validate=True,
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Schema validation failed for code_gen_spec.json: {e}")
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "code_gen_spec.json",
+                code_gen_spec,
+                validate=False,
+            )
 
         manifest.artifacts["code_gen_spec"] = code_gen_spec
 

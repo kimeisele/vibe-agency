@@ -520,26 +520,30 @@ class VibeCLI:
             self.repo_root / "docs" / "playbook" / "_registry.yaml"
         )
 
-    def run_project(self, project_id: str, mode: str = "delegated") -> None:
+    def run_project(self, project_id: str, mode: str = "delegated", resume: bool = False) -> None:
         """
         Run SDLC for a project with Claude Code integration.
 
         Args:
             project_id: Project ID
             mode: Execution mode (delegated or autonomous)
+            resume: Resume from last handoff checkpoint
         """
         logger.info(f"🚀 Starting Agency OS for project: {project_id}")
         logger.info(f"   Execution mode: {mode}")
         logger.info(f"   Repository: {self.repo_root}")
 
+        if resume:
+            logger.info("   🔄 Resume mode: Loading last handoff checkpoint")
+
         if mode == "delegated":
-            self._run_delegated(project_id)
+            self._run_delegated(project_id, resume=resume)
         elif mode == "autonomous":
-            self._run_autonomous(project_id)
+            self._run_autonomous(project_id, resume=resume)
         else:
             raise ValueError(f"Invalid mode: {mode}")
 
-    def _run_delegated(self, project_id: str) -> None:
+    def _run_delegated(self, project_id: str, resume: bool = False) -> None:
         """
         Run orchestrator in delegated mode with STDIN/STDOUT handoff.
 
@@ -548,6 +552,10 @@ class VibeCLI:
         2. Monitors STDOUT for INTELLIGENCE_REQUESTs
         3. Delegates prompts to Claude Code operator
         4. Sends responses back via STDIN
+
+        Args:
+            project_id: Project ID
+            resume: Resume from last handoff checkpoint
         """
         logger.info("🔗 Launching orchestrator in delegated mode...")
 
@@ -559,6 +567,9 @@ class VibeCLI:
             project_id,
             "--mode=delegated",
         ]
+
+        if resume:
+            cmd.append("--resume")
 
         logger.info(f"   Command: {' '.join(cmd)}")
 
@@ -987,7 +998,7 @@ class VibeCLI:
         else:
             logger.warning("⚠️  Handoff script not found, skipping auto-creation")
 
-    def _run_autonomous(self, project_id: str) -> None:
+    def _run_autonomous(self, project_id: str, resume: bool = False) -> None:
         """
         Run orchestrator in autonomous mode (direct execution, no handoff).
 
@@ -1325,6 +1336,11 @@ Notes:
         default=Path.cwd(),
         help="Repository root (default: current directory)",
     )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume project from last handoff checkpoint",
+    )
 
     args = parser.parse_args()
 
@@ -1339,7 +1355,7 @@ Notes:
 
     # Execute command
     if args.command == "run":
-        cli.run_project(args.project_id, mode=args.mode)
+        cli.run_project(args.project_id, mode=args.mode, resume=args.resume)
     elif args.command == "boot":
         cli.boot_mode(user_input=args.project_id)  # project_id is reused as optional intent
     elif args.command == "match":

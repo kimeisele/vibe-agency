@@ -176,12 +176,21 @@ class DeploymentHandler:
         deploy_receipt.setdefault("deployed_at", self._get_timestamp())
 
         # Save deploy_receipt artifact
-        self.orchestrator.save_artifact(
-            manifest.project_id,
-            "deploy_receipt.json",
-            deploy_receipt,
-            validate=False,  # TODO: Add schema validation in future
-        )
+        try:
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "deploy_receipt.json",
+                deploy_receipt,
+                validate=True,
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Schema validation failed for deploy_receipt.json: {e}")
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "deploy_receipt.json",
+                deploy_receipt,
+                validate=False,
+            )
 
         manifest.artifacts["deploy_receipt"] = deploy_receipt
 

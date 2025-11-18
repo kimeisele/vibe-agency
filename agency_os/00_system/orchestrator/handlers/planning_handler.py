@@ -506,20 +506,38 @@ class PlanningHandler:
             }
 
         # Save architecture.json
-        self.orchestrator.save_artifact(
-            manifest.project_id,
-            "architecture.json",
-            architecture,
-            validate=False,  # TODO: Add schema validation in Phase 4
-        )
+        try:
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "architecture.json",
+                architecture,
+                validate=True,
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Schema validation failed for architecture.json: {e}")
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "architecture.json",
+                architecture,
+                validate=False,
+            )
 
         # Save code_gen_spec.json (CRITICAL for CODING phase!)
-        self.orchestrator.save_artifact(
-            manifest.project_id,
-            "code_gen_spec.json",
-            code_gen_spec,
-            validate=False,  # TODO: Add schema validation in Phase 4
-        )
+        try:
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "code_gen_spec.json",
+                code_gen_spec,
+                validate=True,
+            )
+        except Exception as e:
+            logger.warning(f"⚠️  Schema validation failed for code_gen_spec.json: {e}")
+            self.orchestrator.save_artifact(
+                manifest.project_id,
+                "code_gen_spec.json",
+                code_gen_spec,
+                validate=False,
+            )
 
         manifest.artifacts["architecture"] = architecture
         manifest.artifacts["code_gen_spec"] = code_gen_spec
