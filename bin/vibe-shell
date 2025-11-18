@@ -49,10 +49,13 @@ print_motd() {
 ╚════════════════════════════════════════════════════════════════════════════╝
 EOF
 
-    # Show layer detection
+    # Show layer detection from context (GAD-502: Context Projection)
     if [ -f "$VIBE_CONTEXT_FILE" ]; then
         LAYER=$(grep -o '"layer":"[^"]*' "$VIBE_CONTEXT_FILE" | cut -d'"' -f4 || echo "UNKNOWN")
-        echo "📍 Execution Layer: $LAYER" >&2
+        USER_CTX=$(grep -o '"user":"[^"]*' "$VIBE_CONTEXT_FILE" | cut -d'"' -f4 || echo "unknown")
+        echo "📍 Layer: $LAYER | 👤 User: $USER_CTX" >&2
+    else
+        echo "⚠️  Context not initialized" >&2
     fi
 
     echo "" >&2
@@ -95,10 +98,15 @@ log_command() {
     echo "[$timestamp] COMMAND: $cmd (exit_code: $exit_code)" >> "$VIBE_COMMAND_LOG"
 }
 
-# Inject context into environment
+# Inject context into environment (GAD-502: Context Projection)
 inject_context() {
     if [ -f "$VIBE_CONTEXT_FILE" ]; then
         export VIBE_CONTEXT="$(cat "$VIBE_CONTEXT_FILE")"
+
+        # Debug mode: Show context is loaded
+        if [ "${VIBE_SHELL_DEBUG:-0}" = "1" ]; then
+            echo "[DEBUG] VIBE_CONTEXT loaded: $(echo "$VIBE_CONTEXT" | head -c 60)..." >&2
+        fi
     fi
 }
 
@@ -192,6 +200,17 @@ main() {
         --status)
             handle_status
             exit 0
+            ;;
+        -c)
+            # Shell command mode (like bash -c)
+            if [ $# -gt 1 ]; then
+                shift  # Remove -c flag
+                log_command "$@"
+                exec "${SHELL:-/bin/bash}" -c "$@"
+            else
+                echo "Error: -c requires a command" >&2
+                exit 1
+            fi
             ;;
         *)
             # Execute command with arguments if provided
