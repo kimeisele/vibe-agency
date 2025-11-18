@@ -17,7 +17,7 @@ def validate_knowledge_index(index_path: str = ".knowledge_index.yaml") -> bool:
     Returns:
         bool: True if all validations pass, False otherwise
     """
-    repo_root = Path(__file__).parent
+    repo_root = Path(__file__).parent.parent
     index_file = repo_root / index_path
 
     print(f"📋 Validating: {index_file}")
@@ -122,7 +122,7 @@ def validate_hardcoded_paths() -> bool:
     """
     Validates that all hardcoded 'agency_os/' paths still resolve.
     """
-    repo_root = Path(__file__).parent
+    repo_root = Path(__file__).parent.parent
     ssf_dir = repo_root / "system_steward_framework"
 
     print("\n🔍 Checking hardcoded paths in system_steward_framework...")

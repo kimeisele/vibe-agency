@@ -50,8 +50,8 @@ jobs:
 
     - name: Test VIBE_ALIGNER composition
       run: |
-        uv run python test_vibe_aligner.py
+        uv run python tests/test_vibe_aligner.py
 
     - name: Validate knowledge index
       run: |
-        uv run python validate_knowledge_index.py
+        uv run python scripts/validate_knowledge_index.py
