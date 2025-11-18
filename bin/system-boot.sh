@@ -13,6 +13,14 @@ set -euo pipefail
 VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
 
+# ============================================================================
+# DEPENDENCY CHECK - Ensure venv is ready (fast when cached)
+# ============================================================================
+if [ ! -d ".venv" ] || ! python3 -c "import yaml" 2>/dev/null; then
+    echo "📦 Installing dependencies..."
+    uv sync --all-extras > /dev/null 2>&1
+fi
+
 echo "════════════════════════════════════════════════════════════════"
 echo "🚀 VIBE-AGENCY SYSTEM BOOT"
 echo "════════════════════════════════════════════════════════════════"

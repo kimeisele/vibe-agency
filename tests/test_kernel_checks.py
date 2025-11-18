@@ -20,8 +20,9 @@ def test_kernel_blocks_manifest_overwrite():
         orchestrator._kernel_check_save_artifact("project_manifest.json")
         assert False, "Should have raised KernelViolationError"
     except KernelViolationError as e:
-        assert "Cannot overwrite critical file" in str(e)
+        assert "BLOCKED" in str(e)
         assert "project_manifest.json" in str(e)
+        assert "WHAT TO DO INSTEAD" in str(e)
         print("✅ Kernel blocked critical file overwrite (manifest)")
 
 
@@ -33,8 +34,9 @@ def test_kernel_blocks_handoff_overwrite():
         orchestrator._kernel_check_save_artifact(".session_handoff.json")
         assert False, "Should have raised KernelViolationError"
     except KernelViolationError as e:
-        assert "Cannot overwrite critical file" in str(e)
+        assert "BLOCKED" in str(e)
         assert ".session_handoff.json" in str(e)
+        assert "WHAT TO DO INSTEAD" in str(e)
         print("✅ Kernel blocked critical file overwrite (handoff)")
 
 
@@ -82,8 +84,9 @@ def test_kernel_blocks_commit_with_linting_errors():
             orchestrator._kernel_check_git_commit()
             assert False, "Should have raised KernelViolationError"
         except KernelViolationError as e:
-            assert "Cannot commit with linting errors" in str(e)
-            assert "5 linting error(s)" in str(e)
+            assert "BLOCKED" in str(e)
+            assert "linting errors" in str(e)
+            assert "WHAT TO DO INSTEAD" in str(e)
             print("✅ Kernel blocked commit with linting errors")
     finally:
         # Restore original status file
