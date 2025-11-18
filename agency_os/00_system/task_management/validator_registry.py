@@ -48,6 +48,49 @@ def validate_docs_updated(vibe_root: Path, required_files: list) -> bool:
     return all(req in modified_files for req in required_files)
 
 
+def validate_file_exists(vibe_root: Path, path: str) -> bool:
+    """Check if a file or directory exists at the given path."""
+    file_path = vibe_root / path
+    return file_path.exists()
+
+
+def validate_shell_command_success(vibe_root: Path, command: str) -> bool:
+    """Execute a shell command and return True if it succeeds (exit code 0)."""
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,  # noqa: S602
+            cwd=vibe_root,
+            capture_output=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except subprocess.TimeoutExpired:
+        return False
+
+
+def validate_shell_output_contains(vibe_root: Path, command: str, text: str) -> bool:
+    """Execute a shell command and check if output contains text."""
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,  # noqa: S602
+            cwd=vibe_root,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return text in result.stdout or text in result.stderr
+    except subprocess.TimeoutExpired:
+        return False
+
+
+def validate_env_variable_set(vibe_root: Path, variable: str) -> bool:
+    """Check if an environment variable is set in the current environment."""
+    import os
+    return variable in os.environ
+
+
 # ============================================================================
 # REGISTRY
 # ============================================================================
@@ -57,6 +100,10 @@ VALIDATOR_REGISTRY: dict[str, Callable] = {
     "tests_passing": validate_tests_passing,
     "git_clean": validate_git_clean,
     "docs_updated": validate_docs_updated,
+    "file_exists": validate_file_exists,
+    "shell_command_success": validate_shell_command_success,
+    "shell_output_contains": validate_shell_output_contains,
+    "env_variable_set": validate_env_variable_set,
 }
 
 

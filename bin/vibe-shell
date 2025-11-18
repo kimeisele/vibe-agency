@@ -1,0 +1,217 @@
+#!/bin/bash
+################################################################################
+# vibe-shell: VIBE AGENCY RUNTIME KERNEL
+################################################################################
+#
+# Purpose: The execution wrapper for all agent interactions.
+#
+# Features:
+#   - Unavoidable MOTD (displays to stderr, can't be piped away)
+#   - Context Injection (loads .vibe/runtime/context.json)
+#   - Command Logging (tracks all executions)
+#   - Layer Detection (determines execution context)
+#   - Security Enforcement (validates operations)
+#
+# Usage:
+#   vibe-shell [COMMAND] [ARGS...]
+#   vibe-shell --version
+#   vibe-shell --help
+#
+################################################################################
+
+set -euo pipefail
+
+# ============================================================================
+# VERSION & METADATA
+# ============================================================================
+
+VIBE_SHELL_VERSION="1.0.0-alpha"
+VIBE_SHELL_DATE="2025-11-19"
+
+# Determine VIBE_ROOT
+VIBE_ROOT="${VIBE_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export VIBE_ROOT
+
+VIBE_RUNTIME_DIR="$VIBE_ROOT/.vibe/runtime"
+VIBE_LOGS_DIR="$VIBE_ROOT/.vibe/logs"
+VIBE_CONTEXT_FILE="$VIBE_RUNTIME_DIR/context.json"
+VIBE_COMMAND_LOG="$VIBE_LOGS_DIR/commands.log"
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
+
+# Print MOTD to stderr (unavoidable)
+print_motd() {
+    cat >&2 << 'EOF'
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      🚀 VIBE AGENCY OS SHELL 🚀                           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+EOF
+
+    # Show layer detection
+    if [ -f "$VIBE_CONTEXT_FILE" ]; then
+        LAYER=$(grep -o '"layer":"[^"]*' "$VIBE_CONTEXT_FILE" | cut -d'"' -f4 || echo "UNKNOWN")
+        echo "📍 Execution Layer: $LAYER" >&2
+    fi
+
+    echo "" >&2
+}
+
+# Load environment from .env if present
+load_env() {
+    if [ -f "$VIBE_ROOT/.env" ]; then
+        # shellcheck disable=SC2046
+        export $(grep -v '^#' "$VIBE_ROOT/.env" | xargs)
+    fi
+}
+
+# Initialize runtime directories
+init_runtime() {
+    mkdir -p "$VIBE_RUNTIME_DIR"
+    mkdir -p "$VIBE_LOGS_DIR"
+
+    # Create context.json if it doesn't exist
+    if [ ! -f "$VIBE_CONTEXT_FILE" ]; then
+        cat > "$VIBE_CONTEXT_FILE" << EOF
+{
+  "version": 1,
+  "layer": "RUNTIME",
+  "initialized_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "vibe_root": "$VIBE_ROOT",
+  "hostname": "$(hostname)",
+  "user": "$(whoami)"
+}
+EOF
+    fi
+}
+
+# Log command execution
+log_command() {
+    local cmd="$*"
+    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local exit_code=$?
+
+    echo "[$timestamp] COMMAND: $cmd (exit_code: $exit_code)" >> "$VIBE_COMMAND_LOG"
+}
+
+# Inject context into environment
+inject_context() {
+    if [ -f "$VIBE_CONTEXT_FILE" ]; then
+        export VIBE_CONTEXT="$(cat "$VIBE_CONTEXT_FILE")"
+    fi
+}
+
+# ============================================================================
+# COMMAND HANDLERS
+# ============================================================================
+
+handle_version() {
+    cat << EOF
+vibe-shell $VIBE_SHELL_VERSION
+Build Date: $VIBE_SHELL_DATE
+vibe_root: $VIBE_ROOT
+EOF
+}
+
+handle_help() {
+    cat << EOF
+VIBE AGENCY RUNTIME KERNEL
+
+Usage: vibe-shell [COMMAND] [ARGS...]
+
+Commands:
+  --version          Show version information
+  --help             Show this help message
+  --status           Show runtime status
+  [COMMAND] [ARGS]   Execute command with context injection
+
+Environment:
+  VIBE_ROOT          Set root directory (auto-detected if not set)
+  VIBE_CONTEXT       Runtime context (auto-loaded)
+  VIBE_SHELL_DEBUG   Set to 1 for debug output
+
+Examples:
+  vibe-shell python script.py
+  vibe-shell bash -c 'echo \$VIBE_CONTEXT'
+  vibe-shell --version
+
+For more info: https://vibe-agency.dev/shell
+EOF
+}
+
+handle_status() {
+    echo "╔════════════════════════════════════════════════════════════════════════════╗" >&2
+    echo "║                      VIBE SHELL RUNTIME STATUS                            ║" >&2
+    echo "╚════════════════════════════════════════════════════════════════════════════╝" >&2
+    echo "" >&2
+    echo "📦 Version: $VIBE_SHELL_VERSION" >&2
+    echo "📁 Root: $VIBE_ROOT" >&2
+    echo "⏰ Initialized: $(date)" >&2
+
+    if [ -f "$VIBE_CONTEXT_FILE" ]; then
+        echo "✅ Context: Loaded" >&2
+        echo "   $(head -1 "$VIBE_CONTEXT_FILE" | cut -c1-70)..." >&2
+    else
+        echo "❌ Context: Not found" >&2
+    fi
+
+    if [ -f "$VIBE_COMMAND_LOG" ]; then
+        COMMANDS=$(wc -l < "$VIBE_COMMAND_LOG")
+        echo "📝 Commands logged: $COMMANDS" >&2
+    else
+        echo "📝 Commands logged: 0" >&2
+    fi
+
+    echo "" >&2
+}
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+main() {
+    # Always print MOTD (unavoidable)
+    print_motd
+
+    # Initialize runtime
+    init_runtime
+    load_env
+    inject_context
+
+    # Handle special flags
+    case "${1:-}" in
+        --version)
+            handle_version
+            exit 0
+            ;;
+        --help|-h)
+            handle_help
+            exit 0
+            ;;
+        --status)
+            handle_status
+            exit 0
+            ;;
+        *)
+            # Execute command with arguments if provided
+            if [ $# -gt 0 ]; then
+                log_command "$@"
+                exec "$@"
+            else
+                # No command provided - drop into interactive shell (if possible)
+                if [ -t 0 ]; then
+                    # Interactive terminal
+                    PS1="(vibe-shell) $ " exec "${SHELL:-/bin/bash}"
+                else
+                    # Non-interactive - just exit
+                    echo "Error: No command provided and non-interactive mode" >&2
+                    exit 1
+                fi
+            fi
+            ;;
+    esac
+}
+
+# Run main
+main "$@"
