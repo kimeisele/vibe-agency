@@ -34,6 +34,7 @@ build/
 # Test Outputs
 *_TEST.md
 *_TEST_RESULTS.md
+.claude_md_verification_report.json
 
 # Workspaces
 # Exclude generated artifacts but keep project manifests and directory structure
