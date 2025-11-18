@@ -92,32 +92,31 @@ class TestVibeAlignerSystemE2E:
         """Mock lean_canvas_summary.json (prerequisite for VIBE_ALIGNER)"""
         return {
             "version": "1.0",
-            "problem": {
-                "top_problems": [
+            "canvas_type": "quick_research",
+            "canvas_fields": {
+                "problem": [
                     "Yoga studios lose 30% revenue from no-shows",
                     "Students can't easily find available classes",
                     "Manual scheduling wastes instructor time",
-                ]
-            },
-            "customer_segments": "Yoga studios with 3-10 instructors, serving 50-200 students",
-            "unique_value_proposition": "Real-time booking with automated reminders to reduce no-shows",
-            "solution": {
-                "mvp_features": [
-                    "Class schedule display",
-                    "Student booking with payment",
-                    "Automated SMS/email reminders",
-                ]
+                ],
+                "customer_segments": "Yoga studios with 3-10 instructors, serving 50-200 students",
+                "unique_value_proposition": "Real-time booking with automated reminders to reduce no-shows",
+                "solution": [
+                    "Mobile-first booking app",
+                    "Automated reminder SMS/email",
+                    "Instructor dashboard for scheduling",
+                ],
             },
             "riskiest_assumptions": [
-                "Studios will pay $99/month for booking system",
-                "30% no-show reduction is achievable",
-                "Students will use mobile app for booking",
+                {
+                    "id": "RA-001",
+                    "assumption": "Studios will adopt mobile-first solution",
+                    "risk_level": "HIGH",
+                }
             ],
-            "readiness": {"status": "READY", "missing_inputs": []},
-            "metadata": {
-                "created_at": datetime.now().isoformat(),
-                "validator": "LEAN_CANVAS_VALIDATOR",
-            },
+            "readiness": "medium",
+            "research_insights": {},
+            "validation_notes": {},
         }
 
     @pytest.fixture

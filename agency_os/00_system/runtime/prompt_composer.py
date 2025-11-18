@@ -3,36 +3,34 @@
 Composes task playbook + context → enriched prompt for STEWARD
 """
 
-import re
 from pathlib import Path
 from typing import Any, Dict
 
 
 class PromptComposer:
     """Composes task playbook + context → enriched prompt"""
-    
+
     def __init__(self, playbook_tasks_dir: Path = None):
-        self.tasks_dir = playbook_tasks_dir or \
-            Path(__file__).parent.parent / 'playbook' / 'tasks'
-    
+        self.tasks_dir = playbook_tasks_dir or Path(__file__).parent.parent / "playbook" / "tasks"
+
     def compose(self, task: str, context: Dict[str, Any]) -> str:
         """Compose final enriched prompt"""
-        
+
         # Load base task playbook
         task_md = self._load_task(task)
-        
+
         # Inject context
         enriched = self._inject_context(task_md, context)
-        
+
         # Add boot prompt
         final = self._add_boot_prompt(enriched, context)
-        
+
         return final
-    
+
     def _load_task(self, task: str) -> str:
         """Load task playbook markdown"""
-        task_file = self.tasks_dir / f'{task}.md'
-        
+        task_file = self.tasks_dir / f"{task}.md"
+
         if not task_file.exists():
             # Fallback to generic task
             return f"""# {task.upper()} Task
@@ -50,80 +48,90 @@ Execute {task} task.
 ✅ Tests passing
 ✅ Changes documented
 """
-        
+
         with open(task_file) as f:
             return f.read()
-    
+
     def _inject_context(self, task_md: str, context: Dict[str, Any]) -> str:
         """Replace context placeholders in task markdown"""
-        
+
         # Build replacement map
         replacements = {}
-        
+
         # Session context
-        session = context.get('session', {})
-        replacements['${session.phase}'] = session.get('phase', 'UNKNOWN')
-        replacements['${session.last_task}'] = session.get('last_task', 'none')
-        replacements['${session.backlog_item}'] = session.get('backlog_item', 'none')
-        replacements['${session.requirements}'] = ', '.join(session.get('backlog', [])[:3]) or 'none'
-        replacements['${session.doc_audience}'] = 'developers'  # Default
-        replacements['${session.focus_area}'] = context.get('manifest', {}).get('focus_area', 'general')
-        
+        session = context.get("session", {})
+        replacements["${session.phase}"] = session.get("phase", "UNKNOWN")
+        replacements["${session.last_task}"] = session.get("last_task", "none")
+        replacements["${session.backlog_item}"] = session.get("backlog_item", "none")
+        replacements["${session.requirements}"] = (
+            ", ".join(session.get("backlog", [])[:3]) or "none"
+        )
+        replacements["${session.doc_audience}"] = "developers"  # Default
+        replacements["${session.focus_area}"] = context.get("manifest", {}).get(
+            "focus_area", "general"
+        )
+
         # Git context
-        git = context.get('git', {})
-        replacements['${git.branch}'] = git.get('branch', 'unknown')
-        replacements['${git.uncommitted}'] = str(git.get('uncommitted', 0))
-        replacements['${git.last_commit}'] = git.get('last_commit', 'none')
-        replacements['${git.recent_commits}'] = '\n'.join(git.get('recent_commits', [])[:3])
-        
+        git = context.get("git", {})
+        replacements["${git.branch}"] = git.get("branch", "unknown")
+        replacements["${git.uncommitted}"] = str(git.get("uncommitted", 0))
+        replacements["${git.last_commit}"] = git.get("last_commit", "none")
+        replacements["${git.recent_commits}"] = "\n".join(git.get("recent_commits", [])[:3])
+
         # Test context
-        tests = context.get('tests', {})
-        failing_tests = tests.get('failing', [])
-        replacements['${tests.failing}'] = ', '.join(failing_tests[:5]) if failing_tests else 'none'
-        replacements['${tests.failing_count}'] = str(len(failing_tests))
-        replacements['${tests.status}'] = 'passing' if not failing_tests else f'{len(failing_tests)} failing'
-        replacements['${tests.errors}'] = ', '.join(tests.get('errors', [])[:3]) or 'none'
-        
+        tests = context.get("tests", {})
+        failing_tests = tests.get("failing", [])
+        replacements["${tests.failing}"] = ", ".join(failing_tests[:5]) if failing_tests else "none"
+        replacements["${tests.failing_count}"] = str(len(failing_tests))
+        replacements["${tests.status}"] = (
+            "passing" if not failing_tests else f"{len(failing_tests)} failing"
+        )
+        replacements["${tests.errors}"] = ", ".join(tests.get("errors", [])[:3]) or "none"
+
         # Manifest context
-        manifest = context.get('manifest', {})
-        replacements['${manifest.project_type}'] = manifest.get('project_type', 'unknown')
-        replacements['${manifest.test_framework}'] = manifest.get('test_framework', 'pytest')
-        replacements['${manifest.docs_path}'] = manifest.get('docs_path', 'docs/')
-        replacements['${manifest.structure}'] = str(manifest.get('structure', {}))
-        
+        manifest = context.get("manifest", {})
+        replacements["${manifest.project_type}"] = manifest.get("project_type", "unknown")
+        replacements["${manifest.test_framework}"] = manifest.get("test_framework", "pytest")
+        replacements["${manifest.docs_path}"] = manifest.get("docs_path", "docs/")
+        replacements["${manifest.structure}"] = str(manifest.get("structure", {}))
+
         # Apply replacements
         result = task_md
         for placeholder, value in replacements.items():
             result = result.replace(placeholder, value)
-        
+
         # Add context section
         context_section = self._format_context_section(context)
-        result += '\n\n' + context_section
-        
+        result += "\n\n" + context_section
+
         return result
-    
+
     def _format_context_section(self, context: Dict[str, Any]) -> str:
         """Format current context as markdown section"""
-        session = context.get('session', {})
-        git = context.get('git', {})
-        tests = context.get('tests', {})
-        env = context.get('environment', {})
-        
-        failing_count = tests.get('failing_count', 0)
-        test_status = '✅ Passing' if failing_count == 0 else f'❌ {failing_count} Failing'
-        
-        git_status = '✅ Clean' if git.get('uncommitted', 0) == 0 else f'⚠️ {git.get("uncommitted")} uncommitted'
-        
-        env_status = '✅ Ready' if env.get('status') == 'ready' else f'⚠️ {env.get("status")}'
-        
+        session = context.get("session", {})
+        git = context.get("git", {})
+        tests = context.get("tests", {})
+        env = context.get("environment", {})
+
+        failing_count = tests.get("failing_count", 0)
+        test_status = "✅ Passing" if failing_count == 0 else f"❌ {failing_count} Failing"
+
+        git_status = (
+            "✅ Clean"
+            if git.get("uncommitted", 0) == 0
+            else f"⚠️ {git.get('uncommitted')} uncommitted"
+        )
+
+        env_status = "✅ Ready" if env.get("status") == "ready" else f"⚠️ {env.get('status')}"
+
         return f"""---
 
 ## 📊 CURRENT CONTEXT
 
 **Project State:**
-- Phase: {session.get('phase', 'UNKNOWN')}
-- Last Task: {session.get('last_task', 'none')}
-- Branch: {git.get('branch', 'unknown')}
+- Phase: {session.get("phase", "UNKNOWN")}
+- Last Task: {session.get("last_task", "none")}
+- Branch: {git.get("branch", "unknown")}
 
 **Status:**
 - Tests: {test_status}
@@ -131,29 +139,29 @@ Execute {task} task.
 - Environment: {env_status}
 
 **Backlog:**
-{self._format_backlog(session.get('backlog', []))}
+{self._format_backlog(session.get("backlog", []))}
 
 **Recent Commits:**
-{self._format_commits(git.get('recent_commits', []))}
+{self._format_commits(git.get("recent_commits", []))}
 
 ---
 """
-    
+
     def _format_backlog(self, backlog: list) -> str:
         """Format backlog items"""
         if not backlog:
-            return '- (empty)'
-        return '\n'.join([f'- {item}' for item in backlog[:5]])
-    
+            return "- (empty)"
+        return "\n".join([f"- {item}" for item in backlog[:5]])
+
     def _format_commits(self, commits: list) -> str:
         """Format recent commits"""
         if not commits:
-            return '- (no commits)'
-        return '\n'.join([f'- {commit}' for commit in commits[:3]])
-    
+            return "- (no commits)"
+        return "\n".join([f"- {commit}" for commit in commits[:3]])
+
     def _add_boot_prompt(self, enriched_task: str, context: Dict[str, Any]) -> str:
         """Add STEWARD boot prompt wrapper"""
-        
+
         return f"""⚡ **STEWARD OPERATIONAL MODE**
 
 You are STEWARD, the senior orchestration agent at vibe-agency.

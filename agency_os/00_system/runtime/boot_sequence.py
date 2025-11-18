@@ -17,82 +17,84 @@ from prompt_composer import PromptComposer
 
 class BootSequence:
     """Main entry point for system boot"""
-    
+
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path.cwd()
         self.context_loader = ContextLoader(self.project_root)
         self.playbook_engine = PlaybookEngine()
         self.prompt_composer = PromptComposer()
-    
+
     def run(self, user_input: Optional[str] = None):
         """Execute the boot sequence"""
-        
+
         # PRE-FLIGHT: Check for uncommitted changes (graceful guardrail)
         git_status = self._check_uncommitted_changes()
-        if git_status['has_uncommitted'] and not git_status['is_clean_state']:
+        if git_status["has_uncommitted"] and not git_status["is_clean_state"]:
             self._display_commit_warning(git_status)
             return  # Soft halt - exit cleanly, agent sees warning
-        
+
         # Conveyor Belt 1: Load Context
         print("🔄 Loading context...", file=sys.stderr)
         context = self.context_loader.load()
-        
+
         # Conveyor Belt 2: Route to Task
         print("🎯 Routing to task...", file=sys.stderr)
         route = self.playbook_engine.route(user_input or "", context)
-        
+
         # Conveyor Belt 3: Compose Prompt
         print("📝 Composing prompt...", file=sys.stderr)
         prompt = self.prompt_composer.compose(route.task, context)
-        
+
         # Add system prompt (prime agent properly)
         system_prompt = self._get_system_prompt(route)
         final_prompt = system_prompt + "\n\n" + prompt
-        
+
         # Display dashboard
         self._display_dashboard(context, route)
-        
+
         # Output prompt for STEWARD
         print("\n" + "=" * 80, file=sys.stderr)
         print(final_prompt)
         print("=" * 80 + "\n", file=sys.stderr)
-    
+
     def _check_uncommitted_changes(self) -> dict:
         """Check for uncommitted changes - graceful detection"""
         try:
             import subprocess
-            
+
             result = subprocess.run(
-                ['git', 'status', '--porcelain'],
+                ["git", "status", "--porcelain"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
                 timeout=5,
-                check=True
+                check=True,
             )
-            
-            uncommitted = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
-            
+
+            uncommitted = [
+                line.strip() for line in result.stdout.strip().split("\n") if line.strip()
+            ]
+
             return {
-                'has_uncommitted': len(uncommitted) > 0,
-                'files': uncommitted[:10],  # First 10
-                'count': len(uncommitted),
-                'is_clean_state': len(uncommitted) == 0
+                "has_uncommitted": len(uncommitted) > 0,
+                "files": uncommitted[:10],  # First 10
+                "count": len(uncommitted),
+                "is_clean_state": len(uncommitted) == 0,
             }
         except Exception as e:
             return {
-                'has_uncommitted': False,
-                'files': [],
-                'count': 0,
-                'is_clean_state': True,
-                'error': str(e)
+                "has_uncommitted": False,
+                "files": [],
+                "count": 0,
+                "is_clean_state": True,
+                "error": str(e),
             }
-    
+
     def _display_commit_warning(self, git_status: dict) -> None:
         """Display graceful halt warning for uncommitted changes"""
-        count = git_status['count']
-        files = git_status['files']
-        
+        count = git_status["count"]
+        files = git_status["files"]
+
         warning = f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                         ⚠️  BOOT HALTED - SOFT GUARDRAIL                     ║
@@ -104,7 +106,7 @@ Files:
 """
         for f in files:
             warning += f"  {f}\n"
-        
+
         warning += """
 ACTION REQUIRED:
 
@@ -129,7 +131,7 @@ Boot will resume once changes are committed or stashed.
 ────────────────────────────────────────────────────────────────────────────────
 """
         print(warning, file=sys.stderr)
-    
+
     def _get_system_prompt(self, route) -> str:
         """System prompt to prime agents properly"""
         return """⚡ STEWARD SYSTEM PROMPT
@@ -179,84 +181,79 @@ DO:
 ✅ Update session state
 ✅ Commit with context
 """
-    
+
     def _check_git_sync(self) -> dict:
         """Check if repo is behind remote - graceful fallback if git fails"""
         try:
             import subprocess
-            
+
             # Fetch latest refs (non-destructive)
             subprocess.run(
-                ['git', 'fetch', 'origin'],
+                ["git", "fetch", "origin"],
                 cwd=self.project_root,
                 capture_output=True,
                 timeout=5,
-                check=False  # Don't fail if fetch fails
+                check=False,  # Don't fail if fetch fails
             )
-            
+
             # Count commits behind
             result = subprocess.run(
-                ['git', 'rev-list', '--count', 'HEAD..origin/main'],
+                ["git", "rev-list", "--count", "HEAD..origin/main"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
                 timeout=5,
-                check=True
+                check=True,
             )
-            
+
             commits_behind = int(result.stdout.strip())
             return {
-                'behind': commits_behind > 0,
-                'commits_behind': commits_behind,
-                'status': 'sync_needed' if commits_behind > 0 else 'up_to_date'
+                "behind": commits_behind > 0,
+                "commits_behind": commits_behind,
+                "status": "sync_needed" if commits_behind > 0 else "up_to_date",
             }
         except Exception as e:
             # Graceful fallback - don't break boot
-            return {
-                'behind': False,
-                'commits_behind': 0,
-                'status': 'unknown',
-                'error': str(e)
-            }
-    
+            return {"behind": False, "commits_behind": 0, "status": "unknown", "error": str(e)}
+
     def _display_dashboard(self, context: dict, route) -> None:
         """Display system status dashboard"""
-        
-        session = context.get('session', {})
-        git = context.get('git', {})
-        tests = context.get('tests', {})
-        env = context.get('environment', {})
-        
+
+        session = context.get("session", {})
+        git = context.get("git", {})
+        tests = context.get("tests", {})
+        env = context.get("environment", {})
+
         # Check git sync status
         sync_status = self._check_git_sync()
-        
+
         # Calculate status indicators
-        test_emoji = '✅' if tests.get('failing_count', 0) == 0 else '❌'
-        git_emoji = '✅' if git.get('uncommitted', 0) == 0 else '⚠️'
-        env_emoji = '✅' if env.get('status') == 'ready' else '⚠️'
-        sync_emoji = '✅' if not sync_status.get('behind') else '⚠️'
-        
+        test_emoji = "✅" if tests.get("failing_count", 0) == 0 else "❌"
+        git_emoji = "✅" if git.get("uncommitted", 0) == 0 else "⚠️"
+        env_emoji = "✅" if env.get("status") == "ready" else "⚠️"
+        sync_emoji = "✅" if not sync_status.get("behind") else "⚠️"
+
         dashboard = f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                           🤖 VIBE AGENCY SYSTEM BOOT                         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 📊 SYSTEM STATUS
-  {test_emoji} Tests: {tests.get('failing_count', 0)} failing, {tests.get('status', 'unknown')}
-  {git_emoji} Git: {git.get('uncommitted', 0)} uncommitted files on '{git.get('branch', 'unknown')}'
-  {sync_emoji} Sync: {sync_status.get('commits_behind', 0)} commits behind origin/main
-  {env_emoji} Environment: {env.get('status', 'unknown')}
+  {test_emoji} Tests: {tests.get("failing_count", 0)} failing, {tests.get("status", "unknown")}
+  {git_emoji} Git: {git.get("uncommitted", 0)} uncommitted files on '{git.get("branch", "unknown")}'
+  {sync_emoji} Sync: {sync_status.get("commits_behind", 0)} commits behind origin/main
+  {env_emoji} Environment: {env.get("status", "unknown")}
 
 """
-        
+
         # Add sync suggestion if behind
-        if sync_status.get('behind'):
-            behind_count = sync_status.get('commits_behind', 0)
+        if sync_status.get("behind"):
+            behind_count = sync_status.get("commits_behind", 0)
             dashboard += f"""⚠️  REPO OUT OF SYNC ({behind_count} commits behind)
   To sync: git pull origin main
   
 """
-        
+
         dashboard += f"""
 🎯 RECOMMENDED TASK
   Task: {route.task.upper()}
@@ -265,51 +262,51 @@ DO:
   Reason: {route.source}
 
 📋 PROJECT STATE
-  Phase: {session.get('phase', 'UNKNOWN')}
-  Last Task: {session.get('last_task', 'none')}
-  Backlog Items: {len(session.get('backlog', []))}
+  Phase: {session.get("phase", "UNKNOWN")}
+  Last Task: {session.get("last_task", "none")}
+  Backlog Items: {len(session.get("backlog", []))}
 
 """
-        
+
         # Show available routes if in suggestion mode
-        if route.confidence == 'suggested':
+        if route.confidence == "suggested":
             routes = self.playbook_engine.list_available_routes()
             dashboard += "\n💡 AVAILABLE ROUTES:\n"
             for r in routes[:5]:
-                examples = ', '.join(r['examples'][:2])
+                examples = ", ".join(r["examples"][:2])
                 dashboard += f"  - {r['name']}: {r['description']}\n"
                 dashboard += f"    Examples: {examples}\n"
-        
+
         print(dashboard, file=sys.stderr)
-    
+
     def show_routes(self) -> None:
         """Show all available playbook routes"""
         routes = self.playbook_engine.list_available_routes()
-        
+
         print("\n╔══════════════════════════════════════════════════════════════════════════════╗")
         print("║                        📚 AVAILABLE PLAYBOOK ROUTES                          ║")
         print("╚══════════════════════════════════════════════════════════════════════════════╝\n")
-        
+
         for route in routes:
             print(f"🎯 {route['name'].upper()}")
             print(f"   {route['description']}")
             print(f"   Examples: {', '.join(route['examples'])}")
             print()
-    
+
     def health_check(self) -> bool:
         """Quick health check - returns True if system is operational"""
         try:
             context = self.context_loader.load()
-            
+
             # Check critical components
-            git_ok = context.get('git', {}).get('status') == 'available'
-            env_ok = context.get('environment', {}).get('status') in ['ready', 'needs_setup']
-            
+            git_ok = context.get("git", {}).get("status") == "available"
+            env_ok = context.get("environment", {}).get("status") in ["ready", "needs_setup"]
+
             if not git_ok:
                 print("⚠️ Git not available", file=sys.stderr)
             if not env_ok:
                 print("⚠️ Environment issues detected", file=sys.stderr)
-            
+
             return git_ok and env_ok
         except Exception as e:
             print(f"❌ Health check failed: {e}", file=sys.stderr)
