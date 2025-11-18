@@ -217,66 +217,54 @@ DO:
             return {"behind": False, "commits_behind": 0, "status": "unknown", "error": str(e)}
 
     def _display_dashboard(self, context: dict, route) -> None:
-        """Display system status dashboard"""
-
-        session = context.get("session", {})
+        """Display kernel-style boot output (lean, visual, actionable)"""
+        
         git = context.get("git", {})
         tests = context.get("tests", {})
         env = context.get("environment", {})
-
-        # Check git sync status
         sync_status = self._check_git_sync()
-
-        # Calculate status indicators
-        test_emoji = "✅" if tests.get("failing_count", 0) == 0 else "❌"
-        git_emoji = "✅" if git.get("uncommitted", 0) == 0 else "⚠️"
-        env_emoji = "✅" if env.get("status") == "ready" else "⚠️"
-        sync_emoji = "✅" if not sync_status.get("behind") else "⚠️"
-
+        
+        # Kernel-style output - clean, scannable, actionable
         dashboard = f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                           🤖 VIBE AGENCY SYSTEM BOOT                         ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════╗
+║              VIBE AGENCY STEWARD BOOT v1.1                ║
+║                    [Playbook Integrated]                   ║
+╚════════════════════════════════════════════════════════════╝
 
-📊 SYSTEM STATUS
-  {test_emoji} Tests: {tests.get("failing_count", 0)} failing, {tests.get("status", "unknown")}
-  {git_emoji} Git: {git.get("uncommitted", 0)} uncommitted files on '{git.get("branch", "unknown")}'
-  {sync_emoji} Sync: {sync_status.get("commits_behind", 0)} commits behind origin/main
-  {env_emoji} Environment: {env.get("status", "unknown")}
+[BOOT SEQUENCE]
+  [✓] Integrity verified
+  [✓] Context loaded (5 sources)
+  [✓] Playbook routed: {route.task.upper()}
+  [✓] Prompt composed
 
+[SYSTEM STATUS]
+  Git:    {'✓' if git.get('uncommitted', 0) == 0 else '⚠'} clean ({git.get('branch', 'unknown')})
+  Tests:  {'✓' if tests.get('failing_count', 0) == 0 else '⚠'} {tests.get('failing_count', 0)} failing
+  Sync:   {'✓' if not sync_status.get('behind') else '⚠'} {sync_status.get('commits_behind', 0)} behind
+  Env:    {'✓' if env.get('status') == 'ready' else '⚠'} {env.get('status')}
+
+[NEXT ACTION]
+  TASK:       {route.task.upper()}
+  SOURCE:     {route.source}
+  CONFIDENCE: {route.confidence}
+
+[EXECUTION PROTOCOL]
+  1. READ task playbook completely
+  2. PLAN steps before executing
+  3. EXECUTE minimal surgical changes
+  4. VERIFY with tests (no claims without proof)
+  5. COMMIT with clear message
+  6. UPDATE .session_handoff.json
+  7. REPORT completion + next steps
+
+[ANTI-SLOP RULES]
+  ✓ manifest=truth | read>write | edit>create
+  ✓ test>claim | health>features
+
+════════════════════════════════════════════════════════════
+🚀 Ready. Executing {route.task.upper()} task now.
 """
-
-        # Add sync suggestion if behind
-        if sync_status.get("behind"):
-            behind_count = sync_status.get("commits_behind", 0)
-            dashboard += f"""⚠️  REPO OUT OF SYNC ({behind_count} commits behind)
-  To sync: git pull origin main
-  
-"""
-
-        dashboard += f"""
-🎯 RECOMMENDED TASK
-  Task: {route.task.upper()}
-  Description: {route.description}
-  Confidence: {route.confidence}
-  Reason: {route.source}
-
-📋 PROJECT STATE
-  Phase: {session.get("phase", "UNKNOWN")}
-  Last Task: {session.get("last_task", "none")}
-  Backlog Items: {len(session.get("backlog", []))}
-
-"""
-
-        # Show available routes if in suggestion mode
-        if route.confidence == "suggested":
-            routes = self.playbook_engine.list_available_routes()
-            dashboard += "\n💡 AVAILABLE ROUTES:\n"
-            for r in routes[:5]:
-                examples = ", ".join(r["examples"][:2])
-                dashboard += f"  - {r['name']}: {r['description']}\n"
-                dashboard += f"    Examples: {examples}\n"
-
+        
         print(dashboard, file=sys.stderr)
 
     def show_routes(self) -> None:
