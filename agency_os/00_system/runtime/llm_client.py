@@ -22,6 +22,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerOpenError
+from quota_manager import OperationalQuota, QuotaExceededError, QuotaLimits
+
 logger = logging.getLogger(__name__)
 
 
@@ -225,6 +228,24 @@ class LLMClient:
         self.cost_tracker = CostTracker()
         self.budget_limit = budget_limit
 
+        # Initialize safety layer (GAD-509 & GAD-510)
+        self.circuit_breaker = CircuitBreaker(
+            config=CircuitBreakerConfig(
+                failure_threshold=5,
+                recovery_timeout_seconds=30,
+                window_size_seconds=60,
+            )
+        )
+        self.quota_manager = OperationalQuota(
+            limits=QuotaLimits(
+                requests_per_minute=100,
+                tokens_per_minute=100_000,
+                cost_per_request_usd=0.50,
+                cost_per_hour_usd=50.0,
+                cost_per_day_usd=500.0,
+            )
+        )
+
         # Initialize Anthropic client with graceful failover
         self.api_key = os.environ.get("ANTHROPIC_API_KEY")
 
@@ -258,7 +279,12 @@ class LLMClient:
         max_retries: int = 3,
     ) -> LLMResponse:
         """
-        Invoke LLM with retry logic and cost tracking.
+        Invoke LLM with safety layer, retry logic, and cost tracking.
+
+        Implements safety guardrails:
+        - Budget limits (legacy)
+        - Operational quotas (GAD-510): RPM, TPM, cost/hour, cost/day
+        - Circuit breaker (GAD-509): Protects against cascading API failures
 
         Args:
             prompt: Input prompt
@@ -272,21 +298,36 @@ class LLMClient:
 
         Raises:
             BudgetExceededError: If budget limit reached
+            QuotaExceededError: If operational quota exceeded
+            CircuitBreakerOpenError: If circuit breaker is OPEN
             LLMInvocationError: If all retries fail
         """
-        # Check budget before invocation
+        # Check budget before invocation (legacy)
         if self.budget_limit and self.cost_tracker.total_cost >= self.budget_limit:
             raise BudgetExceededError(
                 f"Budget limit reached: ${self.budget_limit:.2f} "
                 f"(current: ${self.cost_tracker.total_cost:.4f})"
             )
 
+        # Check operational quotas before invocation (GAD-510 pre-flight check)
+        # This prevents wasted API calls by validating quotas upfront
+        estimated_tokens = max_tokens  # Conservative estimate
+        try:
+            self.quota_manager.check_before_request(
+                estimated_tokens=estimated_tokens, operation=f"invoke({model})"
+            )
+        except QuotaExceededError as e:
+            logger.error(f"Quota check failed: {e}")
+            raise
+
         # Retry loop with exponential backoff
         last_error = None
         for attempt in range(max_retries):
             try:
-                # Call Anthropic API
-                response = self.client.messages.create(
+                # Call Anthropic API through circuit breaker (GAD-509)
+                # Circuit breaker protects against cascading failures
+                response = self.circuit_breaker.call(
+                    self.client.messages.create,
                     model=model,
                     max_tokens=max_tokens,
                     temperature=temperature,
@@ -298,6 +339,12 @@ class LLMClient:
                     input_tokens=response.usage.input_tokens,
                     output_tokens=response.usage.output_tokens,
                     model=model,
+                )
+
+                # Record quota usage (GAD-510 post-request recording)
+                total_tokens = response.usage.input_tokens + response.usage.output_tokens
+                self.quota_manager.record_request(
+                    tokens_used=total_tokens, cost_usd=usage.cost_usd, operation=f"invoke({model})"
                 )
 
                 # Log invocation
@@ -314,6 +361,24 @@ class LLMClient:
                     model=response.model,
                     finish_reason=response.stop_reason,
                 )
+
+            except CircuitBreakerOpenError as e:
+                # Circuit breaker is OPEN - don't retry (fatal condition)
+                logger.error(
+                    f"Circuit breaker OPEN (attempt {attempt + 1}/{max_retries}): {e}. "
+                    f"LLM API showing sustained failures. Not retrying."
+                )
+                raise LLMInvocationError(
+                    f"LLM invocation failed: Circuit breaker OPEN. "
+                    f"API showing sustained issues: {e!s}"
+                )
+
+            except QuotaExceededError as e:
+                # Quota exceeded during request - don't retry (operational limit reached)
+                logger.error(
+                    f"Quota exceeded during invocation (attempt {attempt + 1}/{max_retries}): {e}"
+                )
+                raise
 
             except Exception as e:
                 last_error = e
