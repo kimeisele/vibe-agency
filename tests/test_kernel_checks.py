@@ -3,13 +3,10 @@
 
 import json
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
-
-from core_orchestrator import CoreOrchestrator, KernelViolationError
+from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
 
 def test_kernel_blocks_manifest_overwrite():

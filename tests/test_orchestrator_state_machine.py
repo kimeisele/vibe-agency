@@ -15,7 +15,6 @@ This validates GAD-002 (SDLC Orchestration) implementation.
 
 import json
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 
@@ -23,9 +22,8 @@ import pytest
 
 # Add orchestrator to path
 repo_root = Path(__file__).parent.parent
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator"))
 
-from core_orchestrator import CoreOrchestrator, PlanningSubState, ProjectManifest, ProjectPhase
+from agency_os_orchestrator import CoreOrchestrator, PlanningSubState, ProjectManifest, ProjectPhase
 
 
 class TestOrchestratorStateMachine:

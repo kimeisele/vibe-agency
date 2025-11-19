@@ -17,10 +17,7 @@ import time
 from pathlib import Path
 
 # Add orchestrator to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/runtime"))
-
-from core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
+from agency_os_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
 
 
 def simulate_claude_code_operator(workspace_dir, timeout=10):

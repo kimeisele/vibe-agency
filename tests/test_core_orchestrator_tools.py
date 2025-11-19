@@ -13,11 +13,8 @@ from pathlib import Path
 
 # Add orchestrator to path
 repo_root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator"))
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "orchestrator" / "tools"))
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "runtime"))
 
-from core_orchestrator import CoreOrchestrator
+from agency_os_orchestrator import CoreOrchestrator
 
 
 def test_xml_parsing():

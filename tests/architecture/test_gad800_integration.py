@@ -16,7 +16,6 @@ Test coverage includes:
 """
 
 import importlib.util
-import sys
 from pathlib import Path
 
 import pytest
@@ -24,7 +23,6 @@ import yaml
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 # Import layer detection module dynamically
 layer_detection_path = project_root / "docs" / "architecture" / "GAD-8XX" / "layer_detection.py"

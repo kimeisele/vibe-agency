@@ -17,7 +17,6 @@ This test validates the dogfooding exercise that created feature_spec_v1.0_FINAL
 """
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -25,7 +24,6 @@ import yaml
 
 # Add paths
 repo_root = Path(__file__).parent.parent
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "runtime"))
 
 from prompt_runtime import PromptRuntime
 

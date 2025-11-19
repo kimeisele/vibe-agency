@@ -13,8 +13,6 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(REPO_ROOT / "agency_os" / "00_system" / "orchestrator" / "tools"))
 
 print("=" * 70)
 print("RESEARCH TOOLS PROOF (Claude Code WebSearch Backend)")

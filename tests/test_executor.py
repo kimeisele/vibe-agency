@@ -11,14 +11,12 @@ Ensures the executor correctly:
   5. Handles dry-run mode
 """
 
-import sys
 from pathlib import Path
 
 import pytest
 
 # Add runtime directory to path
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
-sys.path.insert(0, str(runtime_dir))
 
 from executor import (
     ExecutionStatus,

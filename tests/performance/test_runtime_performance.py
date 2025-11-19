@@ -2,11 +2,8 @@
 """Performance tests for GAD-005 Runtime Engineering"""
 
 import subprocess
-import sys
 import time
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "agency_os/00_system/orchestrator"))
 
 
 def benchmark_motd_display():
@@ -29,7 +26,7 @@ def benchmark_motd_display():
 def benchmark_kernel_check():
     """Benchmark: Kernel check should be < 50ms"""
 
-    from core_orchestrator import CoreOrchestrator
+    from agency_os_orchestrator import CoreOrchestrator
 
     orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -55,7 +52,7 @@ def benchmark_kernel_check():
 def benchmark_system_status_load():
     """Benchmark: System status load should be < 200ms"""
 
-    from core_orchestrator import CoreOrchestrator
+    from agency_os_orchestrator import CoreOrchestrator
 
     orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 

@@ -47,8 +47,13 @@ class CodingHandler:
         feature_spec = self.orchestrator.load_artifact(manifest.project_id, "feature_spec.json")
 
         if not feature_spec:
-            from core_orchestrator import ArtifactNotFoundError
-
+            try:
+                from core_orchestrator import ArtifactNotFoundError  # legacy relative
+            except ModuleNotFoundError:
+                try:
+                    from orchestrator.core_orchestrator import ArtifactNotFoundError  # shim
+                except ModuleNotFoundError:
+                    from agency_os_orchestrator import ArtifactNotFoundError  # top-level alias
             raise ArtifactNotFoundError(
                 "feature_spec.json not found - PLANNING phase must complete first"
             )
@@ -207,8 +212,13 @@ class CodingHandler:
         logger.info(f"   Docs: {code_gen_spec['statistics']['total_docs']}")
 
         # Transition to TESTING
-        from core_orchestrator import ProjectPhase
-
+        try:
+            from core_orchestrator import ProjectPhase  # legacy
+        except ModuleNotFoundError:
+            try:
+                from orchestrator.core_orchestrator import ProjectPhase
+            except ModuleNotFoundError:
+                from agency_os_orchestrator import ProjectPhase
         manifest.current_phase = ProjectPhase.TESTING
 
     def _get_timestamp(self) -> str:

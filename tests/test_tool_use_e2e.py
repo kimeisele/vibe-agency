@@ -21,7 +21,6 @@ This test validates GAD-003 (Research Tool Integration) is complete.
 
 import importlib.machinery
 import importlib.util
-import sys
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -29,7 +28,6 @@ import pytest
 
 # Add vibe-cli to path
 repo_root = Path(__file__).parent.parent
-sys.path.insert(0, str(repo_root))
 
 # Import VibeCLI (handle file without .py extension)
 vibe_cli_path = repo_root / "vibe-cli"

@@ -11,7 +11,6 @@ Tests the complete DEPLOYMENT phase execution:
 """
 
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -20,10 +19,8 @@ import pytest
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT / "agency_os/00_system/orchestrator"))
 
-from core_orchestrator import CoreOrchestrator, ProjectPhase
+from agency_os_orchestrator import CoreOrchestrator, ProjectPhase
 
 
 class TestDeploymentWorkflow:
@@ -325,7 +322,7 @@ class TestDeploymentWorkflow:
             # Attempt to run DEPLOYMENT phase - should raise error
             print("\nAttempting to run DEPLOYMENT without qa_report...")
 
-            from core_orchestrator import ArtifactNotFoundError
+            from agency_os_orchestrator import ArtifactNotFoundError
 
             manifest = orchestrator.load_project_manifest("test_deployment_001")
 

@@ -1,7 +1,6 @@
 """Tests for Project Memory - Semantic layer for STEWARD intelligence"""
 
 import json
-import sys
 import tempfile
 from pathlib import Path
 
@@ -10,7 +9,6 @@ import pytest
 # Direct import from file (module naming issue with 00_ prefix)
 PROJECT_ROOT = Path(__file__).parent.parent
 runtime_path = PROJECT_ROOT / "agency_os" / "00_system" / "runtime"
-sys.path.insert(0, str(runtime_path))
 
 from project_memory import ProjectMemoryManager
 

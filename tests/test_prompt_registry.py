@@ -19,7 +19,6 @@ Created: 2025-11-15
 Version: 1.0
 """
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -27,8 +26,6 @@ import pytest
 # Add repo root and runtime directory to path
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _RUNTIME_PATH = _REPO_ROOT / "agency_os" / "00_system" / "runtime"
-sys.path.insert(0, str(_REPO_ROOT))
-sys.path.insert(0, str(_RUNTIME_PATH))
 
 # Import directly from the runtime directory (since folder starts with number)
 from prompt_registry import PromptRegistry
