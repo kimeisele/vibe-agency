@@ -53,6 +53,14 @@ class ResearcherAgent(BaseAgent):
             vibe_root: Path to vibe-agency root
         """
         super().__init__(name=name, role=role, vibe_root=vibe_root)
+        # Explicit capability declaration (GAD-904)
+        self.capabilities = [
+            "research",
+            "search",
+            "synthesis",
+            "reasoning",
+            "documentation",
+        ]
 
     def consult_knowledge(
         self, query: str, domain: str = "research", limit: int = 10

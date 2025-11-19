@@ -75,6 +75,8 @@ class BaseAgent:
         self.created_at = datetime.utcnow().isoformat() + "Z"
         self.execution_count = 0
         self.knowledge_queries = 0
+        # Capability declarations (populated by personas)
+        self.capabilities: list[str] = []
 
         # Auto-detect vibe root if not provided
         if vibe_root is None:
@@ -483,8 +485,11 @@ class BaseAgent:
     # UTILITY METHODS
     # ========================================================================
 
+    def has_capabilities(self, required: list[str]) -> bool:
+        return all(skill in self.capabilities for skill in required)
+
     def __repr__(self) -> str:
-        return f"BaseAgent(name={self.name!r}, role={self.role!r})"
+        return f"BaseAgent(name={self.name!r}, role={self.role!r}, capabilities={self.capabilities})"
 
     def __str__(self) -> str:
         return f"{self.name} ({self.role})"

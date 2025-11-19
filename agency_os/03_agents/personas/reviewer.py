@@ -53,6 +53,15 @@ class ReviewerAgent(BaseAgent):
             vibe_root: Path to vibe-agency root
         """
         super().__init__(name=name, role=role, vibe_root=vibe_root)
+        # Explicit capability declaration (GAD-904)
+        self.capabilities = [
+            "audit",
+            "security",
+            "qa",
+            "code_analysis",
+            "testing",
+            "pattern_knowledge",
+        ]
 
     def consult_knowledge(
         self, query: str, domain: str = "patterns", limit: int = 5

@@ -150,12 +150,23 @@ class GraphExecutor:
 
     def __init__(self):
         """Initialize executor"""
-        self.agent: AgentInterface = MockAgent()  # Default to mock
+        self.agent: AgentInterface = MockAgent()  # Default to mock (backward compatible)
+        self.router = None  # AgentRouter (GAD-904) when connected
+        self.quota = None  # OperationalQuota instance when safety layer active
         self.execution_history: list[ExecutionResult] = []
 
     def set_agent(self, agent: AgentInterface) -> None:
         """Set the agent to use for execution"""
         self.agent = agent
+
+    # GAD-904: Neural link setup
+    def set_router(self, router) -> None:  # type: ignore
+        """Attach AgentRouter for capability-based selection"""
+        self.router = router
+
+    def set_quota_manager(self, quota_manager) -> None:  # type: ignore
+        """Attach OperationalQuota for pre-flight cost checks"""
+        self.quota = quota_manager
 
     def _topological_sort(self, graph: WorkflowGraph) -> ExecutionPlan:
         """
@@ -253,11 +264,17 @@ class GraphExecutor:
         # Check agent capabilities
         for node_id in plan.execution_order:
             node = graph.nodes[node_id]
-            if node.required_skills and not self.agent.can_execute(node.required_skills):
-                return (
-                    False,
-                    f"Agent cannot execute node {node_id}: requires {node.required_skills}",
-                )
+            if node.required_skills:
+                if self.router:  # Use router to find agent per node
+                    best = self.router.find_best_agent_for_skills(node.required_skills)
+                    if best is None:
+                        return False, f"No agent satisfies skills for node {node_id}: {node.required_skills}"
+                else:
+                    if not self.agent.can_execute(node.required_skills):
+                        return (
+                            False,
+                            f"Agent cannot execute node {node_id}: requires {node.required_skills}",
+                        )
 
         return True, "Workflow is valid"
 
@@ -298,6 +315,46 @@ class GraphExecutor:
                 "dependencies": plan.dependencies.get(node_id, []),
             }
 
+        return result
+
+    def execute_step(self, graph: WorkflowGraph, node_id: str) -> ExecutionResult:
+        """Execute a single workflow node using routed agent (mocked)."""
+        node = graph.nodes[node_id]
+        # Quota pre-flight (mocked tokens)
+        if self.quota:
+            try:
+                self.quota.check_before_request(estimated_tokens=50, operation=node.action)
+            except Exception as e:  # QuotaExceededError
+                return ExecutionResult(
+                    workflow_id=graph.id,
+                    node_id=node_id,
+                    status=ExecutionStatus.FAILED,
+                    output=None,
+                    error=str(e),
+                )
+        # Select agent
+        selected_agent = None
+        if self.router:
+            selected_agent = self.router.find_best_agent_for_skills(node.required_skills)
+        if selected_agent is None and hasattr(self, "agent"):
+            selected_agent = self.agent  # Fallback
+        # Mock execution result (no real LLM call)
+        result = ExecutionResult(
+            workflow_id=graph.id,
+            node_id=node_id,
+            status=ExecutionStatus.SUCCESS,
+            output={
+                "message": f"[ROUTED MOCK] {node.action} executed",
+                "agent": getattr(selected_agent, "name", "unknown"),
+                "skills_used": node.required_skills,
+            },
+            cost_usd=0.0,
+            duration_seconds=0.0,
+        )
+        self.execution_history.append(result)
+        # Record quota usage (zero cost)
+        if self.quota:
+            self.quota.record_request(tokens_used=50, cost_usd=0.0, operation=node.action)
         return result
 
     def execute(self, graph: WorkflowGraph) -> dict[str, Any]:
