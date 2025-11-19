@@ -411,4 +411,4 @@ if __name__ == "__main__":
             print(f"Error: {e}")
     else:
         print("NoOp mode - skipping test invocation")
-        print("Set ANTHROPIC_API_KEY to test real invocations")
+        print("Set GOOGLE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY to test real invocations")
