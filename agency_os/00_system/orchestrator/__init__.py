@@ -12,6 +12,8 @@ This package contains the hierarchical orchestrator architecture:
 from .core_orchestrator import (
     ArtifactNotFoundError,
     CoreOrchestrator,
+    KernelViolationError,
+    PROMPT_REGISTRY_AVAILABLE,
     PlanningSubState,
     ProjectManifest,
     ProjectPhase,
@@ -21,6 +23,8 @@ from .core_orchestrator import (
 __all__ = [
     "ArtifactNotFoundError",
     "CoreOrchestrator",
+    "KernelViolationError",
+    "PROMPT_REGISTRY_AVAILABLE",
     "PlanningSubState",
     "ProjectManifest",
     "ProjectPhase",
