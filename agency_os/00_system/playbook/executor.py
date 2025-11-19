@@ -49,6 +49,7 @@ class WorkflowNode:
     required_skills: list[str] = field(default_factory=list)
     timeout_seconds: int = 300
     retries: int = 3
+    prompt_key: str | None = None  # Optional key to lookup prompt in registry
 
 
 @dataclass
@@ -366,10 +367,42 @@ class GraphExecutor:
 
         node = graph.nodes[node_id]
 
-        # Build the prompt: [LENS] + context (if provided) + node description
-        # GAD-906/907: Semantic lens injection for mindset transformation
-        base_prompt = context if context else node.description
+        # Build the prompt: [REGISTRY] → [LENS] + context (if provided) + node description
+        # OPERATION VOICE: Check if node has a prompt_key for registry lookup
+        if node.prompt_key:
+            try:
+                # Import with proper path handling (00_system module structure)
+                import sys
+                from pathlib import Path
 
+                # Get the 00_system directory
+                system_dir = Path(__file__).parent.parent
+                if str(system_dir) not in sys.path:
+                    sys.path.insert(0, str(system_dir))
+
+                from runtime.prompt_registry import PromptRegistry
+
+                # Build context dict for prompt interpolation
+                prompt_context = {"node_id": node_id, "action": node.action}
+                if context:
+                    prompt_context["context"] = context
+
+                # Get prompt from registry (with context interpolation)
+                base_prompt = PromptRegistry.get(node.prompt_key, prompt_context)
+                logger.info(
+                    f"🎙️ VOICE: Retrieved prompt from registry: {node.prompt_key} ({len(base_prompt)} chars)"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"⚠️  Prompt registry lookup failed for key '{node.prompt_key}': {e}. "
+                    f"Falling back to node description."
+                )
+                base_prompt = context if context else node.description
+        else:
+            # No prompt_key: use context or description (legacy behavior)
+            base_prompt = context if context else node.description
+
+        # GAD-906/907: Semantic lens injection for mindset transformation
         if self.lens_prompt:
             # Format: [MINDSET: <lens>]\n\n[TASK]\n<actual task>
             prompt = f"{self.lens_prompt}\n\n{'=' * 80}\n[TASK]\n{'=' * 80}\n\n{base_prompt}"

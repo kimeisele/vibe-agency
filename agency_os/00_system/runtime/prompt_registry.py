@@ -90,6 +90,9 @@ class PromptRegistry:
     # Class-level cache for Guardian Directives (loaded once)
     _guardian_directives_cache: str | None = None
 
+    # Class-level prompt storage (key-based lookup)
+    _prompts: dict[str, str] = {}
+
     @classmethod
     def compose(
         cls,
@@ -187,6 +190,55 @@ class PromptRegistry:
         logger.info(f"Prompt composed successfully: {prompt_size:,} chars")
 
         return final_prompt
+
+    @classmethod
+    def register(cls, key: str, prompt: str) -> None:
+        """
+        Register a prompt by key for simple lookup.
+
+        This is a simpler alternative to compose() for cases where you just
+        need to store and retrieve prompts by key.
+
+        Args:
+            key: Prompt identifier (e.g., "research.analyze_topic")
+            prompt: The prompt template or content
+        """
+        cls._prompts[key] = prompt
+        logger.info(f"Registered prompt: {key} ({len(prompt)} chars)")
+
+    @classmethod
+    def get(cls, key: str, context: dict[str, Any] | None = None) -> str:
+        """
+        Get a prompt by key with optional context interpolation.
+
+        Args:
+            key: Prompt identifier (e.g., "research.analyze_topic")
+            context: Optional context dict for variable interpolation
+
+        Returns:
+            The prompt content (with context interpolated if provided)
+
+        Raises:
+            PromptRegistryError: If prompt key not found
+        """
+        if key not in cls._prompts:
+            raise PromptRegistryError(
+                f"Prompt key not found: {key}\n"
+                f"Available keys: {', '.join(cls._prompts.keys()) if cls._prompts else 'none'}"
+            )
+
+        prompt = cls._prompts[key]
+
+        # Simple context interpolation if provided
+        if context:
+            try:
+                # Support both {variable} and {{variable}} formats
+                prompt = prompt.format(**context)
+            except KeyError as e:
+                logger.warning(f"Context interpolation failed for key {key}: missing {e}")
+                # Return prompt as-is if interpolation fails
+
+        return prompt
 
     @classmethod
     def _load_guardian_directives(cls) -> str:
@@ -425,6 +477,149 @@ Context and governance will be injected via Prompt Registry.
 
 Await further instructions.
 """
+
+    @classmethod
+    def initialize_defaults(cls) -> None:
+        """
+        Initialize registry with default prompts.
+
+        This is called automatically on first use, but can be called
+        manually to reset prompts or during testing.
+        """
+        # Research prompts
+        cls.register(
+            "research.analyze_topic",
+            """# RESEARCH ANALYST - FIRST PRINCIPLES MODE
+
+**MISSION:** Analyze the research request with surgical precision, extracting the true intent and scope.
+
+## ANALYSIS FRAMEWORK
+
+You are conducting a First Principles analysis of a research request. Your goal is to deconstruct the request into its fundamental components and identify what the requestor truly needs to learn.
+
+### Step 1: Parse the Intent
+- What is the core question being asked?
+- What problem is the requestor trying to solve?
+- What decision or action will this research inform?
+
+### Step 2: Extract Key Concepts
+- Identify the primary concepts, domains, and disciplines involved
+- Map relationships between concepts (dependencies, hierarchies, contrasts)
+- Note any implicit assumptions or constraints
+
+### Step 3: Define Scope
+- What is IN scope (must be covered)?
+- What is OUT of scope (explicitly excluded)?
+- What are the boundaries (time, domain, depth)?
+
+### Step 4: Identify Search Parameters
+- What keywords and phrases will yield relevant results?
+- What sources should be prioritized (academic, industry, technical docs)?
+- What time period is relevant (recent developments vs historical context)?
+
+## DELIVERABLE
+
+Provide a structured analysis containing:
+1. **Core Intent:** (1-2 sentences summarizing the true need)
+2. **Key Concepts:** (Bulleted list with brief explanations)
+3. **Scope Definition:** (IN/OUT boundaries clearly marked)
+4. **Search Strategy:** (Keywords, sources, filters)
+
+Think like a research librarian meeting with a professor - your job is to clarify what they really need before you start gathering sources.
+
+---
+**Research Topic:** {context}
+""",
+        )
+
+        cls.register(
+            "research.search_knowledge",
+            """# RESEARCH GATHERER - KNOWLEDGE SYNTHESIS MODE
+
+**MISSION:** Search and gather authoritative knowledge sources on the topic.
+
+## SEARCH PROTOCOL
+
+You are conducting comprehensive research using available knowledge sources. Your goal is to find authoritative, relevant information that addresses the core research question.
+
+### Search Strategy
+1. **Breadth First:** Cast a wide net to identify major themes and perspectives
+2. **Depth Second:** Dive deep into the most promising areas
+3. **Authority Always:** Prioritize credible, authoritative sources
+
+### Source Evaluation Criteria
+- **Authority:** Is the source credible and expert in this domain?
+- **Recency:** Is the information current (or appropriately historical)?
+- **Relevance:** Does it directly address the research question?
+- **Quality:** Is it well-researched, cited, and rigorous?
+
+### Organization
+As you gather sources, organize findings by:
+- **Theme:** Group related concepts together
+- **Priority:** Rank by relevance to core question
+- **Source Type:** Distinguish academic, industry, technical, opinion
+
+## DELIVERABLE
+
+Provide:
+1. **Source Inventory:** List of sources found (title, link, type, authority)
+2. **Thematic Organization:** Sources grouped by theme
+3. **Key Findings Preview:** 1-2 sentence summary per source
+4. **Gaps Identified:** What's missing or needs deeper investigation?
+
+Think like a detective gathering evidence - you're building a case for understanding the topic.
+
+---
+**Research Topic:** {context}
+""",
+        )
+
+        cls.register(
+            "research.synthesize_report",
+            """# RESEARCH SYNTHESIZER - INSIGHT GENERATION MODE
+
+**MISSION:** Transform gathered knowledge into a coherent, actionable report.
+
+## SYNTHESIS FRAMEWORK
+
+You have gathered sources and findings. Now synthesize them into a professional research report that delivers value to the requestor.
+
+### Structure
+1. **Executive Summary:** (3-5 sentences: what you found, why it matters)
+2. **Background:** (Context and definitions needed to understand the topic)
+3. **Key Findings:** (Organized by theme, with evidence and citations)
+4. **Patterns & Trends:** (Cross-cutting insights, emerging themes)
+5. **Gaps & Limitations:** (What we don't know, what needs more research)
+6. **Actionable Insights:** (So what? What should the reader do with this?)
+
+### Quality Standards
+- **Clarity:** Write for intelligent non-experts (explain jargon)
+- **Evidence:** Support claims with specific sources and data
+- **Balance:** Present multiple perspectives where they exist
+- **Honesty:** Acknowledge uncertainty and limitations
+
+### Tone
+- Professional but accessible
+- Confident but not dogmatic
+- Insight-driven, not just summarizing
+
+## DELIVERABLE
+
+A structured report in markdown format containing all sections above, with proper citations and clear recommendations.
+
+Think like a consultant delivering findings to a client - they need to understand it AND know what to do with it.
+
+---
+**Research Topic:** {context}
+**Sources Gathered:** [will be provided from previous step]
+""",
+        )
+
+        logger.info("✅ Initialized default prompts in registry")
+
+
+# Initialize defaults on module load
+PromptRegistry.initialize_defaults()
 
 
 # =================================================================

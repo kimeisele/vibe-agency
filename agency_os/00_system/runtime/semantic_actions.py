@@ -95,6 +95,7 @@ class SemanticAction:
     output_schema: dict[str, Any] = field(default_factory=dict)  # Expected output structure
     estimated_cost_usd: float = 0.0  # Estimated API cost
     timeout_seconds: int = 300  # Execution timeout
+    prompt_key: str | None = None  # Optional key to lookup prompt in registry
 
     def __str__(self) -> str:
         return f"SemanticAction({self.name}: {self.intent})"

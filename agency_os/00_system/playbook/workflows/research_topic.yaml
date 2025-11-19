@@ -30,6 +30,7 @@ workflow:
   nodes:
     - id: analyze_request
       action: analyze
+      prompt_key: research.analyze_topic
       description: |
         Analyze the research request to extract key concepts and scope.
         - Parse research topic and learning objectives
@@ -44,6 +45,7 @@ workflow:
 
     - id: search_knowledge
       action: research
+      prompt_key: research.search_knowledge
       description: |
         Search and gather knowledge from multiple sources.
         - Query knowledge base and web sources
@@ -59,6 +61,7 @@ workflow:
 
     - id: synthesize_report
       action: implement
+      prompt_key: research.synthesize_report
       description: |
         Synthesize gathered knowledge into coherent report.
         - Organize findings into logical sections
