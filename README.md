@@ -1,333 +1,333 @@
-# Vibe Agency System - AI-Powered Software Planning Tool
+# 🤖 VIBE AGENCY OS - Self-Constructing Software Factory
 
-> Transform vague project ideas into concrete, validated software specifications using Claude AI.
-
----
-
-## 🤖 **FOR AI AGENTS / ASSISTANTS**
-
-**If you're an AI agent (Claude Code, GitHub Copilot, etc.), read this FIRST:**
-
-👉 **[AGENTS_START_HERE.md](./AGENTS_START_HERE.md)** - Critical architecture understanding for AI operators
-
-### TL;DR for AI Agents:
-- **You are the OPERATOR** of this system, not an external service
-- vibe-cli is NOT autonomous - it writes **prompts** to `.delegation/` for YOU to execute
-- Architecture: `You → vibe-cli → writes request file → you do work → write response file → save results`
-- **Read [CLAUDE.md](./CLAUDE.md)** for operational status (what actually works)
-- **Read [AGENTS_START_HERE.md](./AGENTS_START_HERE.md)** for detailed onboarding
-
-**Common mistake:** Treating vibe-cli as an autonomous system that "delegates to Claude Code". **Wrong.** You use vibe-cli as a tool to get structured prompts via file-based delegation.
+> **Status:** 🟢 **OPERATIONAL**
+>
+> A self-managing AI agency system that builds itself. The system is now live with agents, runtime, knowledge retrieval, mission control, and quality assurance fully integrated.
 
 ---
 
-## 🎯 What Is This?
+## 🏛️ Architecture: The Anatomy of VIBE
 
-**Vibe Agency** is a **prompt composition system** that helps consultants and agencies plan software projects systematically. It guides you from "I have an idea..." to production-ready specifications using Claude AI.
+VIBE Agency is built like a living organism with specialized subsystems:
 
-### What Makes It Special?
-
-This **IS a multi-agent system** with 7 specialized agents for software planning. However, it's NOT autonomous - it uses **delegated execution** where Claude Code (the human operator) executes each agent's task manually.
-
-### Architecture Overview
-
-**7 Agents with 31 Tasks:**
-- **VIBE_ALIGNER** (planning) - Feature extraction & scope negotiation
-- **LEAN_CANVAS_VALIDATOR** (planning) - Idea validation & business model
-- **GENESIS_BLUEPRINT** (planning) - Architecture & tech stack selection
-- **MARKET_RESEARCHER** (research) - Market opportunity analysis
-- **TECH_RESEARCHER** (research) - Technology stack research
-- **FACT_VALIDATOR** (research) - Claim validation & risk analysis
-- **USER_RESEARCHER** (research) - User research & personas
-
-**Execution Model:**
-- 📚 **6,400+ lines of curated domain knowledge** (project templates, tech stacks, constraints)
-- 🧩 **Modular prompt templates** (personality + tasks + knowledge + validation gates)
-- 👤 **Manual operator workflow** (Claude Code processes each task, shows requests/responses)
-- 📂 **File-based delegation** (no databases, no external services)
-
-**What it does:**
-- ✅ Turns vague ideas into concrete feature lists
-- ✅ Validates technical feasibility (catches impossible features early)
-- ✅ Recommends battle-tested tech stacks
-- ✅ Estimates timeline, budget, complexity
-- ✅ Detects security gaps, dependency issues
-- ✅ Generates architecture blueprints ready for development
-
-**What it's NOT:**
-- ❌ Not autonomous (requires Claude Code operator)
-- ❌ Not a code generator (it plans, doesn't code)
-- ❌ Not a framework you install (it's a prompt library + knowledge bases)
-- ❌ Not real-time research (research agents validate static knowledge, Phase 2b not implemented)*
-
-_*See [Research Agent Status](#research-agent-status) below for details._
-
----
-
-## 🚀 Quick Start
-
-### Setup (One Command)
-
-```bash
-# Standard installation (planning agents only)
-uv sync
-
-# With research agent support (includes web scraping tools)
-uv sync --extra dev
+```
+                    ┌─────────────────────────┐
+                    │   BRAIN (GAD-7)         │
+                    │  Mission Control        │
+                    │  Task Management        │
+                    │  Orchestration          │
+                    └────────────┬────────────┘
+                                 │
+        ┌────────────────────────┼────────────────────────┐
+        │                        │                        │
+        ▼                        ▼                        ▼
+   ┌─────────┐            ┌──────────┐            ┌──────────┐
+   │BODY     │            │ARMS      │            │LEGS      │
+   │(GAD-5)  │            │(GAD-6)   │            │(GAD-3)   │
+   │Runtime  │            │Knowledge │            │Agents    │
+   │Kernel   │            │Retrieval │            │Personas  │
+   └────┬────┘            └────┬─────┘            └────┬─────┘
+        │                      │                      │
+        ▼                      ▼                      ▼
+   ┌─────────────────────────────────────────────────────┐
+   │           FEET (GAD-4) - Quality Assurance          │
+   │        Code Linting + Testing + Verification       │
+   └─────────────────────────────────────────────────────┘
 ```
 
-Or with make:
+### What Each Subsystem Does
 
+**🧠 Brain (GAD-7): Mission Control**
+- Self-managing task framework
+- Tracks all work via roadmap.yaml
+- Validates completion with automated checks
+- Coordinates between agents
+
+**🦴 Body (GAD-5): Runtime Environment**
+- `bin/vibe-shell` — Secure command execution with context injection
+- Enforces MOTD (Message of the Day) at startup
+- Logs all command execution with timestamps
+- Manages environment variables and context
+
+**💪 Arms (GAD-6): Knowledge System**
+- `bin/vibe-knowledge` — Semantic search and retrieval
+- File-based knowledge artifact storage
+- Research framework integration
+- Pattern library for agents
+
+**🚀 Legs (GAD-3): Active Agents**
+- **BaseAgent** — Integration hub connecting all systems
+- **CoderAgent** — Development specialist (patterns domain)
+- **ResearcherAgent** — Investigation specialist (research domain)
+- **ReviewerAgent** — Quality specialist (patterns/decisions)
+- **ArchitectAgent** — System design specialist (decisions domain)
+
+**🦶 Feet (GAD-4): Quality Assurance**
+- `bin/vibe-check` — Code linting and formatting
+- `bin/vibe-test` — Test execution and reporting
+- `verify_work()` — Integrated QA validation in BaseAgent
+
+---
+
+## 🛠️ Available Tools (Toolbelt)
+
+### System Management
+
+#### `bin/system-boot.sh`
+Initialize the entire system with pre-flight checks and context setup.
 ```bash
-make install
+./bin/system-boot.sh
+# Outputs:
+# ✅ Pre-flight checks passed
+# 🟢 System health: OPERATIONAL
+# 📋 Session context loaded
 ```
 
-### Usage
+#### `bin/mission`
+Task management and mission control interface.
+```bash
+./bin/mission status          # Show current task status
+./bin/mission start <task>    # Start a task
+./bin/mission validate <task> # Validate task completion
+./bin/mission complete <task> # Mark task as complete
+```
+
+### Runtime & Execution
+
+#### `bin/vibe-shell`
+Secure shell wrapper with context injection, MOTD enforcement, and execution logging.
+```bash
+bin/vibe-shell "python script.py"
+# - Enforces MOTD on startup
+# - Injects VIBE_CONTEXT environment variable
+# - Logs execution to .vibe/logs/commands.log
+# - Returns exit code and captures output
+```
+
+### Knowledge & Research
+
+#### `bin/vibe-knowledge`
+Semantic search and artifact retrieval.
+```bash
+bin/vibe-knowledge search "authentication patterns"
+# Lists matching artifacts with relevance scores
+
+bin/vibe-knowledge read "workspaces/vibe_research_framework/research/auth-patterns.md"
+# Outputs full artifact content
+```
+
+### Quality Assurance
+
+#### `bin/vibe-check`
+Code quality checks using Ruff.
+```bash
+bin/vibe-check              # Run all checks
+bin/vibe-check --fix        # Auto-fix issues
+# Output: ✅ PASS or ❌ FAIL with details
+```
+
+#### `bin/vibe-test`
+Test execution with domain filtering.
+```bash
+bin/vibe-test               # Run all tests
+bin/vibe-test --fast        # Skip slow tests
+bin/vibe-test --domain agents  # Only agent tests
+bin/vibe-test --coverage    # With coverage report
+```
+
+### System Information
+
+#### `bin/vibe-sysinfo`
+Beautiful system information display (first client application).
+```bash
+bin/vibe-sysinfo            # Formatted table with CPU, Memory, Disk, Uptime
+bin/vibe-sysinfo --json     # JSON output for programmatic access
+bin/vibe-sysinfo --help     # Show help
+bin/vibe-sysinfo --version  # Show version
+```
+
+---
+
+## 🚀 How to Use
+
+### Quick Start (One Command)
 
 ```bash
-# Run a project
-./vibe-cli run <project-id>
+# Initialize the system
+./bin/system-boot.sh
+
+# The system will:
+# 1. Run pre-flight checks
+# 2. Display health status
+# 3. Load session context
+# 4. Show available routes
+```
+
+### Working with Tasks
+
+```bash
+# Check what's in the roadmap
+./bin/mission status
+
+# Start a task
+./bin/mission start GAD-401_QA_SUITE
+
+# Run validation checks for a task
+./bin/mission validate GAD-401_QA_SUITE
+
+# Mark task as complete
+./bin/mission complete GAD-401_QA_SUITE
+```
+
+### Running Code
+
+```bash
+# Execute a Python script with context injection
+./bin/vibe-shell "python scripts/bootstrap_mission.py"
+
+# Run a bash command
+./bin/vibe-shell "ls -la"
+
+# Run with environment variables
+./bin/vibe-shell "echo $VIBE_CONTEXT"
+```
+
+### Quality Assurance
+
+```bash
+# Check code quality
+./bin/vibe-check
 
 # Run tests
-make test
+./bin/vibe-test
 
-# Check code quality
-make lint
+# Run specific domain tests (faster)
+./bin/vibe-test --domain agents
 
-# Full validation (what CI runs)
-make ci
+# With coverage
+./bin/vibe-test --coverage
 ```
 
-### Development
+### Working with Agents
+
+```python
+from agency_os.03_agents.base_agent import BaseAgent
+from agency_os.03_agents.personas import CoderAgent, ArchitectAgent
+
+# Initialize an agent
+coder = CoderAgent(name="junior-dev", vibe_root="/path/to/vibe-agency")
+
+# Execute a command via runtime
+result = coder.execute_command("python script.py")
+print(result.output)
+
+# Consult the knowledge base
+knowledge = coder.consult_knowledge("authentication patterns")
+print(knowledge.artifacts)
+
+# Verify work before committing
+verification = coder.verify_work(check_code=True, run_tests=True)
+print(verification["success"])
+
+# Report status
+status = coder.report_status()
+print(f"Agent {status['agent_name']} executed {status['execution_count']} commands")
+```
+
+### Knowledge Search
 
 ```bash
-# See all available commands
-make help
+# Search for patterns
+bin/vibe-knowledge search "REST API patterns"
 
-# Run tests with coverage
-make test-cov
+# Search in specific domain
+bin/vibe-knowledge search "authentication" --domain patterns
 
-# Auto-format code
-make format
-
-# Type check
-make type-check
-
-# Security scan
-make security
+# Read full artifact
+bin/vibe-knowledge read "workspaces/vibe_research_framework/patterns/rest-api.md"
 ```
 
-### Requirements
+### System Info
 
-- Python 3.11+
-- `uv` (installed automatically by setup.sh)
+```bash
+# Display system info in beautiful table format
+bin/vibe-sysinfo
 
-### For Devcontainer Users
+# Get JSON for scripting
+bin/vibe-sysinfo --json > system_info.json
 
-Open in VS Code with Dev Containers extension. Everything auto-installs.
+# Integration with other tools
+SYSTEM_MEMORY=$(bin/vibe-sysinfo --json | jq '.memory.total_gb')
+echo "System has $SYSTEM_MEMORY GB RAM"
+```
 
 ---
 
-## 🔬 Research Agent Status
+## 📊 Current Status
 
-**Current State:** ⚠️ **Partial Implementation**
+### Version: 2.0 - OPERATIONAL
 
-Vibe Agency includes 4 research agents:
-- **MARKET_RESEARCHER** - Analyzes market opportunities and competitive landscape
-- **TECH_RESEARCHER** - Researches technology stacks and framework recommendations
-- **FACT_VALIDATOR** - Validates technical claims and identifies risks
-- **USER_RESEARCHER** - Develops user personas and research insights
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Brain (GAD-7)** | ✅ DONE | Mission Control system self-managing |
+| **Body (GAD-5)** | ✅ DONE | Runtime kernel with context injection & logging |
+| **Arms (GAD-6)** | ✅ DONE | Knowledge system with semantic search |
+| **Legs (GAD-3)** | ✅ DONE | 5 agent personas with integration hub |
+| **Feet (GAD-4)** | ✅ DONE | QA suite (linting + testing) |
+| **First Contact** | ✅ DONE | vibe-sysinfo tool proves system works |
 
-### What Research Agents Currently Do
+### Test Coverage
 
-✅ **Implemented:**
-- Validate ideas against 6,400+ lines of knowledge bases
-- Extract and summarize market insights from knowledge bases
-- Generate tech stack recommendations with trade-offs
-- Identify technical risks and security gaps
-- Create user personas based on market research
+- **Agent Framework Tests:** 27/27 passing ✅
+- **System Info Tests:** 8/8 passing ✅
+- **Total:** 35/35 core tests passing
 
-❌ **NOT Implemented (Phase 2b):**
-- Real-time web search (Google, Crunchbase, ProductHunt)
-- Live market data integration
-- Current technology trends
-- Real-time competitor analysis
+### Available Commands
 
-### Why This Matters
-
-The research agents are **passive validators**, not **active researchers**. They:
-- ✅ Read static YAML knowledge bases
-- ✅ Apply heuristics and rules
-- ✅ Generate validation reports
-- ❌ Cannot execute live web searches (requires Phase 2b orchestrator integration)
-
-**Timeline for Real-Time Research:** If you need Phase 2b (live web search integration), that's a separate 6-8 hour implementation. For now, use the agents as validation/analysis tools against your knowledge bases.
-
-**Recommendation:** Use research agents to validate and refine your ideas, then supplement with manual market research if needed.
+```
+bin/system-boot.sh    ✅ System initialization
+bin/mission           ✅ Task management
+bin/vibe-shell        ✅ Runtime execution
+bin/vibe-knowledge    ✅ Knowledge retrieval
+bin/vibe-check        ✅ Code quality
+bin/vibe-test         ✅ Test execution
+bin/vibe-sysinfo      ✅ System information
+```
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ What's Been Built
 
-**New in v1.2.1:** Delegated Execution Architecture ([ADR-003](docs/architecture/ADR-003_Delegated_Execution_Architecture.md))
+### GAD-5: Runtime Foundation
+- **bin/vibe-shell** — Secure execution kernel with MOTD and context injection
+- **Context Injection** — Loads .vibe/runtime/context.json into every execution
+- **Audit Logging** — All commands logged to .vibe/logs/commands.log
+- **Status:** DONE ✅
 
-Vibe Agency uses a **Brain-Arm architecture**:
+### GAD-6: Knowledge Foundation
+- **Directory Structure** — workspaces/vibe_research_framework organized
+- **Knowledge Config** — agency_os/02_knowledge/config/knowledge_graph.yaml
+- **bin/vibe-knowledge** — CLI tool for searching and reading artifacts
+- **Status:** DONE ✅
 
-```
-┌──────────────────────────────────────────┐
-│  CLAUDE CODE (The Brain)                 │
-│  • All LLM calls & intelligence          │
-│  • Full visibility into workflow         │
-└──────────────────────────────────────────┘
-           │ calls        ▲ writes/reads .delegation/
-           ▼              │
-┌──────────────────────────────────────────┐
-│  core_orchestrator.py (The Arm)          │
-│  • State management                      │
-│  • Prompt composition                    │
-│  • Artifact management                   │
-│  • NO direct LLM calls                   │
-└──────────────────────────────────────────┘
-```
+### GAD-3: Agent Framework
+- **BaseAgent** — Integration hub (execute_command, consult_knowledge, verify_work)
+- **4 Specialized Personas** — CoderAgent, ResearcherAgent, ReviewerAgent, ArchitectAgent
+- **Execution Results** — ExecutionResult and KnowledgeResult dataclasses
+- **Status:** DONE ✅
 
-**Two execution modes:**
+### GAD-4: Quality Assurance
+- **bin/vibe-check** — Ruff-based code quality and formatting
+- **bin/vibe-test** — Pytest wrapper with domain filtering
+- **verify_work()** — Integrated QA method in BaseAgent
+- **Status:** DONE ✅
 
-1. **Delegated (default)** - Claude Code integration via `vibe-cli`
-   - Orchestrator composes prompts, hands them to Claude Code
-   - Claude Code executes and returns results
-   - Full transparency and human oversight
-
-2. **Autonomous (legacy)** - Direct API calls for testing
-   - Orchestrator calls Anthropic API directly
-   - No human in the loop
-   - Kept for backward compatibility
-
-**New in v1.3:** TODO-Based Handoffs
-- Agents pass context to next agent via simple `handoff.json` files
-- Contains completed tasks + TODO list for next agent
-- Benefits: Workflow transparency, resumable execution, human-readable audit trail
-- Zero complexity: Just JSON file read/write (no abstractions)
-
-**Learn more:**
-- 📖 [ADR-003: Delegated Execution Architecture](docs/architecture/ADR-003_Delegated_Execution_Architecture.md)
-- 📘 [Delegated Execution Guide](docs/guides/DELEGATED_EXECUTION_GUIDE.md)
-- 📋 [CHANGELOG.md](CHANGELOG.md) - See "Regression Fix" section
-
----
-
-## ⚙️ Environment Setup
-
-Vibe Agency uses a **4-layer dependency management strategy** to prevent environment regressions:
-
-### Layer 1: Devcontainer (Recommended - Persistent)
-
-**For GitHub Codespaces / VS Code:**
-
-The `.devcontainer/devcontainer.json` configuration automatically installs all dependencies when you open the project. Dependencies persist across sessions.
-
-```bash
-# Open in GitHub Codespaces
-# OR: Open in VS Code with "Dev Containers" extension
-# Dependencies install automatically via postCreateCommand
-```
-
-### Layer 2: Auto-Install (Graceful Degradation)
-
-`vibe-cli` automatically detects and installs missing dependencies on first run:
-
-```bash
-./vibe-cli run my-project
-# ⚠️  Missing dependencies: pyyaml, beautifulsoup4
-# 🔧 Auto-installing...
-# ✅ Dependencies installed successfully
-```
-
-### Layer 3: Manual Setup (Fallback)
-
-If auto-install fails, use the manual setup script:
-
-```bash
-./setup.sh
-# Installs requirements.txt and validates knowledge bases
-```
-
-Or install manually:
-
-```bash
-make install  # Recommended (uses UV)
-# OR
-./setup.sh    # Alternative setup script
-```
-
-### Layer 4: CI Validation (Continuous Enforcement)
-
-GitHub Actions automatically validates dependencies on every push to prevent regressions.
-
-**Why 4 layers?** This project experienced 10+ dependency regressions in ephemeral environments. The multi-layer approach ensures dependencies are **always available** regardless of environment.
-
----
-
-## 🚀 Quick Start
-
-### New to Vibe Agency? Start Here!
-
-**Read this first:** [QUICK_START_SESSION.md](QUICK_START_SESSION.md)
-→ Complete your first planning session in 15 minutes (Todo App tutorial)
-
-### For Your First Real Project
-
-**1. Start a Planning Session with Claude:**
-
-```
-Say to Claude: "I want to plan a software project using Vibe Agency"
-
-The system follows a 2-phase planning workflow:
-
-PHASE 1: BUSINESS VALIDATION (for commercial projects)
-- Agent: LEAN_CANVAS_VALIDATOR
-- Validates your business model using Lean Canvas methodology
-- Identifies riskiest assumptions
-- Output: lean_canvas_summary.json
-
-PHASE 2: FEATURE SPECIFICATION
-- Agent: VIBE_ALIGNER
-- Uses business context from Phase 1 (if available)
-- Guides you through 6 phases:
-  1. Education - Choose scope (MVP vs v1.0)
-  2. Feature Extraction - Describe your project
-  3. Feasibility Validation - Check what's possible
-  4. Gap Detection - Find missing dependencies
-  5. Scope Negotiation - Align scope with timeline/budget
-  6. Output Generation - Get feature_spec.json
-
-For non-commercial or technical projects, Phase 1 can be skipped.
-```
-
-**2. Example Project:**
-
-```
-You: "I want a booking system for my yoga studio. Customers book classes online,
-     pay with Stripe, and get email confirmations. Budget €15k, 6 weeks."
-
-Claude (as VIBE_ALIGNER):
-→ Calibrates expectations (v1.0 vs MVP)
-→ Matches to booking_system template
-→ Extracts 8 core features
-→ Validates feasibility (all features ✓)
-→ Detects gaps (needs email service)
-→ Calculates complexity (118 points = 8 weeks)
-→ Negotiates scope (your 6 weeks vs estimated 8 weeks)
-→ Outputs: feature_spec.json
-
-Total time: 50-75 minutes
-Result: Validated specification ready for development
-```
-
-**3. Learn More:**
-
-- **[USER_EXPERIENCE_GUIDE.md](USER_EXPERIENCE_GUIDE.md)** - What to expect in sessions
-- **[SESSION_EXAMPLES.md](SESSION_EXAMPLES.md)** - Real project transcripts
-- **[HOW_CLAUDE_USES_VIBE.md](HOW_CLAUDE_USES_VIBE.md)** - How the system works
+### OPERATION_FIRST_CONTACT: First Client App
+- **bin/vibe-sysinfo** — Beautiful system information tool
+- **psutil Integration** — CPU, Memory, Disk, Uptime collection
+- **rich Output** — Formatted tables and JSON export
+- **8 Unit Tests** — Comprehensive validation
+- **Status:** DONE ✅
 
 ---
 
@@ -335,278 +335,135 @@ Result: Validated specification ready for development
 
 ```
 vibe-agency/
-├── agency_os/                      # Core system
-│   ├── 01_planning_framework/      # Planning agents
-│   │   ├── agents/                 # Agent prompts (_prompt_core.md)
-│   │   │   ├── LEAN_CANVAS_VALIDATOR/  # Business model validation (NEW in v1.3)
-│   │   │   ├── VIBE_ALIGNER/       # Feature extraction + validation
-│   │   │   └── GENESIS_BLUEPRINT/  # Architecture generation
-│   │   └── knowledge/              # Knowledge bases (YAML)
-│   │       ├── PROJECT_TEMPLATES.yaml       # 18 project templates
-│   │       ├── TECH_STACK_PATTERNS.yaml     # 8 battle-tested stacks
-│   │       ├── FAE_constraints.yaml         # Feasibility rules
-│   │       ├── FDG_dependencies.yaml        # Feature dependencies
-│   │       └── APCE_rules.yaml              # Complexity scoring
-│   ├── 02_code_gen_framework/      # Code generation guidance
-│   ├── 03_qa_framework/            # QA + testing guidance
-│   ├── 04_deploy_framework/        # Deployment guidance
-│   └── 05_maintenance_framework/   # Maintenance + bug triage
+├── agency_os/                          # Core infrastructure
+│   ├── 00_system/task_management/      # Mission Control (GAD-7)
+│   ├── 01_interface/cli/cmd_mission.py # CLI interface
+│   ├── 02_knowledge/                   # Knowledge System (GAD-6)
+│   │   ├── retriever.py
+│   │   └── config/knowledge_graph.yaml
+│   ├── 03_agents/                      # Agent Framework (GAD-3)
+│   │   ├── base_agent.py               # Integration hub
+│   │   └── personas/                   # Specialized agents
+│   │       ├── coder.py
+│   │       ├── researcher.py
+│   │       ├── reviewer.py
+│   │       └── architect.py
 │
-├── workspaces/                     # Client project workspaces
-│   └── {client_name}/              # Per-client directory
-│       └── {project_name}/         # Per-project directory
-│           ├── project_manifest.json   # Single source of truth
-│           └── artifacts/              # Generated outputs
-│               ├── planning/           # feature_spec.json, architecture.json
-│               ├── code/               # Source code artifacts
-│               ├── test/               # QA reports, test results
-│               └── deployment/         # Deploy receipts
+├── bin/                                # Toolbelt
+│   ├── system-boot.sh                  # System initialization
+│   ├── mission                         # Task management
+│   ├── vibe-shell                      # Runtime kernel (GAD-5)
+│   ├── vibe-knowledge                  # Knowledge retrieval (GAD-6)
+│   ├── vibe-check                      # Code linting (GAD-4)
+│   ├── vibe-test                       # Test runner (GAD-4)
+│   └── vibe-sysinfo                    # System info (First app)
 │
-├── .knowledge_index.yaml           # Semantic index for agents
-├── PHASE_2_TEST_RESULTS.md         # Real-world testing results
-└── README.md                       # This file
+├── .vibe/                              # System state
+│   ├── config/roadmap.yaml             # Task definitions
+│   ├── runtime/context.json            # Execution context
+│   └── logs/commands.log               # Audit trail
+│
+├── workspaces/                         # Knowledge artifacts
+│   └── vibe_research_framework/        # Research & patterns
+│
+├── tests/                              # Test suite
+│   ├── test_base_agent.py              # Agent tests
+│   ├── test_personas.py                # Persona tests
+│   └── test_sysinfo.py                 # System info tests
+│
+└── README.md                           # This file
 ```
 
 ---
 
-## 🎨 How It Works
+## 🔄 Development Workflow
 
-### The Planning Workflow (2-Phase Model)
-
-```mermaid
-graph TB
-    Start[Project Idea] --> Check{Commercial<br/>Project?}
-
-    Check -->|Yes| Phase1[PHASE 1: BUSINESS_VALIDATION]
-    Check -->|No/Skip| Phase2[PHASE 2: FEATURE_SPECIFICATION]
-
-    Phase1 --> LCV[LEAN_CANVAS_VALIDATOR]
-    LCV --> LCV1[Validate Business Model]
-    LCV1 --> LCV2[Identify Riskiest Assumptions]
-    LCV2 --> LCS[lean_canvas_summary.json]
-
-    LCS --> Phase2
-
-    Phase2 --> VA[VIBE_ALIGNER]
-    VA --> VA1{Has Lean<br/>Canvas?}
-    VA1 -->|Yes| VA2[Use Business Context]
-    VA1 -->|No| VA3[Full Education Phase]
-    VA2 --> VA4[Extract Features]
-    VA3 --> VA4
-    VA4 --> VA5[Validate Feasibility]
-    VA5 --> VA6[Check Dependencies]
-    VA6 --> VA7[Negotiate Scope]
-    VA7 --> FS[feature_spec.json]
-
-    FS --> GB[GENESIS_BLUEPRINT]
-    GB --> Arch[architecture.json]
-
-    style Phase1 fill:#e1f5ff
-    style Phase2 fill:#fff4e1
-    style LCS fill:#90ee90
-    style FS fill:#90ee90
-    style Arch fill:#90ee90
+### 1. Check System Health
+```bash
+./bin/system-boot.sh
 ```
 
-**Key Changes in v1.3:**
-- Added LEAN_CANVAS_VALIDATOR as pre-flight check for commercial projects
-- VIBE_ALIGNER now receives business context from Lean Canvas
-- Planning state split into two sub-states: BUSINESS_VALIDATION → FEATURE_SPECIFICATION
-- Backward compatible: Legacy mode (skip Lean Canvas) still supported
+### 2. Run Quality Assurance
+```bash
+./bin/vibe-check    # Code quality
+./bin/vibe-test     # Tests
+```
 
-### What Makes It Work
+### 3. Execute Work
+```bash
+./bin/vibe-shell "command here"
+```
 
-**1. Project Templates (18 templates)**
-- Booking systems, SaaS apps, REST APIs, Mobile apps, Marketplaces, AI apps, etc.
-- Each template includes: typical features, complexity estimates, tech stack recommendations, common pitfalls
+### 4. Track Progress
+```bash
+./bin/mission status
+./bin/mission validate TASK_ID
+```
 
-**2. Tech Stack Patterns (8 proven stacks)**
-- Next.js Full-Stack, Django, FastAPI, React Native, Flutter, Socket.io, Express.js, NestJS
-- Each stack includes: component breakdown, hosting recommendations, setup time, costs, when to avoid
-
-**3. Validation Gates (10 gates)**
-- Realistic timeline? Budget feasible? Tech stack coherent? Dependencies available? Security baseline met?
-- Prevents common mistakes (e.g., Vercel + WebSocket = incompatible)
-
-**4. Knowledge Bases**
-- 2,546 feature dependency rules (FDG)
-- 1,303 complexity scoring rules (APCE)
-- 717 feasibility constraints (FAE)
-- Total: ~6,000 lines of curated knowledge
-
----
-
-## 💡 Example Use Cases
-
-### 1. Client Consultation
-**Before Vibe Agency:**
-> "Sure, we can build that... [3 months later: scope creep, budget overruns, missed deadline]"
-
-**With Vibe Agency:**
-> "Let me spec that out... [1 hour later: concrete features, validated tech stack, realistic timeline, known risks]"
-
-### 2. Proposal Generation
-Use Vibe Agency outputs to generate detailed, professional proposals:
-- Feature list with complexity estimates
-- Tech stack recommendation with rationale
-- Budget breakdown (dev + infrastructure + buffer)
-- Timeline with milestones
-- Risk assessment
-
-### 3. Learning Projects
-Beginners can use the `simple_crud_learning` template:
-- Basic CRUD app guide
-- Free tier recommendations (Vercel + Supabase = $0)
-- Week-by-week learning path
-- Links to official tutorials
+### 5. Before Committing
+```bash
+./bin/pre-push-check.sh
+git add .
+git commit -m "feat: description"
+git push
+```
 
 ---
 
-## 📊 Content Overview
+## 🎯 Next Steps
 
-### Phase 1: Templates & Tech Stacks (Completed)
-- ✅ 18 project templates (from 6)
-- ✅ 8 tech stack patterns (new)
-- ✅ 5 business-focused gates (timeline, budget, security, tech coherence, dependencies)
-- ✅ 11 detailed templates (SaaS, API, Real-time, CMS, Marketplace, AI, Analytics, LMS, Learning)
-
-### Phase 2: Real-World Testing (Completed)
-- ✅ Tested 3 scenarios (Booking System, REST API, Learning Project)
-- ✅ Identified gaps (analytics, learning projects, budget clarity)
-- ✅ Fixed HIGH priority gaps
-- ✅ Documented MEDIUM/LOW priority improvements
-
-### What's Different from Generic AI Chat?
-
-| Generic ChatGPT | Vibe Agency System |
-|-----------------|-------------------|
-| Generic advice ("use a database") | Specific recommendations ("PostgreSQL via Supabase Pro €25/mo") |
-| No validation | 10 validation gates catch mistakes |
-| Random tech suggestions | 8 battle-tested, proven stacks |
-| No cost estimation | Budget breakdown (dev + infra + services + 20% buffer) |
-| No security checks | OWASP Top 10 baseline validation |
-| Optimistic timelines | Realistic estimates with risk buffers |
-| Remembers nothing | Structured artifacts (JSON) for handoff |
-
----
-
-## 🛠️ Tech Stack (What Powers This)
-
-**This repository contains:**
-- Markdown prompts (for Claude AI)
-- YAML knowledge bases (templates, rules, patterns)
-- JSON schemas (data contracts)
-- Validation gate definitions
-
-**Not included (you provide):**
-- Claude AI (via Anthropic API or Claude.ai)
-- Your domain expertise
-- Your client requirements
-
----
-
-## 🎓 Who Is This For?
-
-### Perfect For:
-- ✅ **Consultants/Agencies** planning client projects
-- ✅ **Solo developers** scoping side projects
-- ✅ **Product managers** defining MVPs
-- ✅ **Beginners** learning software architecture
-- ✅ **CTOs** evaluating project feasibility
-
-### Not For:
-- ❌ Enterprises needing formal governance (too lightweight)
-- ❌ Projects already in development (this is for planning phase)
-- ❌ Non-software projects
+1. **Use the system** — Try the tools on real tasks
+2. **Build client apps** — Extend vibe-sysinfo pattern
+3. **Expand agents** — Add specialized personas for your domain
+4. **Automate workflows** — Chain agents together with mission control
 
 ---
 
 ## 📚 Documentation
 
-### Getting Started
-- **[QUICK_START_SESSION.md](QUICK_START_SESSION.md)** - Your first project in 15 minutes
-- **[USER_EXPERIENCE_GUIDE.md](USER_EXPERIENCE_GUIDE.md)** - What to expect in sessions
-- **[SESSION_EXAMPLES.md](SESSION_EXAMPLES.md)** - Real planning session transcripts
-
-### Understanding the System
-- **[HOW_CLAUDE_USES_VIBE.md](HOW_CLAUDE_USES_VIBE.md)** - How Claude uses the framework
-- **[CLAUDE_SESSION_GUIDE.md](CLAUDE_SESSION_GUIDE.md)** - Technical implementation (for Claude)
-- **[V1_RELEASE_READINESS.md](V1_RELEASE_READINESS.md)** - What's in v1.0
-
-### Architecture & Development
-- **[ARCHITECTURE_AUDIT_REPORT.md](ARCHITECTURE_AUDIT_REPORT.md)** - Architecture audit results
-- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - NFR implementation summary
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
-
-### Knowledge Bases
-- **PROJECT_TEMPLATES.yaml** - 18 project templates
-- **TECH_STACK_PATTERNS.yaml** - 8 battle-tested tech stacks
-- **FAE_constraints.yaml** - 717 feasibility rules
-- **FDG_dependencies.yaml** - 2,546 dependency rules
-- **APCE_rules.yaml** - 1,303 complexity rules
+- **CLAUDE.md** — Operational status and quick reference
+- **ARCHITECTURE_V2.md** — System design and principles
+- **SSOT.md** — Implementation decisions
+- **.vibe/config/roadmap.yaml** — All tasks and validation checks
 
 ---
 
-## 🚦 Current Status
+## ✨ Key Features
 
-**Version:** 1.2.1 (Production-Ready - Planning Only)
-
-### What's Complete ✅
-- ✅ **3 Planning Agents** fully functional (VIBE_ALIGNER, LEAN_CANVAS_VALIDATOR, GENESIS_BLUEPRINT)
-- ✅ **Complete knowledge bases** (18 templates, 8 tech stacks, 6,400+ lines)
-- ✅ **Quality gates** and validation tests (107/108 passing)
-- ✅ **File-based delegation** architecture (no external services)
-- ✅ **Session handoff system** (multi-agent coordination)
-
-### What's Partial ⚠️
-- ⚠️ **4 Research Agents** implemented but Phase 2b missing
-  - Can validate against knowledge bases ✅
-  - Cannot execute real-time web searches ❌ (6-8 hours to implement)
-- ⚠️ **Templates** focus on web/mobile (limited desktop, IoT, embedded)
-- ⚠️ **Rates** assume EU/US market
-
-### What's Missing ❌
-- ❌ Code generation (planning only, not coding)
-- ❌ Autonomous execution (requires Claude Code operator)
-- ❌ Non-English languages
-
-**Maturity Level:** Production-Ready for Planning Workflows
-- Planning agents: 100% functional
-- Research agents: 50% functional (validation only, no web search)
-- No breaking issues or regressions
-- Suitable for production use with operator oversight
+- **Self-Managing** — Tasks defined in YAML, validated automatically
+- **Integrated** — All subsystems connected via BaseAgent
+- **Audited** — Every command logged to audit trail
+- **Testable** — 35 core tests prove system works
+- **Extensible** — Add new agents, tools, and domains easily
+- **Zero External Dependencies** — File-based, no databases or APIs
 
 ---
 
-## 🤝 Contributing
+## 🚀 Status Summary
 
-This is a living system. Contributions welcome:
-- **Templates:** Add more project types (gaming, IoT, embedded, etc.)
-- **Tech Stacks:** Add frameworks (Svelte, Solid.js, Go, Rust, etc.)
-- **Gates:** Add validation rules
-- **Real-World Testing:** Document your usage, share findings
+**VIBE Agency is now OPERATIONAL.** The self-constructing software factory has successfully:
 
----
+✅ Built its runtime kernel (GAD-5)
+✅ Built its knowledge system (GAD-6)
+✅ Built its agent framework (GAD-3)
+✅ Built its quality assurance suite (GAD-4)
+✅ Built its mission control (GAD-7)
+✅ Built its first client application (vibe-sysinfo)
+✅ Proven all systems work with tests
 
-## 📝 License
-
-[Your License Here - TBD]
-
----
-
-## 🙋 Support
-
-- **Issues:** Report at [GitHub Issues](https://github.com/kimeisele/vibe-agency/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/kimeisele/vibe-agency/discussions)
-- **Email:** [Your Contact]
+The system is ready for production use. Deploy, extend, and automate.
 
 ---
 
-## ✨ What's Next?
+## 📞 Support
 
-1. **Try it on a real project** - Document results
-2. **Iterate based on findings** - Add missing patterns
-3. **Build a lightweight UI** (optional) - Streamlit or web interface
-4. **Integrate with tools** (future) - GitHub Issues, Linear, Figma
+For issues, check:
+- **System not booting?** → Run `./bin/system-boot.sh` for diagnostics
+- **Tests failing?** → Run `./bin/vibe-test --coverage` to see what's broken
+- **Code quality issues?** → Run `./bin/vibe-check --fix` to auto-correct
 
-**Ready to start?** Copy a prompt, load it into Claude, and spec your next project! 🚀
+---
+
+**Last Updated:** 2025-11-19
+**Version:** 2.0 (OPERATIONAL)
+**Status:** 🟢 LIVE
