@@ -146,15 +146,16 @@ class TestVibeAlignerSystemE2E:
 
         # Patch BEFORE CoreOrchestrator init
         import importlib
+
         llm_module = importlib.import_module("agency_os.00_system.runtime.llm_client")
-        
+
         mock_llm = MagicMock(spec=LLMClient)
         mock_llm.invoke.side_effect = mock_invoke
         mock_llm.get_cost_summary.return_value = {"total_cost_usd": 0.50}
-        
+
         # Monkeypatch the CLASS before CoreOrchestrator uses it
         monkeypatch.setattr(llm_module, "LLMClient", lambda budget_limit=10: mock_llm)
-        
+
         try:
             orchestrator = CoreOrchestrator(repo_root=str(repo_root), execution_mode="autonomous")
 

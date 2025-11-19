@@ -327,7 +327,11 @@ class TestDeploymentWorkflow:
             except ModuleNotFoundError:
                 import sys
                 from pathlib import Path
-                sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator"))
+
+                sys.path.insert(
+                    0,
+                    str(Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator"),
+                )
                 from core_orchestrator import ArtifactNotFoundError
 
             manifest = orchestrator.load_project_manifest("test_deployment_001")
