@@ -1,0 +1,551 @@
+version: 1
+project_name: vibe-agency-gad-roadmap
+description: STEWARD-managed GAD implementation roadmap based on Strategic Plan 2025-11-18
+
+# ==============================================================================
+# STEWARD ROADMAP - GAD IMPLEMENTATION
+# ==============================================================================
+# This roadmap reflects the actual strategic priorities for vibe-agency
+# Based on: docs/STRATEGIC_PLAN_2025-11-18.md
+# Status tracking: docs/architecture/GAD_IMPLEMENTATION_STATUS.md
+# ==============================================================================
+
+phases:
+  - name: WEEK_1_RUNTIME_FOUNDATION
+    status: IN_PROGRESS
+    progress: 75
+    description: Complete GAD-500 Week 1 deliverables + stabilize vibe aligner
+    task_ids:
+      - w1-task-001
+      - w1-task-002
+      - w1-task-003
+      - w1-task-004
+  
+  - name: WEEK_2_SEMANTIC_REFINEMENT
+    status: TODO
+    progress: 0
+    description: Semantic audit, product packaging, error handling
+    task_ids:
+      - w2-task-001
+      - w2-task-002
+      - w2-task-003
+      - w2-task-004
+  
+  - name: WEEK_3_FRAMEWORK_UPGRADE
+    status: TODO
+    progress: 0
+    description: Upgrade Testing and Maintenance from stubs to MVP
+    task_ids:
+      - w3-task-001
+      - w3-task-002
+      - w3-task-003
+  
+  - name: WEEK_4_PRODUCTION_READY
+    status: TODO
+    progress: 0
+    description: Polish, performance, documentation, quality gates
+    task_ids:
+      - w4-task-001
+      - w4-task-002
+      - w4-task-003
+      - w4-task-004
+
+tasks:
+  # ==============================================================================
+  # WEEK 1: Runtime Engineering Foundation
+  # ==============================================================================
+  
+  w1-task-001:
+    version: 1
+    id: w1-task-001
+    name: VERIFY_SYSTEM_INTEGRITY_COMPLETE
+    description: Verify GAD-501 Layer 0 (System Integrity) is fully operational
+    status: DONE
+    priority: 10
+    created_at: '2025-11-19T10:47:00.000000'
+    completed_at: '2025-11-18T00:00:00.000000'
+    time_budget_mins: 30
+    time_used_mins: 0
+    validation_checks:
+      - id: layer0_operational
+        description: scripts/verify-system-integrity.py works correctly
+        validator: validate_command
+        params:
+          command: python3 scripts/verify-system-integrity.py
+        status: true
+        last_check: '2025-11-18T00:00:00.000000'
+        error: null
+    blocking_reason: null
+    related_files:
+      - scripts/verify-system-integrity.py
+      - scripts/generate-integrity-manifest.py
+      - .vibe/integrity/system_integrity.json
+    git_commits: []
+  
+  w1-task-002:
+    version: 1
+    id: w1-task-002
+    name: VERIFY_MOTD_INTEGRATION
+    description: Verify MOTD displays system integrity status on vibe-cli execution
+    status: IN_PROGRESS
+    priority: 10
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: '2025-11-19T10:47:00.000000'
+    completed_at: null
+    time_budget_mins: 60
+    time_used_mins: 0
+    validation_checks:
+      - id: motd_displays
+        description: MOTD shows on vibe-cli execution
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: integrity_check_runs
+        description: System integrity check runs before MOTD
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - vibe-cli
+      - agency_os/system/motd.py
+    git_commits: []
+  
+  w1-task-003:
+    version: 1
+    id: w1-task-003
+    name: VIBE_ALIGNER_STABILIZATION
+    description: Review and improve vibe aligner error handling and recovery
+    status: TODO
+    priority: 9
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 120
+    time_used_mins: 0
+    validation_checks:
+      - id: error_handling_reviewed
+        description: Error handling code reviewed and improved
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: edge_cases_tested
+        description: Edge cases tested and handled
+        validator: validate_tests_passing
+        params:
+          test_pattern: "test_vibe_aligner"
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/01_planning_framework/agents/VIBE_ALIGNER/
+    git_commits: []
+  
+  w1-task-004:
+    version: 1
+    id: w1-task-004
+    name: DOCUMENTATION_CLEANUP_WEEK1
+    description: Update docs to reflect current operational reality
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 90
+    time_used_mins: 0
+    validation_checks:
+      - id: claude_md_accurate
+        description: CLAUDE.md reflects current state
+        validator: validate_command
+        params:
+          command: ./bin/verify-claude-md.sh
+        status: false
+        last_check: null
+        error: null
+      - id: unimplemented_marked
+        description: Unimplemented features clearly marked
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - CLAUDE.md
+      - INDEX.md
+      - docs/GETTING_STARTED.md
+    git_commits: []
+  
+  # ==============================================================================
+  # WEEK 2: Semantic Refinement
+  # ==============================================================================
+  
+  w2-task-001:
+    version: 1
+    id: w2-task-001
+    name: SEMANTIC_AUDIT
+    description: Review and standardize agent names, terminology, error messages
+    status: TODO
+    priority: 9
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 180
+    time_used_mins: 0
+    validation_checks:
+      - id: agent_names_clear
+        description: All agent names clearly describe their purpose
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: terminology_consistent
+        description: Terminology is consistent across codebase
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/
+    git_commits: []
+  
+  w2-task-002:
+    version: 1
+    id: w2-task-002
+    name: PRODUCT_STRUCTURE_CLEANUP
+    description: Clean up directory structure, unused code, consolidate duplicates
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 150
+    time_used_mins: 0
+    validation_checks:
+      - id: no_unused_code
+        description: Unused/placeholder code removed or documented
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: structure_intuitive
+        description: Directory structure is intuitive
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/
+    git_commits: []
+  
+  w2-task-003:
+    version: 1
+    id: w2-task-003
+    name: PLAYBOOK_REFINEMENT
+    description: Update playbook routes for real use cases, add examples
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 120
+    time_used_mins: 0
+    validation_checks:
+      - id: playbook_updated
+        description: Playbook reflects real use cases
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: examples_added
+        description: Examples added for common tasks
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - docs/playbook/
+    git_commits: []
+  
+  w2-task-004:
+    version: 1
+    id: w2-task-004
+    name: ERROR_HANDLING_IMPROVEMENTS
+    description: Add clear error messages, graceful degradation, recovery suggestions
+    status: TODO
+    priority: 9
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 150
+    time_used_mins: 0
+    validation_checks:
+      - id: errors_actionable
+        description: Error messages are clear and actionable
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: degradation_graceful
+        description: System degrades gracefully on errors
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/
+    git_commits: []
+  
+  # ==============================================================================
+  # WEEK 3: Framework Upgrades
+  # ==============================================================================
+  
+  w3-task-001:
+    version: 1
+    id: w3-task-001
+    name: TESTING_FRAMEWORK_UPGRADE
+    description: Upgrade Testing framework from stub to MVP (basic test generation)
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 240
+    time_used_mins: 0
+    validation_checks:
+      - id: test_generation_works
+        description: Basic test generation implemented and working
+        validator: validate_tests_passing
+        params:
+          test_pattern: "test_testing_framework"
+        status: false
+        last_check: null
+        error: null
+      - id: integration_working
+        description: Testing phase integrates with quality gates
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/03_testing_framework/
+    git_commits: []
+  
+  w3-task-002:
+    version: 1
+    id: w3-task-002
+    name: MAINTENANCE_FRAMEWORK_UPGRADE
+    description: Upgrade Maintenance framework from stub to MVP (basic monitoring)
+    status: TODO
+    priority: 7
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 240
+    time_used_mins: 0
+    validation_checks:
+      - id: monitoring_works
+        description: Basic monitoring implemented and working
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: alerting_works
+        description: Simple alerting implemented
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/05_maintenance_framework/
+    git_commits: []
+  
+  w3-task-003:
+    version: 1
+    id: w3-task-003
+    name: E2E_INTEGRATION_TESTING
+    description: Test full SDLC flow end-to-end, document gaps
+    status: TODO
+    priority: 9
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 180
+    time_used_mins: 0
+    validation_checks:
+      - id: e2e_tests_pass
+        description: End-to-end integration tests pass
+        validator: validate_tests_passing
+        params:
+          test_pattern: "test_e2e"
+        status: false
+        last_check: null
+        error: null
+      - id: gaps_documented
+        description: Known gaps and limitations documented
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - tests/e2e/
+    git_commits: []
+  
+  # ==============================================================================
+  # WEEK 4: Production Polish
+  # ==============================================================================
+  
+  w4-task-001:
+    version: 1
+    id: w4-task-001
+    name: PERFORMANCE_OPTIMIZATION
+    description: Profile and optimize slow operations, reduce overhead
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 180
+    time_used_mins: 0
+    validation_checks:
+      - id: critical_paths_optimized
+        description: Critical paths are performant
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: benchmarks_pass
+        description: Performance benchmarks meet targets
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - agency_os/
+    git_commits: []
+  
+  w4-task-002:
+    version: 1
+    id: w4-task-002
+    name: UX_POLISH
+    description: Improve CLI output, progress indicators, feedback
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 150
+    time_used_mins: 0
+    validation_checks:
+      - id: cli_output_clear
+        description: CLI output is clear and helpful
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: progress_shown
+        description: Progress indicators implemented
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - vibe-cli
+      - agency_os/01_interface/
+    git_commits: []
+  
+  w4-task-003:
+    version: 1
+    id: w4-task-003
+    name: DOCUMENTATION_COMPLETE
+    description: Complete all docs - user guides, troubleshooting, FAQ
+    status: TODO
+    priority: 9
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 240
+    time_used_mins: 0
+    validation_checks:
+      - id: gad_docs_updated
+        description: All GAD docs reflect current reality
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: user_guides_complete
+        description: User guides for all workflows exist
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - docs/
+    git_commits: []
+  
+  w4-task-004:
+    version: 1
+    id: w4-task-004
+    name: QUALITY_GATES_COMPLETE
+    description: Run full test suite, fix all failing tests, verify no regressions
+    status: TODO
+    priority: 10
+    created_at: '2025-11-19T10:47:00.000000'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 180
+    time_used_mins: 0
+    validation_checks:
+      - id: all_tests_pass
+        description: Full test suite passes at 100%
+        validator: validate_tests_passing
+        params: {}
+        status: false
+        last_check: null
+        error: null
+      - id: no_regressions
+        description: No regressions from previous state
+        validator: validate_manual
+        params: {}
+        status: false
+        last_check: null
+        error: null
+    blocking_reason: null
+    related_files:
+      - tests/
+    git_commits: []

@@ -48,8 +48,8 @@ def main():
         
         roadmap_name = sys.argv[2]
         roadmap_files = {
-            "demo": vibe_root / ".vibe" / "config" / "roadmap.yaml",
-            "gad": vibe_root / ".vibe" / "config" / "steward_roadmap.yaml",
+            "demo": vibe_root / "config" / "roadmaps" / "demo_gad701_roadmap.yaml",
+            "gad": vibe_root / "config" / "roadmaps" / "steward_gad_roadmap.yaml",
         }
         
         if roadmap_name not in roadmap_files:

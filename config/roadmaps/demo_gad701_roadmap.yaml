@@ -1,0 +1,112 @@
+version: 1
+project_name: vibe-agency
+phases:
+- name: FOUNDATION_BUILD
+  status: IN_PROGRESS
+  progress: 33
+  task_ids:
+  - task-001
+  - task-002
+  - task-003
+tasks:
+  task-001:
+    version: 1
+    id: task-001
+    name: SCAFFOLD_GAD_701_CORE
+    description: Create core task management files (models, manager, validators)
+    status: DONE
+    priority: 10
+    created_at: '2025-11-19T10:47:35.143828'
+    started_at: null
+    completed_at: '2025-11-19T10:47:35.143835'
+    time_budget_mins: 120
+    time_used_mins: 120
+    validation_checks:
+    - id: files_created
+      description: Core files created (models.py, task_manager.py, etc)
+      validator: validate_files_exist
+      params: {}
+      status: true
+      last_check: '2025-11-19T10:47:35.143837'
+      error: null
+    - id: imports_work
+      description: All imports resolve correctly
+      validator: validate_imports
+      params: {}
+      status: true
+      last_check: '2025-11-19T10:47:35.143840'
+      error: null
+    blocking_reason: null
+    related_files: []
+    git_commits: []
+  task-002:
+    version: 1
+    id: task-002
+    name: INTEGRATE_CLI_DASHBOARD
+    description: Create rich-based CLI with mission control dashboard
+    status: IN_PROGRESS
+    priority: 9
+    created_at: '2025-11-19T10:47:35.143844'
+    started_at: '2025-11-19T10:47:35.143846'
+    completed_at: null
+    time_budget_mins: 120
+    time_used_mins: 0
+    validation_checks:
+    - id: cmd_mission_created
+      description: cmd_mission.py created with all commands
+      validator: validate_files_exist
+      params:
+        files:
+        - agency_os/01_interface/cli/cmd_mission.py
+      status: false
+      last_check: null
+      error: null
+    - id: git_clean
+      description: Git working directory is clean
+      validator: validate_git_clean
+      params: {}
+      status: false
+      last_check: null
+      error: null
+    - id: tests_passing
+      description: All tests passing
+      validator: validate_tests_passing
+      params: {}
+      status: false
+      last_check: null
+      error: null
+    blocking_reason: null
+    related_files:
+    - agency_os/01_interface/cli/cmd_mission.py
+    - agency_os/01_interface/cli/__init__.py
+    git_commits: []
+  task-003:
+    version: 1
+    id: task-003
+    name: IMPLEMENT_NEXT_TASK_GENERATOR
+    description: Auto-select next task based on roadmap progress
+    status: TODO
+    priority: 8
+    created_at: '2025-11-19T10:47:35.143851'
+    started_at: null
+    completed_at: null
+    time_budget_mins: 90
+    time_used_mins: 0
+    validation_checks:
+    - id: generator_implemented
+      description: next_task_generator.py functional
+      validator: validate_files_exist
+      params: {}
+      status: false
+      last_check: null
+      error: null
+    - id: tests_passing
+      description: Generator tests passing
+      validator: validate_tests_passing
+      params: {}
+      status: false
+      last_check: null
+      error: null
+    blocking_reason: null
+    related_files: []
+    git_commits: []
