@@ -15,8 +15,9 @@
 | **v0.2** | Integration | ✅ COMPLETE | 2025-11 | Knowledge system (GAD-6), agents framework (GAD-3) |
 | **v0.3** | Quality | ✅ COMPLETE | 2025-11 | QA suite (GAD-4), linting, testing infrastructure |
 | **v0.4** | Orchestration | ✅ COMPLETE | 2025-11 | Mission Control (GAD-7), task management, atomic git delivery |
-| **v0.5** | **Iron Dome** | 🟡 **YOU ARE HERE** | 2025-11 | Safety layer (GAD-509/510), dynamic configuration, semantic foundation |
-| **v0.9** | Semantic Orchestration | ⏳ NEXT | TBD | Graph executor, playbook 2.0, agent capability matching |
+| **v0.5** | **Iron Dome + Semantic Foundation** | ✅ **COMPLETE** | 2025-11-19 | Safety layer (GAD-509/510), semantic orchestration (GAD-902/903) |
+| **v0.6** | Agent Capabilities | ⏳ NEXT | TBD | Capability matching, cost prediction, parallel execution |
+| **v0.9** | Full Semantic | 📋 PLANNED | TBD | Workflow composition, self-healing, optimization |
 | **v1.0** | Autonomous | 📋 PLANNED | TBD | No-UI autonomous operation, full semantic orchestration |
 
 ---
@@ -50,17 +51,17 @@
 - ✅ Test automation (pytest)
 - ✅ Pre-push validation
 
-#### **⚡ Safety Layer (NEW)**
+#### **🎯 Semantic Orchestration (GAD-9): The Playbook Engine**
+- ✅ Graph Executor (GAD-902): Workflow topology and execution
+- ✅ Workflow Loader (GAD-903): YAML → Graph transformation
+- ✅ Schema validation for workflow definitions
+- ✅ Dry-run mode for workflow validation
+
+#### **⚡ Safety Layer (GAD-5XX)**
 - ✅ Circuit Breaker (GAD-509): Protects against cascading API failures
 - ✅ Quota Manager (GAD-510): Prevents surprise cost spikes
 - ✅ Dynamic Configuration (GAD-510.1): Environment variable quotas with safe defaults
 - ✅ Cost tracking and estimation
-
-#### **🎯 Semantic Foundation (NEW)**
-- ✅ Semantic Actions Framework: Intent-driven task definitions
-- ✅ Workflow Schema: Graph-based workflow definitions
-- ✅ Action Registry: Catalog of available workflows
-- ⏳ Graph Executor: Orchestration logic (NEXT)
 
 ---
 
@@ -105,20 +106,29 @@ Coverage:        ~65% (core systems)
 - Dynamic configuration (GAD-510.1)
 - Semantic actions framework (foundation)
 
-### ⏳ Phase 3: ORCHESTRATION (Next - v0.9)
-- **GAD-902: Graph Executor**
-  - Load workflows as graphs
-  - Topological sort for execution order
-  - Dry-run mode for validation
-  - Agent capability matching
+### ⏳ Phase 3: AGENT CAPABILITIES (Next - v0.6)
+- **Agent Capability Matching**
+  - Auto-select agents by required skills
+  - Match workflow actions to agent capabilities
+  - Load balancing across agents
 
-- **Playbook 2.0**
-  - YAML workflow definitions
-  - Replace hardcoded PlaybookEngine
-  - Support custom domains
-  - Cost prediction before execution
+- **Cost Prediction**
+  - Estimate workflow cost before execution
+  - Per-workflow quota limits
+  - Historical cost tracking
 
-### 📋 Phase 4: AUTONOMY (v1.0)
+- **Parallel Execution**
+  - Run independent tasks concurrently
+  - Resource pooling for agents
+  - Timeout management
+
+### 📋 Phase 4: FULL SEMANTIC (v0.9)
+- Workflow composition (sub-workflows)
+- Self-healing capabilities
+- Workflow optimization suggestions
+- Learning from execution history
+
+### 📋 Phase 5: AUTONOMY (v1.0)
 - No-UI autonomous operation
 - Full semantic orchestration
 - Self-healing capabilities
@@ -128,21 +138,23 @@ Coverage:        ~65% (core systems)
 
 ## What You CAN'T Do Yet (v0.5)
 
-❌ Execute workflows with full semantic orchestration
-❌ Define custom workflows in YAML
-❌ Use agent capability matching automatically
+❌ Agent capability matching (manual agent selection required)
 ❌ Predict workflow costs before execution
-❌ Run the system without user intervention
+❌ Run workflows in parallel (sequential only)
+❌ Compose workflows from sub-workflows
+❌ Full autonomous operation
 
 ## What You CAN Do (v0.5)
 
-✅ Run individual agents with full safety constraints
+✅ Execute workflows from YAML definitions
+✅ Graph-based dependency resolution
+✅ Dry-run workflow validation
+✅ Circuit breaker protection for API failures
+✅ Quota enforcement to prevent cost overruns
 ✅ Track API costs and quotas in real-time
-✅ Define semantic actions programmatically
-✅ View workflow schemas and dependencies
-✅ Query agent capabilities
-✅ Execute tasks with circuit breaker protection
 ✅ Configure quotas via environment variables
+✅ Run individual agents with full safety constraints
+✅ Query workflow schemas and dependencies
 
 ---
 
@@ -249,21 +261,28 @@ agency_os/03_agents/
 
 ## Success Criteria
 
-### v0.5 (Current)
+### v0.5 (Current) ✅
 - ✅ Safety layer prevents cascading failures
 - ✅ Quotas prevent surprise costs
 - ✅ Configuration is environment-driven
-- ✅ Semantic actions framework defined
-- ✅ All tests passing (531)
+- ✅ Graph executor fully operational
+- ✅ Workflow loader functional
+- ✅ YAML workflows validated
+- ✅ All tests passing (531+)
 
-### v0.9 (Next)
-- Graph executor fully operational
-- Playbook 2.0 YAML workflows working
+### v0.6 (Next)
 - Agent capability matching functional
-- Dry-run mode validated
-- Full backward compatibility maintained
+- Cost prediction before execution
+- Parallel workflow execution
+- Per-workflow quota limits
 
-### v1.0 (Vision)
+### v0.9 (Vision)
+- Workflow composition working
+- Self-healing capabilities
+- Learning from execution history
+- Optimization suggestions
+
+### v1.0 (Ultimate)
 - Autonomous 24/7 operation
 - No manual intervention required
 - Self-healing from failures

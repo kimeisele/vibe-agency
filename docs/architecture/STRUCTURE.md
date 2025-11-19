@@ -33,7 +33,7 @@ GAD-5XX/
 └─ GAD-502.md  # Runtime Haiku Hardening
 ```
 
-**The 8 Pillars**:
+**The 9 Pillars**:
 - GAD-1XX: Planning & Research
 - GAD-2XX: Core Orchestration & Workflow
 - GAD-3XX: Agent Framework & Runtime
@@ -42,6 +42,7 @@ GAD-5XX/
 - GAD-6XX: Knowledge Department
 - GAD-7XX: STEWARD Governance
 - GAD-8XX: Integration Matrix
+- GAD-9XX: Semantic Orchestration (The Playbook Engine)
 
 ---
 
@@ -172,6 +173,11 @@ docs/architecture/
 │
 ├─ GAD-8XX/              # Integration Matrix
 │  └─ GAD-800.md         # EPIC
+│
+├─ GAD-9XX/              # Semantic Orchestration (The Playbook Engine)
+│  ├─ GAD-900.md         # EPIC
+│  ├─ GAD-902.md         # Graph Executor
+│  └─ GAD-903.md         # Workflow Loader
 │
 ├─ LAD/                  # Layer overviews (horizontal views)
 │  ├─ LAD-1.md           # Browser Layer

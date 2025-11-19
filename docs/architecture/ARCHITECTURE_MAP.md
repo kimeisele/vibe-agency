@@ -12,6 +12,7 @@
 
 ```
 STATUS: GAD-5 (Runtime) ✅ LIVE | GAD-6 (Knowledge) ✅ LIVE | GAD-7 (Steward) ✅ LIVE
+        GAD-9 (Semantic Orchestration) ✅ OPERATIONAL
 NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 ┌────────────────────────────────────────────────────────────┐
 │                    VIBE AGENCY ARCHITECTURE                │
@@ -21,6 +22,8 @@ NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 │  │ • GAD-501: Shell Kernel (bin/vibe-shell)           │ │
 │  │ • GAD-502: Context Projection (VIBE_CONTEXT)       │ │
 │  │ • GAD-503: Logging Kernel (.vibe/logs)             │ │
+│  │ • GAD-509: Circuit Breaker (Iron Dome) 🛡️         │ │
+│  │ • GAD-510: Quota Manager (Cost Control) 💰         │ │
 │  │ • Anti-Decay: Health check (--health flag)         │ │
 │  │ Status: Production-Grade, Sealed, Tested           │ │
 │  └──────────────────────────────────────────────────────┘ │
@@ -39,6 +42,14 @@ NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 │  │ • Playbook Routing System                           │ │
 │  │ • Delegation & Validation                           │ │
 │  │ Status: Fully Operational                           │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                          ↕                                 │
+│  ┌──────────────────────────────────────────────────────┐ │
+│  │ GAD-9: SEMANTIC ORCHESTRATION (ENGINE) ✅ LIVE      │ │
+│  │ • GAD-902: Graph Executor (Topology & Dependencies)│ │
+│  │ • GAD-903: Workflow Loader (Data → Logic)          │ │
+│  │ • Playbook Engine (Task Routing & Validation)      │ │
+│  │ Status: Operational, v0.5 Foundation Complete      │ │
 │  └──────────────────────────────────────────────────────┘ │
 │                          ↕                                 │
 │  ┌──────────────────────────────────────────────────────┐ │
@@ -154,7 +165,7 @@ use_case: "Agencies, teams, production deployments, client work"
 ```
 ┌─────────────┐
 │   GAD-5     │  ← Foundation (must exist first)
-│  Runtime    │     (Docs: GAD-5XX/)
+│  Runtime    │     (Docs: GAD-5XX/ - includes Iron Dome)
 └─────────────┘
        ↓ provides context to
 ┌─────────────┐     ┌─────────────┐
@@ -166,6 +177,12 @@ use_case: "Agencies, teams, production deployments, client work"
        └────────┬──────────┘
                 ↓
         ┌─────────────┐
+        │   GAD-9     │  ← Playbook Engine (NEW)
+        │  Semantic   │     (Docs: GAD-9XX/)
+        │Orchestration│     Executor + Loader
+        └─────────────┘
+                ↓
+        ┌─────────────┐
         │   GAD-8     │  ← Orchestrates all
         │ Integration │     (Docs: GAD-8XX/)
         └─────────────┘
@@ -174,6 +191,7 @@ Dependencies:
 - GAD-6 needs GAD-5 (uses receipts, integrity)
 - GAD-7 needs GAD-5 (governs context layers)
 - GAD-6 ↔ GAD-7 (bidirectional - knowledge needs governance, governance uses knowledge)
+- GAD-9 needs GAD-5 (safety layer: circuit breaker, quota manager)
 - GAD-8 needs all (orchestrates everything)
 ```
 
@@ -216,11 +234,31 @@ semi_intelligent_components:
     system: "Agency OS"
     layers: [2, 3]
     purpose: "State management and prompt composition"
+  
+  - name: "GraphExecutor"
+    system: "GAD-9 (Semantic Orchestration)"
+    layers: [2, 3]
+    purpose: "Workflow graph execution with dependency resolution"
+    
+  - name: "WorkflowLoader"
+    system: "GAD-9 (Semantic Orchestration)"
+    layers: [2, 3]
+    purpose: "Load and validate YAML workflows"
     
   - name: "ReceiptManager"
     system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
     purpose: "Receipt generation and validation"
+  
+  - name: "CircuitBreaker"
+    system: "GAD-5 (Runtime Engineering)"
+    layers: [2, 3]
+    purpose: "Cascading failure protection (Iron Dome)"
+    
+  - name: "QuotaManager"
+    system: "GAD-5 (Runtime Engineering)"
+    layers: [2, 3]
+    purpose: "API cost control and quota enforcement"
     
   - name: "IntegrityChecker"
     system: "GAD-5 (Runtime Engineering)"
@@ -283,6 +321,19 @@ vibe-agency/
 │   └── audit/                          # Layer 3 only
 │
 ├── agency_os/                          # Core Agency
+│   ├── 00_system/
+│   │   ├── runtime/
+│   │   │   ├── circuit_breaker.py       # GAD-509 (Iron Dome)
+│   │   │   ├── quota_manager.py         # GAD-510 (Cost Control)
+│   │   │   └── llm_client.py
+│   │   ├── playbook/
+│   │   │   ├── executor.py              # GAD-902 (Graph Executor)
+│   │   │   ├── loader.py                # GAD-903 (Workflow Loader)
+│   │   │   └── workflows/               # YAML workflow definitions
+│   │   ├── orchestrator/                # Core orchestration
+│   │   ├── task_management/             # Mission control
+│   │   └── gates/                       # Validation gates
+│   │
 │   ├── 01_planning_framework/
 │   │   ├── agents/
 │   │   │   ├── VIBE_ALIGNER/
@@ -462,6 +513,10 @@ vibe-agency/
 
 | Feature | Layer 1 | Layer 2 | Layer 3 | GAD |
 |---------|---------|---------|---------|-----|
+| **Circuit Breaker** | ❌ N/A | ✅ Active | ✅ Active | 509 |
+| **Quota Manager** | ❌ N/A | ✅ Active | ✅ Active | 510 |
+| **Graph Executor** | ❌ N/A | ✅ Active | ✅ Active | 902 |
+| **Workflow Loader** | ❌ N/A | ✅ Active | ✅ Active | 903 |
 | **System Integrity** | ⚠️ Manual | ✅ Auto | ✅ Auto | 005 |
 | **Session Shell** | ❌ N/A | ✅ Active | ✅ Active | 005 |
 | **Receipts** | ❌ N/A | ✅ Created | ✅ Managed | 005 |
@@ -772,6 +827,7 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 - GAD-6 (Pillar 6): Knowledge department & research (Docs: GAD-6XX/)
 - GAD-7 (Pillar 7): STEWARD governance (Docs: GAD-7XX/)
 - GAD-8 (Pillar 8): Integration & orchestration (Docs: GAD-8XX/)
+- GAD-9 (Pillar 9): Semantic Orchestration - The Playbook Engine (Docs: GAD-9XX/)
 
 **Three Layers:**
 - Layer 1: Prompt-only (browser, $0)
@@ -803,7 +859,11 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 - GAD-500: Runtime Engineering EPIC (COMPLETE v2.0)
 - GAD-501: Layer 0 and Layer 1 (COMPLETE)
 - GAD-502: Haiku Hardening (PLAN)
+- GAD-509: Circuit Breaker (COMPLETE - Iron Dome)
+- GAD-510: Quota Manager (COMPLETE - Cost Control)
 - GAD-600: Knowledge Department (VISION)
 - GAD-700: STEWARD Governance (VISION)
 - GAD-800: Integration Matrix (VISION)
+- GAD-902: Graph Executor (COMPLETE - Topology & Dependencies)
+- GAD-903: Workflow Loader (COMPLETE - Data → Logic)
 - ARCHITECTURE_MAP: This document
