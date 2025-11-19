@@ -60,9 +60,7 @@ class TestDashboardIntegration:
         assert result.returncode == 0
         # Should contain mission control section
         output = result.stdout
-        assert (
-            "MISSION" in output or "mission" in output
-        ), "Dashboard missing mission control data"
+        assert "MISSION" in output or "mission" in output, "Dashboard missing mission control data"
 
     def test_dashboard_shows_system_health(self):
         """Test that dashboard displays system health status."""
@@ -76,9 +74,9 @@ class TestDashboardIntegration:
         assert result.returncode == 0
         output = result.stdout
         # Should show health status
-        assert (
-            "HEALTH" in output or "health" in output or "Status" in output
-        ), "Dashboard missing health status"
+        assert "HEALTH" in output or "health" in output or "Status" in output, (
+            "Dashboard missing health status"
+        )
 
     def test_dashboard_shows_git_status(self):
         """Test that dashboard displays git information."""
@@ -92,9 +90,7 @@ class TestDashboardIntegration:
         assert result.returncode == 0
         output = result.stdout
         # Should contain git status section
-        assert (
-            "GIT" in output or "Branch" in output
-        ), "Dashboard missing git status"
+        assert "GIT" in output or "Branch" in output, "Dashboard missing git status"
 
     def test_dashboard_shows_pr_status(self):
         """Test that dashboard displays PR information."""
@@ -108,9 +104,9 @@ class TestDashboardIntegration:
         assert result.returncode == 0
         output = result.stdout
         # Should mention PRs or draft status
-        assert (
-            "PR" in output or "Draft" in output or "draft" in output or "No draft" in output
-        ), "Dashboard missing PR information"
+        assert "PR" in output or "Draft" in output or "draft" in output or "No draft" in output, (
+            "Dashboard missing PR information"
+        )
 
 
 class TestDashboardOutputFormats:
@@ -192,9 +188,9 @@ class TestDashboardGADIntegration:
         )
         data = json.loads(result.stdout)
         # Mission data comes from GAD-7
-        assert (
-            data.get("mission") is not None or data.get("git") is not None
-        ), "Dashboard not integrating GAD-7 mission control"
+        assert data.get("mission") is not None or data.get("git") is not None, (
+            "Dashboard not integrating GAD-7 mission control"
+        )
 
     def test_dashboard_shows_draft_pr_review_gate(self):
         """Test that dashboard reflects Draft PR status (Review Gate)."""

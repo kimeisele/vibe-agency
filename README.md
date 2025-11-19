@@ -146,6 +146,14 @@ bin/vibe-sysinfo --help     # Show help
 bin/vibe-sysinfo --version  # Show version
 ```
 
+#### `bin/vibe-dashboard`
+Unified health and mission status dashboard integrating all GAD layers.
+```bash
+bin/vibe-dashboard          # Show full dashboard (Mission Control, Health, Git, PRs)
+bin/vibe-dashboard --json   # JSON output for programmatic access
+bin/vibe-dashboard --help   # Show help
+```
+
 ---
 
 ## 🚀 How to Use
@@ -274,7 +282,8 @@ echo "System has $SYSTEM_MEMORY GB RAM"
 | **Arms (GAD-6)** | ✅ DONE | Knowledge system with semantic search |
 | **Legs (GAD-3)** | ✅ DONE | 5 agent personas with integration hub |
 | **Feet (GAD-4)** | ✅ DONE | QA suite (linting + testing) |
-| **First Contact** | ✅ DONE | vibe-sysinfo tool proves system works |
+| **Orchestration (GAD-2)** | ✅ DONE | Atomic Git delivery with draft PR safety gate |
+| **First Contact** | ✅ DONE | vibe-sysinfo & vibe-dashboard system monitoring |
 
 ### Test Coverage
 

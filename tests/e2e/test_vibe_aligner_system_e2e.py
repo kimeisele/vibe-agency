@@ -309,19 +309,167 @@ class TestVibeAlignerSystemE2E:
             # Track prompts for Guardian Directive verification
             executed_prompts = []
             task_call_counter = {"LEAN_CANVAS_VALIDATOR": 0, "VIBE_ALIGNER": 0}
+            total_calls = [0]  # Track total invocations to determine agent phase
 
             def track_and_invoke(prompt, model=None, max_tokens=4096):
                 executed_prompts.append({"prompt": prompt, "length": len(prompt)})
+                total_calls[0] += 1
+                current_call = total_calls[0]
 
-                # Enhanced detection: Use agent name to determine which mock response to return
+                # CRITICAL FIX: Use context-aware detection to determine target agent.
+                # Strategy: Check prompt content for UNIQUE keywords/patterns specific to each agent.
+                # This avoids substring matching failures when historical context mentions other agents.
+
                 p_lower = prompt.lower()
+                p_head = p_lower[:5000]  # First 5000 chars contain the agent-specific instructions
 
-                # DEBUG: Print first 200 chars to see what we're matching
-                print(f"\n🔍 MOCK MATCHING: {p_lower[:200]}...")
+                print(f"\n🔍 MOCK MATCHING: Call #{current_call}")
+                print(f"  Prompt length: {len(prompt)}")
+
+                target_agent = None
+                import re
+
+                # Strategy 0: Look for task execution pattern in composition spec
+                # Pattern: "Executing: AGENT.TASK_NAME" at the beginning of the prompt
+                task_exec_pattern = re.search(r"Executing:\s*([A-Z_]+)\.([a-z0-9_]+)", p_head)
+                if task_exec_pattern:
+                    agent_name = task_exec_pattern.group(1)
+                    print(
+                        f"  → Strategy 0 (task execution): Found 'Executing: {agent_name}.{task_exec_pattern.group(2)}'"
+                    )
+
+                    if "LEAN" in agent_name or "CANVAS" in agent_name:
+                        target_agent = "LEAN_CANVAS_VALIDATOR"
+                    elif "VIBE" in agent_name or "ALIGNER" in agent_name:
+                        target_agent = "VIBE_ALIGNER"
+                    elif "GENESIS" in agent_name or "BLUEPRINT" in agent_name:
+                        target_agent = "GENESIS_BLUEPRINT"
+                    elif "AUDITOR" in agent_name:
+                        target_agent = "AUDITOR"
+                    elif "CODE" in agent_name or "GENERATOR" in agent_name:
+                        target_agent = "CODE_GENERATOR"
+
+                # Strategy 1: Look for explicit agent name in structured format (most reliable)
+                # Patterns like "agent: LEAN_CANVAS_VALIDATOR" or "role: VIBE_ALIGNER"
+                if target_agent is None:
+                    agent_pattern = re.search(r"(?:agent|role):\s*([a-z_]+)", p_head, re.IGNORECASE)
+                    if agent_pattern:
+                        agent_text = agent_pattern.group(1).upper()
+                        if "LEAN" in agent_text or "CANVAS" in agent_text:
+                            target_agent = "LEAN_CANVAS_VALIDATOR"
+                        elif "VIBE" in agent_text or "ALIGNER" in agent_text:
+                            target_agent = "VIBE_ALIGNER"
+                        elif "GENESIS" in agent_text or "BLUEPRINT" in agent_text:
+                            target_agent = "GENESIS_BLUEPRINT"
+                        elif "AUDITOR" in agent_text:
+                            target_agent = "AUDITOR"
+                        elif "CODE" in agent_text or "GENERATOR" in agent_text:
+                            target_agent = "CODE_GENERATOR"
+                        print(
+                            f"  → Strategy 1 (agent field): Found '{agent_pattern.group(1)}' → {target_agent}"
+                        )
+
+                # Strategy 3: Look for agent-UNIQUE keywords (MUST RUN BEFORE Strategy 2)
+                # IMPORTANT: Be conservative to avoid false matches from future-step mentions
+                if target_agent is None:
+                    # Only check for LEAN_CANVAS if we haven't completed it yet
+                    lean_canvas_indicators = 0
+                    if task_call_counter["LEAN_CANVAS_VALIDATOR"] < 3:
+                        lean_canvas_indicators = (
+                            p_head.count("canvas_fields")
+                            + p_head.count("riskiest_assumptions")
+                            + p_head.count("lean canvas")
+                        )
+
+                    # AUDITOR specific: Very specific to AUDITOR only
+                    auditor_indicators = (
+                        p_head.count("semantic_audit")
+                        + p_head.count("auditor")
+                        + p_head.count("compliance_check")
+                    )
+
+                    # CODE_GENERATOR specific: Only for calls > 10 where we're in coding phase
+                    code_generator_indicators = 0
+                    if current_call > 10:
+                        code_generator_indicators = (
+                            p_head.count("code_gen_spec")
+                            + p_head.count("implementation")
+                            + p_head.count("database_context")
+                            + p_head.count("code generation")
+                        )
+
+                    # VIBE_ALIGNER specific: More specific matches to avoid false positives
+                    # Look for patterns that indicate actual ALIGNER work, not previews
+                    # But NOT if we're already in coding phase (current_call > 10)
+                    vibe_aligner_indicators = 0
+                    if current_call <= 10:
+                        vibe_aligner_indicators = (
+                            p_head.count("validated_features")
+                            + p_head.count("fae_validation")
+                            + p_head.count("fdg_rules")
+                            + p_head.count("apce_rules")
+                            + p_head.count("complexity_score")
+                        )
+
+                    # Priority: LEAN_CANVAS > AUDITOR > CODE_GENERATOR > VIBE_ALIGNER
+                    # (GENESIS_BLUEPRINT will be detected by Strategy 4 fallback)
+                    if lean_canvas_indicators > 0:
+                        target_agent = "LEAN_CANVAS_VALIDATOR"
+                        print(
+                            f"  → Strategy 3 (keywords): LEAN_CANVAS (specific indicators={lean_canvas_indicators})"
+                        )
+                    elif auditor_indicators > 0:
+                        target_agent = "AUDITOR"
+                        print(
+                            f"  → Strategy 3 (keywords): AUDITOR (specific indicators={auditor_indicators})"
+                        )
+                    elif code_generator_indicators > 0:
+                        target_agent = "CODE_GENERATOR"
+                        print(
+                            f"  → Strategy 3 (keywords): CODE_GENERATOR (specific indicators={code_generator_indicators})"
+                        )
+                    elif vibe_aligner_indicators > 0:
+                        target_agent = "VIBE_ALIGNER"
+                        print(
+                            f"  → Strategy 3 (keywords): VIBE_ALIGNER (specific indicators={vibe_aligner_indicators})"
+                        )
+                    else:
+                        print("  → Strategy 3 (keywords): No clear keywords found")
+
+                # Strategy 2: Check sequential call count (fallback after keywords failed)
+                # This ensures LEAN_CANVAS tasks get identified even without strong keywords
+                if target_agent is None and task_call_counter["LEAN_CANVAS_VALIDATOR"] < 3:
+                    target_agent = "LEAN_CANVAS_VALIDATOR"
+                    print(
+                        f"  → Strategy 2 (sequential): LEAN_CANVAS_VALIDATOR task #{task_call_counter['LEAN_CANVAS_VALIDATOR']}"
+                    )
+
+                # Strategy 4: Final fallback based on call number sequence
+                # Based on observed pattern: calls 1-3=LEAN_CANVAS, 4=VIBE_ALIGNER, 5=GENESIS, 6-10=AUDITOR, 11+=CODE_GEN
+                if target_agent is None:
+                    if current_call <= 3:
+                        target_agent = "LEAN_CANVAS_VALIDATOR"
+                        print(
+                            f"  → Strategy 4 (fallback): LEAN_CANVAS_VALIDATOR (call #{current_call})"
+                        )
+                    elif current_call == 4:
+                        target_agent = "VIBE_ALIGNER"
+                        print("  → Strategy 4 (fallback): VIBE_ALIGNER (scope negotiation)")
+                    elif current_call == 5:
+                        target_agent = "GENESIS_BLUEPRINT"
+                        print("  → Strategy 4 (fallback): GENESIS_BLUEPRINT (handoff)")
+                    elif 6 <= current_call <= 10:
+                        target_agent = "AUDITOR"
+                        print("  → Strategy 4 (fallback): AUDITOR (semantic audit)")
+                    else:
+                        target_agent = "CODE_GENERATOR"
+                        print("  → Strategy 4 (fallback): CODE_GENERATOR (implementation)")
+
+                print(f"  → FINAL TARGET: {target_agent}")
+                response_data = {}
 
                 # LEAN_CANVAS_VALIDATOR tasks (sequential counter-based)
-                if "lean_canvas_validator" in p_lower:
-                    print("  → Matched: LEAN_CANVAS_VALIDATOR")
+                if target_agent == "LEAN_CANVAS_VALIDATOR":
                     task_num = task_call_counter["LEAN_CANVAS_VALIDATOR"]
                     task_call_counter["LEAN_CANVAS_VALIDATOR"] += 1
 
@@ -335,14 +483,59 @@ class TestVibeAlignerSystemE2E:
                         response_data = lean_canvas_summary
 
                 # VIBE_ALIGNER tasks (sequential counter-based)
-                elif "vibe_aligner" in p_lower:
-                    print("  → Matched: VIBE_ALIGNER")
-                    task_num = task_call_counter["VIBE_ALIGNER"]
+                elif target_agent == "VIBE_ALIGNER":
+                    task_num = task_call_counter.get("VIBE_ALIGNER", 0)
+                    if "VIBE_ALIGNER" not in task_call_counter:
+                        task_call_counter["VIBE_ALIGNER"] = 0
                     task_call_counter["VIBE_ALIGNER"] += 1
 
-                    # In FEATURE_SPECIFICATION sub-state, planning_handler calls task_05_scope_negotiation
-                    # which should return the complete feature_spec (task_06 output in test fixture)
+                    # For VIBE_ALIGNER, Call #4 is task 05 (scope negotiation) = output generation
+                    # In the actual system, this produces feature_spec.json
                     response_data = mock_llm_responses["task_06_output_generation"]
+
+                # GENESIS_BLUEPRINT tasks - return empty success response
+                elif target_agent == "GENESIS_BLUEPRINT":
+                    response_data = {"status": "handoff_complete", "architecture_ready": True}
+
+                # AUDITOR tasks - return validation success
+                elif target_agent == "AUDITOR":
+                    response_data = {
+                        "audit_passed": True,
+                        "issues": [],
+                        "severity_high": 0,
+                        "severity_medium": 0,
+                        "severity_low": 0,
+                    }
+
+                # CODE_GENERATOR tasks - return complete code_gen_spec
+                elif target_agent == "CODE_GENERATOR":
+                    response_data = {
+                        "schema_version": "3.0",
+                        "structured_specification": {
+                            "modules": [
+                                {
+                                    "name": "BookingAPI",
+                                    "type": "REST API",
+                                    "description": "REST API for booking system",
+                                }
+                            ]
+                        },
+                        "database_context": {
+                            "primary_tables": ["classes", "bookings", "users", "instructors"],
+                            "relationships": [
+                                {"from": "bookings", "to": "classes"},
+                                {"from": "bookings", "to": "users"},
+                            ],
+                        },
+                        "task_context": {
+                            "current_phase": "task_01_spec_analysis",
+                            "completed_analysis": True,
+                        },
+                        "system_context": {
+                            "technology_stack": ["Python", "FastAPI", "PostgreSQL"],
+                            "architectural_pattern": "MVC",
+                        },
+                    }
 
                 else:
                     # Fallback: empty response

@@ -58,8 +58,8 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest tests/ -v --tb=short --ignore=tests/e2e/test_vibe_aligner_system_e2e.py -k "not test_complete_quality_enforcement_flow"
-        continue-on-error: false  # Now properly excludes known failures
+          uv run pytest tests/ -v --tb=short
+        continue-on-error: false
 
       - name: Check code quality
         run: |
