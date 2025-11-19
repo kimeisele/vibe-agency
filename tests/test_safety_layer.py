@@ -375,11 +375,12 @@ class TestSafetyLayerIntegration:
         LLMClient = llm_module.LLMClient
         LLMInvocationError = llm_module.LLMInvocationError
 
-        mock_client = MagicMock()
-        mock_client.messages.create.side_effect = Exception("API Error")
+        # Create mock provider that raises errors
+        mock_provider = MagicMock()
+        mock_provider.invoke.side_effect = Exception("Provider Error")
+        mock_provider.get_provider_name.return_value = "MockProvider"
 
-        client = LLMClient()
-        client.client = mock_client
+        client = LLMClient(provider=mock_provider)
         client.circuit_breaker.config.failure_threshold = 2
 
         # Trigger 2 failures
@@ -398,20 +399,32 @@ class TestSafetyLayerIntegration:
         # Import after sys.path is set
         llm_module = __import__("llm_client")
         LLMClient = llm_module.LLMClient
+        LLMUsage = llm_module.LLMUsage
+        LLMResponse = llm_module.LLMResponse
 
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="Response")]
-        mock_response.usage.input_tokens = 100
-        mock_response.usage.output_tokens = 50
-        mock_response.model = "claude-3-5-sonnet-20241022"
-        mock_response.stop_reason = "end_turn"
+        from datetime import datetime
 
-        mock_client = MagicMock()
-        mock_client.messages.create.return_value = mock_response
+        # Create mock provider response
+        mock_usage = LLMUsage(
+            input_tokens=100,
+            output_tokens=50,
+            model="claude-3-5-sonnet-20241022",
+            cost_usd=0.001,
+            timestamp=datetime.utcnow().isoformat() + "Z",
+        )
 
-        client = LLMClient()
-        client.client = mock_client
+        mock_response = LLMResponse(
+            content="Response",
+            usage=mock_usage,
+            model="claude-3-5-sonnet-20241022",
+            finish_reason="end_turn",
+        )
 
+        mock_provider = MagicMock()
+        mock_provider.invoke.return_value = mock_response
+        mock_provider.get_provider_name.return_value = "MockProvider"
+
+        client = LLMClient(provider=mock_provider)
         client.invoke(prompt="test")
 
         # Verify metrics were recorded

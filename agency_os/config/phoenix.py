@@ -167,6 +167,44 @@ class SafetyConfig(BaseSettings):
         case_sensitive = False
 
 
+class ModelConfig(BaseSettings):
+    """
+    LLM Model configuration (GAD-511: Neural Adapter Strategy)
+
+    Supports multiple providers: Anthropic, OpenAI, Local/Ollama
+    """
+
+    provider: str = "anthropic"
+    """LLM provider: 'anthropic', 'openai', 'local'"""
+
+    model_name: str = "claude-3-5-sonnet-20241022"
+    """Default model to use (provider-specific)"""
+
+    api_key: str | None = None
+    """API key for the provider (loaded from provider-specific env vars if not set)"""
+
+    max_tokens: int = 4096
+    """Default maximum output tokens"""
+
+    temperature: float = 1.0
+    """Default sampling temperature (0.0 to 2.0)"""
+
+    @model_validator(mode="after")
+    def load_api_key_from_env(self) -> "ModelConfig":
+        """Auto-load API key from environment if not explicitly set"""
+        if self.api_key is None:
+            # Try provider-specific env vars
+            if self.provider == "anthropic":
+                self.api_key = os.getenv("ANTHROPIC_API_KEY")
+            elif self.provider == "openai":
+                self.api_key = os.getenv("OPENAI_API_KEY")
+        return self
+
+    class Config:
+        env_prefix = "VIBE_MODEL_"
+        case_sensitive = False
+
+
 class PhoenixConfig(BaseSettings):
     """
     Master configuration for vibe-agency.
@@ -186,6 +224,9 @@ class PhoenixConfig(BaseSettings):
 
     safety: SafetyConfig = SafetyConfig()
     """Execution modes and safety guardrails"""
+
+    model: ModelConfig = ModelConfig()
+    """LLM model configuration (GAD-511)"""
 
     class Config:
         env_file = ".env"
@@ -240,6 +281,7 @@ class PhoenixConfig(BaseSettings):
             },
             "quotas": self.quotas.model_dump(),
             "safety": self.safety.model_dump(),
+            "model": self.model.model_dump(),
         }
 
 
@@ -305,6 +347,13 @@ if __name__ == "__main__":
     print(f"  Quota Enforcement: {config.safety.enable_quota_enforcement}")
     print(f"  Cost Tracking: {config.safety.enable_cost_tracking}")
     print(f"  Audit Logging: {config.safety.enable_audit_logging}")
+
+    print("\n🧠 Model (GAD-511):")
+    print(f"  Provider: {config.model.provider}")
+    print(f"  Model: {config.model.model_name}")
+    print(f"  API Key: {'✅ Set' if config.model.api_key else '❌ Not set'}")
+    print(f"  Max Tokens: {config.model.max_tokens}")
+    print(f"  Temperature: {config.model.temperature}")
 
     print(f"\n✅ Configuration Valid: {is_valid}")
     if issues:

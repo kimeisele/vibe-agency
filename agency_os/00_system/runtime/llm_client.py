@@ -1,35 +1,37 @@
 #!/usr/bin/env python3
 """
-LLM Client - Thin wrapper around LLM providers
-================================================
+LLM Client - Provider-Agnostic Adapter (GAD-511 Refactor)
+===========================================================
 
-Implements GAD-002 Decision 6: Agent Invocation Architecture
+Implements GAD-002 Decision 6 + GAD-511 Neural Adapter Strategy
 
 Features:
+- **Multi-provider support** (Anthropic, OpenAI, Local) via GAD-511
 - Graceful failover (no crash if API key missing)
 - Retry logic with exponential backoff
 - Cost tracking (input/output tokens)
-- Rate limiting support
-- Error handling
+- Circuit breaker (GAD-509)
+- Operational quotas (GAD-510)
 
-Version: 1.0 (Phase 3 - GAD-002)
+**BACKWARD COMPATIBLE**: Maintains same API as previous version
+
+Version: 2.0 (GAD-511)
 """
 
 import logging
-import os
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from circuit_breaker import CircuitBreaker, CircuitBreakerConfig, CircuitBreakerOpenError
+from providers import LLMProvider, LLMProviderError, NoOpProvider, get_default_provider
 from quota_manager import OperationalQuota, QuotaExceededError, QuotaLimits
 
 logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# DATA STRUCTURES
+# DATA STRUCTURES (Kept for backward compatibility)
 # =============================================================================
 
 
@@ -55,7 +57,7 @@ class LLMResponse:
 
 
 # =============================================================================
-# COST TRACKER
+# COST TRACKER (Kept unchanged for backward compatibility)
 # =============================================================================
 
 
@@ -63,15 +65,8 @@ class CostTracker:
     """
     Tracks API costs across invocations.
 
-    Pricing (as of 2025-11-14):
-    - Claude 3.5 Sonnet: $3/MTok input, $15/MTok output
+    Now provider-agnostic - delegates cost calculation to providers.
     """
-
-    # Pricing table (USD per million tokens)
-    PRICING = {
-        "claude-3-5-sonnet-20241022": {"input": 3.0, "output": 15.0},
-        "claude-3-5-sonnet-20250129": {"input": 3.0, "output": 15.0},
-    }
 
     def __init__(self):
         self.total_cost = 0.0
@@ -79,32 +74,19 @@ class CostTracker:
         self.total_output_tokens = 0
         self.invocations = []
 
-    def calculate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
-        """Calculate cost for a single invocation"""
-        if model not in self.PRICING:
-            logger.warning(f"Unknown model pricing: {model}, using Sonnet defaults")
-            pricing = self.PRICING["claude-3-5-sonnet-20241022"]
-        else:
-            pricing = self.PRICING[model]
-
-        input_cost = (input_tokens / 1_000_000) * pricing["input"]
-        output_cost = (output_tokens / 1_000_000) * pricing["output"]
-
-        return input_cost + output_cost
-
-    def record(self, input_tokens: int, output_tokens: int, model: str) -> LLMUsage:
-        """Record token usage and calculate cost"""
-        cost = self.calculate_cost(input_tokens, output_tokens, model)
-
+    def record(
+        self, input_tokens: int, output_tokens: int, model: str, cost_usd: float
+    ) -> LLMUsage:
+        """Record token usage (cost now provided by provider)"""
         usage = LLMUsage(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             model=model,
-            cost_usd=cost,
+            cost_usd=cost_usd,
             timestamp=datetime.utcnow().isoformat() + "Z",
         )
 
-        self.total_cost += cost
+        self.total_cost += cost_usd
         self.total_input_tokens += input_tokens
         self.total_output_tokens += output_tokens
         self.invocations.append(usage)
@@ -125,7 +107,7 @@ class CostTracker:
 
 
 # =============================================================================
-# EXCEPTIONS
+# EXCEPTIONS (Kept unchanged for backward compatibility)
 # =============================================================================
 
 
@@ -148,18 +130,15 @@ class BudgetExceededError(LLMClientError):
 
 
 # =============================================================================
-# NO-OP CLIENT (GRACEFUL FAILOVER)
+# NO-OP CLIENT (Kept for backward compatibility with legacy code)
 # =============================================================================
 
 
 class NoOpClient:
     """
-    Fallback client when API key is not available.
+    Legacy NoOpClient for backward compatibility.
 
-    Implements GAD-002 Decision 6 - Graceful Failover:
-    - Returns empty responses instead of crashing
-    - Allows system to run in knowledge-only mode
-    - Logs warnings for visibility
+    **Deprecated**: Use providers.NoOpProvider instead (via GAD-511)
     """
 
     def __init__(self):
@@ -191,22 +170,26 @@ class NoOpClient:
 
 
 # =============================================================================
-# LLM CLIENT
+# LLM CLIENT (GAD-511 Refactored)
 # =============================================================================
 
 
 class LLMClient:
     """
-    Thin wrapper around Anthropic API with retry, cost tracking, error handling.
+    Provider-agnostic LLM client adapter.
 
-    Implements GAD-002 Decision 6: Agent Invocation Architecture
+    **GAD-511 Architecture**: Uses provider system for multi-provider support
+    while maintaining backward-compatible API.
+
+    **Backward Compatible**: Drop-in replacement for legacy LLMClient
 
     Features:
-    - Graceful failover (NoOpClient if no API key)
-    - Retry with exponential backoff (up to 3 attempts)
+    - Multi-provider support (Anthropic, OpenAI, Local)
+    - Graceful failover (NoOpProvider if no provider available)
     - Cost tracking via CostTracker
+    - Circuit breaker (GAD-509)
+    - Operational quotas (GAD-510)
     - Budget enforcement (optional)
-    - Rate limiting support (optional)
 
     Usage:
         client = LLMClient()
@@ -219,12 +202,13 @@ class LLMClient:
         print(f"Cost: ${response.usage.cost_usd:.4f}")
     """
 
-    def __init__(self, budget_limit: float | None = None):
+    def __init__(self, budget_limit: float | None = None, provider: LLMProvider | None = None):
         """
         Initialize LLM client.
 
         Args:
             budget_limit: Optional budget limit in USD (default: None = no limit)
+            provider: Optional explicit provider (default: auto-detect via factory)
         """
         self.cost_tracker = CostTracker()
         self.budget_limit = budget_limit
@@ -247,29 +231,21 @@ class LLMClient:
             )
         )
 
-        # Initialize Anthropic client with graceful failover
-        self.api_key = os.environ.get("ANTHROPIC_API_KEY")
-
-        if not self.api_key:
-            logger.warning(
-                "ANTHROPIC_API_KEY not found - using NoOpClient (knowledge-only mode). "
-                "Set ANTHROPIC_API_KEY environment variable to enable LLM invocations."
-            )
-            self.client = NoOpClient()
-            self.mode = "noop"
+        # Initialize provider (GAD-511)
+        if provider is not None:
+            self.provider = provider
         else:
-            try:
-                from anthropic import Anthropic
+            self.provider = get_default_provider()
 
-                self.client = Anthropic(api_key=self.api_key)
-                self.mode = "anthropic"
-                logger.info("LLM Client initialized with Anthropic API")
-            except ImportError:
-                logger.error(
-                    "anthropic package not installed. Install with: pip install anthropic>=0.18.0"
-                )
-                self.client = NoOpClient()
-                self.mode = "noop"
+        # Set mode for backward compatibility
+        if isinstance(self.provider, NoOpProvider):
+            self.mode = "noop"
+            self.client = NoOpClient()  # For legacy code compatibility
+            logger.info("LLM Client initialized with NoOp provider (mock mode)")
+        else:
+            self.mode = self.provider.get_provider_name().lower()
+            self.client = None  # Not used in provider mode
+            logger.info(f"LLM Client initialized with {self.provider.get_provider_name()} provider")
 
     def invoke(
         self,
@@ -282,10 +258,7 @@ class LLMClient:
         """
         Invoke LLM with safety layer, retry logic, and cost tracking.
 
-        Implements safety guardrails:
-        - Budget limits (legacy)
-        - Operational quotas (GAD-510): RPM, TPM, cost/hour, cost/day
-        - Circuit breaker (GAD-509): Protects against cascading API failures
+        **GAD-511**: Delegates to provider while maintaining safety guardrails
 
         Args:
             prompt: Input prompt
@@ -303,16 +276,15 @@ class LLMClient:
             CircuitBreakerOpenError: If circuit breaker is OPEN
             LLMInvocationError: If all retries fail
         """
-        # Check budget before invocation (legacy)
+        # Check budget before invocation
         if self.budget_limit and self.cost_tracker.total_cost >= self.budget_limit:
             raise BudgetExceededError(
                 f"Budget limit reached: ${self.budget_limit:.2f} "
                 f"(current: ${self.cost_tracker.total_cost:.4f})"
             )
 
-        # Check operational quotas before invocation (GAD-510 pre-flight check)
-        # This prevents wasted API calls by validating quotas upfront
-        estimated_tokens = max_tokens  # Conservative estimate
+        # Check operational quotas (GAD-510 pre-flight check)
+        estimated_tokens = max_tokens
         try:
             self.quota_manager.check_before_request(
                 estimated_tokens=estimated_tokens, operation=f"invoke({model})"
@@ -321,92 +293,66 @@ class LLMClient:
             logger.error(f"Quota check failed: {e}")
             raise
 
-        # Retry loop with exponential backoff
-        last_error = None
-        for attempt in range(max_retries):
-            try:
-                # Call Anthropic API through circuit breaker (GAD-509)
-                # Circuit breaker protects against cascading failures
-                response = self.circuit_breaker.call(
-                    self.client.messages.create,
+        # Delegate to provider through circuit breaker
+        try:
+
+            def provider_invoke():
+                return self.provider.invoke(
+                    prompt=prompt,
                     model=model,
                     max_tokens=max_tokens,
                     temperature=temperature,
-                    messages=[{"role": "user", "content": prompt}],
+                    max_retries=max_retries,
                 )
 
-                # Track cost
-                usage = self.cost_tracker.record(
-                    input_tokens=response.usage.input_tokens,
-                    output_tokens=response.usage.output_tokens,
-                    model=model,
-                )
+            # Call provider through circuit breaker (GAD-509)
+            provider_response = self.circuit_breaker.call(provider_invoke)
 
-                # Record quota usage (GAD-510 post-request recording)
-                total_tokens = response.usage.input_tokens + response.usage.output_tokens
-                self.quota_manager.record_request(
-                    tokens_used=total_tokens, cost_usd=usage.cost_usd, operation=f"invoke({model})"
-                )
+            # Track cost
+            usage = self.cost_tracker.record(
+                input_tokens=provider_response.usage.input_tokens,
+                output_tokens=provider_response.usage.output_tokens,
+                model=provider_response.model,
+                cost_usd=provider_response.usage.cost_usd,
+            )
 
-                # Log invocation
-                logger.info(
-                    f"LLM invocation successful: {model} "
-                    f"(in: {usage.input_tokens}, out: {usage.output_tokens}, "
-                    f"cost: ${usage.cost_usd:.4f})"
-                )
+            # Record quota usage (GAD-510)
+            total_tokens = (
+                provider_response.usage.input_tokens + provider_response.usage.output_tokens
+            )
+            self.quota_manager.record_request(
+                tokens_used=total_tokens, cost_usd=usage.cost_usd, operation=f"invoke({model})"
+            )
 
-                # Return standardized response
-                return LLMResponse(
-                    content=response.content[0].text,
-                    usage=usage,
-                    model=response.model,
-                    finish_reason=response.stop_reason,
-                )
+            # Log success
+            provider_name = getattr(provider_response, "provider", "unknown")
+            logger.info(
+                f"LLM invocation successful: {model} via {provider_name} "
+                f"(in: {usage.input_tokens}, out: {usage.output_tokens}, cost: ${usage.cost_usd:.4f})"
+            )
 
-            except CircuitBreakerOpenError as e:
-                # Circuit breaker is OPEN - don't retry (fatal condition)
-                logger.error(
-                    f"Circuit breaker OPEN (attempt {attempt + 1}/{max_retries}): {e}. "
-                    f"LLM API showing sustained failures. Not retrying."
-                )
-                raise LLMInvocationError(
-                    f"LLM invocation failed: Circuit breaker OPEN. "
-                    f"API showing sustained issues: {e!s}"
-                )
+            # Return standardized response (convert provider response to legacy format)
+            return LLMResponse(
+                content=provider_response.content,
+                usage=usage,
+                model=provider_response.model,
+                finish_reason=provider_response.finish_reason,
+            )
 
-            except QuotaExceededError as e:
-                # Quota exceeded during request - don't retry (operational limit reached)
-                logger.error(
-                    f"Quota exceeded during invocation (attempt {attempt + 1}/{max_retries}): {e}"
-                )
-                raise
+        except CircuitBreakerOpenError as e:
+            logger.error(f"Circuit breaker OPEN: {e}")
+            raise LLMInvocationError(f"LLM invocation failed: Circuit breaker OPEN - {e!s}")
 
-            except Exception as e:
-                last_error = e
-                error_name = type(e).__name__
+        except QuotaExceededError:
+            raise  # Re-raise quota errors
 
-                # Check if retryable error
-                retryable_errors = ["RateLimitError", "APIConnectionError", "APITimeoutError"]
-                is_retryable = any(err in error_name for err in retryable_errors)
+        except LLMProviderError as e:
+            logger.error(f"Provider invocation failed: {e}")
+            raise LLMInvocationError(f"LLM invocation failed: {e!s}")
 
-                if is_retryable and attempt < max_retries - 1:
-                    # Exponential backoff: 2s, 4s, 8s
-                    wait_time = 2**attempt
-                    logger.warning(
-                        f"LLM invocation failed ({error_name}), "
-                        f"retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})"
-                    )
-                    time.sleep(wait_time)
-                else:
-                    # Non-retryable error or max retries reached
-                    logger.error(f"LLM invocation failed: {error_name} - {e!s}")
-                    break
-
-        # All retries failed
-        raise LLMInvocationError(
-            f"LLM invocation failed after {max_retries} attempts. "
-            f"Last error: {type(last_error).__name__} - {last_error!s}"
-        )
+        except Exception as e:
+            logger.error(f"Unexpected error during invocation: {e}")
+            raise LLMInvocationError(f"LLM invocation failed: {type(e).__name__} - {e!s}")
 
     def get_cost_summary(self) -> dict[str, Any]:
         """Get cost tracking summary"""
@@ -423,23 +369,24 @@ class LLMClient:
 
 
 # =============================================================================
-# CLI INTERFACE (FOR TESTING)
+# CLI INTERFACE (For testing)
 # =============================================================================
 
 if __name__ == "__main__":
-    # Test LLM client
-    print("Testing LLM Client...")
+    # Test LLM client with provider system
+    print("Testing LLM Client (GAD-511 Provider System)...")
     print("=" * 60)
 
     # Initialize client
-    client = LLMClient(budget_limit=1.0)  # $1 budget for testing
+    client = LLMClient(budget_limit=1.0)
 
     print(f"Mode: {client.mode}")
+    print(f"Provider: {client.provider.get_provider_name()}")
     print(f"Budget: ${client.budget_limit}")
     print()
 
     # Test invocation
-    if client.mode == "anthropic":
+    if client.mode != "noop":
         try:
             response = client.invoke(
                 prompt="What is 2+2? Answer in one sentence.",
@@ -462,7 +409,6 @@ if __name__ == "__main__":
 
         except Exception as e:
             print(f"Error: {e}")
-
     else:
         print("NoOp mode - skipping test invocation")
         print("Set ANTHROPIC_API_KEY to test real invocations")

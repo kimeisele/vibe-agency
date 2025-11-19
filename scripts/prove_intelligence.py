@@ -19,6 +19,7 @@ Expected outcome:
 Version: v0.7 (LIVE FIRE)
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -30,8 +31,9 @@ sys.path.insert(0, str(project_root))
 runtime_dir = project_root / "agency_os" / "00_system" / "runtime"
 sys.path.insert(0, str(runtime_dir))
 
-from agency_os.config.phoenix import get_config, reset_config
-from llm_client import LLMClient
+from llm_client import LLMClient  # noqa: E402
+
+from agency_os.config.phoenix import get_config, reset_config  # noqa: E402
 
 print("=" * 70)
 print("🔥 OPERATION FIRST CONTACT: PROOF OF INTELLIGENCE")
@@ -46,14 +48,15 @@ config = get_config()
 print(f"   Current LIVE FIRE status: {config.safety.live_fire_enabled}")
 
 # Enable LIVE FIRE mode programmatically
-import os
 os.environ["VIBE_LIVE_FIRE"] = "true"
 reset_config()  # Reload config to pick up env var
 config = get_config()
 
 print(f"   ✅ LIVE FIRE ENABLED: {config.safety.live_fire_enabled}")
-print(f"   Quota limits: RPM={config.quotas.requests_per_minute}, "
-      f"Cost/hour=${config.quotas.cost_per_hour_usd}")
+print(
+    f"   Quota limits: RPM={config.quotas.requests_per_minute}, "
+    f"Cost/hour=${config.quotas.cost_per_hour_usd}"
+)
 print()
 
 # Step 2: Initialize LLM Client
@@ -100,10 +103,7 @@ print()
 
 try:
     response = client.invoke(
-        prompt=prompt,
-        model="claude-3-5-sonnet-20241022",
-        max_tokens=512,
-        temperature=0.7
+        prompt=prompt, model="claude-3-5-sonnet-20241022", max_tokens=512, temperature=0.7
     )
 
     # Step 5: Verify the response
@@ -161,6 +161,7 @@ except Exception as e:
     print()
 
     import traceback
+
     print("Traceback:")
     traceback.print_exc()
 
