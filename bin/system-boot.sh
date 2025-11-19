@@ -10,17 +10,38 @@
 
 set -euo pipefail
 
+# --- TERM CHECK (GAD-501: CI/CD Compatibility) ---
+# If TERM is not set (e.g., in CI), disable color output
+if [ -z "${TERM:-}" ]; then
+    export TERM=dumb
+    USE_COLOR=false
+else
+    USE_COLOR=true
+fi
+
 # --- VIBE COLORS ---
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+if [ "$USE_COLOR" = true ]; then
+    CYAN='\033[0;36m'
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    YELLOW='\033[1;33m'
+    NC='\033[0m'
+else
+    CYAN=''
+    GREEN=''
+    RED=''
+    YELLOW=''
+    NC=''
+fi
 
 # --- INITIALIZATION ---
 VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
-clear
+
+# Only clear if we have a real terminal
+if [ "$USE_COLOR" = true ]; then
+    clear
+fi
 
 echo -e "${CYAN}"
 cat << "EOF"
