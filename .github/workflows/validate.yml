@@ -33,7 +33,8 @@ jobs:
 
       - name: Install uv
         run: |
-          pip install uv
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           uv --version
 
       - name: Restore uv cache
@@ -91,6 +92,5 @@ jobs:
 
       - name: Validate pyproject.toml syntax
         run: |
-          pip install tomli
-          python3 -c "import tomli; tomli.load(open('pyproject.toml', 'rb'))"
+          python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"
           echo "✅ pyproject.toml is valid TOML"

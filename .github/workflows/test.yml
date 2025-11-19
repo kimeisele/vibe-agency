@@ -21,7 +21,8 @@ jobs:
 
     - name: Install uv
       run: |
-        pip install uv
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         uv --version
 
     - name: Restore uv cache
@@ -44,13 +45,9 @@ jobs:
       run: |
         uv run yamllint -c .yamllint agency_os/ system_steward_framework/ || true
 
-    - name: Run prompt composition tests
+    - name: Run test suite
       run: |
-        uv run python tests/test_prompt_composition.py
-
-    - name: Test VIBE_ALIGNER composition
-      run: |
-        uv run python tests/test_vibe_aligner.py
+        uv run pytest -v --tb=short
 
     - name: Validate knowledge index
       run: |
