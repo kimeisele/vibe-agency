@@ -31,6 +31,7 @@ workflow:
     - id: analyze_request
       action: analyze
       prompt_key: research.analyze_topic
+      knowledge_context: true
       description: |
         Analyze the research request to extract key concepts and scope.
         - Parse research topic and learning objectives
@@ -46,6 +47,7 @@ workflow:
     - id: search_knowledge
       action: research
       prompt_key: research.search_knowledge
+      knowledge_context: true
       description: |
         Search and gather knowledge from multiple sources.
         - Query knowledge base and web sources

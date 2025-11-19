@@ -96,6 +96,7 @@ class SemanticAction:
     estimated_cost_usd: float = 0.0  # Estimated API cost
     timeout_seconds: int = 300  # Execution timeout
     prompt_key: str | None = None  # Optional key to lookup prompt in registry
+    knowledge_context: bool = False  # If True, inject relevant knowledge artifacts before execution
 
     def __str__(self) -> str:
         return f"SemanticAction({self.name}: {self.intent})"

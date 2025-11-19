@@ -50,6 +50,7 @@ class WorkflowNode:
     timeout_seconds: int = 300
     retries: int = 3
     prompt_key: str | None = None  # Optional key to lookup prompt in registry
+    knowledge_context: bool = False  # If True, inject relevant knowledge artifacts before execution
 
 
 @dataclass
@@ -401,6 +402,72 @@ class GraphExecutor:
         else:
             # No prompt_key: use context or description (legacy behavior)
             base_prompt = context if context else node.description
+
+        # GAD-908: Knowledge Context Injection (OPERATION INSIGHT)
+        # Check if this node needs knowledge context
+        if node.knowledge_context:
+            try:
+                # Import with proper path handling
+                import importlib.util
+
+                retriever_path = Path(__file__).parent.parent.parent / "02_knowledge" / "retriever.py"
+
+                spec = importlib.util.spec_from_file_location("retriever", retriever_path)
+                retriever_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(retriever_module)
+
+                KnowledgeRetriever = retriever_module.KnowledgeRetriever
+
+                # Initialize retriever with repo root
+                vibe_root = Path(__file__).parent.parent.parent.parent
+                retriever = KnowledgeRetriever(vibe_root)
+
+                # Extract query from context (use first 100 chars as search query)
+                query = context[:100] if context else node.action
+                logger.info(f"👁️ INSIGHT: Retrieving knowledge for query: '{query[:50]}...'")
+
+                # Search for relevant knowledge
+                hits = retriever.search(query, limit=5)
+
+                if hits:
+                    logger.info(f"👁️ INSIGHT: Found {len(hits)} relevant knowledge artifacts")
+
+                    # Format knowledge context
+                    knowledge_section = "\n\n" + "=" * 80 + "\n"
+                    knowledge_section += "[INTERNAL KNOWLEDGE FOUND]\n"
+                    knowledge_section += "=" * 80 + "\n\n"
+                    knowledge_section += "The following knowledge artifacts from our knowledge base are relevant to this task:\n\n"
+
+                    for i, hit in enumerate(hits, 1):
+                        rel_path = hit.path.relative_to(retriever.knowledge_base)
+                        knowledge_section += f"## Artifact {i}: {hit.title}\n"
+                        knowledge_section += f"**Domain:** {hit.domain} | **Relevance:** {hit.relevance_score:.1%}\n"
+                        knowledge_section += f"**Path:** {rel_path}\n\n"
+
+                        # Read full content for high-relevance matches
+                        if hit.relevance_score >= 0.5:
+                            try:
+                                content = retriever.read_file(rel_path)
+                                knowledge_section += f"**Content:**\n```\n{content}\n```\n\n"
+                            except Exception as e:
+                                logger.warning(f"Failed to read knowledge file {rel_path}: {e}")
+                                knowledge_section += f"**Preview:** {hit.preview}\n\n"
+                        else:
+                            knowledge_section += f"**Preview:** {hit.preview}\n\n"
+
+                    knowledge_section += "=" * 80 + "\n"
+                    knowledge_section += "[END INTERNAL KNOWLEDGE]\n"
+                    knowledge_section += "=" * 80 + "\n"
+
+                    # Inject knowledge into prompt
+                    base_prompt = base_prompt + knowledge_section
+                    logger.info(f"👁️ INSIGHT: Injected {len(hits)} knowledge artifacts into prompt")
+                else:
+                    logger.info("👁️ INSIGHT: No relevant knowledge found")
+
+            except Exception as e:
+                logger.warning(f"⚠️  Knowledge retrieval failed: {e}. Continuing without knowledge context.")
+                # Continue execution without knowledge context
 
         # GAD-906/907: Semantic lens injection for mindset transformation
         if self.lens_prompt:
