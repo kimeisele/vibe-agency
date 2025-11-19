@@ -382,11 +382,27 @@ class GraphExecutor:
                     sys.path.insert(0, str(system_dir))
 
                 from runtime.prompt_registry import PromptRegistry
+                from runtime.prompt_context import get_prompt_context
 
                 # Build context dict for prompt interpolation
                 prompt_context = {"node_id": node_id, "action": node.action}
                 if context:
                     prompt_context["context"] = context
+
+                # GAD-909: Resolve dynamic context (The Flesh / OPERATION CONTEXT)
+                # Load standard system context for prompt placeholders
+                try:
+                    context_engine = get_prompt_context()
+                    system_context = context_engine.resolve([
+                        "system_time",
+                        "current_branch",
+                        "git_status"
+                    ])
+                    # Merge system context into prompt context
+                    prompt_context.update(system_context)
+                    logger.debug(f"🔌 CONTEXT: Resolved {len(system_context)} system contexts")
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to resolve system context: {e}")
 
                 # Get prompt from registry (with context interpolation)
                 base_prompt = PromptRegistry.get(node.prompt_key, prompt_context)

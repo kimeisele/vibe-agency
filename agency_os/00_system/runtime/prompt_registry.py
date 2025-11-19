@@ -493,6 +493,17 @@ Await further instructions.
 
 **MISSION:** Analyze the research request with surgical precision, extracting the true intent and scope.
 
+## SYSTEM CONTEXT (GAD-909: Dynamic Injection)
+
+**Current Time:** {system_time}
+**Git Branch:** {current_branch}
+**Git Status:**
+```
+{git_status}
+```
+
+This context provides temporal and version control awareness for your analysis.
+
 ## ANALYSIS FRAMEWORK
 
 You are conducting a First Principles analysis of a research request. Your goal is to deconstruct the request into its fundamental components and identify what the requestor truly needs to learn.
