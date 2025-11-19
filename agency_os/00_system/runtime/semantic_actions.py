@@ -44,10 +44,11 @@ Architecture:
 Version: 0.1 (Foundation)
 """
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ class ActionStep:
     name: str  # e.g., "analyze_logs"
     action_type: SemanticActionType
     depends_on: list[str] = field(default_factory=list)  # Step IDs this depends on
-    executor: Optional[Callable] = None  # Function to execute
+    executor: Callable | None = None  # Function to execute
     retry_count: int = 3
     timeout_seconds: int = 300
 
@@ -182,13 +183,11 @@ class SemanticActionsRegistry:
         self.actions[action.name] = action
         logger.info(f"Registered semantic action: {action.name}")
 
-    def get_action(self, action_name: str) -> Optional[SemanticAction]:
+    def get_action(self, action_name: str) -> SemanticAction | None:
         """Get a semantic action by name"""
         return self.actions.get(action_name)
 
-    def find_matching_actions(
-        self, required_skills: list[str]
-    ) -> list[SemanticAction]:
+    def find_matching_actions(self, required_skills: list[str]) -> list[SemanticAction]:
         """Find actions that match required skills"""
         return [
             action
@@ -198,11 +197,7 @@ class SemanticActionsRegistry:
 
     def list_actions_by_type(self, action_type: SemanticActionType) -> list[SemanticAction]:
         """List all actions of a specific type"""
-        return [
-            action
-            for action in self.actions.values()
-            if action.action_type == action_type
-        ]
+        return [action for action in self.actions.values() if action.action_type == action_type]
 
     def get_total_estimated_cost(self, action_names: list[str]) -> float:
         """Calculate total estimated cost for a set of actions"""
@@ -242,4 +237,6 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print(f"Total Actions Registered: {len(registry.actions)}")
-    print(f"Total Estimated Cost: ${registry.get_total_estimated_cost(list(registry.actions.keys())):.2f}")
+    print(
+        f"Total Estimated Cost: ${registry.get_total_estimated_cost(list(registry.actions.keys())):.2f}"
+    )

@@ -1,0 +1,425 @@
+#!/usr/bin/env python3
+"""
+GAD-902: Graph Executor (Isolated Implementation)
+===================================================
+
+Orchestrates workflow execution using graph-based dependencies.
+
+KEY PRINCIPLE: Pure logic first, agent integration second.
+- Takes WorkflowGraph (data) as input
+- Returns execution plan (data) as output
+- Dry-run mode validates logic without touching agents
+- Abstract agent interfaces (mocks for testing)
+
+Architecture:
+  1. Load workflow as graph (nodes + edges)
+  2. Topological sort (determine execution order)
+  3. Validate dependencies
+  4. Generate execution plan
+  5. Execute plan or dry-run it
+
+Version: 0.1 (Logic Foundation)
+"""
+
+import logging
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+class ExecutionStatus(Enum):
+    """Status of workflow execution"""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+@dataclass
+class WorkflowNode:
+    """A node in the workflow graph"""
+
+    id: str
+    action: str
+    description: str = ""
+    required_skills: list[str] = field(default_factory=list)
+    timeout_seconds: int = 300
+    retries: int = 3
+
+
+@dataclass
+class WorkflowEdge:
+    """An edge in the workflow graph (dependency)"""
+
+    from_node: str
+    to_node: str
+    condition: str = "success"  # "success" or "always"
+
+
+@dataclass
+class WorkflowGraph:
+    """Complete workflow graph definition"""
+
+    id: str
+    name: str
+    intent: str
+    nodes: dict[str, WorkflowNode]
+    edges: list[WorkflowEdge]
+    entry_point: str
+    exit_points: list[str]
+    estimated_cost_usd: float = 0.0
+
+
+@dataclass
+class ExecutionPlan:
+    """Execution plan (output of topological sort)"""
+
+    workflow_id: str
+    execution_order: list[str]  # Node IDs in execution order
+    dependencies: dict[str, list[str]]  # node_id → list of dependencies
+    is_valid: bool
+    errors: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ExecutionResult:
+    """Result of executing a workflow or step"""
+
+    workflow_id: str
+    node_id: str
+    status: ExecutionStatus
+    output: Any = None
+    error: str | None = None
+    cost_usd: float = 0.0
+    duration_seconds: float = 0.0
+
+
+class AgentInterface:
+    """
+    Abstract interface for agents (mock for testing).
+
+    This allows testing the executor logic WITHOUT depending on
+    actual agent implementations.
+    """
+
+    def can_execute(self, required_skills: list[str]) -> bool:
+        """Check if this agent has required skills"""
+        raise NotImplementedError
+
+    def execute_action(self, action: str, prompt: str, timeout_seconds: int) -> ExecutionResult:
+        """Execute an action (mocked for testing)"""
+        raise NotImplementedError
+
+
+class MockAgent(AgentInterface):
+    """Mock agent for dry-run and testing"""
+
+    def __init__(self, name: str = "MockAgent", skills: list[str] = None):
+        self.name = name
+        self.skills = skills or ["code_analysis", "debugging", "coding"]
+
+    def can_execute(self, required_skills: list[str]) -> bool:
+        """Check if mock agent has all required skills"""
+        return all(skill in self.skills for skill in required_skills)
+
+    def execute_action(
+        self, action: str, prompt: str, timeout_seconds: int = 300
+    ) -> ExecutionResult:
+        """Return mock success (for dry-run)"""
+        return ExecutionResult(
+            workflow_id="mock",
+            node_id=action,
+            status=ExecutionStatus.SUCCESS,
+            output={"message": f"[MOCK] Executed {action}"},
+            cost_usd=0.0,
+            duration_seconds=0.1,
+        )
+
+
+class GraphExecutor:
+    """
+    Orchestrates workflow execution using graph-based dependencies.
+
+    Pure logic implementation - can be tested with mock agents before
+    connecting to real agent implementations.
+    """
+
+    def __init__(self):
+        """Initialize executor"""
+        self.agent: AgentInterface = MockAgent()  # Default to mock
+        self.execution_history: list[ExecutionResult] = []
+
+    def set_agent(self, agent: AgentInterface) -> None:
+        """Set the agent to use for execution"""
+        self.agent = agent
+
+    def _topological_sort(self, graph: WorkflowGraph) -> ExecutionPlan:
+        """
+        Perform topological sort to determine execution order.
+
+        Returns ExecutionPlan with nodes in execution order, or with
+        errors if graph is invalid.
+        """
+        # Build adjacency list and in-degree counts
+        adjacency: dict[str, set[str]] = {node_id: set() for node_id in graph.nodes}
+        in_degree: dict[str, int] = {node_id: 0 for node_id in graph.nodes}
+
+        for edge in graph.edges:
+            if edge.from_node not in adjacency or edge.to_node not in adjacency:
+                return ExecutionPlan(
+                    workflow_id=graph.id,
+                    execution_order=[],
+                    dependencies={},
+                    is_valid=False,
+                    errors=[
+                        f"Edge references non-existent node: {edge.from_node} → {edge.to_node}"
+                    ],
+                )
+
+            adjacency[edge.from_node].add(edge.to_node)
+            in_degree[edge.to_node] += 1
+
+        # Kahn's algorithm for topological sort
+        queue = [node_id for node_id, degree in in_degree.items() if degree == 0]
+        execution_order = []
+
+        while queue:
+            node = queue.pop(0)
+            execution_order.append(node)
+
+            for neighbor in adjacency[node]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+        # Check for cycles
+        if len(execution_order) != len(graph.nodes):
+            return ExecutionPlan(
+                workflow_id=graph.id,
+                execution_order=[],
+                dependencies={},
+                is_valid=False,
+                errors=["Workflow contains circular dependencies"],
+            )
+
+        # Verify entry and exit points exist
+        if graph.entry_point not in graph.nodes:
+            return ExecutionPlan(
+                workflow_id=graph.id,
+                execution_order=[],
+                dependencies={},
+                is_valid=False,
+                errors=[f"Entry point {graph.entry_point} not found"],
+            )
+
+        for exit_point in graph.exit_points:
+            if exit_point not in graph.nodes:
+                return ExecutionPlan(
+                    workflow_id=graph.id,
+                    execution_order=[],
+                    dependencies={},
+                    is_valid=False,
+                    errors=[f"Exit point {exit_point} not found"],
+                )
+
+        # Build dependency map (reverse of adjacency)
+        dependencies = {node_id: [] for node_id in graph.nodes}
+        for edge in graph.edges:
+            dependencies[edge.to_node].append(edge.from_node)
+
+        return ExecutionPlan(
+            workflow_id=graph.id,
+            execution_order=execution_order,
+            dependencies=dependencies,
+            is_valid=True,
+        )
+
+    def validate_workflow(self, graph: WorkflowGraph) -> tuple[bool, str]:
+        """
+        Validate workflow graph for structural correctness.
+
+        Returns (is_valid, message)
+        """
+        plan = self._topological_sort(graph)
+
+        if not plan.is_valid:
+            error_msg = "; ".join(plan.errors)
+            return False, f"Invalid workflow: {error_msg}"
+
+        # Check agent capabilities
+        for node_id in plan.execution_order:
+            node = graph.nodes[node_id]
+            if node.required_skills and not self.agent.can_execute(node.required_skills):
+                return (
+                    False,
+                    f"Agent cannot execute node {node_id}: requires {node.required_skills}",
+                )
+
+        return True, "Workflow is valid"
+
+    def dry_run(self, graph: WorkflowGraph) -> dict[str, Any]:
+        """
+        Dry-run the workflow without executing agents.
+
+        Returns:
+            Dictionary with execution plan, validation results, and mock output
+        """
+        # Validate workflow
+        is_valid, validation_msg = self.validate_workflow(graph)
+
+        # Generate execution plan
+        plan = self._topological_sort(graph)
+
+        result = {
+            "workflow_id": graph.id,
+            "workflow_name": graph.name,
+            "intent": graph.intent,
+            "is_valid": is_valid,
+            "validation_message": validation_msg,
+            "execution_plan": {
+                "execution_order": plan.execution_order,
+                "dependencies": plan.dependencies,
+            },
+            "nodes": {},
+        }
+
+        # Add node details
+        for node_id in plan.execution_order:
+            node = graph.nodes[node_id]
+            result["nodes"][node_id] = {
+                "action": node.action,
+                "description": node.description,
+                "required_skills": node.required_skills,
+                "timeout_seconds": node.timeout_seconds,
+                "dependencies": plan.dependencies.get(node_id, []),
+            }
+
+        return result
+
+    def execute(self, graph: WorkflowGraph) -> dict[str, Any]:
+        """
+        Execute the workflow (uses agent interface).
+
+        For now, this is a stub that returns the execution plan.
+        Phase 2 will implement actual agent invocation.
+        """
+        # Validate first
+        is_valid, validation_msg = self.validate_workflow(graph)
+        if not is_valid:
+            return {
+                "workflow_id": graph.id,
+                "status": "failed",
+                "error": validation_msg,
+            }
+
+        # Generate plan
+        plan = self._topological_sort(graph)
+
+        # Execute (Phase 2: will actually call agents)
+        results = []
+        for node_id in plan.execution_order:
+            node = graph.nodes[node_id]
+            result = ExecutionResult(
+                workflow_id=graph.id,
+                node_id=node_id,
+                status=ExecutionStatus.SUCCESS,
+                output={"message": f"[PHASE 2] Would execute {node.action}"},
+                cost_usd=0.0,
+            )
+            results.append(result)
+            self.execution_history.append(result)
+
+        return {
+            "workflow_id": graph.id,
+            "status": "success",
+            "execution_order": plan.execution_order,
+            "results": [
+                {
+                    "node_id": r.node_id,
+                    "status": r.status.value,
+                    "output": r.output,
+                }
+                for r in results
+            ],
+        }
+
+    def get_execution_history(self) -> list[ExecutionResult]:
+        """Get execution history"""
+        return self.execution_history
+
+    def get_execution_cost(self, graph: WorkflowGraph) -> float:
+        """Get estimated cost for workflow"""
+        return graph.estimated_cost_usd
+
+
+if __name__ == "__main__":
+    # Example usage (no import needed - just test the executor)
+
+    # Create a simple test graph
+    nodes = {
+        "step1": WorkflowNode(
+            id="step1",
+            action="analyze",
+            description="Analyze the problem",
+            required_skills=["analysis"],
+        ),
+        "step2": WorkflowNode(
+            id="step2",
+            action="design",
+            description="Design solution",
+            required_skills=["design"],
+        ),
+        "step3": WorkflowNode(
+            id="step3",
+            action="implement",
+            description="Implement solution",
+            required_skills=["coding"],
+        ),
+    }
+
+    edges = [
+        WorkflowEdge("step1", "step2"),
+        WorkflowEdge("step2", "step3"),
+    ]
+
+    workflow = WorkflowGraph(
+        id="test_workflow",
+        name="Test Workflow",
+        intent="Test the executor",
+        nodes=nodes,
+        edges=edges,
+        entry_point="step1",
+        exit_points=["step3"],
+        estimated_cost_usd=0.50,
+    )
+
+    # Create executor and test
+    executor = GraphExecutor()
+
+    print("Testing Graph Executor")
+    print("=" * 60)
+
+    # Dry-run
+    print("\n1. Dry-run (validation only):")
+    dry_run_result = executor.dry_run(workflow)
+    print(f"   Valid: {dry_run_result['is_valid']}")
+    print(f"   Execution order: {dry_run_result['execution_plan']['execution_order']}")
+    print(f"   Message: {dry_run_result['validation_message']}")
+
+    # Execute
+    print("\n2. Execute:")
+    exec_result = executor.execute(workflow)
+    print(f"   Status: {exec_result['status']}")
+    print(f"   Order: {exec_result['execution_order']}")
+
+    # Cost estimation
+    print("\n3. Cost Estimation:")
+    cost = executor.get_execution_cost(workflow)
+    print(f"   Estimated cost: ${cost:.2f}")
+
+    print("\n" + "=" * 60)
+    print("✅ Executor logic validated successfully!")
