@@ -28,8 +28,8 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 _RUNTIME_PATH = _REPO_ROOT / "agency_os" / "00_system" / "runtime"
 
 # Import directly from the runtime directory (since folder starts with number)
-from prompt_registry import PromptRegistry
-from prompt_runtime import AgentNotFoundError, PromptRuntime
+from runtime.prompt_registry import PromptRegistry
+from runtime.prompt_runtime import AgentNotFoundError, PromptRuntime
 
 
 class TestGovernanceInjection:

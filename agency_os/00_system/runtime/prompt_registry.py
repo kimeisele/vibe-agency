@@ -42,8 +42,8 @@ import yaml
 try:
     from .prompt_runtime import PromptRuntime
 except ImportError:
-    # Direct execution - import without relative path
-    from prompt_runtime import PromptRuntime
+    # Package-qualified import (00_system in sys.path)
+    from runtime.prompt_runtime import PromptRuntime
 
 # Import workspace utilities
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent

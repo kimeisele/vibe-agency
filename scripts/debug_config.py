@@ -138,7 +138,9 @@ def check_provider_detection():
         import importlib.util
         import sys
 
-        factory_path = project_root / "agency_os" / "00_system" / "runtime" / "providers" / "factory.py"
+        factory_path = (
+            project_root / "agency_os" / "00_system" / "runtime" / "providers" / "factory.py"
+        )
         spec = importlib.util.spec_from_file_location("factory", factory_path)
         if spec and spec.loader:
             factory = importlib.util.module_from_spec(spec)
@@ -193,7 +195,9 @@ def check_llm_client_init():
                 print("   This means no API keys were detected.")
                 print("   Real LLM invocations will be mocked.")
             else:
-                print(f"\n✅ Client initialized with {client.provider.get_provider_name()} provider")
+                print(
+                    f"\n✅ Client initialized with {client.provider.get_provider_name()} provider"
+                )
                 print("   Real LLM invocations are possible.")
         else:
             print("\n❌ Failed to load llm_client module")

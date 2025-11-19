@@ -19,13 +19,13 @@ import pytest
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
 
 # Now we can import from the runtime modules
-from circuit_breaker import (
+from runtime.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerOpenError,
     CircuitBreakerState,
 )
-from quota_manager import (
+from runtime.quota_manager import (
     OperationalQuota,
     QuotaExceededError,
     QuotaLimits,
@@ -357,7 +357,9 @@ class TestSafetyLayerIntegration:
     def test_llm_client_quota_check_before_request(self):
         """LLMClient checks quotas before making API calls"""
         # Import after sys.path is set
-        llm_module = __import__("llm_client")
+        import importlib
+
+        llm_module = importlib.import_module("runtime.llm_client")
         LLMClient = llm_module.LLMClient
 
         client = LLMClient()
@@ -371,7 +373,9 @@ class TestSafetyLayerIntegration:
     def test_llm_client_circuit_breaker_protection(self):
         """LLMClient circuit breaker protects against cascading failures"""
         # Import after sys.path is set
-        llm_module = __import__("llm_client")
+        import importlib
+
+        llm_module = importlib.import_module("runtime.llm_client")
         LLMClient = llm_module.LLMClient
         LLMInvocationError = llm_module.LLMInvocationError
 
@@ -397,7 +401,9 @@ class TestSafetyLayerIntegration:
     def test_llm_client_records_quota_metrics(self):
         """LLMClient records quota metrics after successful requests"""
         # Import after sys.path is set
-        llm_module = __import__("llm_client")
+        import importlib
+
+        llm_module = importlib.import_module("runtime.llm_client")
         LLMClient = llm_module.LLMClient
         LLMUsage = llm_module.LLMUsage
         LLMResponse = llm_module.LLMResponse
