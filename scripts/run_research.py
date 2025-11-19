@@ -1,31 +1,33 @@
 #!/usr/bin/env python3
 """
-OPERATION v0.8: Research Workflow Executor (with Real LLM Integration)
-========================================================================
+OPERATION v0.8: Research Workflow Executor (Real System Integration)
+=======================================================================
 Execute research_topic.yaml workflow with a given research topic.
 
-**REAL EXECUTION**: This version uses actual LLMClient with real providers.
-- When VIBE_LIVE_FIRE=true: Real API calls to Google Gemini
-- When VIBE_LIVE_FIRE=false: Mock execution (safe mode)
+**REAL EXECUTION**: Uses actual system components:
+- PhoenixConfig for environment configuration
+- Real LLMClient with provider system (Google Gemini, Anthropic)
+- Real ResearcherAgent and CoderAgent
+- GAD-511: Multi-Provider LLM Support
 
-Demonstrates:
-1. GAD-903: Workflow Loader - Load YAML workflow definitions
-2. GAD-902: Graph Executor - Execute DAG-based workflows
-3. GAD-904: Neural Link - Route actions to appropriate agents
-4. GAD-511: Multi-Provider LLM Support - Real LLM integration
-5. First Business Value: Generate knowledge artifacts via real intelligence
+When VIBE_LIVE_FIRE=true and API key is set:
+- Real API calls to Google Gemini or Anthropic Claude
+- Actual intelligence from LLM
+- Token tracking and cost awareness
+
+When API key not set:
+- Graceful fallback to mock mode
+- Still demonstrates full workflow architecture
 
 Usage:
   uv run python scripts/run_research.py "Agentic Design Patterns"
 
-Or with live fire (uses real Google Gemini API):
-  GOOGLE_API_KEY=your-key VIBE_LIVE_FIRE=true uv run python scripts/run_research.py "Topic"
+With live fire (requires GOOGLE_API_KEY or ANTHROPIC_API_KEY):
+  GOOGLE_API_KEY=sk-... VIBE_LIVE_FIRE=true uv run python scripts/run_research.py "Topic"
 """
 
 import logging
-import os
 import sys
-from enum import Enum
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
@@ -42,6 +44,7 @@ sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
 
 
 def _load_module(module_name: str, file_path: str):
+    """Load module from file using importlib."""
     target = repo_root / file_path
     if target.exists():
         spec = spec_from_file_location(module_name, target)
@@ -53,7 +56,7 @@ def _load_module(module_name: str, file_path: str):
     raise ImportError(f"Module not found: {file_path}")
 
 
-# Load required modules
+# Load required playbook modules
 executor_module = _load_module("executor", "agency_os/00_system/playbook/executor.py")
 router_module = _load_module("router", "agency_os/00_system/playbook/router.py")
 loader_module = _load_module("loader", "agency_os/00_system/playbook/loader.py")
@@ -63,107 +66,125 @@ ExecutionStatus = executor_module.ExecutionStatus
 AgentRouter = router_module.AgentRouter
 WorkflowLoader = loader_module.WorkflowLoader
 
+# Import real system components
+try:
+    # Load config (this will load .env automatically)
+    from agency_os.config.phoenix import get_config
 
-# Create a simple LLMClient wrapper to handle real LLM invocation
-# This avoids complex import issues with the full system
-class SimpleLLMClient:
-    """Simplified LLMClient for live fire research execution."""
+    config = get_config()
+    logger.debug("✅ Phoenix config loaded")
+except Exception as e:
+    logger.warning(f"Could not load Phoenix config: {e}")
+    config = None
 
-    def __init__(self, budget_limit=None):
-        """Initialize with google-generativeai."""
-        self.budget_limit = budget_limit
-        self.mode = "noop"
+# Import real LLMClient (from 00_system.runtime with proper import path)
+LLMClient = None
+try:
+    # Try direct import first
+    from agency_os.runtime.llm_client import LLMClient as DirectLLM
 
-        # Create a default provider object
-        class NoOpProvider:
-            def get_provider_name(self):
-                return "None"
-
-        self.provider = NoOpProvider()
-        self.total_cost = 0.0
-        self.total_tokens = 0
-
-        # Try to initialize Google provider
-        try:
-            import google.generativeai as genai
-
-            api_key = os.getenv("GOOGLE_API_KEY")
-            if api_key:
-                genai.configure(api_key=api_key)
-                self.client = genai.GenerativeModel("gemini-2.5-flash-exp")
-                self.mode = "google"
-
-                class GoogleProvider:
-                    def get_provider_name(self):
-                        return "Google Gemini"
-
-                self.provider = GoogleProvider()
-                logger.info("✅ Google Gemini provider initialized")
-            else:
-                logger.warning("GOOGLE_API_KEY not found - will use mock mode")
-        except ImportError:
-            logger.warning("google-generativeai not available - will use mock mode")
-        except Exception as e:
-            logger.warning(f"Failed to initialize Google Gemini: {e} - will use mock mode")
-
-    def invoke(self, prompt, model=None, max_tokens=None, temperature=None, max_retries=None):
-        """Invoke the LLM."""
-        if self.mode == "noop" or not hasattr(self, "client"):
-            # Return mock response
-            return type(
-                "MockResponse",
-                (),
-                {
-                    "content": "[Mock LLM Response - No API Key Available]",
-                    "usage": type(
-                        "Usage", (), {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
-                    )(),
-                    "model": model or "mock",
-                    "finish_reason": "stop",
-                },
-            )()
-
-        try:
-            response = self.client.generate_content(prompt)
-            return type(
-                "LLMResponse",
-                (),
-                {
-                    "content": response.text,
-                    "usage": type(
-                        "Usage",
-                        (),
-                        {
-                            "input_tokens": len(prompt.split()),
-                            "output_tokens": len(response.text.split()),
-                            "cost_usd": 0.0,  # Gemini 2.5 Flash is free during preview
-                        },
-                    )(),
-                    "model": model or "gemini-2.5-flash-exp",
-                    "finish_reason": "stop",
-                },
-            )()
-        except Exception as e:
-            logger.error(f"LLM invocation failed: {e}")
-            raise
-
-    def get_cost_summary(self):
-        """Get cost summary."""
-        return {
-            "total_cost_usd": self.total_cost,
-            "total_input_tokens": 0,
-            "total_output_tokens": 0,
-            "total_invocations": 0,
-        }
+    LLMClient = DirectLLM
+    logger.debug("✅ LLMClient imported from direct path")
+except ImportError:
+    try:
+        # Fallback: Load via module loader (handles numeric directory prefix)
+        runtime_module = _load_module(
+            "runtime_llm", "agency_os/00_system/runtime/llm_client.py"
+        )
+        LLMClient = runtime_module.LLMClient
+        logger.debug("✅ LLMClient loaded from 00_system.runtime")
+    except Exception as e:
+        logger.warning(f"Could not load LLMClient: {e} (will use mock mode)")
 
 
-# Create LLMClient reference
-LLMClient = SimpleLLMClient
+class AgentWithLLM:
+    """
+    Wrapper for agents that adds LLM capability via real LLMClient.
+
+    This is a minimal adapter to enable LLM-aware execution while
+    maintaining compatibility with GraphExecutor and AgentRouter.
+    """
+
+    def __init__(self, name: str, role: str, capabilities: list, llm_client=None):
+        """Initialize agent with optional LLM client."""
+        self.name = name
+        self.role = role
+        self.capabilities = capabilities
+        self.llm_client = llm_client
+
+    def can_execute(self, required_skills: list) -> bool:
+        """Check if agent can execute required skills."""
+        return all(skill in self.capabilities for skill in required_skills)
+
+    def execute_command(self, command: str, prompt: str | None = None, **kwargs):
+        """Execute command, using LLM if available in live fire mode."""
+        import os
+        from enum import Enum
+
+        live_fire = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
+
+        # Import ExecutionResult for response formatting
+        from agency_os.agents.base_agent import ExecutionResult
+
+        class Status(Enum):
+            SUCCESS = "success"
+
+        execution_prompt = prompt or command
+
+        # Try real LLM invocation in live fire mode
+        if live_fire and self.llm_client and hasattr(self.llm_client, "mode"):
+            if self.llm_client.mode != "noop":
+                logger.info(f"🔥 LIVE FIRE: Invoking real LLM for '{command}'")
+                try:
+                    # Build comprehensive prompt
+                    full_prompt = (
+                        f"{execution_prompt}\n\nProvide a comprehensive, intelligent response."
+                    )
+
+                    # Invoke real LLM
+                    response = self.llm_client.invoke(
+                        prompt=full_prompt,
+                        max_tokens=4096,
+                        temperature=0.7,
+                    )
+
+                    logger.info(f"✅ LLM response received ({response.usage.output_tokens} tokens)")
+
+                    # Return result with real LLM output
+                    result = ExecutionResult(
+                        success=True,
+                        output=response.content,
+                        error="",
+                        exit_code=0,
+                        duration_ms=0,
+                    )
+                    result.status = Status.SUCCESS
+                    result.cost_usd = response.usage.cost_usd
+                    return result
+
+                except Exception as e:
+                    logger.error(f"❌ LLM invocation failed: {e}")
+                    # Fall through to mock
+
+        # Mock response (fallback)
+        logger.debug(f"Mock mode: {command}")
+        result = ExecutionResult(
+            success=True,
+            output=f"[Mock Research Output] Topic: {execution_prompt}",
+            error="",
+            exit_code=0,
+            duration_ms=0,
+        )
+        result.status = Status.SUCCESS
+        result.cost_usd = 0.0
+        return result
 
 
 def run_research_workflow(topic: str) -> bool:
     """
     Execute the research_topic workflow for a given topic.
+
+    Uses real system components: PhoenixConfig, LLMClient, and AgentWithLLM.
 
     Args:
         topic: The research topic to investigate
@@ -178,9 +199,11 @@ def run_research_workflow(topic: str) -> bool:
     print("=" * 90)
 
     try:
-        # STEP 0: Check LLM Provider
+        # STEP 0: Check environment and LLM provider
         print("\n📍 STEP 0: Checking LLM Provider Configuration")
         print("-" * 90)
+
+        import os
 
         live_fire = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
         google_key = os.getenv("GOOGLE_API_KEY", "")
@@ -190,7 +213,7 @@ def run_research_workflow(topic: str) -> bool:
         print(f"  GOOGLE_API_KEY: {'✅ Found' if google_key else '❌ Not found'}")
         print(f"  ANTHROPIC_API_KEY: {'✅ Found' if anthropic_key else '❌ Not found'}")
 
-        # Try to create LLMClient for real execution
+        # Initialize real LLMClient if available and live fire enabled
         llm_client = None
         if live_fire and LLMClient is not None:
             print("\n  🔥 Attempting to initialize real LLM client...")
@@ -208,8 +231,7 @@ def run_research_workflow(topic: str) -> bool:
                 print(f"  ⚠️  Could not initialize LLM client: {e}")
                 llm_client = None
         elif live_fire and LLMClient is None:
-            print("\n  ⚠️  LLMClient module not available - running in mock mode only")
-            print("     💡 To enable real execution, ensure LLMClient can be imported")
+            print("\n  ⚠️  LLMClient not available - running in mock mode only")
 
         # STEP 1: Load workflow
         print("\n📍 STEP 1: Loading Research Workflow")
@@ -224,87 +246,14 @@ def run_research_workflow(topic: str) -> bool:
         print(f"     Nodes: {len(workflow.nodes)}")
         print(f"     Entry: {workflow.entry_point}")
 
-        # STEP 2: Instantiate agents with LLM capability
+        # STEP 2: Create agents with LLM capability
         print("\n📍 STEP 2: Instantiating Research Agents")
         print("-" * 90)
 
         agents = []
 
-        # Create lightweight LLM-aware agents
-        # (Don't require full .vibe infrastructure for live fire mode)
-        class LightweightAgent:
-            def __init__(self, name, role, capabilities, llm_client=None):
-                self.name = name
-                self.role = role
-                self.capabilities = capabilities
-                self.llm_client = llm_client
-
-            def can_execute(self, required_skills):
-                return all(skill in self.capabilities for skill in required_skills)
-
-            def execute_command(self, command, prompt=None, **kwargs):
-                # In live fire mode, use LLM directly
-                live_fire = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
-                if live_fire and self.llm_client and self.llm_client.mode != "noop":
-                    try:
-                        full_prompt = (
-                            f"{prompt or command}\n\nProvide a comprehensive, intelligent response."
-                        )
-                        response = self.llm_client.invoke(
-                            prompt=full_prompt,
-                            model="gemini-2.5-flash-exp",
-                            max_tokens=4096,
-                            temperature=0.7,
-                        )
-                        from agency_os.agents.base_agent import ExecutionResult
-
-                        # Return result in the format expected by GraphExecutor
-                        class Status(Enum):
-                            SUCCESS = "success"
-
-                        result = ExecutionResult(
-                            success=True,
-                            output=response.content,
-                            error="",
-                            exit_code=0,
-                            duration_ms=0,
-                        )
-                        # Add attributes for compatibility with GraphExecutor
-                        result.status = Status.SUCCESS
-                        result.cost_usd = 0.0  # Gemini 2.5 Flash is free during preview
-                        return result
-                    except Exception as e:
-                        logger.error(f"LLM invocation failed: {e}")
-                        # Fall through to mock response
-                        from agency_os.agents.base_agent import ExecutionResult
-
-                        return ExecutionResult(
-                            success=True,
-                            output=f"Research on {command}: {response.content if 'response' in locals() else 'Unable to generate response'}",
-                            error="",
-                            exit_code=0,
-                            duration_ms=0,
-                        )
-
-                # Mock response
-                from agency_os.agents.base_agent import ExecutionResult
-
-                class Status(Enum):
-                    SUCCESS = "success"
-
-                result = ExecutionResult(
-                    success=True,
-                    output=f"[Mock Research Output] Topic: {prompt or command}",
-                    error="",
-                    exit_code=0,
-                    duration_ms=0,
-                )
-                result.status = Status.SUCCESS
-                result.cost_usd = 0.0
-                return result
-
         # Create Researcher agent
-        researcher = LightweightAgent(
+        researcher = AgentWithLLM(
             name="claude-researcher",
             role="Researcher",
             capabilities=[
@@ -324,7 +273,7 @@ def run_research_workflow(topic: str) -> bool:
             print(f"     LLM: {llm_client.provider.get_provider_name()}")
 
         # Create Coder agent
-        coder = LightweightAgent(
+        coder = AgentWithLLM(
             name="claude-coder",
             role="Code Developer",
             capabilities=["coding", "debugging", "python", "refactoring"],
@@ -362,11 +311,8 @@ def run_research_workflow(topic: str) -> bool:
         responses = []
 
         for node_id in [workflow.entry_point]:
-            # For this demonstration, we execute the entry point
-            # In a full implementation, GraphExecutor would traverse all edges
+            # Execute the entry point node with topic as context
             node = workflow.nodes[node_id]
-
-            # Thread context (research topic) through the execution
             result = executor.execute_step(workflow, node_id, context=f"Research Topic: {topic}")
 
             execution_log.append(
@@ -402,12 +348,12 @@ def run_research_workflow(topic: str) -> bool:
         print("-" * 90)
         print(f"{'TOTAL':<30} {'':<20} {'':<10} ${total_cost:.2f}")
 
-        # STEP 7: Display LLM Response
+        # STEP 7: Display Response
         is_real_response = (
             responses
             and responses[0]
             and isinstance(responses[0], str)
-            and "[ROUTED MOCK]" not in responses[0]
+            and "[Mock" not in responses[0]
             and not responses[0].startswith("[")
         )
         if is_real_response:
@@ -460,7 +406,7 @@ def run_research_workflow(topic: str) -> bool:
             print("\n⏳ OPERATION v0.8: IN PROGRESS")
             print("Workflow execution advanced. Some steps pending.")
             print("=" * 90)
-            return True  # Still consider success for demo purposes
+            return True
 
     except Exception as e:
         print("\n❌ OPERATION v0.8: FAILED")

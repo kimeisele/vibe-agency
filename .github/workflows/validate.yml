@@ -58,6 +58,10 @@ jobs:
           fi
 
       - name: Run tests
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VIBE_LIVE_FIRE: "true"
         run: |
           uv run pytest tests/ -v --tb=short
         continue-on-error: false
