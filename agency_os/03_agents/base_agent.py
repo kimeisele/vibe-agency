@@ -10,6 +10,7 @@ This is the abstract class that connects:
 Every specialized agent (Coder, Researcher, Reviewer, etc.) inherits from this.
 """
 
+import importlib.util
 import json
 import subprocess
 from dataclasses import dataclass
@@ -17,7 +18,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from agency_os.02_orchestration import TaskExecutor
+# Dynamic import for numeric directory names
+spec = importlib.util.spec_from_file_location(
+    "task_executor_module",
+    Path(__file__).parent.parent / "02_orchestration" / "task_executor.py",
+)
+task_executor_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(task_executor_module)
+
+TaskExecutor = task_executor_module.TaskExecutor
 
 
 @dataclass

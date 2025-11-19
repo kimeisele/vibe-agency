@@ -19,12 +19,12 @@ Key Design Principle: Use existing infrastructure (vibe-shell, mission) instead
 of reinventing. This ensures consistency and safety across all operations.
 """
 
-import subprocess
 import re
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -32,10 +32,10 @@ class DeliveryResult:
     """Result of an atomic delivery operation."""
 
     success: bool
-    pr_url: Optional[str] = None
-    branch: Optional[str] = None
-    commit_sha: Optional[str] = None
-    error: Optional[str] = None
+    pr_url: str | None = None
+    branch: str | None = None
+    commit_sha: str | None = None
+    error: str | None = None
     timestamp: float = None
 
     def __post_init__(self):
@@ -110,7 +110,7 @@ class TaskExecutor:
             if not vibe_shell_path.exists():
                 raise GitOperationError(f"bin/vibe-shell not found at {vibe_shell_path}")
 
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 [str(vibe_shell_path), "-c", command],
                 cwd=self.vibe_root,
                 capture_output=True,
@@ -180,14 +180,10 @@ class TaskExecutor:
 
             # STEP 1: Create feature branch
             branch_name = f"feature/{task_id.lower().replace('_', '-')}"
-            returncode, stdout, stderr = self._run_via_vibe_shell(
-                f"git checkout -b {branch_name}"
-            )
+            returncode, stdout, stderr = self._run_via_vibe_shell(f"git checkout -b {branch_name}")
             if returncode != 0:
                 # Branch might exist, try switching to it
-                returncode, stdout, stderr = self._run_via_vibe_shell(
-                    f"git checkout {branch_name}"
-                )
+                returncode, stdout, stderr = self._run_via_vibe_shell(f"git checkout {branch_name}")
                 if returncode != 0:
                     return DeliveryResult(
                         success=False,
@@ -285,9 +281,7 @@ class TaskExecutor:
         except GitOperationError as e:
             return DeliveryResult(success=False, error=str(e))
         except Exception as e:
-            return DeliveryResult(
-                success=False, error=f"Unexpected error during delivery: {e}"
-            )
+            return DeliveryResult(success=False, error=f"Unexpected error during delivery: {e}")
 
     def __repr__(self) -> str:
         return f"TaskExecutor(vibe_root={self.vibe_root})"
