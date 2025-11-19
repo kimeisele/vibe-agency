@@ -1,0 +1,281 @@
+#!/bin/bash
+#
+# VIBE Dashboard - Unified Health & Mission Status View
+# Integrates GAD-7 (Mission Control), GAD-5 (Health Check), and GAD-6 (Knowledge)
+#
+# USAGE:
+#   ./bin/vibe-dashboard              - Show full dashboard
+#   ./bin/vibe-dashboard --json       - Output as JSON
+#   ./bin/vibe-dashboard --help       - Show help
+#
+
+# Get the project root
+VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$VIBE_ROOT"
+
+# Python inline implementation - pass arguments
+python3 - "$@" << 'PYTHON_CODE'
+#!/usr/bin/env python3
+"""
+VIBE Dashboard: Unified Health & Mission Status Display
+Integrates all GAD components into a comprehensive system view.
+"""
+
+import json
+import sys
+import subprocess
+from pathlib import Path
+from datetime import datetime
+
+try:
+    from rich.console import Console
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.text import Text
+    from rich.align import Align
+    from rich.box import ROUNDED
+except ImportError:
+    Console = None
+
+
+def run_command(cmd, timeout=10):
+    """Execute command safely and return output."""
+    try:
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd="/Users/ss/projects/vibe-agency",
+        )
+        return result.returncode == 0, result.stdout.strip(), result.stderr.strip()
+    except subprocess.TimeoutExpired:
+        return False, "", "Command timed out"
+    except Exception as e:
+        return False, "", str(e)
+
+
+def load_mission_state():
+    """Load mission state from JSON file."""
+    state_file = Path("/Users/ss/projects/vibe-agency/.vibe/state/active_mission.json")
+    if not state_file.exists():
+        return None
+
+    try:
+        with open(state_file) as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def get_system_health():
+    """Get system health status from vibe-shell."""
+    success, output, error = run_command("python3 bin/mission status")
+    if not success:
+        return None
+
+    # Parse health info from mission status
+    return {
+        "status": "healthy" if "HEALTHY" in output else "degraded",
+        "output": output,
+    }
+
+
+def get_git_status():
+    """Get current git status."""
+    success, branch, _ = run_command("git rev-parse --abbrev-ref HEAD")
+    success2, commits_ahead, _ = run_command(
+        "git rev-list --count origin/main..HEAD"
+    )
+
+    return {
+        "branch": branch if success else "unknown",
+        "ahead": commits_ahead if success2 else "0",
+    }
+
+
+def get_pr_info():
+    """Get information about draft PRs awaiting review."""
+    success, prs, _ = run_command("gh pr list -d --json number,title,url")
+    if not success:
+        return []
+
+    try:
+        pr_data = json.loads(prs) if prs else []
+        return pr_data
+    except Exception:
+        return []
+
+
+def show_dashboard_rich(mission, health, git_status, prs):
+    """Display dashboard using rich formatting."""
+    if not Console:
+        return show_dashboard_text(mission, health, git_status, prs)
+
+    console = Console()
+    console.clear()
+    console.print()
+
+    # Header
+    console.print(
+        Align.center(Text("🎯 VIBE AGENCY OS - UNIFIED DASHBOARD", style="bold cyan"))
+    )
+    console.print(Align.center("=" * 70))
+    console.print()
+
+    # Mission Control Panel
+    if mission and mission.get("current_task"):
+        current_task = mission["current_task"]
+        task_info = f"""[bold]{current_task['name']}[/bold]
+{current_task.get('description', '')}
+
+[dim]ID:[/dim] {current_task['id']}
+[dim]Status:[/dim] {current_task['status']}
+[dim]Priority:[/dim] {current_task.get('priority', 'N/A')}/10"""
+
+        console.print(
+            Panel(task_info, border_style="blue", title="[bold]MISSION CONTROL[/bold]")
+        )
+        console.print()
+
+    # System Health Panel
+    health_status_text = (
+        "[green]✅ HEALTHY[/green]" if health and health["status"] == "healthy"
+        else "[yellow]⚠️  DEGRADED[/yellow]"
+    )
+    console.print(
+        Panel(
+            f"System Status: {health_status_text}",
+            border_style="green" if health and health["status"] == "healthy" else "yellow",
+            title="[bold]SYSTEM HEALTH[/bold]",
+        )
+    )
+    console.print()
+
+    # Git Status Panel
+    git_info = f"""[dim]Branch:[/dim] [bold]{git_status['branch']}[/bold]
+[dim]Commits Ahead:[/dim] {git_status['ahead']}
+[dim]Timestamp:[/dim] {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}"""
+    console.print(
+        Panel(git_info, border_style="magenta", title="[bold]GIT STATUS[/bold]")
+    )
+    console.print()
+
+    # Draft PRs Panel
+    if prs:
+        pr_table = Table(title="Draft PRs (Awaiting Review)", show_header=True)
+        pr_table.add_column("ID", style="cyan")
+        pr_table.add_column("Title", style="white")
+        pr_table.add_column("Status", style="yellow")
+
+        for pr in prs:
+            pr_table.add_row(
+                str(pr.get("number", "?")),
+                pr.get("title", "?")[:50],
+                "🟡 DRAFT",
+            )
+
+        console.print(pr_table)
+        console.print()
+    else:
+        console.print("[dim]No draft PRs[/dim]")
+        console.print()
+
+    # Summary
+    console.print(Align.center("=" * 70))
+    console.print()
+    console.print("[dim]Mission Control Dashboard | GAD-7 Integration Layer[/dim]")
+    console.print("[dim]Updated: " + datetime.now().isoformat() + "Z[/dim]")
+    console.print()
+
+
+def show_dashboard_text(mission, health, git_status, prs):
+    """Display dashboard using plain text."""
+    print()
+    print("=" * 70)
+    print("🎯 VIBE AGENCY OS - UNIFIED DASHBOARD")
+    print("=" * 70)
+    print()
+
+    if mission and mission.get("current_task"):
+        current_task = mission["current_task"]
+        print("MISSION CONTROL")
+        print("-" * 70)
+        print(f"Name: {current_task['name']}")
+        print(f"ID: {current_task['id']}")
+        print(f"Status: {current_task['status']}")
+        print(f"Priority: {current_task.get('priority', 'N/A')}/10")
+        print()
+
+    print("SYSTEM HEALTH")
+    print("-" * 70)
+    if health:
+        status = "✅ HEALTHY" if health["status"] == "healthy" else "⚠️  DEGRADED"
+        print(f"Status: {status}")
+    else:
+        print("Status: ⚠️  UNKNOWN")
+    print()
+
+    print("GIT STATUS")
+    print("-" * 70)
+    print(f"Branch: {git_status['branch']}")
+    print(f"Commits Ahead: {git_status['ahead']}")
+    print()
+
+    if prs:
+        print("DRAFT PRs (Awaiting Review)")
+        print("-" * 70)
+        for pr in prs:
+            print(f"  #{pr.get('number', '?')} - {pr.get('title', '?')}")
+        print()
+    else:
+        print("No draft PRs")
+        print()
+
+    print("=" * 70)
+    print()
+
+
+def main():
+    """Main entry point."""
+    output_format = "rich"
+
+    # When called via bash with `python3 - "$@"`, sys.argv[0] is "-"
+    # Arguments start from sys.argv[1]
+    args = sys.argv[1:] if sys.argv[0] == "-" else sys.argv[1:]
+
+    if len(args) > 0:
+        if args[0] == "--json":
+            output_format = "json"
+        elif args[0] in ["--help", "-h"]:
+            print("Usage: ./bin/vibe-dashboard [OPTIONS]")
+            print()
+            print("OPTIONS:")
+            print("  --json    Output as JSON")
+            print("  --help    Show this help message")
+            return
+
+    # Gather data
+    mission = load_mission_state()
+    health = get_system_health()
+    git_status = get_git_status()
+    prs = get_pr_info()
+
+    if output_format == "json":
+        output = {
+            "mission": mission,
+            "health": health,
+            "git": git_status,
+            "prs": prs,
+            "timestamp": datetime.now().isoformat() + "Z",
+        }
+        print(json.dumps(output, indent=2))
+    else:
+        show_dashboard_rich(mission, health, git_status, prs)
+
+
+if __name__ == "__main__":
+    main()
+
+PYTHON_CODE
