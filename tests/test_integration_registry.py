@@ -20,9 +20,8 @@ _RUNTIME_PATH = _REPO_ROOT / "agency_os" / "00_system" / "runtime"
 _ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "00_system" / "orchestrator"
 
 
-from prompt_registry import PromptRegistry
-
 from agency_os_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator
+from prompt_registry import PromptRegistry
 
 
 def test_prompt_registry_integration():
