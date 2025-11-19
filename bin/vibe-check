@@ -18,6 +18,14 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VIBE_ROOT="$(dirname "$SCRIPT_DIR")"
 
+echo "🔍 Running linting check..."
+uv run ruff check . || { echo "❌ Linting failed"; exit 1; }
+
+echo "📝 Running type checking (mypy strict mode)..."
+uv run mypy agency_os/ --strict || { echo "❌ Type checking failed"; exit 1; }
+
+echo "✅ All checks passed"
+
 # Verify we're in a valid vibe environment
 if [[ ! -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]]; then
     echo "❌ Error: Not in a valid vibe-agency environment"
