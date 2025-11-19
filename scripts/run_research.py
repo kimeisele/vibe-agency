@@ -17,16 +17,15 @@ Or with live fire:
   VIBE_LIVE_FIRE=true uv run python scripts/run_research.py "Your Research Topic"
 """
 
-import sys
-import os
-from pathlib import Path
 import logging
+import sys
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+
+from agency_os.agents.personas.researcher import ResearcherAgent
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 # Add repo root to path for imports
@@ -36,8 +35,6 @@ sys.path.insert(0, str(repo_root))
 # Setup path for 00_system modules (numeric prefix)
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
 
-# Load modules from 00_system
-from importlib.util import module_from_spec, spec_from_file_location
 
 def _load_module(module_name: str, file_path: str):
     target = repo_root / file_path
@@ -50,6 +47,7 @@ def _load_module(module_name: str, file_path: str):
         return sys.modules[module_name]
     raise ImportError(f"Module not found: {file_path}")
 
+
 # Load required modules
 executor_module = _load_module("executor", "agency_os/00_system/playbook/executor.py")
 router_module = _load_module("router", "agency_os/00_system/playbook/router.py")
@@ -59,8 +57,6 @@ GraphExecutor = executor_module.GraphExecutor
 ExecutionStatus = executor_module.ExecutionStatus
 AgentRouter = router_module.AgentRouter
 WorkflowLoader = loader_module.WorkflowLoader
-
-from agency_os.agents.personas.researcher import ResearcherAgent
 
 
 def run_research_workflow(topic: str) -> bool:
@@ -75,7 +71,7 @@ def run_research_workflow(topic: str) -> bool:
     """
 
     print("\n" + "=" * 90)
-    print(f"🔬 OPERATION v0.8: RESEARCH WORKFLOW EXECUTOR")
+    print("🔬 OPERATION v0.8: RESEARCH WORKFLOW EXECUTOR")
     print(f"📌 Topic: {topic}")
     print("=" * 90)
 
@@ -99,8 +95,8 @@ def run_research_workflow(topic: str) -> bool:
 
         try:
             researcher = ResearcherAgent(vibe_root=repo_root)
-            print(f"  ✅ Researcher agent ready")
-            if hasattr(researcher, 'get_available_skills'):
+            print("  ✅ Researcher agent ready")
+            if hasattr(researcher, "get_available_skills"):
                 skills = researcher.get_available_skills()
                 print(f"     Skills: {', '.join(skills)}")
         except Exception as e:
@@ -122,7 +118,7 @@ def run_research_workflow(topic: str) -> bool:
         executor = GraphExecutor()
         if router:
             executor.set_router(router)
-        print(f"  ✅ Executor initialized")
+        print("  ✅ Executor initialized")
         print(f"     Workflow: {workflow.id}")
 
         # STEP 5: Execute workflow
@@ -138,14 +134,17 @@ def run_research_workflow(topic: str) -> bool:
             # In a full implementation, GraphExecutor would traverse all edges
             node = workflow.nodes[node_id]
 
-            result = executor.execute_step(workflow, node_id)
+            # Thread context (research topic) through the execution
+            result = executor.execute_step(workflow, node_id, context=f"Research Topic: {topic}")
 
-            execution_log.append({
-                "node_id": node_id,
-                "action": node.action,
-                "status": result.status.value,
-                "cost_usd": result.cost_usd,
-            })
+            execution_log.append(
+                {
+                    "node_id": node_id,
+                    "action": node.action,
+                    "status": result.status.value,
+                    "cost_usd": result.cost_usd,
+                }
+            )
 
             status_icon = "✅" if result.status == ExecutionStatus.SUCCESS else "⏳"
             print(f"  {status_icon} [{node_id}] {node.action} → {result.status.value}")
@@ -162,7 +161,7 @@ def run_research_workflow(topic: str) -> bool:
                 f"{log['node_id']:<30} {log['action']:<20} "
                 f"{log['status']:<10} ${log['cost_usd']:.2f}"
             )
-            total_cost += log['cost_usd']
+            total_cost += log["cost_usd"]
 
         print("-" * 90)
         print(f"{'TOTAL':<30} {'':<20} {'':<10} ${total_cost:.2f}")
@@ -197,10 +196,11 @@ def run_research_workflow(topic: str) -> bool:
             return True  # Still consider success for demo purposes
 
     except Exception as e:
-        print(f"\n❌ OPERATION v0.8: FAILED")
+        print("\n❌ OPERATION v0.8: FAILED")
         print(f"Error: {e}")
         print("=" * 90)
         import traceback
+
         traceback.print_exc()
         return False
 

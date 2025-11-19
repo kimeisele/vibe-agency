@@ -154,7 +154,9 @@ class BaseAgent:
     # CONNECTION TO BODY (GAD-5: Runtime)
     # ========================================================================
 
-    def execute_command(self, command: str, timeout: int = 30) -> ExecutionResult:
+    def execute_command(
+        self, command: str, timeout: int = 30, prompt: str | None = None, **kwargs
+    ) -> ExecutionResult:
         """
         Execute a command via the Runtime (GAD-5).
 
@@ -166,12 +168,22 @@ class BaseAgent:
 
         Args:
             command: Command to execute
-            timeout: Timeout in seconds
+            timeout: Timeout in seconds (can also use timeout_seconds kwarg)
+            prompt: Optional prompt/context to include in execution
+            **kwargs: Additional parameters (e.g., timeout_seconds)
 
         Returns:
             ExecutionResult with stdout, stderr, exit code
         """
         import time
+
+        # Support both 'timeout' and 'timeout_seconds' parameter names
+        if "timeout_seconds" in kwargs:
+            timeout = kwargs["timeout_seconds"]
+
+        # Store prompt in context if provided
+        if prompt:
+            self.context["execution_prompt"] = prompt
 
         start_time = time.time()
 

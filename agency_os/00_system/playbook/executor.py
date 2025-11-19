@@ -320,7 +320,9 @@ class GraphExecutor:
 
         return result
 
-    def execute_step(self, graph: WorkflowGraph, node_id: str) -> ExecutionResult:
+    def execute_step(
+        self, graph: WorkflowGraph, node_id: str, context: str | None = None
+    ) -> ExecutionResult:
         """Execute a single workflow node using routed agent.
 
         Execution mode is determined by Phoenix safety configuration:
@@ -328,6 +330,11 @@ class GraphExecutor:
         - config.safety.live_fire_enabled=false: Mock execution ($0 cost)
 
         Falls back to VIBE_LIVE_FIRE environment variable if Phoenix config unavailable.
+
+        Args:
+            graph: The workflow graph
+            node_id: The node to execute
+            context: Optional context/prompt to pass to the agent
         """
         # Lazy import to avoid circular dependencies
         live_fire_enabled = False  # Default: safe mode
@@ -344,6 +351,9 @@ class GraphExecutor:
             live_fire_enabled = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
 
         node = graph.nodes[node_id]
+
+        # Build the prompt: context (if provided) + node description
+        prompt = context if context else node.description
 
         # Quota pre-flight check
         if self.quota:
@@ -375,12 +385,12 @@ class GraphExecutor:
                 # Real execution path - would call agent.execute_command or similar
                 if hasattr(selected_agent, "execute_command"):
                     result = selected_agent.execute_command(
-                        node.action, prompt=node.description, timeout_seconds=node.timeout_seconds
+                        node.action, prompt=prompt, timeout_seconds=node.timeout_seconds
                     )
                 elif hasattr(selected_agent, "execute_action"):
                     result = selected_agent.execute_action(
                         action=node.action,
-                        prompt=node.description,
+                        prompt=prompt,
                         timeout_seconds=node.timeout_seconds,
                     )
                 else:
@@ -416,6 +426,7 @@ class GraphExecutor:
                     "agent": getattr(selected_agent, "name", "unknown"),
                     "skills_used": node.required_skills,
                     "mode": "mock",
+                    "context": context,
                 },
                 cost_usd=0.0,
                 duration_seconds=0.0,
