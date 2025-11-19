@@ -153,7 +153,6 @@ class TestVibeAlignerSystemE2E:
         mock_llm.get_cost_summary.return_value = {"total_cost_usd": 0.50}
         
         # Monkeypatch the CLASS before CoreOrchestrator uses it
-        original_llm_client = llm_module.LLMClient
         monkeypatch.setattr(llm_module, "LLMClient", lambda budget_limit=10: mock_llm)
         
         try:

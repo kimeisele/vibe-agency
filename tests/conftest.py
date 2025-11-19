@@ -1,8 +1,8 @@
 """Pytest configuration for vibe-agency tests."""
 
 import sys
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from importlib.util import spec_from_file_location, module_from_spec
 
 # Add project root to sys.path for proper package discovery
 repo_root = Path(__file__).parent.parent

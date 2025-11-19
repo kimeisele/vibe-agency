@@ -10,10 +10,10 @@ This package contains the hierarchical orchestrator architecture:
 """
 
 from .core_orchestrator import (
+    PROMPT_REGISTRY_AVAILABLE,
     ArtifactNotFoundError,
     CoreOrchestrator,
     KernelViolationError,
-    PROMPT_REGISTRY_AVAILABLE,
     PlanningSubState,
     ProjectManifest,
     ProjectPhase,
@@ -21,10 +21,10 @@ from .core_orchestrator import (
 )
 
 __all__ = [
+    "PROMPT_REGISTRY_AVAILABLE",
     "ArtifactNotFoundError",
     "CoreOrchestrator",
     "KernelViolationError",
-    "PROMPT_REGISTRY_AVAILABLE",
     "PlanningSubState",
     "ProjectManifest",
     "ProjectPhase",
