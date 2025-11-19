@@ -171,11 +171,11 @@ class ModelConfig(BaseSettings):
     """
     LLM Model configuration (GAD-511: Neural Adapter Strategy)
 
-    Supports multiple providers: Anthropic, OpenAI, Local/Ollama
+    Supports multiple providers: Anthropic, Google (Gemini), OpenAI, Local/Ollama
     """
 
     provider: str = "anthropic"
-    """LLM provider: 'anthropic', 'openai', 'local'"""
+    """LLM provider: 'google', 'anthropic', 'openai', 'local'"""
 
     model_name: str = "claude-3-5-sonnet-20241022"
     """Default model to use (provider-specific)"""
@@ -194,7 +194,9 @@ class ModelConfig(BaseSettings):
         """Auto-load API key from environment if not explicitly set"""
         if self.api_key is None:
             # Try provider-specific env vars
-            if self.provider == "anthropic":
+            if self.provider == "google":
+                self.api_key = os.getenv("GOOGLE_API_KEY")
+            elif self.provider == "anthropic":
                 self.api_key = os.getenv("ANTHROPIC_API_KEY")
             elif self.provider == "openai":
                 self.api_key = os.getenv("OPENAI_API_KEY")

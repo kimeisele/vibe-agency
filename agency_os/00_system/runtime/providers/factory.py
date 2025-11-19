@@ -20,6 +20,7 @@ from typing import Any
 
 from .anthropic import AnthropicProvider
 from .base import LLMProvider, NoOpProvider, ProviderNotAvailableError
+from .google import GoogleProvider
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,12 @@ def create_provider(
         if provider_name == "anthropic":
             logger.info(f"Creating Anthropic provider (model: {model_name or 'default'})")
             return AnthropicProvider(api_key=api_key, **kwargs)
+
+        elif provider_name == "google":
+            logger.info(
+                f"Creating Google Gemini provider (model: {model_name or 'gemini-2.5-flash-exp'})"
+            )
+            return GoogleProvider(api_key=api_key, **kwargs)
 
         elif provider_name == "openai":
             logger.warning("OpenAI provider not yet implemented (GAD-511 Phase 2)")
@@ -123,14 +130,17 @@ def _detect_provider() -> str:
     Auto-detect which provider to use based on available API keys.
 
     Priority order:
-    1. ANTHROPIC_API_KEY → anthropic
-    2. OPENAI_API_KEY → openai
-    3. None available → noop (will use NoOpProvider)
+    1. GOOGLE_API_KEY → google
+    2. ANTHROPIC_API_KEY → anthropic
+    3. OPENAI_API_KEY → openai
+    4. None available → noop (will use NoOpProvider)
 
     Returns:
         Provider name string
     """
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    if os.environ.get("GOOGLE_API_KEY"):
+        return "google"
+    elif os.environ.get("ANTHROPIC_API_KEY"):
         return "anthropic"
     elif os.environ.get("OPENAI_API_KEY"):
         return "openai"
@@ -150,6 +160,7 @@ def _get_api_key_for_provider(provider_name: str) -> str | None:
         API key string or None
     """
     env_var_map = {
+        "google": "GOOGLE_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
         "openai": "OPENAI_API_KEY",
         "local": None,  # Local models don't need API keys

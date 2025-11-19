@@ -69,16 +69,18 @@ print()
 # Step 3: Check API key availability
 print("Step 3: Checking API key availability...")
 if client.mode == "noop":
-    print("   ⚠️  WARNING: No ANTHROPIC_API_KEY found")
+    print("   ⚠️  WARNING: No API key found")
     print("   Running in NoOp mode (mock execution, $0 cost)")
     print()
-    print("   To enable real execution:")
+    print("   To enable real execution, set one of:")
+    print("     export GOOGLE_API_KEY='your-key-here'")
     print("     export ANTHROPIC_API_KEY='your-key-here'")
+    print("     export OPENAI_API_KEY='your-key-here'")
     print("     python scripts/prove_intelligence.py")
     print()
     mock_mode = True
 else:
-    print("   ✅ API key detected - LIVE FIRE ARMED")
+    print(f"   ✅ API key detected - Provider: {client.mode.upper()} - LIVE FIRE ARMED")
     print()
     mock_mode = False
 
@@ -140,7 +142,9 @@ try:
         print("=" * 70)
         print()
         print("   ⚠️  This was a mock execution (NoOpClient)")
-        print("   Set ANTHROPIC_API_KEY to enable real intelligence")
+        print(
+            "   Set GOOGLE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY to enable real intelligence"
+        )
     else:
         print("🧠 PROOF OF INTELLIGENCE: CONFIRMED")
         print("=" * 70)

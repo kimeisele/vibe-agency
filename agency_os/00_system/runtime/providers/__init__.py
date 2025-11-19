@@ -6,6 +6,7 @@ Multi-provider LLM support with clean abstraction layer.
 
 Supported providers:
 - Anthropic (Claude)
+- Google (Gemini)
 - OpenAI (Future)
 - Local/Ollama (Future)
 
@@ -29,9 +30,11 @@ from .base import (
     ProviderNotAvailableError,
 )
 from .factory import create_provider, get_default_provider
+from .google import GoogleProvider
 
 __all__ = [
     "AnthropicProvider",
+    "GoogleProvider",
     "LLMProvider",
     "LLMProviderError",
     "LLMResponse",
