@@ -3,6 +3,7 @@
 
 Verifies capability-based agent selection without triggering real LLM calls.
 """
+
 import sys
 from pathlib import Path
 
@@ -11,31 +12,34 @@ import pytest
 # Import SemanticAction definitions
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
 sys.path.insert(0, str(runtime_dir))
-from semantic_actions import SemanticAction, SemanticActionType  # noqa: E402
+from semantic_actions import SemanticAction, SemanticActionType
 
 # Import personas and router
 personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"
 sys.path.insert(0, str(personas_dir))
+
+
 # Use simple dummy agents to avoid runtime infrastructure dependencies
 class DummyAgent:
     def __init__(self, name: str, capabilities: list[str]):
         self.name = name
         self.capabilities = capabilities
 
+
 # Real personas available but not used to keep tests $0 and infra-free
-# from coder import CoderAgent  # noqa: E402
-# from researcher import ResearcherAgent  # noqa: E402
+# from coder import CoderAgent
+# from researcher import ResearcherAgent
 
 router_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
 sys.path.insert(0, str(router_dir))
-from router import AgentRouter  # noqa: E402
-from executor import GraphExecutor, WorkflowGraph, WorkflowNode, WorkflowEdge  # noqa: E402
+from executor import GraphExecutor, WorkflowGraph, WorkflowNode
+from router import AgentRouter
 
 
 class TestAgentRouter:
     def test_router_selects_coder_for_debugging(self):
-        coder = DummyAgent(name="coder", capabilities=["coding", "debugging", "python"]) 
-        researcher = DummyAgent(name="researcher", capabilities=["research", "search", "synthesis"]) 
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging", "python"])
+        researcher = DummyAgent(name="researcher", capabilities=["research", "search", "synthesis"])
         router = AgentRouter([coder, researcher])
 
         action = SemanticAction(
@@ -49,7 +53,7 @@ class TestAgentRouter:
         assert best is coder
 
     def test_router_returns_none_if_no_match(self):
-        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"]) 
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"])
         router = AgentRouter([coder])
         action = SemanticAction(
             action_type=SemanticActionType.RESEARCH,
@@ -63,8 +67,8 @@ class TestAgentRouter:
 
 class TestExecutorNeuralLink:
     def test_executor_uses_router_for_step(self):
-        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"]) 
-        researcher = DummyAgent(name="researcher", capabilities=["research"]) 
+        coder = DummyAgent(name="coder", capabilities=["coding", "debugging"])
+        researcher = DummyAgent(name="researcher", capabilities=["research"])
         router = AgentRouter([coder, researcher])
 
         # Minimal workflow graph with one node needing debugging

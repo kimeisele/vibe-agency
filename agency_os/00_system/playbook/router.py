@@ -20,35 +20,37 @@ Responsibilities:
 
 NOTE: No real LLM calls yet. Execution is mocked per instructions.
 """
+
 from __future__ import annotations
 
-from typing import List, Optional, Protocol
+from typing import Protocol
+
 
 class HasRequiredSkills(Protocol):
-    required_skills: List[str]
+    required_skills: list[str]
     # name and intent are optional for scoring
 
 
 class AgentRouter:
     """Agent capability matching and selection."""
 
-    def __init__(self, agents: Optional[List[object]] = None):
-        self._agents: List[object] = agents or []
+    def __init__(self, agents: list[object] | None = None):
+        self._agents: list[object] = agents or []
 
     # Registry operations -------------------------------------------------
     def register(self, agent: object) -> None:
         if agent not in self._agents:
             self._agents.append(agent)
 
-    def list_agents(self) -> List[object]:
+    def list_agents(self) -> list[object]:
         return list(self._agents)
 
     # Matching logic ------------------------------------------------------
-    def _score(self, agent: object, required: List[str]) -> int:
+    def _score(self, agent: object, required: list[str]) -> int:
         capabilities = getattr(agent, "capabilities", []) or []
         return sum(1 for skill in required if skill in capabilities)
 
-    def find_best_agent_for_skills(self, required_skills: List[str]) -> Optional[object]:
+    def find_best_agent_for_skills(self, required_skills: list[str]) -> object | None:
         if not self._agents:
             return None
         best = None
@@ -62,11 +64,11 @@ class AgentRouter:
             return None
         return best
 
-    def find_best_agent(self, action: HasRequiredSkills) -> Optional[object]:
+    def find_best_agent(self, action: HasRequiredSkills) -> object | None:
         return self.find_best_agent_for_skills(action.required_skills)
 
     # Convenience ---------------------------------------------------------
-    def can_any_execute(self, required_skills: List[str]) -> bool:
+    def can_any_execute(self, required_skills: list[str]) -> bool:
         return self.find_best_agent_for_skills(required_skills) is not None
 
     def get_capability_matrix(self) -> dict:

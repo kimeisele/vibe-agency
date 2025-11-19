@@ -489,7 +489,9 @@ class BaseAgent:
         return all(skill in self.capabilities for skill in required)
 
     def __repr__(self) -> str:
-        return f"BaseAgent(name={self.name!r}, role={self.role!r}, capabilities={self.capabilities})"
+        return (
+            f"BaseAgent(name={self.name!r}, role={self.role!r}, capabilities={self.capabilities})"
+        )
 
     def __str__(self) -> str:
         return f"{self.name} ({self.role})"

@@ -269,7 +269,10 @@ class GraphExecutor:
                 if self.router:  # Use router to find agent per node
                     best = self.router.find_best_agent_for_skills(node.required_skills)
                     if best is None:
-                        return False, f"No agent satisfies skills for node {node_id}: {node.required_skills}"
+                        return (
+                            False,
+                            f"No agent satisfies skills for node {node_id}: {node.required_skills}",
+                        )
                 else:
                     if not self.agent.can_execute(node.required_skills):
                         return (
@@ -351,20 +354,20 @@ class GraphExecutor:
         # EXECUTION MODE: Real vs Mock
         if live_fire_enabled:
             # REAL EXECUTION: Actual agent invocation (real tokens, real cost)
-            logger.info(f"🔥 LIVE FIRE: Executing {node_id} with real agent: {getattr(selected_agent, 'name', 'unknown')}")
+            logger.info(
+                f"🔥 LIVE FIRE: Executing {node_id} with real agent: {getattr(selected_agent, 'name', 'unknown')}"
+            )
             try:
                 # Real execution path - would call agent.execute_command or similar
-                if hasattr(selected_agent, 'execute_command'):
+                if hasattr(selected_agent, "execute_command"):
                     result = selected_agent.execute_command(
-                        node.action,
-                        prompt=node.description,
-                        timeout_seconds=node.timeout_seconds
+                        node.action, prompt=node.description, timeout_seconds=node.timeout_seconds
                     )
-                elif hasattr(selected_agent, 'execute_action'):
+                elif hasattr(selected_agent, "execute_action"):
                     result = selected_agent.execute_action(
                         action=node.action,
                         prompt=node.description,
-                        timeout_seconds=node.timeout_seconds
+                        timeout_seconds=node.timeout_seconds,
                     )
                 else:
                     # Fallback if agent doesn't have execution methods
@@ -376,7 +379,7 @@ class GraphExecutor:
                         error=f"Agent {getattr(selected_agent, 'name', 'unknown')} does not support execute_command or execute_action",
                     )
                 # Record actual cost from execution
-                cost_usd = result.cost_usd if hasattr(result, 'cost_usd') else 0.0
+                cost_usd = result.cost_usd if hasattr(result, "cost_usd") else 0.0
             except Exception as e:
                 logger.error(f"🔥 LIVE FIRE execution failed for {node_id}: {e}")
                 result = ExecutionResult(
@@ -409,11 +412,7 @@ class GraphExecutor:
 
         # Record quota usage
         if self.quota:
-            self.quota.record_request(
-                tokens_used=50,
-                cost_usd=cost_usd,
-                operation=node.action
-            )
+            self.quota.record_request(tokens_used=50, cost_usd=cost_usd, operation=node.action)
 
         return result
 
