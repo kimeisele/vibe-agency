@@ -27,6 +27,9 @@
 - [GAD-500: Runtime Engineering EPIC](GAD-5XX/GAD-500.md)
 - [GAD-501: Layer 0 and Layer 1](GAD-5XX/GAD-501.md)
 - [GAD-502: Haiku Hardening](GAD-5XX/GAD-502.md)
+- [GAD-509: Circuit Breaker Protocol (Iron Dome)](GAD-5XX/GAD-509.md) ✅
+- [GAD-510: Quota Manager (Cost Control)](GAD-5XX/GAD-510.md) ✅
+- [GAD-511: Neural Adapter Strategy (Multi-Provider LLM)](GAD-5XX/GAD-511.md) ✅
 
 ### GAD-6XX: Knowledge Department ✅
 - [GAD-600: Knowledge Department EPIC](GAD-6XX/GAD-600.md)
@@ -103,5 +106,5 @@ These files have been archived after migration to new structure:
 
 ---
 
-**Last Updated**: 2025-11-17
-**Version**: 3.0 (Foundation Closure - GAD-1XX through GAD-4XX Complete)
+**Last Updated**: 2025-11-19
+**Version**: 3.1 (Infrastructure Sync - GAD-509, GAD-510, GAD-511 documented)

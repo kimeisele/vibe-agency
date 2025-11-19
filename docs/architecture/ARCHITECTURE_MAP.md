@@ -24,6 +24,7 @@ NEXT:   GAD-3 (Agents/Legs) ⏳ READY | GAD-4 (QA/Feet) ⏳ PLANNED
 │  │ • GAD-503: Logging Kernel (.vibe/logs)             │ │
 │  │ • GAD-509: Circuit Breaker (Iron Dome) 🛡️         │ │
 │  │ • GAD-510: Quota Manager (Cost Control) 💰         │ │
+│  │ • GAD-511: Neural Adapter (Multi-Provider LLM) 🧠  │ │
 │  │ • Anti-Decay: Health check (--health flag)         │ │
 │  │ Status: Production-Grade, Sealed, Tested           │ │
 │  └──────────────────────────────────────────────────────┘ │
@@ -259,7 +260,12 @@ semi_intelligent_components:
     system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
     purpose: "API cost control and quota enforcement"
-    
+
+  - name: "NeuralAdapter"
+    system: "GAD-5 (Runtime Engineering)"
+    layers: [2, 3]
+    purpose: "Multi-provider LLM abstraction (Anthropic, Google, OpenAI)"
+
   - name: "IntegrityChecker"
     system: "GAD-5 (Runtime Engineering)"
     layers: [2, 3]
@@ -325,6 +331,11 @@ vibe-agency/
 │   │   ├── runtime/
 │   │   │   ├── circuit_breaker.py       # GAD-509 (Iron Dome)
 │   │   │   ├── quota_manager.py         # GAD-510 (Cost Control)
+│   │   │   ├── providers/               # GAD-511 (Neural Adapter)
+│   │   │   │   ├── base.py              #   - Abstract interface
+│   │   │   │   ├── anthropic.py         #   - Claude provider
+│   │   │   │   ├── google.py            #   - Gemini provider
+│   │   │   │   └── factory.py           #   - Auto-detection
 │   │   │   └── llm_client.py
 │   │   ├── playbook/
 │   │   │   ├── executor.py              # GAD-902 (Graph Executor)
@@ -515,6 +526,7 @@ vibe-agency/
 |---------|---------|---------|---------|-----|
 | **Circuit Breaker** | ❌ N/A | ✅ Active | ✅ Active | 509 |
 | **Quota Manager** | ❌ N/A | ✅ Active | ✅ Active | 510 |
+| **Neural Adapter** | ❌ N/A | ✅ Active | ✅ Active | 511 |
 | **Graph Executor** | ❌ N/A | ✅ Active | ✅ Active | 902 |
 | **Workflow Loader** | ❌ N/A | ✅ Active | ✅ Active | 903 |
 | **System Integrity** | ⚠️ Manual | ✅ Auto | ✅ Auto | 005 |
@@ -861,6 +873,7 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 - GAD-502: Haiku Hardening (PLAN)
 - GAD-509: Circuit Breaker (COMPLETE - Iron Dome)
 - GAD-510: Quota Manager (COMPLETE - Cost Control)
+- GAD-511: Neural Adapter Strategy (COMPLETE - Multi-Provider LLM)
 - GAD-600: Knowledge Department (VISION)
 - GAD-700: STEWARD Governance (VISION)
 - GAD-800: Integration Matrix (VISION)
