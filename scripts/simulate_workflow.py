@@ -17,9 +17,6 @@ Evidence: Table showing action → agent mapping
 import sys
 from pathlib import Path
 
-from agency_os.agents.personas.coder import CoderAgent
-from agency_os.agents.personas.researcher import ResearcherAgent
-from agency_os.agents.personas.reviewer import ReviewerAgent
 from agency_os.playbook.executor import (
     ExecutionStatus,
     GraphExecutor,
@@ -28,6 +25,10 @@ from agency_os.playbook.executor import (
     WorkflowNode,
 )
 from agency_os.playbook.router import AgentRouter
+
+from agency_os.agents.personas.coder import CoderAgent
+from agency_os.agents.personas.researcher import ResearcherAgent
+from agency_os.agents.personas.reviewer import ReviewerAgent
 
 
 # ============================================================================

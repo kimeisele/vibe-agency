@@ -46,9 +46,16 @@ jobs:
         uv run yamllint -c .yamllint agency_os/ system_steward_framework/ || true
 
     - name: Run test suite
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        VIBE_LIVE_FIRE: "true"
       run: |
         uv run pytest -v --tb=short
 
     - name: Validate knowledge index
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
         uv run python scripts/validate_knowledge_index.py
