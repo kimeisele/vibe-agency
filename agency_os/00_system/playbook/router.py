@@ -22,18 +22,11 @@ NOTE: No real LLM calls yet. Execution is mocked per instructions.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Protocol
 
-try:
-    # Import SemanticAction for type hints (soft dependency)
-    from agency_os.00_system.runtime.semantic_actions import SemanticAction  # type: ignore
-except Exception:  # pragma: no cover - soft import
-    @dataclass
-    class SemanticAction:  # type: ignore
-        required_skills: List[str]
-        name: str = "unknown"
-        intent: str = ""
+class HasRequiredSkills(Protocol):
+    required_skills: List[str]
+    # name and intent are optional for scoring
 
 
 class AgentRouter:
@@ -69,7 +62,7 @@ class AgentRouter:
             return None
         return best
 
-    def find_best_agent(self, action: SemanticAction) -> Optional[object]:
+    def find_best_agent(self, action: HasRequiredSkills) -> Optional[object]:
         return self.find_best_agent_for_skills(action.required_skills)
 
     # Convenience ---------------------------------------------------------
