@@ -156,6 +156,44 @@ bin/vibe-dashboard --help   # Show help
 
 ---
 
+## ⚙️ Configuration
+
+### Environment Variables (GAD-510.1: Dynamic Quotas)
+
+VIBE Agency loads quota limits from environment variables for flexible cost and rate control:
+
+```bash
+# Budget Control (Safe defaults prevent surprise costs)
+export VIBE_QUOTA_RPM=10                    # Requests per minute (default: 10)
+export VIBE_QUOTA_TPM=10000                 # Tokens per minute (default: 10000)
+export VIBE_QUOTA_HOURLY_USD=2.0            # Cost per hour limit (default: $2.0)
+export VIBE_QUOTA_DAILY_USD=5.0             # Cost per day limit (default: $5.0)
+```
+
+**Common Scenarios:**
+
+```bash
+# Conservative budget for testing
+export VIBE_QUOTA_DAILY_USD=1.0
+export VIBE_QUOTA_HOURLY_USD=0.50
+
+# Production with more headroom
+export VIBE_QUOTA_DAILY_USD=100.0
+export VIBE_QUOTA_HOURLY_USD=20.0
+
+# Rate limiting (useful for free tier APIs)
+export VIBE_QUOTA_RPM=3
+export VIBE_QUOTA_TPM=5000
+```
+
+**How It Works:**
+- System loads these variables on startup
+- Falls back to safe defaults if undefined
+- Circuit breaker protects against cascading failures
+- Pre-flight quota checks prevent wasted API calls
+
+---
+
 ## 🚀 How to Use
 
 ### Quick Start (One Command)

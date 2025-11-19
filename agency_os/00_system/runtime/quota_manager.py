@@ -14,10 +14,16 @@ Quotas tracked:
 
 Implementation of operational safeguards - prevents runaway API costs.
 
-Version: 1.0 (GAD-510)
+GAD-510.1: Dynamic Quota Configuration
+- Loads quota limits from environment variables
+- Falls back to safe defaults if undefined
+- Configurable limits prevent surprises and enable custom budgets
+
+Version: 1.1 (GAD-510 + GAD-510.1)
 """
 
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -31,16 +37,57 @@ class QuotaExceededError(Exception):
     pass
 
 
+def _load_quota_limits_from_env() -> dict[str, Any]:
+    """
+    Load quota limits from environment variables.
+
+    Environment Variables (with safe defaults):
+    - VIBE_QUOTA_RPM: Requests per minute (default: 10)
+    - VIBE_QUOTA_TPM: Tokens per minute (default: 10000)
+    - VIBE_QUOTA_HOURLY_USD: Cost per hour (default: 2.0)
+    - VIBE_QUOTA_DAILY_USD: Cost per day (default: 5.0)
+
+    Returns:
+        Dictionary with quota limit keys and values loaded from environment
+    """
+    try:
+        return {
+            "requests_per_minute": int(os.environ.get("VIBE_QUOTA_RPM", "10")),
+            "tokens_per_minute": int(os.environ.get("VIBE_QUOTA_TPM", "10000")),
+            "cost_per_hour_usd": float(os.environ.get("VIBE_QUOTA_HOURLY_USD", "2.0")),
+            "cost_per_day_usd": float(os.environ.get("VIBE_QUOTA_DAILY_USD", "5.0")),
+        }
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Invalid quota environment variables, using safe defaults: {e}")
+        return {
+            "requests_per_minute": 10,
+            "tokens_per_minute": 10000,
+            "cost_per_hour_usd": 2.0,
+            "cost_per_day_usd": 5.0,
+        }
+
+
 @dataclass
 class QuotaLimits:
-    """Quota limits configuration"""
+    """Quota limits configuration (GAD-510.1: Environment-configurable)"""
 
-    requests_per_minute: int = 100  # Anthropic typical limit
-    tokens_per_minute: int = 100_000  # Tokens per minute
+    requests_per_minute: int = 10  # Default: Safe limit
+    tokens_per_minute: int = 10000  # Default: Safe limit
     concurrent_requests: int = 10  # Max parallel invocations
     cost_per_request_usd: float = 0.50  # Alert if single request > $0.50
-    cost_per_hour_usd: float = 50.0  # Alert if hourly spend > $50
-    cost_per_day_usd: float = 500.0  # Alert if daily spend > $500
+    cost_per_hour_usd: float = 2.0  # Default: $2/hour safe limit
+    cost_per_day_usd: float = 5.0  # Default: $5/day safe limit
+
+    @classmethod
+    def from_environment(cls) -> "QuotaLimits":
+        """
+        Create QuotaLimits from environment variables.
+
+        Returns:
+            QuotaLimits instance with values loaded from env or defaults
+        """
+        limits_dict = _load_quota_limits_from_env()
+        return cls(**limits_dict)
 
 
 @dataclass
@@ -88,9 +135,9 @@ class OperationalQuota:
         Initialize quota manager.
 
         Args:
-            limits: QuotaLimits configuration (uses defaults if None)
+            limits: QuotaLimits configuration (loads from env vars if None)
         """
-        self.limits = limits or QuotaLimits()
+        self.limits = limits or QuotaLimits.from_environment()
         self.metrics = QuotaMetrics()
 
         logger.info(

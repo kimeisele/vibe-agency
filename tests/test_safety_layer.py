@@ -208,14 +208,15 @@ class TestQuotaManager:
     """Tests for Operational Quota Manager"""
 
     def test_quota_manager_initial_state(self):
-        """Quota manager initializes with correct limits"""
+        """Quota manager initializes with correct limits (GAD-510.1: Safe defaults)"""
         quota = OperationalQuota()
         status = quota.get_status()
 
-        assert status["requests"]["limit"] == 100
-        assert status["tokens"]["limit"] == 100_000
-        assert status["cost"]["limit_per_hour_usd"] == 50.0
-        assert status["cost"]["limit_per_day_usd"] == 500.0
+        # GAD-510.1: Changed to safe defaults
+        assert status["requests"]["limit"] == 10  # Safe default RPM
+        assert status["tokens"]["limit"] == 10000  # Safe default TPM
+        assert status["cost"]["limit_per_hour_usd"] == 2.0  # Safe default hourly
+        assert status["cost"]["limit_per_day_usd"] == 5.0  # Safe default daily
 
     def test_quota_manager_check_before_request_passes(self):
         """Valid requests pass pre-flight check"""
