@@ -21,7 +21,7 @@ _ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "00_system" / "orchestrator"
 
 
 from agency_os_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator
-from prompt_registry import PromptRegistry
+from runtime.prompt_registry import PromptRegistry
 
 
 def test_prompt_registry_integration():
@@ -110,7 +110,7 @@ def test_prompt_registry_integration():
     # Test 5: Verify backward compatibility (PromptRuntime still works)
     print("Test 5: Backward compatibility test...")
     try:
-        from prompt_runtime import PromptRuntime
+        from runtime.prompt_runtime import PromptRuntime
 
         runtime = PromptRuntime(base_path=_REPO_ROOT)
         old_prompt = runtime.execute_task(

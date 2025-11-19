@@ -10,7 +10,7 @@ import pytest
 
 # Import SemanticAction definitions
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
-from semantic_actions import SemanticAction, SemanticActionType
+from runtime.semantic_actions import SemanticAction, SemanticActionType
 
 # Import personas and router
 personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"

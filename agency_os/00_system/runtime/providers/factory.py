@@ -138,6 +138,7 @@ def _detect_provider() -> str:
     Returns:
         Provider name string
     """
+
     def is_valid_key(key: str | None) -> bool:
         """Check if key is valid (not None, not empty, not a placeholder)"""
         if not key:

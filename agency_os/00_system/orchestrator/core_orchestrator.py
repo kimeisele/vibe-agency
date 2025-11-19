@@ -35,10 +35,10 @@ from typing import Any
 
 import yaml
 
-# Add runtime to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "runtime"))
+# Add 00_system to path for package-qualified imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from llm_client import BudgetExceededError, LLMClient
+from runtime.llm_client import BudgetExceededError, LLMClient
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -46,12 +46,12 @@ logger = logging.getLogger(__name__)
 # GAD-003 Phase 2: Use PromptRegistry instead of PromptRuntime
 # PromptRegistry provides automatic governance injection
 try:
-    from prompt_registry import PromptRegistry
+    from runtime.prompt_registry import PromptRegistry
 
     PROMPT_REGISTRY_AVAILABLE = True
 except ImportError:
     # Fallback to PromptRuntime if Registry not available
-    from prompt_runtime import PromptRuntime
+    from runtime.prompt_runtime import PromptRuntime
 
     PROMPT_REGISTRY_AVAILABLE = False
     logger.warning("PromptRegistry not available, falling back to PromptRuntime")

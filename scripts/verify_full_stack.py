@@ -28,8 +28,7 @@ sys.path.insert(0, str(project_root))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -64,6 +63,7 @@ def test_provider_factory() -> str:
     try:
         # Import using proper path for modules starting with numbers
         import importlib
+
         factory_module = importlib.import_module("agency_os.00_system.runtime.providers.factory")
         _detect_provider = factory_module._detect_provider
         _get_api_key_for_provider = factory_module._get_api_key_for_provider
@@ -97,6 +97,7 @@ def test_workflow_loader() -> object:
     try:
         # Import using proper path for modules starting with numbers
         import importlib
+
         sys.path.insert(0, str(project_root / "agency_os" / "00_system" / "playbook"))
 
         loader_module = importlib.import_module("agency_os.00_system.playbook.loader")
@@ -104,12 +105,7 @@ def test_workflow_loader() -> object:
 
         # Load workflow
         workflow_path = (
-            project_root /
-            "agency_os" /
-            "00_system" /
-            "playbook" /
-            "workflows" /
-            "auto_debug.yaml"
+            project_root / "agency_os" / "00_system" / "playbook" / "workflows" / "auto_debug.yaml"
         )
 
         if not workflow_path.exists():
@@ -140,12 +136,13 @@ def test_graph_executor(workflow: object, provider_name: str) -> dict:
     try:
         # Import using proper path for modules starting with numbers
         import importlib
+
         executor_module = importlib.import_module("agency_os.00_system.playbook.executor")
         GraphExecutor = executor_module.GraphExecutor
 
         # Create executor
         executor = GraphExecutor()
-        print(f"  Created GraphExecutor")
+        print("  Created GraphExecutor")
 
         # Check live fire mode
         live_fire = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
@@ -181,7 +178,6 @@ def test_first_step_execution(exec_context: dict) -> dict:
 
     executor = exec_context["executor"]
     workflow = exec_context["workflow"]
-    live_fire = exec_context["live_fire"]
 
     try:
         # Get first step
@@ -194,17 +190,17 @@ def test_first_step_execution(exec_context: dict) -> dict:
         print(f"  Description: {first_node.description[:100]}...")
 
         # Execute first step
-        print(f"\n  Executing...")
+        print("\n  Executing...")
         result = executor.execute_step(workflow, first_step)
 
-        print(f"\n  ✅ Execution completed")
+        print("\n  ✅ Execution completed")
         print(f"     Status: {result.status.value}")
         print(f"     Cost: ${result.cost_usd:.4f}")
         print(f"     Duration: {result.duration_seconds:.2f}s")
 
         # Show output
         if result.output:
-            print(f"\n  📊 OUTPUT:")
+            print("\n  📊 OUTPUT:")
             if isinstance(result.output, dict):
                 for key, value in result.output.items():
                     if isinstance(value, str) and len(value) > 100:
@@ -272,6 +268,7 @@ def generate_report(
 
     # Add timestamp
     from datetime import datetime
+
     report["test_timestamp"] = datetime.utcnow().isoformat()
 
     # Print summary

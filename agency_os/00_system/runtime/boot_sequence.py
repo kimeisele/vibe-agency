@@ -9,10 +9,10 @@ Orchestrates the conveyor belt:
 import sys
 from pathlib import Path
 
-from context_loader import ContextLoader
-from playbook_engine import PlaybookEngine
-from project_memory import ProjectMemoryManager
-from prompt_composer import PromptComposer
+from runtime.context_loader import ContextLoader
+from runtime.playbook_engine import PlaybookEngine
+from runtime.project_memory import ProjectMemoryManager
+from runtime.prompt_composer import PromptComposer
 
 
 class BootSequence:

@@ -8,6 +8,9 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
+# Add 00_system to path (Python doesn't like numeric module names)
+sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+
 
 # Dynamically load modules from 00_system (which has numeric prefix, not importable directly)
 def _load_module_from_path(module_name: str, file_path: str) -> None:
