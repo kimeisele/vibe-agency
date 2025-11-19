@@ -1,53 +1,88 @@
 #!/bin/bash
 #
-# system-boot.sh - STEWARD Boot Sequence
+# VIBE AGENCY OS - Atomic System Boot Sequence
 #
-# Purpose: Initialize STEWARD with session context + playbook routing
-# Usage: ./bin/system-boot.sh
+# PURPOSE: Runs integrity checks and securely hands over control to the STEWARD (Mission Control).
+# USAGE: ./bin/system-boot.sh
 #
-# Flow:
-#   1. Pre-flight checks (dependencies, environment)
-#   2. Call vibe-cli boot (displays MOTD, session context, playbook routes)
-#   3. Ready for STEWARD to receive user intent
-#
-# Full system diagnostics: ./bin/show-status.sh
-#
+# Note: The STEWARD system prompt is now managed dynamically via GAD-7 mission state,
+#       not hardcoded in this script.
 
 set -euo pipefail
 
+# --- VIBE COLORS ---
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# --- INITIALIZATION ---
 VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
+clear
+
+echo -e "${CYAN}"
+cat << "EOF"
+__     __  _   _               _
+\ \   / / (_) | |__     ___   | |
+ \ \ / /  | | | '_ \   / _ \  | |
+  \ V /   | | | |_) | |  __/  |_|
+   \_/    |_| |_.__/   \___|  (_)
+
+   >>> AGENCY OPERATING SYSTEM <<<
+   >>> GAD-2/3/4/5/6/7 COMPLETE <<<
+EOF
+echo -e "${NC}"
+echo "════════════════════════════════════════════════════════════════"
 
 # ============================================================================
-# PRE-FLIGHT CHECKS
+# 1. PRE-FLIGHT CHECKS (GIT & ENV)
 # ============================================================================
-echo "🔍 Running pre-flight checks..."
-echo ""
+echo "🔍 Running pre-flight environment checks..."
 
-# Check dependencies
+# Check Virtual Environment
 if [ ! -d ".venv" ]; then
-    echo "📦 Dependencies not found. Please run:"
-    echo "   make install"
-    echo "   or"
-    echo "   uv sync --all-extras"
-    echo ""
-    exit 1
+    echo -e "⚠️  VirtualEnv: ${YELLOW}Not active.${NC} Dependencies may be unstable."
 fi
 
-# Check environment
+# Check Git Status
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    echo "✅ Git repository detected (branch: $BRANCH)"
+    echo -e "✅ Git Repository: ${GREEN}Detected${NC} (branch: $BRANCH)"
 else
-    echo "⚠️  Not a git repository"
+    echo -e "⚠️  Git Repository: ${YELLOW}Not initialized.${NC}"
 fi
 
 echo ""
 
 # ============================================================================
-# SYSTEM HEALTH CHECK (Anti-Decay Mechanism)
+# 2. SYSTEM HEALTH CHECK (The Anti-Decay Mechanism)
 # ============================================================================
-echo "🏥 Running system health check (Anti-Decay mechanism)..."
+echo "🏥 Running system health check (GAD-5 Anti-Decay)..."
+echo ""
+
+# Use the vibe-shell health check
+if ./bin/vibe-shell --health 2>&1 | grep -q "SYSTEM HEALTHY"; then
+    echo -e "✅ System health check: ${GREEN}PASSED${NC} (All critical checks green)"
+else
+    echo ""
+    echo -e "❌ System health check: ${RED}FAILED${NC}"
+    echo -e "⚠️  Proceeding anyway, but system may be unstable. Fix dependencies!"
+fi
+
+echo ""
+
+# ============================================================================
+# 3. HANDOVER TO STEWARD (Mission Control)
+# ============================================================================
+echo "🚀 Transferring control to STEWARD (Mission Control)..."
+echo "════════════════════════════════════════════════════════════════"
+echo ""
+
+# The primary system prompt is displayed via the Mission Control Dashboard
+# This replaces the old hardcoded SYSTEMPROMPT block.
+python3 bin/mission status
 echo ""
 
 if ./bin/vibe-shell --health 2>&1; then
