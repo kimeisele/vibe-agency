@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""
+vibe-knowledge: The Librarian CLI
+
+Commands:
+  search <query>         Search knowledge base for artifacts
+  list <domain>          List all artifacts in a domain
+  read <path>            Read a knowledge artifact
+  domains                Show available domains
+
+This is the retrieval interface for the Knowledge Department (GAD-602).
+Agents use this to find patterns, snippets, research, and decisions.
+"""
+
+import sys
+import json
+from pathlib import Path
+
+# Add agency_os to path so we can import modules
+_vibe_root = Path(__file__).parent.parent
+sys.path.insert(0, str(_vibe_root))
+
+
+def get_retriever():
+    """Import and initialize the KnowledgeRetriever."""
+    try:
+        # Use dynamic import to avoid numeric path issues
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "retriever",
+            _vibe_root / "agency_os" / "02_knowledge" / "retriever.py"
+        )
+        retriever_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(retriever_module)
+
+        return retriever_module.KnowledgeRetriever(_vibe_root)
+    except Exception as e:
+        print(f"❌ Error loading knowledge retriever: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_search(query, limit=10):
+    """Search the knowledge base."""
+    retriever = get_retriever()
+
+    try:
+        hits = retriever.search(query, limit=limit)
+    except Exception as e:
+        print(f"❌ Search error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if not hits:
+        print(f"❌ No results found for: {query}")
+        return
+
+    print(f"📚 Search Results for '{query}' ({len(hits)} matches)")
+    print("=" * 80)
+
+    for i, hit in enumerate(hits, 1):
+        # Calculate relative path for display
+        rel_path = hit.path.relative_to(retriever.knowledge_base)
+
+        print(f"\n[{i}] {hit.title}")
+        print(f"    Domain:    {hit.domain}")
+        print(f"    Path:      {rel_path}")
+        print(f"    Relevance: {hit.relevance_score:.1%}")
+        print(f"    Preview:   {hit.preview}")
+
+    print("\n" + "=" * 80)
+    print(f"💡 Use: vibe-knowledge read <path>")
+
+
+def cmd_list(domain):
+    """List all artifacts in a domain."""
+    retriever = get_retriever()
+
+    if domain not in retriever.DOMAINS:
+        print(f"❌ Unknown domain: {domain}")
+        print(f"   Valid domains: {', '.join(retriever.DOMAINS)}")
+        sys.exit(1)
+
+    try:
+        files = retriever.list_domain(domain)
+    except Exception as e:
+        print(f"❌ Error listing domain: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if not files:
+        print(f"📚 Domain '{domain}' is empty")
+        return
+
+    print(f"📚 {domain.upper()} ({len(files)} artifacts)")
+    print("=" * 80)
+
+    for file_path in files:
+        rel_path = file_path.relative_to(retriever.knowledge_base)
+        print(f"  {rel_path}")
+
+    print("=" * 80)
+
+
+def cmd_read(file_path):
+    """Read a knowledge artifact."""
+    retriever = get_retriever()
+
+    try:
+        content = retriever.read_file(file_path)
+    except FileNotFoundError:
+        print(f"❌ File not found: {file_path}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error reading file: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(content)
+
+
+def cmd_domains():
+    """Show available domains."""
+    retriever = get_retriever()
+
+    print("📚 KNOWLEDGE DOMAINS")
+    print("=" * 80)
+    for domain in retriever.DOMAINS:
+        domain_path = retriever.knowledge_base / domain
+        count = len(list(domain_path.rglob("*.md"))) if domain_path.exists() else 0
+        print(f"  {domain:<15} ({count} artifacts)")
+
+    print("=" * 80)
+    print("💡 Use: vibe-knowledge list <domain>")
+
+
+def show_help():
+    """Show help message."""
+    print("""
+VIBE KNOWLEDGE RETRIEVAL SYSTEM (The Librarian)
+================================================
+
+The knowledge base is your agency's long-term memory.
+Use this CLI to search patterns, snippets, research, and decisions.
+
+COMMANDS:
+
+  search <query>    Search knowledge base
+                    Example: vibe-knowledge search "react component"
+
+  list <domain>     List all artifacts in a domain
+                    Domains: research, patterns, snippets, decisions
+                    Example: vibe-knowledge list patterns
+
+  read <path>       Read a specific artifact
+                    Example: vibe-knowledge read patterns/react-component.md
+
+  domains           Show available domains and counts
+
+  --help            Show this message
+
+EXAMPLES:
+
+  # Find patterns for React
+  vibe-knowledge search "react"
+
+  # List all code snippets
+  vibe-knowledge list snippets
+
+  # Read a specific decision record
+  vibe-knowledge read decisions/ADR-000_KNOWLEDGE_STRATEGY.md
+
+Note: Paths can be relative to workspaces/vibe_research_framework/
+
+The Librarian queries the knowledge base WITHOUT hallucination.
+If knowledge doesn't exist, the Librarian tells you so.
+""")
+
+
+def main():
+    """Main CLI entry point."""
+    if len(sys.argv) < 2:
+        show_help()
+        sys.exit(0)
+
+    command = sys.argv[1]
+
+    try:
+        if command == "search":
+            if len(sys.argv) < 3:
+                print("❌ Usage: vibe-knowledge search <query>")
+                sys.exit(1)
+            query = " ".join(sys.argv[2:])
+            cmd_search(query)
+
+        elif command == "list":
+            if len(sys.argv) < 3:
+                print("❌ Usage: vibe-knowledge list <domain>")
+                sys.exit(1)
+            domain = sys.argv[2]
+            cmd_list(domain)
+
+        elif command == "read":
+            if len(sys.argv) < 3:
+                print("❌ Usage: vibe-knowledge read <path>")
+                sys.exit(1)
+            file_path = sys.argv[2]
+            cmd_read(file_path)
+
+        elif command == "domains":
+            cmd_domains()
+
+        elif command in ["--help", "-h", "help"]:
+            show_help()
+
+        else:
+            print(f"❌ Unknown command: {command}")
+            print("Use 'vibe-knowledge --help' for help")
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("\n⏸️  Interrupted")
+        sys.exit(0)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
