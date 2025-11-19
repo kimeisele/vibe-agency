@@ -6,12 +6,8 @@ for system health checks and status reporting.
 """
 
 import json
-import sys
-from pathlib import Path
 
 # Add agency_os to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os" / "00_system"))
-
 from orchestrator.core_orchestrator import CoreOrchestrator
 
 

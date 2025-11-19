@@ -68,7 +68,13 @@ class PlanningHandler:
                 self._execute_architecture_design_state(manifest)
 
         # Apply quality gates before transitioning to CODING (GAD-002 Decision 2)
-        from core_orchestrator import ProjectPhase
+        try:
+            from core_orchestrator import ProjectPhase
+        except ModuleNotFoundError:
+            try:
+                from orchestrator.core_orchestrator import ProjectPhase
+            except ModuleNotFoundError:
+                from agency_os_orchestrator import ProjectPhase
 
         logger.info("🔒 Applying quality gates for PLANNING → CODING transition...")
 

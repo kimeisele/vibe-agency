@@ -2,10 +2,7 @@
 """Integration test for GAD-005: Runtime Engineering (Simplified)"""
 
 import subprocess
-import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
 
 
 def test_complete_runtime_enforcement():
@@ -25,7 +22,7 @@ def test_complete_runtime_enforcement():
     # COMPONENT B: Pre-Action Kernel
     print("\n2️⃣  Testing Pre-Action Kernel...")
 
-    from core_orchestrator import CoreOrchestrator, KernelViolationError
+    from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
     orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 

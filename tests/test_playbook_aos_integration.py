@@ -4,13 +4,11 @@ Tests the lean MVP implementation of playbook integration into Agency OS.
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 # Add agency_os to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"))
 
 
 def test_context_loader():

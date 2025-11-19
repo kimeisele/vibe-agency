@@ -30,14 +30,11 @@ Version: 1.0 (GAD-100 Phase 3)
 """
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 # Add config to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "config"))
-
 from legacy_config_loader import LegacyConfigLoader
 
 # Check if phoenix_config is available

@@ -9,7 +9,6 @@ Tests the safety layer that protects against:
 - Token consumption spikes (Quota Manager)
 """
 
-import sys
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, Mock
@@ -18,7 +17,6 @@ import pytest
 
 # Add runtime directory to path to handle numeric module names
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
-sys.path.insert(0, str(runtime_dir))
 
 # Now we can import from the runtime modules
 from circuit_breaker import (

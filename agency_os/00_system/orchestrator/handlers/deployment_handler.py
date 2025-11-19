@@ -46,8 +46,13 @@ class DeploymentHandler:
         qa_report = self.orchestrator.load_artifact(manifest.project_id, "qa_report.json")
 
         if not qa_report:
-            from core_orchestrator import ArtifactNotFoundError
-
+            try:
+                from core_orchestrator import ArtifactNotFoundError
+            except ModuleNotFoundError:
+                try:
+                    from orchestrator.core_orchestrator import ArtifactNotFoundError
+                except ModuleNotFoundError:
+                    from agency_os_orchestrator import ArtifactNotFoundError
             raise ArtifactNotFoundError(
                 "qa_report.json not found - TESTING phase must complete first"
             )
@@ -200,8 +205,13 @@ class DeploymentHandler:
         logger.info(f"   Health: {deploy_receipt.get('health_check_status', 'OK')}")
 
         # Transition to PRODUCTION
-        from core_orchestrator import ProjectPhase
-
+        try:
+            from core_orchestrator import ProjectPhase
+        except ModuleNotFoundError:
+            try:
+                from orchestrator.core_orchestrator import ProjectPhase
+            except ModuleNotFoundError:
+                from agency_os_orchestrator import ProjectPhase
         manifest.current_phase = ProjectPhase.PRODUCTION
 
         logger.info("🎉 Project deployed to PRODUCTION")

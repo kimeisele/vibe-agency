@@ -28,13 +28,11 @@ This work package spans the spectrum:
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 # Add orchestrator to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
 
 
 class TestHallucinationScenarios:
@@ -81,9 +79,8 @@ class TestBypassAttempts:
 
         Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -102,9 +99,8 @@ class TestBypassAttempts:
 
         Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -123,9 +119,8 @@ class TestBypassAttempts:
 
         Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -143,9 +138,8 @@ class TestBypassAttempts:
 
         Status: ✅ PROTECTED (GAD-502 Phase 2)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -163,9 +157,8 @@ class TestBypassAttempts:
 
         Status: ✅ WORKS (GAD-502 Phase 2)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator
+        from agency_os_orchestrator import CoreOrchestrator
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -207,9 +200,8 @@ class TestMisinterpretationScenarios:
 
         Status: ✅ WORKS (GAD-502 Phase 3)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -257,9 +249,7 @@ class TestContextOverloadScenarios:
         Status: ✅ WORKS (GAD-502 Phase 4)
         """
         # Test that get_critical_alerts() exists and prioritizes correctly
-        import sys
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
         from vibe_cli_imports import get_critical_alerts
 
         # Test: System integrity failure (highest priority)
@@ -288,9 +278,7 @@ class TestContextOverloadScenarios:
 
         Status: ✅ WORKS (GAD-502 Phase 4)
         """
-        import sys
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
         from vibe_cli_imports import get_critical_alerts
 
         # Test priority order
@@ -315,9 +303,7 @@ class TestContextOverloadScenarios:
 
         Status: ✅ WORKS (GAD-502 Phase 4)
         """
-        import sys
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
         from vibe_cli_imports import get_critical_alerts
 
         # All systems healthy
@@ -344,9 +330,8 @@ class TestRecoveryGuidance:
 
         Status: ✅ WORKS (GAD-502 Phase 3)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -373,9 +358,8 @@ class TestRecoveryGuidance:
 
         Status: ✅ WORKS (GAD-502 Phase 5)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -412,9 +396,8 @@ class TestRecoveryGuidance:
 
         Status: ✅ WORKS (GAD-502 Phase 5)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 
@@ -442,9 +425,8 @@ class TestRecoveryGuidance:
 
         Status: ✅ WORKS (GAD-502 Phase 5)
         """
-        from pathlib import Path
 
-        from core_orchestrator import CoreOrchestrator, KernelViolationError
+        from agency_os_orchestrator import CoreOrchestrator, KernelViolationError
 
         orchestrator = CoreOrchestrator(repo_root=Path.cwd())
 

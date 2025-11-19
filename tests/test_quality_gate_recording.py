@@ -11,9 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 # Add orchestrator to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
-
-from core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
+from agency_os_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
 
 
 def test_quality_gate_result_recorded_in_manifest():

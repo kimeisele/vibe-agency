@@ -26,7 +26,6 @@ spec = importlib.util.spec_from_file_location(
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 
-sys.path.insert(0, str(repo_root / "scripts"))
 from workspace_utils import list_active_workspaces, load_workspace_manifest
 
 

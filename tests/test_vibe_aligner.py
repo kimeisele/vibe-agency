@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 
 # Add current dir to path
-sys.path.insert(0, str(Path(__file__).parent))
 
 # Debug: Print working directory
 print(f"Working directory: {os.getcwd()}")

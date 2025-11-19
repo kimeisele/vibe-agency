@@ -15,12 +15,10 @@ ENFORCEMENT: This test FAILS if vibe-cli contains Anthropic SDK usage.
 Related: docs/architecture/EXECUTION_MODE_STRATEGY.md
 """
 
-import sys
 from pathlib import Path
 
 # Add repo root to path
 REPO_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT))
 
 
 def test_vibe_cli_no_anthropic_imports():

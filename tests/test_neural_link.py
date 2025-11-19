@@ -4,19 +4,16 @@
 Verifies capability-based agent selection without triggering real LLM calls.
 """
 
-import sys
 from pathlib import Path
 
 import pytest
 
 # Import SemanticAction definitions
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
-sys.path.insert(0, str(runtime_dir))
 from semantic_actions import SemanticAction, SemanticActionType
 
 # Import personas and router
 personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"
-sys.path.insert(0, str(personas_dir))
 
 
 # Use simple dummy agents to avoid runtime infrastructure dependencies
@@ -31,7 +28,6 @@ class DummyAgent:
 # from researcher import ResearcherAgent
 
 router_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
-sys.path.insert(0, str(router_dir))
 from executor import GraphExecutor, WorkflowGraph, WorkflowNode
 from router import AgentRouter
 

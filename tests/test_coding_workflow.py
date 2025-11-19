@@ -11,7 +11,6 @@ Tests the complete CODING phase execution:
 """
 
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -20,10 +19,8 @@ import pytest
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT / "agency_os/00_system/orchestrator"))
 
-from core_orchestrator import CoreOrchestrator, ProjectPhase
+from agency_os_orchestrator import CoreOrchestrator, ProjectPhase
 
 
 class TestCodingWorkflow:
@@ -330,7 +327,17 @@ class TestCodingWorkflow:
             # Attempt to run CODING phase - should raise error
             print("\nAttempting to run CODING without feature_spec...")
 
-            from core_orchestrator import ArtifactNotFoundError
+            try:
+                from core_orchestrator import ArtifactNotFoundError
+            except ModuleNotFoundError:
+                import sys
+                from pathlib import Path
+
+                sys.path.insert(
+                    0,
+                    str(Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator"),
+                )
+                from core_orchestrator import ArtifactNotFoundError
 
             manifest = orchestrator.load_project_manifest("test_coding_001")
 

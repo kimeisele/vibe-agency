@@ -14,9 +14,7 @@ import time
 from pathlib import Path
 
 # Add orchestrator to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "agency_os/00_system/orchestrator"))
-
-from core_orchestrator import CoreOrchestrator
+from agency_os_orchestrator import CoreOrchestrator
 
 
 def test_orchestrator_initialization_performance():

@@ -15,8 +15,6 @@ import yaml
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT / "agency_os/00_system/orchestrator"))
 
 from handlers.planning_handler import PlanningHandler
 

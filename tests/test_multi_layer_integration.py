@@ -48,8 +48,7 @@ def test_complete_quality_enforcement_flow():
     print("\n2️⃣  Testing Layer 2 (Workflow-Scoped Quality Gates)...")
 
     # Verify orchestrator has quality gate recording methods
-    sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
-    from core_orchestrator import CoreOrchestrator
+    from agency_os_orchestrator import CoreOrchestrator
 
     orch = CoreOrchestrator(repo_root=Path.cwd(), execution_mode="delegated")
     assert hasattr(orch, "_record_quality_gate_result"), (

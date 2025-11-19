@@ -9,7 +9,6 @@ Tests the data layer → logic layer connection:
 4. Error handling and diagnostics
 """
 
-import sys
 import tempfile
 from pathlib import Path
 
@@ -18,7 +17,6 @@ import yaml
 
 # Add playbook directory to path
 playbook_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
-sys.path.insert(0, str(playbook_dir))
 
 from executor import WorkflowEdge, WorkflowGraph, WorkflowNode
 from loader import WorkflowLoader, WorkflowLoaderError, WorkflowValidationError
