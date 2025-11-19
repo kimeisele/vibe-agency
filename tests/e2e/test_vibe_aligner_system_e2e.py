@@ -144,26 +144,34 @@ class TestVibeAlignerSystemE2E:
             mock_response.content = json.dumps(response_data)
             return mock_response
 
+        # Patch BEFORE CoreOrchestrator init
+        import importlib
+        llm_module = importlib.import_module("agency_os.00_system.runtime.llm_client")
+        
         mock_llm = MagicMock(spec=LLMClient)
         mock_llm.invoke.side_effect = mock_invoke
         mock_llm.get_cost_summary.return_value = {"total_cost_usd": 0.50}
-
-        # Inject mock before orchestrator init
-        monkeypatch.setattr("llm_client.LLMClient", lambda budget_limit=10: mock_llm)
-
-        orchestrator = CoreOrchestrator(repo_root=str(repo_root), execution_mode="autonomous")
-
+        
+        # Monkeypatch the CLASS before CoreOrchestrator uses it
+        original_llm_client = llm_module.LLMClient
+        monkeypatch.setattr(llm_module, "LLMClient", lambda budget_limit=10: mock_llm)
+        
         try:
-            orchestrator.run_full_sdlc("test_project_001")
-        except ValueError as e:
-            if "No handler for phase" not in str(e) or "TESTING" not in str(e):
-                pytest.fail(f"SDLC workflow failed: {e}")
+            orchestrator = CoreOrchestrator(repo_root=str(repo_root), execution_mode="autonomous")
 
-        updated_manifest = json.loads((project_dir / "project_manifest.json").read_text())
-        final_phase = updated_manifest["status"]["projectPhase"]
-        assert final_phase == "AWAITING_QA_APPROVAL"
-        assert (project_dir / "artifacts" / "coding" / "code_gen_spec.json").exists()
-        print("\n✅ E2E TEST PASSED")
+            try:
+                orchestrator.run_full_sdlc("test_project_001")
+            except ValueError as e:
+                if "No handler for phase" not in str(e) or "TESTING" not in str(e):
+                    pytest.fail(f"SDLC workflow failed: {e}")
+
+            updated_manifest = json.loads((project_dir / "project_manifest.json").read_text())
+            final_phase = updated_manifest["status"]["projectPhase"]
+            assert final_phase == "AWAITING_QA_APPROVAL"
+            assert (project_dir / "artifacts" / "coding" / "code_gen_spec.json").exists()
+            print("\n✅ E2E TEST PASSED")
+        finally:
+            monkeypatch.undo()
 
     def test_prompt_registry_governance_injection(self):
         """Tests that the PromptRegistry correctly injects governance directives."""
