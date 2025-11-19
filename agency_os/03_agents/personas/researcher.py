@@ -60,6 +60,7 @@ class ResearcherAgent(BaseAgent):
             "synthesis",
             "reasoning",
             "documentation",
+            "pattern_recognition",
         ]
 
     def consult_knowledge(

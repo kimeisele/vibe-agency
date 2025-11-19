@@ -61,6 +61,7 @@ class ReviewerAgent(BaseAgent):
             "code_analysis",
             "testing",
             "pattern_knowledge",
+            "validation",
         ]
 
     def consult_knowledge(

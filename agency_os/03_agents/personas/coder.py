@@ -58,11 +58,7 @@ class CoderAgent(BaseAgent):
             "coding",
             "debugging",
             "python",
-            "code_analysis",
-            "testing",
             "refactoring",
-            "validation",
-            "pattern_recognition",
         ]
 
     def consult_knowledge(
