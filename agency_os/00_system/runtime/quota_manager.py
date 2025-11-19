@@ -23,12 +23,20 @@ Version: 1.1 (GAD-510 + GAD-510.1)
 """
 
 import logging
-import os
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Try to import Phoenix config, fall back to environment variables
+try:
+    from agency_os.config import get_config
+
+    _PHOENIX_AVAILABLE = True
+except ImportError:
+    _PHOENIX_AVAILABLE = False
+    get_config = None
 
 
 class QuotaExceededError(Exception):
@@ -37,25 +45,43 @@ class QuotaExceededError(Exception):
     pass
 
 
-def _load_quota_limits_from_env() -> dict[str, Any]:
+def _load_quota_limits_from_config() -> dict[str, Any]:
     """
-    Load quota limits from environment variables.
+    Load quota limits from Phoenix configuration or environment variables.
 
-    Environment Variables (with safe defaults):
-    - VIBE_QUOTA_RPM: Requests per minute (default: 10)
-    - VIBE_QUOTA_TPM: Tokens per minute (default: 10000)
-    - VIBE_QUOTA_HOURLY_USD: Cost per hour (default: 2.0)
-    - VIBE_QUOTA_DAILY_USD: Cost per day (default: 5.0)
+    Phoenix automatically loads from environment variables or .env file:
+    - VIBE_QUOTA_REQUESTS_PER_MINUTE: Requests per minute (default: 10)
+    - VIBE_QUOTA_TOKENS_PER_MINUTE: Tokens per minute (default: 10000)
+    - VIBE_QUOTA_COST_PER_HOUR_USD: Cost per hour (default: 2.0)
+    - VIBE_QUOTA_COST_PER_DAY_USD: Cost per day (default: 5.0)
+
+    If Phoenix is not available, falls back to environment variables.
 
     Returns:
-        Dictionary with quota limit keys and values loaded from environment
+        Dictionary with quota limit keys and values from Phoenix config or env
     """
+    # If Phoenix is available, use it
+    if _PHOENIX_AVAILABLE and get_config:
+        try:
+            config = get_config()
+            return {
+                "requests_per_minute": config.quotas.requests_per_minute,
+                "tokens_per_minute": config.quotas.tokens_per_minute,
+                "cost_per_hour_usd": config.quotas.cost_per_hour_usd,
+                "cost_per_day_usd": config.quotas.cost_per_day_usd,
+            }
+        except Exception as e:
+            logger.debug(f"Phoenix config unavailable, falling back to environment variables: {e}")
+
+    # Fallback: Load from environment variables
     try:
+        import os
+
         return {
-            "requests_per_minute": int(os.environ.get("VIBE_QUOTA_RPM", "10")),
-            "tokens_per_minute": int(os.environ.get("VIBE_QUOTA_TPM", "10000")),
-            "cost_per_hour_usd": float(os.environ.get("VIBE_QUOTA_HOURLY_USD", "2.0")),
-            "cost_per_day_usd": float(os.environ.get("VIBE_QUOTA_DAILY_USD", "5.0")),
+            "requests_per_minute": int(os.environ.get("VIBE_QUOTA_REQUESTS_PER_MINUTE", "10")),
+            "tokens_per_minute": int(os.environ.get("VIBE_QUOTA_TOKENS_PER_MINUTE", "10000")),
+            "cost_per_hour_usd": float(os.environ.get("VIBE_QUOTA_COST_PER_HOUR_USD", "2.0")),
+            "cost_per_day_usd": float(os.environ.get("VIBE_QUOTA_COST_PER_DAY_USD", "5.0")),
         }
     except (ValueError, TypeError) as e:
         logger.warning(f"Invalid quota environment variables, using safe defaults: {e}")
@@ -81,12 +107,12 @@ class QuotaLimits:
     @classmethod
     def from_environment(cls) -> "QuotaLimits":
         """
-        Create QuotaLimits from environment variables.
+        Create QuotaLimits from Phoenix configuration.
 
         Returns:
-            QuotaLimits instance with values loaded from env or defaults
+            QuotaLimits instance with values loaded from config or defaults
         """
-        limits_dict = _load_quota_limits_from_env()
+        limits_dict = _load_quota_limits_from_config()
         return cls(**limits_dict)
 
 

@@ -22,7 +22,6 @@ Version: 0.1 (Logic Foundation)
 """
 
 import logging
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -324,12 +323,27 @@ class GraphExecutor:
     def execute_step(self, graph: WorkflowGraph, node_id: str) -> ExecutionResult:
         """Execute a single workflow node using routed agent.
 
-        Execution mode is determined by VIBE_LIVE_FIRE environment variable:
-        - VIBE_LIVE_FIRE=true: Real execution (actual tokens, real cost)
-        - VIBE_LIVE_FIRE=false or unset: Mock execution ($0 cost)
+        Execution mode is determined by Phoenix safety configuration:
+        - config.safety.live_fire_enabled=true: Real execution (actual tokens, real cost)
+        - config.safety.live_fire_enabled=false: Mock execution ($0 cost)
+
+        Falls back to VIBE_LIVE_FIRE environment variable if Phoenix config unavailable.
         """
+        # Lazy import to avoid circular dependencies
+        live_fire_enabled = False  # Default: safe mode
+
+        try:
+            from agency_os.config import get_config
+
+            config = get_config()
+            live_fire_enabled = config.safety.live_fire_enabled
+        except ImportError:
+            # Fallback: Use environment variable if Phoenix config unavailable
+            import os
+
+            live_fire_enabled = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
+
         node = graph.nodes[node_id]
-        live_fire_enabled = os.getenv("VIBE_LIVE_FIRE", "false").lower() == "true"
 
         # Quota pre-flight check
         if self.quota:

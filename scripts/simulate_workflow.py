@@ -17,26 +17,17 @@ Evidence: Table showing action → agent mapping
 import sys
 from pathlib import Path
 
-# Setup path to access modules (must be before imports)
-playbook_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
-runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
-personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"
-
-sys.path.insert(0, str(playbook_dir))
-sys.path.insert(0, str(runtime_dir))
-sys.path.insert(0, str(personas_dir))
-
-from coder import CoderAgent  # noqa: E402
-from executor import (  # noqa: E402
+from agency_os.agents.personas.coder import CoderAgent
+from agency_os.agents.personas.researcher import ResearcherAgent
+from agency_os.agents.personas.reviewer import ReviewerAgent
+from agency_os.playbook.executor import (
     ExecutionStatus,
     GraphExecutor,
     WorkflowEdge,
     WorkflowGraph,
     WorkflowNode,
 )
-from researcher import ResearcherAgent  # noqa: E402
-from reviewer import ReviewerAgent  # noqa: E402
-from router import AgentRouter  # noqa: E402
+from agency_os.playbook.router import AgentRouter
 
 
 # ============================================================================
