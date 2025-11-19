@@ -45,6 +45,23 @@ fi
 echo ""
 
 # ============================================================================
+# SYSTEM HEALTH CHECK (Anti-Decay Mechanism)
+# ============================================================================
+echo "🏥 Running system health check (Anti-Decay mechanism)..."
+echo ""
+
+if ./bin/vibe-shell --health 2>&1; then
+    echo "✅ System health check PASSED - proceeding to boot"
+else
+    echo ""
+    echo "⚠️  System health check FAILED"
+    echo "⚠️  Attempting to proceed anyway, but system may be unstable"
+    echo ""
+fi
+
+echo ""
+
+# ============================================================================
 # BOOT WITH VIBE-CLI
 # ============================================================================
 echo "🚀 Starting STEWARD with playbook routing..."

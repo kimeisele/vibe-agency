@@ -1,173 +1,120 @@
-# 🔬 VIBE RESEARCH FRAMEWORK
+# VIBE RESEARCH FRAMEWORK
+## The Knowledge Department (GAD-6: The Arms)
 
-**Version:** 1.0.0
-**Status:** Planning Complete ✅
-**Timeline:** 12-13 weeks
-**Complexity Budget:** 37/60 points (61% utilization)
+**Purpose**: Central repository for research, patterns, decision records, and code snippets that feed the agency's long-term memory.
 
----
-
-## 📖 Overview
-
-The **VIBE RESEARCH FRAMEWORK** is an integration-ready extension to the VIBE AGENCY planning workflow. It adds a new **RESEARCH** sub-state that provides fact-based validation **before** business planning begins.
-
-### The Problem
-Currently, users jump from idea → Lean Canvas without verifying:
-- Market assumptions (competitors, pricing, market size)
-- Technical feasibility (API limits, library maintenance, stack constraints)
-- User insights (personas, pain points, interview questions)
-
-This leads to **hallucinated assumptions** and failed pivots.
-
-### The Solution
-Add an **optional** RESEARCH phase with 4 specialized agents that generate a citation-backed `research_brief.json` artifact.
+**Why**: An agent without organized knowledge is a hallucinator. The Research Framework prevents "knowledge sprawl" by providing strict, physical separation of concerns.
 
 ---
 
-## 🏗️ Architecture
+## 📁 Directory Structure
 
-```
-PLANNING (Phase)
-│
-├── RESEARCH (NEW - Optional)
-│   ├── MARKET_RESEARCHER (Competitor analysis, pricing, market sizing)
-│   ├── TECH_RESEARCHER (API evaluation, library comparison, FAE validation)
-│   ├── FACT_VALIDATOR (Hallucination detection, citation enforcement)
-│   └── USER_RESEARCHER (Persona generation, interview scripts)
-│   │
-│   └─→ research_brief.json
-│
-├── BUSINESS_VALIDATION (Updated to accept research_brief.json)
-│   └── LEAN_CANVAS_VALIDATOR
-│   └─→ lean_canvas_summary.json
-│
-└── FEATURE_SPECIFICATION
-    └── VIBE_ALIGNER
-    └─→ feature_spec.json
-```
+This framework implements strict separation of concerns across four domains:
 
----
+### `research/`
+- **Purpose**: Findings, explorations, and experimental results
+- **Content**: Markdown documents, research notes, investigation logs
+- **Lifecycle**: Raw findings → validated → patterns extraction
+- **Audience**: Primarily for internal research and knowledge building
 
-## ✨ Key Features
+### `patterns/`
+- **Purpose**: Reusable architectural and implementation patterns
+- **Content**: Pattern descriptions, use cases, implementation examples
+- **Lifecycle**: Patterns extracted from research → documented → reusable
+- **Audience**: System developers, architects, future implementations
 
-### 1. MARKET_RESEARCHER Agent
-- **Competitor identification** (with sources)
-- **Pricing analysis** (verifiable pricing data)
-- **Market size estimation** (TAM/SAM/SOM with formulas)
-- **Positioning opportunities** (differentiation analysis)
-- **Risk identification** (market saturation, timing risks)
+### `snippets/`
+- **Purpose**: Vetted code snippets and templates
+- **Content**: Working code examples, templates, boilerplate
+- **Organization**: By language, by problem domain
+- **Lifecycle**: Code from successful implementations → tested → added to snippets
+- **Audience**: Developers implementing new features
 
-### 2. TECH_RESEARCHER Agent
-- **API evaluation** (rate limits, pricing, reliability via docs)
-- **Library comparison** (GitHub stars, maintenance status, license)
-- **Stack recommendation** (based on project type)
-- **Technical constraint identification** (FAE-style validation)
-- **Feasibility scoring** (high/medium/low with explanations)
-
-### 3. FACT_VALIDATOR Agent
-- **Knowledge base audit** (like the audit document)
-- **Claim verification** (all claims need sources)
-- **Red flag detection** (context-collapse, plausible falsehoods, platitudes)
-- **Citation enforcement** (blocks output if critical claims lack sources)
-- **Quality scoring** (X/100 with issue breakdown)
-
-### 4. USER_RESEARCHER Agent
-- **Persona generation** (industry-standard templates)
-- **Pain point identification** (extracted from vision)
-- **Interview script creation** (actionable questions)
-- **Survey design** (survey template generation)
-- **User journey mapping** (5-stage template)
+### `decisions/`
+- **Purpose**: Architecture Decision Records (ADRs)
+- **Content**: ADR documents following standard format (Status, Context, Decision, Consequences)
+- **Lifecycle**: Proposed decision → debated → recorded → implemented
+- **Audience**: System architects, decision makers, anyone needing historical context
 
 ---
 
-## 📊 Validation Results
+## 🔗 Integration Points
 
-### FAE (Feasibility Analysis Engine)
-✅ **PASSED** - No FAE violations detected
-⚠️ FACT_VALIDATOR flagged for review (high complexity but justified)
+### From GAD-5 (Runtime Foundation)
+- Reads: `.vibe/logs/commands.log` for execution patterns
+- Reads: `.vibe/runtime/context.json` for system context
+- Reads: `.vibe/config/roadmap.yaml` for task history
 
-### FDG (Feature Dependency Graph)
-✅ **PASSED** - No missing dependencies
-✅ No circular dependencies
+### To GAD-3 (Strategic Layer)
+- Provides: Research findings and analysis
+- Provides: Architecture patterns and best practices
+- Provides: Code snippets and templates
+- Provides: Decision history and rationale
 
-### APCE (Complexity & Prioritization Engine)
-✅ **PASSED** - 37/60 complexity budget (61% utilization)
-✅ Must Have: 32 points (87% of scope)
-✅ Should Have: 5 points (13% of scope)
-
----
-
-## 🎯 Deliverables
-
-| Artifact | Location | Status |
-|----------|----------|--------|
-| Feature Specifications | `artifacts/planning/VIBE_RESEARCH_FRAMEWORK_SPECS.md` | ✅ Complete |
-| Technical Blueprint | `artifacts/planning/TECHNICAL_BLUEPRINT.md` | ✅ Complete |
-| Project Manifest | `project_manifest.json` | ✅ Complete |
-| Implementation Roadmap | See Technical Blueprint | ✅ 7 sprints defined |
+### Within Agency
+- Used by: Agents needing to understand system patterns
+- Used by: Future implementations needing prior art
+- Used by: Strategic decisions needing historical context
 
 ---
 
-## 🚀 Implementation Roadmap
+## 📊 Usage Guidelines
 
-### Sprint 1-2: Foundation (Weeks 1-2)
-- Directory structure + data contracts
-- State machine integration
-- Knowledge base YAML files
+### Adding Research
+1. Create file in `research/` with descriptive name
+2. Format as Markdown with clear sections
+3. Include: objective, methodology, findings, next steps
+4. Tag with relevant keywords for semantic search
 
-### Sprint 3-4: MARKET_RESEARCHER (Weeks 3-4)
-- 6 tasks + 3 gates
-- Competitor analysis templates
+### Creating Patterns
+1. Extract from successful research or implementations
+2. Document in `patterns/` with:
+   - Problem statement
+   - Solution overview
+   - When to use / when not to use
+   - Implementation example
+3. Cross-reference with research origins
 
-### Sprint 5-6: TECH_RESEARCHER (Weeks 5-6)
-- 6 tasks + 3 gates
-- FAE integration
+### Adding Snippets
+1. Ensure code is tested and working
+2. Add clear comments explaining purpose
+3. Organize in appropriate subdirectory
+4. Include usage examples
 
-### Sprint 7-9: FACT_VALIDATOR (Weeks 7-9)
-- 6 tasks + 3 gates
-- Red flag taxonomy
-
-### Sprint 10-11: USER_RESEARCHER (Weeks 10-11)
-- 6 tasks + 2 gates
-- Persona templates
-
-### Sprint 12: Integration (Week 12)
-- LEAN_CANVAS_VALIDATOR updates
-- Backward compatibility testing
-
-### Sprint 13: Testing & Docs (Week 13)
-- Full test suite
-- User + developer documentation
+### Recording Decisions
+1. Use standard ADR format (MADR or similar)
+2. Include: Status (Proposed/Accepted/Deprecated), Context, Decision, Consequences
+3. File in `decisions/` with timestamp
+4. Reference in implementation commits
 
 ---
 
-## ⚠️ Critical Success Factors
+## 🚀 Roadmap
 
-1. **Citation Enforcement** - FACT_VALIDATOR blocks output if critical claims lack sources
-2. **Backward Compatibility** - LEAN_CANVAS_VALIDATOR works with AND without research
-3. **Optionality** - Users can skip RESEARCH phase
-4. **Zero Breaking Changes** - Existing workflows unchanged
-5. **FAE Integration** - TECH_RESEARCHER references existing FAE rules
+**Phase 1 (GAD-601)**: Structural scaffolding (CURRENT)
+- ✅ Directory structure created
+- ✅ Config system initialized
+- ⏳ Initial documentation templates
 
----
+**Phase 2 (GAD-602)**: Semantic search
+- Implement knowledge base indexing
+- Build semantic search over stored knowledge
+- Connect to LLM context windows
 
-## 📋 Next Steps
-
-1. ✅ Review feature specs + blueprint
-2. ⏳ Confirm 12-13 week timeline with team
-3. ⏳ Begin Sprint 1 (foundation + data contracts)
-4. ⏳ Set up agent composition test environment
-
----
-
-## 📚 Documentation
-
-- **Feature Specs:** [VIBE_RESEARCH_FRAMEWORK_SPECS.md](artifacts/planning/VIBE_RESEARCH_FRAMEWORK_SPECS.md)
-- **Technical Blueprint:** [TECHNICAL_BLUEPRINT.md](artifacts/planning/TECHNICAL_BLUEPRINT.md)
-- **Project Manifest:** [project_manifest.json](project_manifest.json)
+**Phase 3**: Integration with agents
+- Agents query knowledge base for patterns
+- Agents add findings to research database
+- Self-improving through delegation
 
 ---
 
-**Framework Execution:** VIBE_ALIGNER v3.0
-**Generated:** 2025-11-14
-**Status:** ✅ Ready for Implementation
+## 🛡️ Anti-Sprawl Guarantee
+
+Every file has a place. Every domain has a clear purpose.
+
+- **No** miscellaneous docs at root
+- **No** research scattered in code
+- **No** patterns hidden in commit messages
+- **No** decisions lost to Slack history
+
+The physical structure forces discipline.

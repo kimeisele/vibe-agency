@@ -1,0 +1,41 @@
+# Knowledge Graph Configuration
+# Semantic memory structure for the VIBE AGENCY system
+
+version: 1
+name: vibe_agency_knowledge_graph
+description: Semantic knowledge base for research, patterns, and agency memory
+
+# Knowledge domains
+domains:
+  - name: research
+    path: workspaces/vibe_research_framework/research
+    description: Research findings and explorations
+
+  - name: patterns
+    path: workspaces/vibe_research_framework/patterns
+    description: Reusable architectural and implementation patterns
+
+  - name: snippets
+    path: workspaces/vibe_research_framework/snippets
+    description: Code snippets and templates
+
+  - name: decisions
+    path: workspaces/vibe_research_framework/decisions
+    description: Architecture Decision Records (ADRs)
+
+# Semantic indexing
+indexing:
+  enabled: true
+  backend: in_memory  # Will be upgraded to embeddings later
+  update_frequency_mins: 60
+
+# Search configuration
+search:
+  enabled: false  # Will be enabled in GAD-602_SEMANTIC_SEARCH
+  mode: stub  # Will upgrade from stub to semantic
+
+# Connection to runtime foundation
+runtime_integration:
+  logs_source: .vibe/logs/commands.log
+  context_source: .vibe/runtime/context.json
+  roadmap_source: .vibe/config/roadmap.yaml

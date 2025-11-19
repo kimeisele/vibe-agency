@@ -148,6 +148,7 @@ Commands:
   --version          Show version information
   --help             Show this help message
   --status           Show runtime status
+  --health           Run system health check (Anti-Decay mechanism)
   [COMMAND] [ARGS]   Execute command with context injection
 
 Environment:
@@ -158,6 +159,7 @@ Environment:
 Examples:
   vibe-shell python script.py
   vibe-shell bash -c 'echo \$VIBE_CONTEXT'
+  vibe-shell --health
   vibe-shell --version
 
 For more info: https://vibe-agency.dev/shell
@@ -190,6 +192,81 @@ handle_status() {
     echo "" >&2
 }
 
+# System health check (Anti-Decay Mechanism)
+handle_health() {
+    local health_status=0
+    local checks_passed=0
+    local checks_total=0
+
+    echo "╔════════════════════════════════════════════════════════════════════════════╗" >&2
+    echo "║                    VIBE SHELL HEALTH CHECK (Anti-Decay)                   ║" >&2
+    echo "╚════════════════════════════════════════════════════════════════════════════╝" >&2
+    echo "" >&2
+
+    # Check 1: Config exists
+    checks_total=$((checks_total + 1))
+    if [ -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]; then
+        echo "✅ Config: .vibe/config/roadmap.yaml exists" >&2
+        checks_passed=$((checks_passed + 1))
+    else
+        echo "❌ Config: .vibe/config/roadmap.yaml MISSING" >&2
+        health_status=1
+    fi
+
+    # Check 2: State exists
+    checks_total=$((checks_total + 1))
+    if [ -f "$VIBE_ROOT/.vibe/state/active_mission.json" ]; then
+        echo "✅ State: .vibe/state/active_mission.json exists" >&2
+        checks_passed=$((checks_passed + 1))
+    else
+        echo "❌ State: .vibe/state/active_mission.json MISSING" >&2
+        health_status=1
+    fi
+
+    # Check 3: Logs writable
+    checks_total=$((checks_total + 1))
+    if mkdir -p "$VIBE_LOGS_DIR" && [ -w "$VIBE_LOGS_DIR" ]; then
+        echo "✅ Logs: .vibe/logs/ is writable" >&2
+        checks_passed=$((checks_passed + 1))
+    else
+        echo "❌ Logs: .vibe/logs/ is NOT writable" >&2
+        health_status=1
+    fi
+
+    # Check 4: VirtualEnv active
+    checks_total=$((checks_total + 1))
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        echo "✅ VirtualEnv: Active ($(basename $VIRTUAL_ENV))" >&2
+        checks_passed=$((checks_passed + 1))
+    else
+        echo "⚠️  VirtualEnv: Not active (optional, but recommended)" >&2
+    fi
+
+    # Check 5: Mission CLI reachable
+    checks_total=$((checks_total + 1))
+    if python3 "$VIBE_ROOT/bin/mission" status > /dev/null 2>&1; then
+        echo "✅ Steward: Mission control reachable" >&2
+        checks_passed=$((checks_passed + 1))
+    else
+        echo "❌ Steward: Mission control NOT reachable" >&2
+        health_status=1
+    fi
+
+    echo "" >&2
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+    echo "Health: $checks_passed/$checks_total checks passed" >&2
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+
+    if [ $health_status -eq 0 ]; then
+        echo "🟢 SYSTEM HEALTHY: All critical checks passed" >&2
+    else
+        echo "🔴 SYSTEM DEGRADED: Critical checks failed - system may be unstable" >&2
+    fi
+    echo "" >&2
+
+    return $health_status
+}
+
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
@@ -216,6 +293,10 @@ main() {
         --status)
             handle_status
             exit 0
+            ;;
+        --health)
+            handle_health
+            exit $?
             ;;
         -c)
             # Shell command mode (like bash -c)
