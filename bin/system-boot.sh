@@ -10,23 +10,26 @@
 
 set -euo pipefail
 
-# --- TERM CHECK (GAD-501: CI/CD Compatibility) ---
-# If TERM is not set (e.g., in CI), disable color output
-if [ -z "${TERM:-}" ]; then
-    export TERM=dumb
-    USE_COLOR=false
-else
+# --- HARDENED COLOR DETECTION (GAD-501: CI/CD Robustness) ---
+# Detect if we have a real terminal AND tput is available
+# Degrades gracefully to no colors if either condition fails
+if [ -t 1 ] && command -v tput >/dev/null 2>&1; then
     USE_COLOR=true
+else
+    USE_COLOR=false
 fi
 
-# --- VIBE COLORS ---
+# --- VIBE COLORS (Safe Initialization) ---
+# All color variables initialized regardless of terminal
+# If USE_COLOR=false, all variables are empty strings
 if [ "$USE_COLOR" = true ]; then
-    CYAN='\033[0;36m'
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    YELLOW='\033[1;33m'
-    NC='\033[0m'
+    CYAN=$(tput setaf 6)
+    GREEN=$(tput setaf 2)
+    RED=$(tput setaf 1)
+    YELLOW=$(tput bold; tput setaf 3)
+    NC=$(tput sgr0)
 else
+    # Empty strings - safe for all environments
     CYAN=''
     GREEN=''
     RED=''
@@ -47,9 +50,9 @@ if [ ! -f .env ]; then
     fi
 fi
 
-# Only clear if we have a real terminal
+# Only clear if we have a real terminal (and it's safe to do so)
 if [ "$USE_COLOR" = true ]; then
-    clear
+    clear 2>/dev/null || true
 fi
 
 echo -e "${CYAN}"
