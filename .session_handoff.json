@@ -1,253 +1,256 @@
 {
-  "_schema_version": "3.0_kernel_agency_split",
+  "_schema_version": "3.0_AUDIT_COMPLETE",
   "_token_budget": 450,
-  "_verified_date": "2025-11-20T19:20:00Z",
-  "_note": "PHASE 3 IN PROGRESS - Kernel/Agency architecture split. Phase 1 (Prep) complete. Phase 2 (Kernel extraction) starting.",
-  "_ARCHITECTURE": "v3.0 - Vibe OS/Agency Separation (Config consolidated, circular deps broken)",
+  "_verified_date": "2025-11-20T20:52:00Z",
+  "_CRITICAL": "DOCUMENTATION DRIFT CONFIRMED - FEATURE DEVELOPMENT HALTED",
+  "_ARCHITECTURE": "v3.0 Split ~60% Complete - RouterBridge MISSING, Boot BROKEN, agency_os/ ZOMBIE",
 
   "layer0_bedrock": {
-    "from": "STEWARD - claude/fix-architecture-flaw-01CGfqwXffkx223HK4zDysXE",
+    "from": "STEWARD - claude/fix-documentation-drift-01TZAp9fGPgZad7PorqBdosC",
     "date": "2025-11-20",
-    "state": "PHASE_3_SPLIT_IN_PROGRESS",
-    "phase": "Phase 3: Kernel/Agency Architecture Split (IN PROGRESS)",
-    "next_phase": "Phase 4: Integration & Validation",
-    "roadmap": "docs/roadmap/phase_3_architecture_split.json",
-    "completed": [
-      "ARCH-001 through ARCH-005: SQLite persistence foundation",
-      "ARCH-006: PlanningSpecialist extraction (HAP proof)",
-      "ARCH-007: CodingSpecialist with ToolSafetyGuard",
-      "ARCH-008: Full SDLC scale-out (Testing, Deployment, Maintenance)",
-      "ARCH-009: AgentRegistry + legacy handler removal (-1,861 LOC)",
-      "SPLIT-001: Phase 1 Preparation (Config consolidation + circular dependency fix)",
-      "SPLIT-001-A: Phoenix config consolidated to vibe_core/config/",
-      "SPLIT-001-B: Circular dependency broken (orchestrator ↔ registry)",
-      "SPLIT-001-C: Verification complete (12/12 tests passing)"
-    ],
-    "achievement": "Phase 2.5: Monolith → HAP. Phase 3 Phase 1: Config consolidated, circular deps broken. Ready for kernel extraction.",
-    "current_task": "SPLIT-002: Kernel Extraction (36 modules → vibe_core/)"
+    "state": "AUDIT_COMPLETE_FOUNDATION_REPAIR_REQUIRED",
+    "mission": "CLOSE THE GAP",
+    "decision": "HALT ALL FEATURES - COMPLETE MIGRATION TO 100%",
+    "next_session_objective": "Implement RouterBridge, fix boot, delete agency_os/"
   },
 
-  "layer1_runtime": {
-    "current_status": "🔄 PHASE 3 IN PROGRESS: Kernel/Agency split initiated. Phase 1 (Prep) complete: config consolidated (vibe_core/config/), circular deps broken. Phase 2 (Kernel extraction) starting: 36 modules → vibe_core/.",
-    "architecture_status": {
-      "pattern": "Hierarchical Agent Pattern (HAP)",
-      "coverage": "100% SDLC (5 specialists)",
-      "persistence": "SQLite (queryable, transactional)",
-      "routing": "AgentRegistry (dynamic lookup)",
-      "safety": "ToolSafetyGuard active (CodingSpecialist)",
-      "orchestrator": "Pure router (~20 LOC routing code)"
+  "audit_findings": {
+    "documentation_drift": "CONFIRMED",
+    "split_status": "~60% complete (incomplete migration)",
+    "boot_status": "BROKEN (import errors)",
+    "critical_gaps": 3,
+    "zombie_code": "50 Python files in agency_os/ (should be 0)",
+    "outdated_docs": "37 files reference deprecated agency_os",
+    "safe_for_onboarding": "NO - docs contradict reality"
+  },
+
+  "deliverables_created": {
+    "architecture_v3": "docs/architecture/ARCHITECTURE_V3_OS.md - SOURCE OF TRUTH",
+    "feature_matrix": "docs/planning/FEATURE_MATRIX.md - Reality vs claims",
+    "boot_banner": "bin/system-boot.sh - Updated to 'Vibe OS v3.0'",
+    "state_of_union": "Delivered in session transcript",
+    "commit": "f2267dc - Complete documentation drift audit",
+    "branch": "claude/fix-documentation-drift-01TZAp9fGPgZad7PorqBdosC",
+    "pushed": "YES"
+  },
+
+  "p0_critical_blockers": [
+    {
+      "id": "P0-001",
+      "title": "RouterBridge Missing",
+      "location": "vibe_core/playbook/router_bridge.py",
+      "status": "DOES_NOT_EXIST",
+      "impact": "CRITICAL - System disconnected. Cannot route user intent → specialists.",
+      "description": "The connector between PlaybookRouter and AgentRegistry. Without this, playbook system and specialist system cannot communicate.",
+      "effort": "4-6 hours (~150 LOC)",
+      "dependencies": [
+        "from vibe_core.playbook.router import PlaybookRouter",
+        "from vibe_core.specialists.registry import AgentRegistry"
+      ],
+      "acceptance_criteria": [
+        "Create vibe_core/playbook/router_bridge.py",
+        "Wire PlaybookRouter → AgentRegistry",
+        "End-to-end test: user input → specialist execution",
+        "Document the integration pattern"
+      ],
+      "reference": "docs/architecture/KERNEL_AGENCY_SPLIT_PLAN.md Section 2.1"
     },
-    "todos": [
-      "✅ ARCH-001-005: SQLite foundation - COMPLETE",
-      "✅ ARCH-006: PlanningSpecialist - COMPLETE",
-      "✅ ARCH-007: CodingSpecialist - COMPLETE",
-      "✅ ARCH-008: Full scale-out - COMPLETE",
-      "✅ ARCH-009: Registry + cleanup - COMPLETE",
-      "🎯 NEXT: Phase 3 - Product Feature Implementation",
-      "🎯 Complete TestingSpecialist stub (full QA_VALIDATOR integration)",
-      "🎯 Complete MaintenanceSpecialist stub (monitoring + incident response)"
+    {
+      "id": "P0-002",
+      "title": "Boot Sequence Broken",
+      "location": "vibe-cli line 501",
+      "status": "FAILS_ON_IMPORT",
+      "error": "FileNotFoundError: agency_os/core_system/orchestrator/core_orchestrator.py",
+      "impact": "CRITICAL - System cannot start",
+      "cause": "vibe-cli imports point to old agency_os/ structure",
+      "effort": "1-2 hours",
+      "fix": "Update all imports from 'agency_os.core_system.*' to 'vibe_core.*' or 'apps.agency.*'",
+      "acceptance_criteria": [
+        "./bin/system-boot.sh succeeds without errors",
+        "vibe-cli loads without import failures",
+        "System initializes properly"
+      ]
+    },
+    {
+      "id": "P0-003",
+      "title": "Zombie Code (agency_os/)",
+      "location": "agency_os/ directory (50 Python files)",
+      "status": "DEPRECATED_BUT_NOT_REMOVED",
+      "impact": "HIGH - Import confusion, circular dependencies, maintenance burden",
+      "current_structure": {
+        "vibe_core": "41 files (Kernel)",
+        "apps/agency": "25 files (Application)",
+        "agency_os": "50 files (SHOULD BE 0)"
+      },
+      "effort": "2-3 hours",
+      "tasks": [
+        "Audit remaining agency_os/ code",
+        "Verify all critical code migrated to new locations",
+        "Update any remaining imports",
+        "Delete or archive entire agency_os/ directory",
+        "Validate all tests still pass"
+      ],
+      "acceptance_criteria": [
+        "agency_os/ deleted or moved to archive/",
+        "find agency_os -name '*.py' returns 0 files",
+        "All tests pass",
+        "No import errors"
+      ]
+    }
+  ],
+
+  "p1_high_priority": [
+    {
+      "id": "P1-001",
+      "title": "Update Architecture Documentation",
+      "impact": "37 files still reference deprecated 'agency_os'",
+      "effort": "2-3 hours",
+      "files": "See grep output in ARCHITECTURE_V3_OS.md"
+    },
+    {
+      "id": "P1-002",
+      "title": "Update CLAUDE.md",
+      "impact": "Says 'Phase 2.5' not 'v3.0', needs split structure",
+      "effort": "1 hour"
+    },
+    {
+      "id": "P1-003",
+      "title": "Run Full Test Suite",
+      "impact": "Document actual coverage (claimed 631 tests)",
+      "effort": "1 hour",
+      "command": "uv run pytest tests/ -v --cov=vibe_core --cov=apps.agency"
+    },
+    {
+      "id": "P1-004",
+      "title": "Update SSOT.md",
+      "impact": "Pre-split implementation decisions need refresh",
+      "effort": "1 hour"
+    }
+  ],
+
+  "test_infrastructure_issue": {
+    "type": "FLAKY_TESTS",
+    "severity": "MEDIUM",
+    "affected_tests": [
+      "tests/test_deployment_workflow.py::TestDeploymentWorkflow::test_deployment_failure_with_rollback",
+      "tests/test_deployment_workflow.py::TestDeploymentWorkflow::test_post_deployment_validation_failure"
     ],
-    "critical_files": [
-      "CLAUDE.md (updated with Phase 2.5 status)",
-      "docs/status/PHASE_2_5_COMPLETION_REPORT.md (NEW - full metrics)",
-      "agency_os/03_agents/registry.py (NEW - foundation for 5D/6D)",
-      "agency_os/03_agents/specialists/*.py (5 specialists)",
-      "agency_os/persistence/sqlite_store.py (queryable state)",
-      ".vibe/state/vibe_agency.db (SQLite database)"
+    "cause": "SQLite database locking (concurrent access)",
+    "behavior": "Tests pass individually but fail when run in suite",
+    "fix_required": "Implement proper test isolation (separate DB files per test class)",
+    "priority": "P2",
+    "note": "Not blocking P0 work - document and fix later"
+  },
+
+  "current_state": {
+    "directory_structure": {
+      "vibe_core": "41 Python files (Kernel - OS layer)",
+      "apps/agency": "25 Python files (Application - Agency layer)",
+      "agency_os": "50 Python files (ZOMBIE - should be removed)"
+    },
+    "what_works": [
+      "Planning workflow (test_planning_workflow.py passes)",
+      "Coding workflow (test_coding_workflow.py passes)",
+      "Deployment workflow (test_deployment_workflow.py passes)",
+      "Health checks (vibe-shell --health)"
+    ],
+    "what_is_broken": [
+      "System boot (vibe-cli crashes on import)",
+      "User intent → specialist routing (RouterBridge missing)",
+      "Documentation (37 files outdated)"
+    ],
+    "what_is_missing": [
+      "RouterBridge implementation",
+      "Updated imports in vibe-cli",
+      "agency_os/ deprecation"
     ]
   },
 
-  "layer2_detail": {
-    "phase_2_5_achievements": [
+  "recommended_approach": {
+    "session_1_title": "Close the Gap",
+    "estimated_time": "8-10 hours",
+    "focus": "P0 blockers ONLY - no features until foundation 100%",
+    "tasks": [
       {
-        "component": "SQLite Persistence Layer",
-        "status": "✅ OPERATIONAL",
-        "evidence": "agency_os/persistence/sqlite_store.py (800+ lines)",
-        "features": [
-          "Mission CRUD operations",
-          "Decision logging (queryable audit trail)",
-          "Tool call tracking",
-          "Transactional integrity"
-        ],
-        "verification": "SELECT COUNT(*) FROM missions;",
-        "verified_at": "2025-11-20"
+        "task": "1. Implement RouterBridge",
+        "file": "vibe_core/playbook/router_bridge.py",
+        "effort": "4-6 hours",
+        "priority": "P0-001"
       },
       {
-        "component": "Hierarchical Agent Pattern (HAP)",
-        "status": "✅ DEPLOYED AT SCALE",
-        "coverage": "100% SDLC (5 phases, 5 specialists)",
-        "specialists": [
-          "PlanningSpecialist (ARCH-006) - 350 LOC",
-          "CodingSpecialist (ARCH-007) - 526 LOC + ToolSafetyGuard",
-          "TestingSpecialist (ARCH-008) - 206 LOC (stub)",
-          "DeploymentSpecialist (ARCH-008) - 358 LOC (full)",
-          "MaintenanceSpecialist (ARCH-008) - 206 LOC (stub)"
-        ],
-        "verification": "uv run pytest tests/agents/specialists/test_hap_scale_out.py",
-        "test_result": "15/15 tests passing (100%)",
-        "verified_at": "2025-11-20"
+        "task": "2. Fix boot sequence",
+        "files": ["vibe-cli", "bin/system-boot.sh"],
+        "effort": "1-2 hours",
+        "priority": "P0-002"
       },
       {
-        "component": "AgentRegistry Pattern",
-        "status": "✅ OPERATIONAL",
-        "evidence": "agency_os/03_agents/registry.py (196 lines)",
-        "features": [
-          "Dynamic specialist lookup (no hardcoded routing)",
-          "Runtime specialist registration (A/B testing ready)",
-          "Type-safe validation (BaseSpecialist inheritance)",
-          "Foundation for 5D/6D (MAD context routing)"
-        ],
-        "impact": "Routing code reduced by 67% (60 lines → 20 lines)",
-        "verification": "from agency_os.agents import AgentRegistry; registry = AgentRegistry(); print(registry.list_specialists())",
-        "verified_at": "2025-11-20"
+        "task": "3. Delete agency_os/",
+        "action": "Validate migration complete, then delete/archive",
+        "effort": "2-3 hours",
+        "priority": "P0-003"
       },
       {
-        "component": "Legacy Handler Removal",
-        "status": "✅ COMPLETE",
-        "deleted_files": [
-          "planning_handler.py",
-          "coding_handler.py",
-          "testing_handler.py",
-          "deployment_handler.py",
-          "maintenance_handler.py"
-        ],
-        "lines_removed": 1861,
-        "impact": "~55KB legacy code deleted, clean codebase",
-        "verification": "ls agency_os/core_system/orchestrator/handlers/",
-        "remaining": "specialist_handler_adapter.py (HAP adapter only)",
-        "verified_at": "2025-11-20"
-      },
-      {
-        "component": "ToolSafetyGuard Integration",
-        "status": "✅ ACTIVE (CodingSpecialist)",
-        "features": [
-          "ANTI_BLINDNESS rule (read before edit)",
-          "New file creation allowed",
-          "File write tracking",
-          "SQLite decision logging"
-        ],
-        "evidence": "agency_os/03_agents/specialists/coding.py:419-452",
-        "verification": "grep -n 'ToolSafetyGuard' agency_os/03_agents/specialists/coding.py",
-        "verified_at": "2025-11-20"
+        "task": "4. Validate foundation",
+        "command": "uv run pytest tests/ -v",
+        "criteria": "All tests pass (or establish new baseline)",
+        "effort": "1 hour"
       }
     ],
-    "test_status": {
-      "specialist_tests": "25/27 passing (93%)",
-      "hap_scale_out": "15/15 passing (100%)",
-      "integration_tests": "Some SQLite locking issues (concurrent access)",
-      "overall_health": "GOOD - Core HAP pattern verified"
-    },
-    "metrics": {
-      "code_removed": "-1,861 lines (legacy handlers)",
-      "code_added": "+1,800 lines (specialists + infrastructure)",
-      "net_change": "-60 lines (cleaner codebase)",
-      "routing_reduction": "67% (60 lines → 20 lines)",
-      "orchestrator_loc": "1,825 LOC (target: < 500 for pure router)",
-      "test_coverage": "37 new specialist tests"
-    },
-    "next_phase_constraints": {
-      "DO": [
-        "✅ Create new specialists for new features",
-        "✅ Use AgentRegistry.register_specialist() for extensions",
-        "✅ Log all decisions to SQLite",
-        "✅ Enforce preconditions in all specialists",
-        "✅ Use ToolSafetyGuard for file operations"
-      ],
-      "DO_NOT": [
-        "❌ Add phase-specific logic to orchestrator",
-        "❌ Create new handler files",
-        "❌ Bypass AgentRegistry for routing",
-        "❌ Use JSON files for state (use SQLite)",
-        "❌ Skip precondition validation"
-      ]
-    }
-  },
-
-  "phase_3_objectives": {
-    "primary_goals": [
-      {
-        "goal": "Complete Stub Implementations",
-        "tasks": [
-          "Implement full TestingSpecialist with QA_VALIDATOR integration",
-          "Implement full MaintenanceSpecialist with monitoring/incident response",
-          "Replace auto-pass QA with real test execution",
-          "Replace mock golden signals with real metrics"
-        ],
-        "priority": "HIGH",
-        "estimated_time": "6-8 hours"
-      },
-      {
-        "goal": "Add Product Features",
-        "tasks": [
-          "Use specialists for all new features",
-          "Do NOT add logic to orchestrator",
-          "All features should be specialist-based",
-          "Follow HAP pattern consistently"
-        ],
-        "priority": "MEDIUM",
-        "note": "User will define features"
-      },
-      {
-        "goal": "Orchestrator Decomposition (Optional)",
-        "tasks": [
-          "Extract artifact management to ArtifactService",
-          "Extract quality gates to GovernanceLayer",
-          "Extract budget tracking to FinancialService",
-          "Target: Orchestrator < 500 LOC"
-        ],
-        "priority": "LOW",
-        "estimated_time": "8-12 hours"
-      }
+    "success_criteria": [
+      "✅ ./bin/system-boot.sh succeeds",
+      "✅ RouterBridge connects playbook → specialist",
+      "✅ agency_os/ deleted (0 files)",
+      "✅ All tests pass",
+      "✅ End-to-end: user input routes to specialist"
     ],
-    "5d_6d_foundation": {
-      "current": "4D - Phase-based routing (registry.get_specialist(phase))",
-      "future_5d": "MAD context routing (adaptive specialist variants based on mission constraints)",
-      "future_6d": "Multi-specialist coordination (cross-phase workflows)",
-      "injection_point": "AgentRegistry.get_specialist(phase, mad_context)",
-      "readiness": "Foundation complete, awaiting MAD context definition"
+    "then_and_only_then": "Proceed with P1 docs updates and Phase 3 features"
+  },
+
+  "critical_files_must_read": [
+    "docs/architecture/ARCHITECTURE_V3_OS.md - READ FIRST (source of truth)",
+    "docs/planning/FEATURE_MATRIX.md - Reality check",
+    "docs/architecture/KERNEL_AGENCY_SPLIT_PLAN.md - Original migration plan",
+    "vibe_core/playbook/ - Existing components (router, executor, loader)",
+    "vibe_core/specialists/registry.py - AgentRegistry to integrate with"
+  ],
+
+  "verification_commands": {
+    "boot_test": "./bin/system-boot.sh",
+    "structure_audit": "ls -la vibe_core/ apps/agency/ agency_os/",
+    "file_count": "find vibe_core -name '*.py' | wc -l && find apps/agency -name '*.py' | wc -l && find agency_os -name '*.py' | wc -l",
+    "import_check": "grep -r 'from agency_os' vibe_core/ apps/agency/ 2>/dev/null || echo 'No old imports found'",
+    "full_test_suite": "uv run pytest tests/ -v",
+    "smoke_tests": "uv run pytest tests/test_*_workflow.py -v"
+  },
+
+  "three_layer_model": {
+    "layer_1_kernel": {
+      "location": "vibe_core/",
+      "purpose": "Domain-agnostic OS (persistence, runtime, playbook, specialists framework)",
+      "components": ["store", "runtime", "playbook", "specialists", "config", "task_management"],
+      "status": "EXISTS (41 files)"
+    },
+    "layer_2_application": {
+      "location": "apps/agency/",
+      "purpose": "SDLC-specific application (orchestrator, specialists, personas)",
+      "components": ["orchestrator", "specialists", "personas"],
+      "status": "EXISTS (25 files)"
+    },
+    "layer_3_interface": {
+      "location": "bin/, vibe-cli",
+      "purpose": "User-facing CLI and scripts",
+      "status": "BROKEN (import errors)"
     }
   },
 
-  "commit_history": [
-    {
-      "commit": "0ec40b1",
-      "message": "feat(agents): ARCH-007 - Extract CodingSpecialist (HAP pattern)",
-      "date": "2025-11-20",
-      "impact": "Most complex phase extracted with ToolSafetyGuard integration"
-    },
-    {
-      "commit": "54cd0b1",
-      "message": "feat(agents): ARCH-008 - Scale HAP pattern to full SDLC (batch extraction)",
-      "date": "2025-11-20",
-      "impact": "3 specialists added (Testing, Deployment, Maintenance), 100% HAP coverage"
-    },
-    {
-      "commit": "32552ba",
-      "message": "feat(arch): ARCH-009 - Final refactor (registry pattern + dead wood removal)",
-      "date": "2025-11-20",
-      "impact": "1,861 lines deleted, AgentRegistry implemented, orchestrator refactored"
-    }
-  ],
-
-  "documentation": {
-    "completion_report": "docs/status/PHASE_2_5_COMPLETION_REPORT.md",
-    "architecture": "ARCHITECTURE_V2.md (needs update for HAP pattern)",
-    "roadmap": "docs/roadmap/phase_2_5_foundation.json (6/13 complete)",
-    "index": "INDEX.md (documentation hub)"
+  "strategic_context": {
+    "the_vision": "Separate domain-agnostic OS (Vibe OS) from domain-specific app (Vibe Agency)",
+    "the_reality": "Migration ~60% complete. Files moved but wiring incomplete.",
+    "the_problem": "Both old and new structures exist. Critical connectors missing. Boot broken.",
+    "the_decision": "HALT features. Complete migration to 100%. Then build on solid foundation.",
+    "leadership_approval": "Confirmed - P0 blockers only, no features until foundation solid",
+    "why_this_matters": "Cannot build Phase 3 features on incomplete migration. System half-old, half-new."
   },
 
-  "warnings": [
-    "TestingSpecialist and MaintenanceSpecialist are stubs (Phase 3 priority)",
-    "2/27 specialist tests failing (CodingSpecialist edge cases, fixable)",
-    "SQLite locking issues in integration tests (concurrent access, needs investigation)",
-    "Orchestrator is 1,825 LOC (target: < 500, future refactoring needed)"
-  ],
-
-  "session_summary": {
-    "what_we_built": "Complete architectural transformation from monolith to HAP pattern",
-    "lines_changed": "1,861 deleted, 1,800 added = -60 net (cleaner codebase)",
-    "architectural_debt": "Eliminated (monolith → specialists)",
-    "foundation_ready": "5D/6D evolution (MAD context routing)",
-    "phase_status": "Phase 2.5 COMPLETE, Phase 3 READY"
-  }
+  "next_session_briefing": "🎖️ Welcome, Agent. Mission: CLOSE THE GAP. Read ARCHITECTURE_V3_OS.md first. The split is 60% done - your job: finish it. Implement RouterBridge (connects playbook → specialist). Fix boot (update imports). Delete zombie code (agency_os/). Nothing else. No features. No detours. Foundation first. STEWARD has mapped the terrain. You secure it. Dismissed."
 }
