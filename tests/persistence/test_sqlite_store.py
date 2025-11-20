@@ -74,7 +74,9 @@ class TestSQLiteStoreInitialization:
         assert "quality_gates" in tables
 
         # Verify total count (11 user tables + sqlite_sequence)
-        assert len(tables) == 12, f"Expected 12 tables (11 + sqlite_sequence), got {len(tables)}: {tables}"
+        assert len(tables) == 12, (
+            f"Expected 12 tables (11 + sqlite_sequence), got {len(tables)}: {tables}"
+        )
 
     def test_init_sets_schema_version(self):
         """Test that PRAGMA user_version is set to 2"""
@@ -719,9 +721,7 @@ class TestTrajectory:
         store.set_trajectory(mission_id, "PLANNING", "2025-11-20T00:00:00Z")
 
         # Update
-        store.set_trajectory(
-            mission_id, "CODING", "2025-11-20T01:00:00Z", current_focus="testing"
-        )
+        store.set_trajectory(mission_id, "CODING", "2025-11-20T01:00:00Z", current_focus="testing")
 
         trajectory = store.get_trajectory(mission_id)
         assert trajectory["current_phase"] == "CODING"
@@ -738,8 +738,18 @@ class TestProjectMemoryAdapter:
 
         memory = {
             "narrative": [
-                {"session": 1, "summary": "Session 1", "date": "2025-11-20T00:00:00Z", "phase": "PLANNING"},
-                {"session": 2, "summary": "Session 2", "date": "2025-11-20T01:00:00Z", "phase": "CODING"},
+                {
+                    "session": 1,
+                    "summary": "Session 1",
+                    "date": "2025-11-20T00:00:00Z",
+                    "phase": "PLANNING",
+                },
+                {
+                    "session": 2,
+                    "summary": "Session 2",
+                    "date": "2025-11-20T01:00:00Z",
+                    "phase": "CODING",
+                },
             ],
             "domain": {
                 "concepts": ["payment", "database", "authentication"],
@@ -822,7 +832,9 @@ class TestFullWorkflow:
         )
 
         # 2. Add session narrative
-        store.add_session_narrative(mission_id, 1, "Planning complete", "2025-11-20T00:00:00Z", "PLANNING")
+        store.add_session_narrative(
+            mission_id, 1, "Planning complete", "2025-11-20T00:00:00Z", "PLANNING"
+        )
 
         # 3. Add artifacts
         store.add_artifact(mission_id, "planning", "architecture", "2025-11-20T00:00:00Z")
@@ -1034,7 +1046,10 @@ class TestProjectManifestImport:
         assert mission["mission_uuid"] == "test-orchestrator-003"
         assert mission["phase"] == "PLANNING"
         assert mission["owner"] == "system"
-        assert mission["description"] == "Test delegated execution architecture (Claude Code integration)"
+        assert (
+            mission["description"]
+            == "Test delegated execution architecture (Claude Code integration)"
+        )
         assert mission["max_cost_usd"] == 10.0
         assert mission["current_cost_usd"] == 0.0
         assert mission["planning_sub_state"] == "BUSINESS_VALIDATION"

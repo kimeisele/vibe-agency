@@ -189,7 +189,9 @@ class ShadowModeValidator:
                     "actual": db_mission["mission_uuid"],
                 }
             )
-            self.error(f"mission_uuid mismatch: expected={expected_uuid}, actual={db_mission['mission_uuid']}")
+            self.error(
+                f"mission_uuid mismatch: expected={expected_uuid}, actual={db_mission['mission_uuid']}"
+            )
         else:
             checks["passed"] += 1
             self.log(f"✅ mission_uuid matches: {expected_uuid}")
@@ -223,12 +225,16 @@ class ShadowModeValidator:
         if db_mission["description"] != expected_desc:
             checks["failed"] += 1
             checks["mismatches"].append(
-                {"field": "description", "expected": expected_desc, "actual": db_mission["description"]}
+                {
+                    "field": "description",
+                    "expected": expected_desc,
+                    "actual": db_mission["description"],
+                }
             )
-            self.error(f"description mismatch")
+            self.error("description mismatch")
         else:
             checks["passed"] += 1
-            self.log(f"✅ description matches")
+            self.log("✅ description matches")
 
         # Check budget fields (if present in manifest)
         if budget:
@@ -244,7 +250,9 @@ class ShadowModeValidator:
                         "actual": db_mission["max_cost_usd"],
                     }
                 )
-                self.error(f"max_cost_usd mismatch: expected={expected_max}, actual={db_mission['max_cost_usd']}")
+                self.error(
+                    f"max_cost_usd mismatch: expected={expected_max}, actual={db_mission['max_cost_usd']}"
+                )
             else:
                 checks["passed"] += 1
                 self.log(f"✅ max_cost_usd matches: {expected_max}")
@@ -280,7 +288,8 @@ class ShadowModeValidator:
             # Check session_narrative count
             narrative = memory.get("narrative", [])
             cursor = conn.execute(
-                "SELECT COUNT(*) as count FROM session_narrative WHERE mission_id = ?", (mission_id,)
+                "SELECT COUNT(*) as count FROM session_narrative WHERE mission_id = ?",
+                (mission_id,),
             )
             db_count = cursor.fetchone()[0]
 
@@ -293,7 +302,9 @@ class ShadowModeValidator:
                         "actual": db_count,
                     }
                 )
-                self.error(f"session_narrative count mismatch: expected={len(narrative)}, actual={db_count}")
+                self.error(
+                    f"session_narrative count mismatch: expected={len(narrative)}, actual={db_count}"
+                )
             else:
                 checks["passed"] += 1
                 self.log(f"✅ session_narrative count matches: {len(narrative)}")
@@ -315,7 +326,9 @@ class ShadowModeValidator:
                         "actual": db_count,
                     }
                 )
-                self.error(f"domain_concepts count mismatch: expected={len(concepts)}, actual={db_count}")
+                self.error(
+                    f"domain_concepts count mismatch: expected={len(concepts)}, actual={db_count}"
+                )
             else:
                 checks["passed"] += 1
                 self.log(f"✅ domain_concepts count matches: {len(concepts)}")
@@ -336,7 +349,9 @@ class ShadowModeValidator:
                         "actual": db_count,
                     }
                 )
-                self.error(f"domain_concerns count mismatch: expected={len(concerns)}, actual={db_count}")
+                self.error(
+                    f"domain_concerns count mismatch: expected={len(concerns)}, actual={db_count}"
+                )
             else:
                 checks["passed"] += 1
                 self.log(f"✅ domain_concerns count matches: {len(concerns)}")
@@ -399,7 +414,7 @@ class ShadowModeValidator:
                 print(f"    Failed: {failed}/{total}")
 
                 if check_data.get("mismatches"):
-                    print(f"\n    Mismatches:")
+                    print("\n    Mismatches:")
                     for mismatch in check_data["mismatches"]:
                         print(f"      • {mismatch['field']}")
                         print(f"        Expected: {mismatch['expected']}")
@@ -453,9 +468,7 @@ def main():
         default=Path.cwd(),
         help="Project root directory (default: current directory)",
     )
-    parser.add_argument(
-        "--json-output", type=Path, help="Write report to JSON file (optional)"
-    )
+    parser.add_argument("--json-output", type=Path, help="Write report to JSON file (optional)")
 
     args = parser.parse_args()
 
