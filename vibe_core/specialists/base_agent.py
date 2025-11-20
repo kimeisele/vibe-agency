@@ -494,7 +494,7 @@ class BaseAgent:
             "pr_url": None,
             "branch": None,
             "commit_sha": None,
-            "error": f"Delivery failed: {e}",
+            "error": "Delivery failed: TaskExecutor not available",
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
