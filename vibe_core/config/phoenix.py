@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-GAD-100: Phoenix Configuration System
-======================================
+GAD-100: Phoenix Configuration System (Consolidated Kernel Version)
+===================================================================
 
-Unified configuration management for vibe-agency.
+Unified configuration management for Vibe OS and applications.
 
 This module centralizes all system configuration, replacing:
 - os.getenv() calls scattered throughout codebase
@@ -16,9 +16,10 @@ Key sections:
 - Paths: File system locations
 - Quotas: Rate limiting and cost controls
 - Safety: Execution modes and guardrails
+- Model: LLM provider configuration
 
 Usage:
-    from agency_os.config import get_config
+    from vibe_core.config import get_config
     config = get_config()
 
     # Access config safely
@@ -33,7 +34,8 @@ Design Principles:
 4. Safe defaults (conservative quotas, no live fire)
 5. Self-documenting (every field has a description)
 
-Version: 1.1 (GAD-100 + GAD-5: Zero-Config Boot)
+Version: 2.0 (Consolidated Kernel - Vibe OS Architecture)
+Consolidated from: agency_os/config/phoenix.py (v1.1) + agency_os/core_system/config/phoenix.py (v1.0)
 """
 
 import logging
@@ -75,11 +77,11 @@ class PathsConfig(BaseSettings):
     home: Path = Path.home() / ".vibe"
     """Home directory for vibe data (user config, cache, etc.)"""
 
-    project_root: Path = Path(__file__).parent.parent.parent.parent
-    """Project root directory"""
+    project_root: Path = Path(__file__).parent.parent.parent
+    """Project root directory (vibe-agency)"""
 
-    agency_os: Path = Path(__file__).parent.parent
-    """agency_os module directory"""
+    vibe_core: Path = Path(__file__).parent.parent
+    """vibe_core module directory (kernel)"""
 
     data_dir: Path = Path.home() / ".vibe" / "data"
     """Data directory for persistent storage"""
@@ -215,7 +217,7 @@ class ModelConfig(BaseSettings):
 
 class PhoenixConfig(BaseSettings):
     """
-    Master configuration for vibe-agency.
+    Master configuration for Vibe OS and applications.
 
     Loads from environment variables with safe defaults.
     Provides centralized access to all system configuration.
@@ -334,7 +336,7 @@ if __name__ == "__main__":
     config = get_config()
     is_valid, issues = config.validate_configuration()
 
-    print("Phoenix Configuration System")
+    print("Phoenix Configuration System (Vibe OS Kernel)")
     print("=" * 60)
     print(f"\nEnvironment: {config.system.environment}")
     print(f"Debug: {config.system.debug}")
@@ -343,6 +345,7 @@ if __name__ == "__main__":
     print("\n📁 Paths:")
     print(f"  Home: {config.paths.home}")
     print(f"  Project Root: {config.paths.project_root}")
+    print(f"  Vibe Core: {config.paths.vibe_core}")
     print(f"  Data Dir: {config.paths.data_dir}")
 
     print("\n⚡ Quotas:")

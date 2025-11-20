@@ -64,10 +64,9 @@ class AgentRegistry:
         Initialize registry with default specialist mappings
 
         This maps each ProjectPhase to its corresponding specialist class.
-        Import ProjectPhase lazily to avoid circular dependencies.
         """
-        # Import ProjectPhase here to avoid circular dependency
-        from agency_os.core_system.orchestrator.core_orchestrator import ProjectPhase
+        # Import ProjectPhase from shared types module (no circular dependency)
+        from agency_os.core_system.orchestrator.types import ProjectPhase
 
         self._registry = {
             ProjectPhase.PLANNING: PlanningSpecialist,

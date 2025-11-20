@@ -106,7 +106,7 @@ def get_default_provider() -> LLMProvider:
     """
     try:
         # Try to load Phoenix Config
-        from agency_os.config.phoenix import get_config
+        from vibe_core.config import get_config
 
         get_config()  # Load config (future: use config.model.provider)
 

@@ -58,25 +58,8 @@ except ImportError:
 # DATA STRUCTURES
 # =============================================================================
 
-
-class ProjectPhase(Enum):
-    """SDLC lifecycle phases"""
-
-    PLANNING = "PLANNING"
-    CODING = "CODING"
-    TESTING = "TESTING"
-    AWAITING_QA_APPROVAL = "AWAITING_QA_APPROVAL"
-    DEPLOYMENT = "DEPLOYMENT"
-    PRODUCTION = "PRODUCTION"
-    MAINTENANCE = "MAINTENANCE"
-
-
-class PlanningSubState(Enum):
-    """Planning phase sub-states"""
-
-    RESEARCH = "RESEARCH"
-    BUSINESS_VALIDATION = "BUSINESS_VALIDATION"
-    FEATURE_SPECIFICATION = "FEATURE_SPECIFICATION"
+# Import shared types (extracted to break circular dependency with registry.py)
+from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 
 
 @dataclass

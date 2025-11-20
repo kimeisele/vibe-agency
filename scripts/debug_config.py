@@ -95,7 +95,7 @@ def check_phoenix_config():
     print_section("2. PHOENIX CONFIG LOADING")
 
     try:
-        from agency_os.config.phoenix import get_config
+        from vibe_core.config import get_config
 
         config = get_config()
 

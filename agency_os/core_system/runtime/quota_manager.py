@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import Phoenix config, fall back to environment variables
 try:
-    from agency_os.config import get_config
+    from vibe_core.config import get_config
 
     _PHOENIX_AVAILABLE = True
 except ImportError:

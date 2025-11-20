@@ -361,7 +361,7 @@ class GraphExecutor:
         live_fire_enabled = False  # Default: safe mode
 
         try:
-            from agency_os.config import get_config
+            from vibe_core.config import get_config
 
             config = get_config()
             live_fire_enabled = config.safety.live_fire_enabled
