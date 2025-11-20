@@ -50,6 +50,10 @@ jobs:
           uv sync --frozen --all-extras
 
       - name: Validate knowledge bases
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VIBE_LIVE_FIRE: "false"
         run: |
           if [ -f "validate_knowledge_index.py" ]; then
             uv run python validate_knowledge_index.py
