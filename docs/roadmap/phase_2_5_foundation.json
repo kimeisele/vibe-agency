@@ -361,12 +361,13 @@
       "ARCH-002",
       "ARCH-003",
       "ARCH-004",
-      "ARCH-005"
+      "ARCH-005",
+      "ARCH-009"
     ],
     "blocked_tasks": [],
     "estimated_total_time_mins": 1920,
     "estimated_total_sessions": 12,
-    "last_updated": "2025-11-20T16:14:06.008648Z"
+    "last_updated": "2025-11-20T18:04:21.803185Z"
   },
   "metrics": {
     "before": {
