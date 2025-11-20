@@ -14,11 +14,10 @@ from .core_orchestrator import (
     ArtifactNotFoundError,
     CoreOrchestrator,
     KernelViolationError,
-    PlanningSubState,
     ProjectManifest,
-    ProjectPhase,
     SchemaValidator,
 )
+from .types import PlanningSubState, ProjectPhase
 
 __all__ = [
     "PROMPT_REGISTRY_AVAILABLE",

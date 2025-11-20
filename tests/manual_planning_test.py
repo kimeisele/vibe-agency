@@ -24,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add orchestrator to path
-from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator
+from apps.agency.orchestrator import CoreOrchestrator
 
 
 def show_request_file(request_file: Path):

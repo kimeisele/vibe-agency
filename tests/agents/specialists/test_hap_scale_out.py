@@ -14,14 +14,14 @@ This test proves the HAP pattern scales across all SDLC phases.
 from unittest.mock import MagicMock
 
 import pytest
-
-from agency_os.agents import BaseSpecialist, MissionContext
 from agency_os.agents.specialists import (
     CodingSpecialist,
     DeploymentSpecialist,
     MaintenanceSpecialist,
     TestingSpecialist,
 )
+
+from agency_os.agents import BaseSpecialist, MissionContext
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.store.sqlite_store import SQLiteStore
 

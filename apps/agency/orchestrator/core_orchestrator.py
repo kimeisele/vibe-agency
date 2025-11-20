@@ -33,9 +33,10 @@ from typing import Any
 
 import yaml
 
-from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 from vibe_core.runtime.llm_client import BudgetExceededError, LLMClient
 from vibe_core.store.sqlite_store import SQLiteStore
+
+from .types import PlanningSubState, ProjectPhase
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -318,7 +319,7 @@ class CoreOrchestrator:
         logger.info("✅ Tool Safety Guard initialized")
 
         # ARCH-009: Initialize Agent Registry (HAP pattern)
-        from agency_os.agents.registry import AgentRegistry
+        from vibe_core.specialists import AgentRegistry
 
         self.agent_registry = AgentRegistry()
         logger.info(f"✅ Agent Registry initialized: {self.agent_registry.list_specialists()}")
@@ -366,9 +367,7 @@ class CoreOrchestrator:
         """
         if phase not in self._handlers:
             # Import adapter (constant across all phases)
-            from agency_os.core_system.orchestrator.handlers.specialist_handler_adapter import (
-                SpecialistHandlerAdapter,
-            )
+            from .handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
             # Get specialist class from registry (ARCH-009: Dynamic lookup)
             specialist_class = self.agent_registry.get_specialist(phase)

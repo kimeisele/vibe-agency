@@ -24,13 +24,7 @@ Future Evolution (5D/6D):
 import logging
 from enum import Enum
 
-from agency_os.agents import BaseSpecialist, PlanningSpecialist
-from agency_os.agents.specialists import (
-    CodingSpecialist,
-    DeploymentSpecialist,
-    MaintenanceSpecialist,
-    TestingSpecialist,
-)
+from .base_specialist import BaseSpecialist
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +59,15 @@ class AgentRegistry:
 
         This maps each ProjectPhase to its corresponding specialist class.
         """
-        # Import ProjectPhase from shared types module (no circular dependency)
-        from agency_os.core_system.orchestrator.types import ProjectPhase
+        # Import ProjectPhase from apps.agency types (no circular dependency)
+        from apps.agency.orchestrator.types import ProjectPhase
+        from apps.agency.specialists import (
+            CodingSpecialist,
+            DeploymentSpecialist,
+            MaintenanceSpecialist,
+            PlanningSpecialist,
+            TestingSpecialist,
+        )
 
         self._registry = {
             ProjectPhase.PLANNING: PlanningSpecialist,

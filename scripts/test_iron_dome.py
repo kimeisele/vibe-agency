@@ -18,8 +18,8 @@ Expected result: Iron Dome blocks dangerous operations while allowing safe ones.
 import importlib
 import sys
 
-# Import from agency_os package
-tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")
+# Import from vibe_core package
+tool_safety_guard = importlib.import_module("vibe_core.runtime.tool_safety_guard")
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ViolationSeverity = tool_safety_guard.ViolationSeverity
 

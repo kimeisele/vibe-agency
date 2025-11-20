@@ -14,7 +14,7 @@ import pytest
 # Legacy backward compatibility: Create module aliases for old test code
 # These map old bare imports to new package imports
 try:
-    import agency_os.core_system.orchestrator as orchestrator_module
+    import apps.agency.orchestrator as orchestrator_module
     import vibe_core.playbook.executor as executor_module
     import vibe_core.playbook.loader as loader_module
     import vibe_core.playbook.router as router_module
@@ -49,7 +49,7 @@ if legacy_config_path.exists():
 
 # Load handlers module with fallback
 try:
-    import agency_os.core_system.orchestrator.handlers as handlers_module
+    import apps.agency.orchestrator.handlers as handlers_module
 
     sys.modules["handlers"] = handlers_module
 except ImportError:

@@ -25,7 +25,7 @@ and applies the result back to the manifest.
 import logging
 from pathlib import Path
 
-from agency_os.agents import BaseSpecialist, MissionContext
+from vibe_core.specialists import BaseSpecialist, MissionContext
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ class SpecialistHandlerAdapter:
             result: SpecialistResult from specialist
             manifest: ProjectManifest to update
         """
-        from agency_os.core_system.orchestrator.core_orchestrator import ProjectPhase
+        from ..types import ProjectPhase
 
         # Update artifacts
         if result.artifacts:

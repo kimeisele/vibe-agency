@@ -30,7 +30,7 @@ print("TEST 1: Web Fetch Tool")
 print("-" * 70)
 
 try:
-    from agency_os.core_system.orchestrator.tools.web_fetch_client import WebFetchClient
+    from apps.agency.orchestrator.tools.web_fetch_client import WebFetchClient
 
     client = WebFetchClient()
     print("✅ WebFetchClient initialized")
@@ -49,7 +49,7 @@ print("TEST 2: Tool Executor (Lazy Loading)")
 print("-" * 70)
 
 try:
-    from agency_os.core_system.orchestrator.tools.tool_executor import ToolExecutor
+    from apps.agency.orchestrator.tools.tool_executor import ToolExecutor
 
     executor = ToolExecutor()
     print("✅ ToolExecutor initialized")

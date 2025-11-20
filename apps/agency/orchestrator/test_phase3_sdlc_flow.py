@@ -17,7 +17,8 @@ import shutil
 import sys
 from pathlib import Path
 
-from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
+from .core_orchestrator import CoreOrchestrator
+from .types import ProjectPhase
 
 
 def test_phase3_sdlc_flow():

@@ -20,7 +20,7 @@ import pytest
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 
-from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
+from apps.agency.orchestrator import CoreOrchestrator, ProjectPhase
 
 
 class TestCodingWorkflow:
