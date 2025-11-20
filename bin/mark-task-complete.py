@@ -24,7 +24,7 @@ def load_roadmap():
     roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
 
     if not roadmap_path.exists():
-        print(f"❌ No active roadmap found")
+        print("❌ No active roadmap found")
         sys.exit(1)
 
     with open(roadmap_path) as f:
