@@ -32,6 +32,7 @@ def load_roadmap(vibe_root):
     """Load roadmap from YAML file"""
     try:
         import yaml
+
         roadmap_file = vibe_root / ".vibe" / "config" / "roadmap.yaml"
         if not roadmap_file.exists():
             return None
@@ -99,7 +100,7 @@ def show_status_text(mission, roadmap):
                     "DONE": "✅",
                     "IN_PROGRESS": "🚀",
                     "TODO": "⏳",
-                    "BLOCKED": "🚫"
+                    "BLOCKED": "🚫",
                 }.get(task.get("status"), "❓")
                 print(f"   {status_icon} {task['name']} (ID: {task_id})")
 
@@ -121,9 +122,7 @@ def show_status_rich(mission, roadmap):
     from rich.align import Align
     from rich.text import Text
 
-    console.print(
-        Align.center(Text("🎯 MISSION CONTROL", style="bold cyan"))
-    )
+    console.print(Align.center(Text("🎯 MISSION CONTROL", style="bold cyan")))
     console.print(Align.center("─" * 60))
     console.print()
 
@@ -142,9 +141,7 @@ def show_status_rich(mission, roadmap):
 [dim]Priority:[/dim] {current_task.get('priority', 'N/A')}/10
 [dim]Time Budget:[/dim] {current_task.get('time_used_mins', 0)}/{current_task.get('time_budget_mins', 0)} mins"""
 
-    console.print(
-        Panel(task_info, border_style="blue", title="[bold]CURRENT TASK[/bold]")
-    )
+    console.print(Panel(task_info, border_style="blue", title="[bold]CURRENT TASK[/bold]"))
     console.print()
 
     # Validation Checks
@@ -157,16 +154,23 @@ def show_status_rich(mission, roadmap):
         for check in checks:
             icon = "✅" if check.get("status") else "❌"
             status = "PASS" if check.get("status") else "FAIL"
-            validation_table.add_row(f"{icon} {status}", check['description'])
+            validation_table.add_row(f"{icon} {status}", check["description"])
 
         console.print(validation_table)
         console.print()
 
     # Stats
     stats_table = Table(show_header=False, box=None)
-    stats_table.add_row("[dim]Tasks Completed:[/dim]", f"[bold]{mission.get('total_tasks_completed', 0)}[/bold]")
-    stats_table.add_row("[dim]Total Time Spent:[/dim]", f"[bold]{mission.get('total_time_spent_mins', 0)} mins[/bold]")
-    stats_table.add_row("[dim]Current Phase:[/dim]", f"[bold]{mission.get('current_phase', 'Unknown')}[/bold]")
+    stats_table.add_row(
+        "[dim]Tasks Completed:[/dim]", f"[bold]{mission.get('total_tasks_completed', 0)}[/bold]"
+    )
+    stats_table.add_row(
+        "[dim]Total Time Spent:[/dim]",
+        f"[bold]{mission.get('total_time_spent_mins', 0)} mins[/bold]",
+    )
+    stats_table.add_row(
+        "[dim]Current Phase:[/dim]", f"[bold]{mission.get('current_phase', 'Unknown')}[/bold]"
+    )
 
     console.print(stats_table)
     console.print()
