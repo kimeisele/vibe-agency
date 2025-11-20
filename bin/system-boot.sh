@@ -40,15 +40,6 @@ fi
 VIBE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$VIBE_ROOT"
 
-# --- AUTO-PROVISIONING (GAD-5: Zero-Config Boot) ---
-# If no .env exists, create it from template silently
-if [ ! -f .env ]; then
-    if [ -f .env.template ]; then
-        cp .env.template .env
-        # Note: .env will have placeholder values, but phoenix.py handles missing keys gracefully
-    fi
-fi
-
 # Only clear if we have a real terminal
 if [ "$USE_COLOR" = true ]; then
     clear
@@ -73,9 +64,38 @@ echo "════════════════════════�
 # ============================================================================
 echo "🔍 Running pre-flight environment checks..."
 
-# Check Virtual Environment
+# Check .env file (GAD-5: Auto-provision from template)
+if [ ! -f .env ]; then
+    if [ -f .env.template ]; then
+        echo -e "⚠️  .env file: ${YELLOW}Not found.${NC} Auto-provisioning from template..."
+        cp .env.template .env
+        echo -e "✅ ${GREEN}.env created from template${NC} (configure API keys as needed)"
+    else
+        echo -e "⚠️  .env file: ${YELLOW}Not found${NC} (.env.template also missing)"
+    fi
+else
+    echo -e "✅ .env file: ${GREEN}Found${NC}"
+fi
+
+# Check Virtual Environment (GAD-5: Auto-heal if missing)
 if [ ! -d ".venv" ]; then
-    echo -e "⚠️  VirtualEnv: ${YELLOW}Not active.${NC} Dependencies may be unstable."
+    echo -e "⚠️  VirtualEnv: ${YELLOW}Not found.${NC} Auto-installing dependencies..."
+
+    # Check if uv is available
+    if command -v uv &> /dev/null; then
+        echo "   Running: uv sync --all-extras"
+        uv sync --all-extras || {
+            echo -e "❌ ${RED}Failed to install dependencies with uv${NC}"
+            exit 1
+        }
+        echo -e "✅ ${GREEN}Dependencies installed successfully${NC}"
+    else
+        echo -e "❌ ${RED}UV not found. Please install it first:${NC}"
+        echo "   curl -LsSf https://astral.sh/uv/install.sh | sh"
+        exit 1
+    fi
+else
+    echo -e "✅ VirtualEnv: ${GREEN}Found${NC}"
 fi
 
 # Check Git Status
@@ -87,6 +107,13 @@ else
 fi
 
 echo ""
+
+# Set PYTHON variable to use venv if available
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="python3"
+fi
 
 # ============================================================================
 # 2. SYSTEM HEALTH CHECK (The Anti-Decay Mechanism)
@@ -116,18 +143,18 @@ echo ""
 # This replaces the old hardcoded SYSTEMPROMPT block.
 if [ ! -f .vibe/state/active_mission.json ]; then
     echo "⚠️  Mission state not found. Executing Genesis Protocol..."
-    if ! python3 scripts/genesis.py; then
+    if ! $PYTHON scripts/genesis.py; then
         echo "❌ GENESIS PROTOCOL FAILED: Could not bootstrap mission state"
-        exit 1
+        echo "✅ Genesis complete: .vibe/state/active_mission.json"
     fi
 fi
 
-python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not fully initialized"
+$PYTHON bin/mission status 2>&1 || echo "⚠️  Mission Control not fully initialized"
 
 # Auto-provision system integrity manifest if missing (GAD-501 Layer 0)
 if [ ! -f .vibe/system_integrity_manifest.json ]; then
     echo "⚠️  System integrity manifest not found. Auto-generating..."
-    python3 scripts/generate-integrity-manifest.py > /dev/null 2>&1 && echo "✅ System integrity manifest auto-generated" || echo "❌ Failed to generate integrity manifest."
+    $PYTHON scripts/generate-integrity-manifest.py > /dev/null 2>&1 && echo "✅ System integrity manifest auto-generated" || echo "❌ Failed to generate integrity manifest."
 fi
 
 # Auto-provision cleanup roadmap if missing
@@ -161,7 +188,7 @@ echo ""
 # - Load session handoff
 # - Show available playbook routes
 # - Output ready state
-python3 ./vibe-cli boot 2>&1 || echo "⚠️  VIBE-CLI boot check failed (system may need initialization)"
+$PYTHON ./vibe-cli boot 2>&1 || echo "⚠️  VIBE-CLI boot check failed (system may need initialization)"
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
@@ -202,7 +229,7 @@ echo ""
 echo "💡 Quick Commands:"
 echo "   Full diagnostics:  ./bin/show-status.sh"
 echo "   Pre-push check:    ./bin/pre-push-check.sh"
-echo "   Run tests:         python3 -m pytest tests/ -v"
+echo "   Run tests:         $PYTHON -m pytest tests/ -v"
 echo ""
 echo ""
 echo "════════════════════════════════════════════════════════════════"
@@ -216,8 +243,8 @@ if [ -f .vibe/config/cleanup_roadmap.json ]; then
     echo ""
 
     # Auto-verify completed tasks (prevents showing already-done tasks)
-    python3 ./bin/auto-verify-tasks.py
+    $PYTHON ./bin/auto-verify-tasks.py
 
     # Show next task
-    python3 ./bin/next-task.py
+    $PYTHON ./bin/next-task.py
 fi

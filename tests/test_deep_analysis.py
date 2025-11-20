@@ -26,9 +26,8 @@ spec = importlib.util.spec_from_file_location(
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
 
-# Load workspace_utils from scripts directory
-sys.path.insert(0, str(repo_root / "scripts"))
-from workspace_utils import list_active_workspaces, load_workspace_manifest
+# Load workspace_utils from scripts package (proper Python imports)
+from scripts.workspace_utils import list_active_workspaces, load_workspace_manifest
 
 
 def test_manifest_schema_consistency():
@@ -197,7 +196,7 @@ def test_error_handling():
 
     # Test 1: Invalid workspace name
     try:
-        from workspace_utils import load_workspace_manifest
+        from scripts.workspace_utils import load_workspace_manifest
 
         load_workspace_manifest("nonexistent_workspace")
         print("  ❌ load_workspace_manifest: No error for invalid workspace")
@@ -207,7 +206,7 @@ def test_error_handling():
 
     # Test 2: Invalid workspace in get_workspace_by_name
     try:
-        from workspace_utils import get_workspace_by_name
+        from scripts.workspace_utils import get_workspace_by_name
 
         result = get_workspace_by_name("nonexistent")
         if result is None:
