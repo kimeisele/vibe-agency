@@ -20,7 +20,7 @@ import pytest
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 
-from agency_os_orchestrator import CoreOrchestrator, ProjectPhase
+from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
 
 
 class TestDeploymentWorkflow:
@@ -322,8 +322,8 @@ class TestDeploymentWorkflow:
             # Attempt to run DEPLOYMENT phase - should raise error
             print("\nAttempting to run DEPLOYMENT without qa_report...")
 
-            # Import with proper package path (legacy bare import works via conftest.py aliases)
-            from core_orchestrator import ArtifactNotFoundError
+            # Import with proper package path
+            from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
 
             manifest = orchestrator.load_project_manifest("test_deployment_001")
 

@@ -6,6 +6,7 @@ Orchestrates the conveyor belt:
 3. Prompt Composer → Compose final prompt
 """
 
+import sys
 from pathlib import Path
 
 from agency_os.core_system.runtime.context_loader import ContextLoader

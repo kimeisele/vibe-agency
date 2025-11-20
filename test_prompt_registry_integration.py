@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import sys
 Test Prompt Registry Integration (OPERATION VOICE)
 ===================================================
 
@@ -11,6 +12,7 @@ requiring full infrastructure setup.
 """
 
 import logging
+import sys
 
 # Setup logging to see the integration logs
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")

@@ -16,6 +16,7 @@ Usage:
     python test_phase3_smoke.py
 """
 
+import sys
 from pathlib import Path
 
 

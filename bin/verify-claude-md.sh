@@ -149,7 +149,7 @@ test_command "Core Orchestrator state machine" \
     "passed"
 
 test_command "File-Based Delegation (GAD-003)" \
-    "uv run python manual_planning_test.py" \
+    "uv run python tests/manual_planning_test.py" \
     "✅\|SUCCESS\|PASSED\|OK"
 
 test_command "Session Handoff Integration" \

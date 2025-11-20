@@ -14,6 +14,7 @@ Usage:
 """
 
 import shutil
+import sys
 from pathlib import Path
 
 from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
