@@ -1,0 +1,1 @@
+{"apiVersion": "agency.os/v1alpha1", "kind": "Project", "metadata": {"projectId": "test_project_001", "name": "Yoga Booking System", "owner": "test_user", "description": "A platform for booking classes.", "createdAt": "2025-11-20T09:06:31.293502", "updatedAt": "2025-11-20T09:06:31.293510"}, "status": {"projectPhase": "PLANNING"}, "artifacts": {}, "budget": {"max_cost_usd": 10.0}}
