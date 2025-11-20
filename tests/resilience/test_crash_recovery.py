@@ -63,7 +63,11 @@ def test_crash_recovery():
     }
 
     mission_id = store1.create_mission(
-        mission_uuid=mission_uuid, phase=phase, status=status, created_at=created_at, metadata=metadata
+        mission_uuid=mission_uuid,
+        phase=phase,
+        status=status,
+        created_at=created_at,
+        metadata=metadata,
     )
 
     print(f"   ✅ Created mission: ID={mission_id}, UUID={mission_uuid}")
@@ -118,7 +122,7 @@ def test_crash_recovery():
     print("\n🔄 PHASE 3: Recovering from crash...")
 
     store2 = SQLiteStore(str(db_path))
-    print(f"   ✅ New SQLiteStore instance created")
+    print("   ✅ New SQLiteStore instance created")
 
     # Verify mission recovered
     recovered_mission = store2.get_mission_by_uuid(mission_uuid)
@@ -127,7 +131,7 @@ def test_crash_recovery():
         print("   ❌ CRASH RECOVERY FAILED: Mission not found in DB!")
         return False
 
-    print(f"   ✅ Mission recovered from DB!")
+    print("   ✅ Mission recovered from DB!")
 
     # =========================================================================
     # PHASE 4: VERIFY DATA INTEGRITY
@@ -135,32 +139,40 @@ def test_crash_recovery():
     print("\n🔍 PHASE 4: Verifying data integrity...")
 
     # Verify mission fields
-    assert recovered_mission["id"] == mission_id, f"Mission ID mismatch: {recovered_mission['id']} != {mission_id}"
-    assert (
-        recovered_mission["mission_uuid"] == mission_uuid
-    ), f"UUID mismatch: {recovered_mission['mission_uuid']} != {mission_uuid}"
-    assert recovered_mission["phase"] == phase, f"Phase mismatch: {recovered_mission['phase']} != {phase}"
-    assert recovered_mission["status"] == status, f"Status mismatch: {recovered_mission['status']} != {status}"
-    assert (
-        recovered_mission["created_at"] == created_at
-    ), f"Created_at mismatch: {recovered_mission['created_at']} != {created_at}"
+    assert recovered_mission["id"] == mission_id, (
+        f"Mission ID mismatch: {recovered_mission['id']} != {mission_id}"
+    )
+    assert recovered_mission["mission_uuid"] == mission_uuid, (
+        f"UUID mismatch: {recovered_mission['mission_uuid']} != {mission_uuid}"
+    )
+    assert recovered_mission["phase"] == phase, (
+        f"Phase mismatch: {recovered_mission['phase']} != {phase}"
+    )
+    assert recovered_mission["status"] == status, (
+        f"Status mismatch: {recovered_mission['status']} != {status}"
+    )
+    assert recovered_mission["created_at"] == created_at, (
+        f"Created_at mismatch: {recovered_mission['created_at']} != {created_at}"
+    )
 
     print("   ✅ Mission fields intact")
 
     # Verify metadata
     assert recovered_mission["metadata"] is not None, "Metadata is None!"
-    assert (
-        recovered_mission["metadata"]["mission_name"] == "Crash Recovery Test Mission"
-    ), "Metadata mission_name mismatch"
-    assert len(recovered_mission["metadata"]["objectives"]) == 3, "Metadata objectives count mismatch"
+    assert recovered_mission["metadata"]["mission_name"] == "Crash Recovery Test Mission", (
+        "Metadata mission_name mismatch"
+    )
+    assert len(recovered_mission["metadata"]["objectives"]) == 3, (
+        "Metadata objectives count mismatch"
+    )
 
     print("   ✅ Metadata intact")
 
     # Verify tool calls
     tool_calls = store2.get_tool_calls_for_mission(mission_id)
     assert len(tool_calls) == 2, f"Expected 2 tool calls, got {len(tool_calls)}"
-    assert tool_calls[0]["tool_name"] == "WebFetch", f"Tool call 1 name mismatch"
-    assert tool_calls[1]["tool_name"] == "Grep", f"Tool call 2 name mismatch"
+    assert tool_calls[0]["tool_name"] == "WebFetch", "Tool call 1 name mismatch"
+    assert tool_calls[1]["tool_name"] == "Grep", "Tool call 2 name mismatch"
 
     print("   ✅ Tool calls intact (2 calls recovered)")
 

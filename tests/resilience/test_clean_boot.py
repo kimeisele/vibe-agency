@@ -15,7 +15,6 @@ This tests zero-config deployment.
 """
 
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -50,7 +49,7 @@ def test_clean_boot():
 
         # Remove state directory
         shutil.rmtree(vibe_state_dir)
-        print(f"   ✅ Removed .vibe/state directory")
+        print("   ✅ Removed .vibe/state directory")
     else:
         print("   ℹ️  No existing state (already clean)")
 
@@ -72,9 +71,7 @@ def test_clean_boot():
     print(f"   ✅ Database auto-created: {db_path}")
 
     # Verify schema loaded
-    cursor = store.conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-    )
+    cursor = store.conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
     tables = [row[0] for row in cursor.fetchall()]
 
     expected_tables = ["agent_memory", "decisions", "missions", "playbook_runs", "tool_calls"]
@@ -129,7 +126,7 @@ def test_clean_boot():
     assert mission["phase"] == "PLANNING"  # Default from import
     assert mission["status"] == "in_progress"  # Mapped from "active"
 
-    print(f"   ✅ Genesis mission verified in DB")
+    print("   ✅ Genesis mission verified in DB")
 
     # =========================================================================
     # PHASE 4: VERIFY SYSTEM OPERATIONAL
@@ -189,7 +186,7 @@ def test_clean_boot():
             shutil.rmtree(vibe_state_dir)
         shutil.copytree(backup_dir, vibe_state_dir)
         shutil.rmtree(backup_dir)
-        print(f"\n🔄 Restored original state from backup")
+        print("\n🔄 Restored original state from backup")
 
     return True
 
