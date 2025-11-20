@@ -15,10 +15,10 @@ import pytest
 # These map old bare imports to new package imports
 try:
     import agency_os.core_system.orchestrator as orchestrator_module
-    import agency_os.core_system.playbook.executor as executor_module
-    import agency_os.core_system.playbook.loader as loader_module
-    import agency_os.core_system.playbook.router as router_module
-    import agency_os.core_system.runtime.prompt_registry as prompt_registry_module
+    import vibe_core.playbook.executor as executor_module
+    import vibe_core.playbook.loader as loader_module
+    import vibe_core.playbook.router as router_module
+    import vibe_core.runtime.prompt_registry as prompt_registry_module
 
     sys.modules["orchestrator"] = orchestrator_module
     sys.modules["executor"] = executor_module

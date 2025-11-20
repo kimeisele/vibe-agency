@@ -10,7 +10,7 @@ This script proves that context injection works by:
 import sys
 from pathlib import Path
 
-from agency_os.core_system.runtime.context_loader import ContextLoader
+from vibe_core.runtime.context_loader import ContextLoader
 
 
 def main():

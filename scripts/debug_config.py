@@ -132,7 +132,7 @@ def check_provider_detection():
     print_section("3. PROVIDER FACTORY DETECTION")
 
     try:
-        from agency_os.core_system.runtime.providers import factory
+        from vibe_core.runtime.providers import factory
 
         print("\nProvider Detection:")
         detected = factory._detect_provider()
@@ -158,7 +158,7 @@ def check_llm_client_init():
     print_section("4. LLM CLIENT INITIALIZATION")
 
     try:
-        from agency_os.core_system.runtime.llm_client import LLMClient
+        from vibe_core.runtime.llm_client import LLMClient
 
         print("\nInitializing LLMClient...")
         client = LLMClient()

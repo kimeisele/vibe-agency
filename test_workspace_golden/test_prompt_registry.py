@@ -16,7 +16,7 @@ print()
 print("TEST 1: Import PromptRegistry")
 print("-" * 80)
 try:
-    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
+    from vibe_core.runtime.prompt_registry import PromptRegistry
 
     print("✅ PASS: PromptRegistry imported successfully")
     print(f"   Location: {PromptRegistry.__module__}")

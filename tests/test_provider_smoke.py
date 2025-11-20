@@ -14,8 +14,8 @@ mock_anthropic.Anthropic.return_value = mock_anthropic_client
 # Since the classes import the modules inside __init__, we can import classes globally
 # and then patch sys.modules when calling __init__.
 
-from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
-from agency_os.core_system.runtime.providers.google import GoogleProvider
+from vibe_core.runtime.providers.anthropic import AnthropicProvider
+from vibe_core.runtime.providers.google import GoogleProvider
 
 
 @pytest.fixture(autouse=True)

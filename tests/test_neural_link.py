@@ -10,7 +10,7 @@ import pytest
 
 # Import SemanticAction definitions
 runtime_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "runtime"
-from agency_os.core_system.runtime.semantic_actions import SemanticAction, SemanticActionType
+from vibe_core.runtime.semantic_actions import SemanticAction, SemanticActionType
 
 # Import personas and router
 personas_dir = Path(__file__).parent.parent / "agency_os" / "03_agents" / "personas"

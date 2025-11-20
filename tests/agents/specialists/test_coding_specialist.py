@@ -23,7 +23,7 @@ import pytest
 
 from agency_os.agents import MissionContext
 from agency_os.agents.specialists import CodingSpecialist
-from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.store.sqlite_store import SQLiteStore
 
 # ============================================================================

@@ -28,8 +28,8 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 _RUNTIME_PATH = _REPO_ROOT / "agency_os" / "core_system" / "runtime"
 
 # Import directly from the runtime directory (since folder starts with number)
-from agency_os.core_system.runtime.prompt_registry import PromptRegistry
-from agency_os.core_system.runtime.prompt_runtime import AgentNotFoundError, PromptRuntime
+from vibe_core.runtime.prompt_registry import PromptRegistry
+from vibe_core.runtime.prompt_runtime import AgentNotFoundError, PromptRuntime
 
 
 class TestGovernanceInjection:

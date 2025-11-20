@@ -13,7 +13,7 @@ import pytest
 
 def test_context_loader():
     """Test that ContextLoader can load context"""
-    from runtime.context_loader import ContextLoader
+    from vibe_core.runtime.context_loader import ContextLoader
 
     loader = ContextLoader()
     context = loader.load()
@@ -39,7 +39,7 @@ def test_context_loader():
 
 def test_playbook_engine_explicit_match():
     """Test explicit keyword matching"""
-    from runtime.playbook_engine import PlaybookEngine
+    from vibe_core.runtime.playbook_engine import PlaybookEngine
 
     engine = PlaybookEngine()
     context = {"session": {}, "git": {}, "tests": {}, "manifest": {}, "environment": {}}
@@ -54,7 +54,7 @@ def test_playbook_engine_explicit_match():
 
 def test_playbook_engine_context_match():
     """Test context-based routing"""
-    from runtime.playbook_engine import PlaybookEngine
+    from vibe_core.runtime.playbook_engine import PlaybookEngine
 
     engine = PlaybookEngine()
 
@@ -77,7 +77,7 @@ def test_playbook_engine_context_match():
 
 def test_playbook_engine_suggestion_mode():
     """Test suggestion mode when no match"""
-    from runtime.playbook_engine import PlaybookEngine
+    from vibe_core.runtime.playbook_engine import PlaybookEngine
 
     engine = PlaybookEngine()
 
@@ -99,7 +99,7 @@ def test_playbook_engine_suggestion_mode():
 
 def test_prompt_composer():
     """Test prompt composition"""
-    from runtime.prompt_composer import PromptComposer
+    from vibe_core.runtime.prompt_composer import PromptComposer
 
     composer = PromptComposer()
 
@@ -127,7 +127,7 @@ def test_prompt_composer():
 
 def test_boot_sequence():
     """Test complete boot sequence"""
-    from runtime.boot_sequence import BootSequence
+    from vibe_core.runtime.boot_sequence import BootSequence
 
     boot = BootSequence()
 
@@ -184,7 +184,7 @@ def test_vibe_cli_boot_integration():
 
 def test_health_check():
     """Test boot sequence health check"""
-    from runtime.boot_sequence import BootSequence
+    from vibe_core.runtime.boot_sequence import BootSequence
 
     boot = BootSequence()
     health = boot.health_check()

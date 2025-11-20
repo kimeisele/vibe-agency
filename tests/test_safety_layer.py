@@ -14,13 +14,13 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from agency_os.core_system.runtime.circuit_breaker import (
+from vibe_core.runtime.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerOpenError,
     CircuitBreakerState,
 )
-from agency_os.core_system.runtime.quota_manager import (
+from vibe_core.runtime.quota_manager import (
     OperationalQuota,
     QuotaExceededError,
     QuotaLimits,
@@ -354,7 +354,7 @@ class TestSafetyLayerIntegration:
         # Import after sys.path is set
         import importlib
 
-        llm_module = importlib.import_module("runtime.llm_client")
+        llm_module = importlib.import_module("vibe_core.runtime.llm_client")
         LLMClient = llm_module.LLMClient
 
         client = LLMClient()
@@ -370,7 +370,7 @@ class TestSafetyLayerIntegration:
         # Import after sys.path is set
         import importlib
 
-        llm_module = importlib.import_module("runtime.llm_client")
+        llm_module = importlib.import_module("vibe_core.runtime.llm_client")
         LLMClient = llm_module.LLMClient
         LLMInvocationError = llm_module.LLMInvocationError
 
@@ -398,7 +398,7 @@ class TestSafetyLayerIntegration:
         # Import after sys.path is set
         import importlib
 
-        llm_module = importlib.import_module("runtime.llm_client")
+        llm_module = importlib.import_module("vibe_core.runtime.llm_client")
         LLMClient = llm_module.LLMClient
         LLMUsage = llm_module.LLMUsage
         LLMResponse = llm_module.LLMResponse

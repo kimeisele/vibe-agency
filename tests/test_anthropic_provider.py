@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agency_os.core_system.runtime.providers.base import ProviderNotAvailableError
+from vibe_core.runtime.providers.base import ProviderNotAvailableError
 
 # Mock the anthropic module
 mock_anthropic = MagicMock()
@@ -30,7 +30,7 @@ class TestAnthropicProviderInitialization:
 
     def test_initialization_with_valid_api_key(self):
         """Should initialize AnthropicProvider with valid API key"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
         assert provider.api_key == "sk-test-key"
@@ -39,21 +39,21 @@ class TestAnthropicProviderInitialization:
 
     def test_initialization_with_none_api_key_raises_error(self):
         """Should raise error when initialized with None API key"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         with pytest.raises(ProviderNotAvailableError):
             AnthropicProvider(api_key=None)
 
     def test_get_provider_name(self):
         """Should return correct provider name"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
         assert provider.get_provider_name() == "Anthropic"
 
     def test_is_available_with_valid_key(self):
         """Should report available when API key is set"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
         assert provider.is_available() is True
@@ -64,7 +64,7 @@ class TestAnthropicProviderInvocation:
 
     def test_invoke_with_valid_response(self):
         """Should invoke and return properly formatted response"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -91,7 +91,7 @@ class TestAnthropicProviderInvocation:
 
     def test_invoke_extracts_text_from_content_blocks(self):
         """Should extract text from content blocks properly"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -117,7 +117,7 @@ class TestAnthropicProviderCostCalculation:
 
     def test_calculate_cost_for_sonnet_3_5(self):
         """Should calculate cost for claude-3.5-sonnet model"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -133,7 +133,7 @@ class TestAnthropicProviderCostCalculation:
 
     def test_calculate_cost_with_zero_tokens(self):
         """Should handle zero tokens correctly"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -145,7 +145,7 @@ class TestAnthropicProviderCostCalculation:
 
     def test_calculate_cost_scales_with_tokens(self):
         """Cost should scale with token count"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -161,7 +161,7 @@ class TestAnthropicProviderCostCalculation:
 
     def test_calculate_cost_varies_by_model(self):
         """Different models may have different pricing"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
 
@@ -178,7 +178,7 @@ class TestAnthropicProviderAvailableModels:
 
     def test_get_available_models_returns_list(self):
         """Should return list of available models"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
         models = provider.get_available_models()
@@ -188,7 +188,7 @@ class TestAnthropicProviderAvailableModels:
 
     def test_available_models_includes_claude_variants(self):
         """Should include Claude model variants"""
-        from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+        from vibe_core.runtime.providers.anthropic import AnthropicProvider
 
         provider = AnthropicProvider(api_key="sk-test-key")
         models = provider.get_available_models()

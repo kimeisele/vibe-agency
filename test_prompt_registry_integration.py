@@ -29,8 +29,8 @@ def test_prompt_registry_integration():
     print("\n📍 Step 1: Importing modules...")
 
     # Use proper package imports
-    from agency_os.core_system.playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
-    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
+    from vibe_core.playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
+    from vibe_core.runtime.prompt_registry import PromptRegistry
 
     # Verify the registry has our test prompts
     print("   ✅ PromptRegistry imported")

@@ -34,7 +34,7 @@ from typing import Any
 import yaml
 
 from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
-from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
+from vibe_core.runtime.llm_client import BudgetExceededError, LLMClient
 from vibe_core.store.sqlite_store import SQLiteStore
 
 # Initialize logger BEFORE using it
@@ -43,12 +43,12 @@ logger = logging.getLogger(__name__)
 # GAD-003 Phase 2: Use PromptRegistry instead of PromptRuntime
 # PromptRegistry provides automatic governance injection
 try:
-    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
+    from vibe_core.runtime.prompt_registry import PromptRegistry
 
     PROMPT_REGISTRY_AVAILABLE = True
 except ImportError:
     # Fallback to PromptRuntime if Registry not available
-    from agency_os.core_system.runtime.prompt_runtime import PromptRuntime
+    from vibe_core.runtime.prompt_runtime import PromptRuntime
 
     PROMPT_REGISTRY_AVAILABLE = False
     logger.warning("PromptRegistry not available, falling back to PromptRuntime")
@@ -312,7 +312,7 @@ class CoreOrchestrator:
         logger.info(f"✅ SQLite persistence initialized: {db_path}")
 
         # Initialize Tool Safety Guard (ARCH-006: Required for specialists)
-        from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
+        from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 
         self.tool_safety_guard = ToolSafetyGuard()
         logger.info("✅ Tool Safety Guard initialized")

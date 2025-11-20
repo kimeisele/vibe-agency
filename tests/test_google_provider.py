@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agency_os.core_system.runtime.providers.base import ProviderNotAvailableError
+from vibe_core.runtime.providers.base import ProviderNotAvailableError
 
 # Mock the google.generativeai module
 mock_genai = MagicMock()
@@ -28,7 +28,7 @@ class TestGoogleProviderInitialization:
 
     def test_initialization_with_valid_api_key(self):
         """Should initialize GoogleProvider with valid API key"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
         assert provider.api_key == "valid-key"
@@ -36,21 +36,21 @@ class TestGoogleProviderInitialization:
 
     def test_initialization_with_none_api_key_raises_error(self):
         """Should raise error when initialized with None API key"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         with pytest.raises(ProviderNotAvailableError):
             GoogleProvider(api_key=None)
 
     def test_get_provider_name(self):
         """Should return correct provider name"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="test-key")
         assert provider.get_provider_name() == "Google"
 
     def test_is_available_with_valid_key(self):
         """Should report available when API key is set"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
         assert provider.is_available() is True
@@ -61,7 +61,7 @@ class TestGoogleProviderInvocation:
 
     def test_invoke_with_valid_response(self):
         """Should invoke and return properly formatted response"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
 
@@ -91,7 +91,7 @@ class TestGoogleProviderCostCalculation:
 
     def test_calculate_cost_for_gemini_1_5_flash(self):
         """Should calculate cost for gemini-1.5-flash model"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
 
@@ -107,7 +107,7 @@ class TestGoogleProviderCostCalculation:
 
     def test_calculate_cost_with_zero_tokens(self):
         """Should handle zero tokens correctly"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
 
@@ -117,7 +117,7 @@ class TestGoogleProviderCostCalculation:
 
     def test_calculate_cost_for_free_preview_model(self):
         """Should have zero cost for free preview models"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
 
@@ -134,7 +134,7 @@ class TestGoogleProviderAvailableModels:
 
     def test_get_available_models_returns_list(self):
         """Should return list of available models"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
         models = provider.get_available_models()
@@ -144,7 +144,7 @@ class TestGoogleProviderAvailableModels:
 
     def test_available_models_includes_gemini_variants(self):
         """Should include various Gemini model variants"""
-        from agency_os.core_system.runtime.providers.google import GoogleProvider
+        from vibe_core.runtime.providers.google import GoogleProvider
 
         provider = GoogleProvider(api_key="valid-key")
         models = provider.get_available_models()

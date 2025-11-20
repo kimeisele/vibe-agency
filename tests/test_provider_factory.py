@@ -8,8 +8,8 @@ Tests for the factory pattern that creates and configures LLM providers.
 import os
 from unittest.mock import patch
 
-from agency_os.core_system.runtime.providers.base import NoOpProvider
-from agency_os.core_system.runtime.providers.factory import (
+from vibe_core.runtime.providers.base import NoOpProvider
+from vibe_core.runtime.providers.factory import (
     _detect_provider,
     _get_api_key_for_provider,
 )

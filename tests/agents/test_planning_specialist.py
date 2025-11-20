@@ -14,7 +14,7 @@ Tests that verify PlanningSpecialist correctly:
 import json
 
 from agency_os.agents import MissionContext, PlanningSpecialist
-from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.store.sqlite_store import SQLiteStore
 
 # ============================================================================
