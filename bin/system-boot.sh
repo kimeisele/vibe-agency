@@ -206,10 +206,15 @@ echo "════════════════════════�
 echo ""
 
 # ============================================================================
-# CLEANUP ROADMAP: Show next task if cleanup mode active
+# CLEANUP ROADMAP: Auto-verify and show next task if cleanup mode active
 # ============================================================================
 if [ -f .vibe/config/cleanup_roadmap.json ]; then
     echo "🧹 CLEANUP MODE ACTIVE"
     echo ""
+
+    # Auto-verify completed tasks (prevents showing already-done tasks)
+    python3 ./bin/auto-verify-tasks.py
+
+    # Show next task
     python3 ./bin/next-task.py
 fi

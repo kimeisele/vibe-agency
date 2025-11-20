@@ -22,7 +22,7 @@ def load_roadmap():
         return json.load(f)
 
 
-def find_next_task(roadmap):
+def find_next_task(roadmap, roadmap_path):
     """Find the first pending task in current phase"""
     if not roadmap:
         return None
@@ -133,14 +133,17 @@ Estimated Time: {task['estimated_time_mins']} minutes
 
 
 def main():
-    roadmap = load_roadmap()
+    roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
 
-    if not roadmap:
+    if not roadmap_path.exists():
         print("No cleanup roadmap found.")
         print("The system is either not in cleanup mode or the roadmap hasn't been created.")
         sys.exit(0)
 
-    next_task = find_next_task(roadmap)
+    with open(roadmap_path) as f:
+        roadmap = json.load(f)
+
+    next_task = find_next_task(roadmap, roadmap_path)
     print(format_task_display(next_task))
 
 
