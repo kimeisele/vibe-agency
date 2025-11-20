@@ -115,11 +115,14 @@ echo ""
 # The primary system prompt is displayed via the Mission Control Dashboard
 # This replaces the old hardcoded SYSTEMPROMPT block.
 if [ ! -f .vibe/state/active_mission.json ]; then
-    echo "⚠️  Mission state not found. Auto-provisioning..."
-    python3 scripts/bootstrap_mission.py > /dev/null 2>&1 || echo "❌ Failed to bootstrap mission."
+    echo "⚠️  Mission state not found. Executing Genesis Protocol..."
+    if ! python3 scripts/genesis.py; then
+        echo "❌ GENESIS PROTOCOL FAILED: Could not bootstrap mission state"
+        exit 1
+    fi
 fi
 
-python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not initialized (run scripts/bootstrap_mission.py)"
+python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not fully initialized"
 
 # Auto-provision system integrity manifest if missing (GAD-501 Layer 0)
 if [ ! -f .vibe/system_integrity_manifest.json ]; then

@@ -188,7 +188,7 @@ def main():
         roadmap = load_roadmap(vibe_root)
 
         if not mission:
-            print("❌ No mission state found. Run: python scripts/bootstrap_mission.py")
+            print("❌ No mission state found. Run: python scripts/genesis.py")
             sys.exit(1)
 
         try:

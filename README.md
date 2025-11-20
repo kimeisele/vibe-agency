@@ -229,7 +229,7 @@ export VIBE_QUOTA_TPM=5000
 
 ```bash
 # Execute a Python script with context injection
-./bin/vibe-shell "python scripts/bootstrap_mission.py"
+./bin/vibe-shell "python scripts/genesis.py"
 
 # Run a bash command
 ./bin/vibe-shell "ls -la"

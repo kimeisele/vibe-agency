@@ -83,7 +83,7 @@
           "description": "Boot script must work on clean checkout without manual setup",
           "acceptance_criteria": [
             "system-boot.sh checks for missing .vibe/state/active_mission.json",
-            "Auto-runs python scripts/bootstrap_mission.py if missing",
+            "Auto-runs Genesis Protocol (python scripts/genesis.py) if missing",
             "Auto-generates .vibe/system_integrity_manifest.json if missing",
             "Test: rm -rf .vibe/ && ./bin/system-boot.sh (succeeds without errors)"
           ],
