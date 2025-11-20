@@ -102,6 +102,12 @@ fi
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
     echo -e "✅ Git Repository: ${GREEN}Detected${NC} (branch: $BRANCH)"
+
+    # Configure git hooks (auto-setup after env wipe)
+    if [ -d ".githooks" ]; then
+        git config core.hooksPath .githooks
+        echo -e "✅ Git Hooks: ${GREEN}Configured${NC} (.githooks/)"
+    fi
 else
     echo -e "⚠️  Git Repository: ${YELLOW}Not initialized.${NC}"
 fi
