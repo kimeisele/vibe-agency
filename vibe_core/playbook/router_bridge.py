@@ -24,10 +24,9 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from apps.agency.orchestrator.types import ProjectPhase
     from vibe_core.playbook.executor import WorkflowGraph, WorkflowNode
 
 logger = logging.getLogger(__name__)
@@ -71,7 +70,7 @@ class RoutedAction:
     node_action: str
     target_phase: str  # ProjectPhase enum name (PLANNING, CODING, etc.)
     required_skills: list[str] = field(default_factory=list)
-    prompt_key: Optional[str] = None
+    prompt_key: str | None = None
     timeout_seconds: int = 300
     retries: int = 3
     metadata: dict = field(default_factory=dict)
@@ -244,4 +243,4 @@ class RouterBridge:
         return True
 
 
-__all__ = ["RouterBridge", "RouterBridgeContext", "RoutedAction", "WorkflowPhaseMapping"]
+__all__ = ["RoutedAction", "RouterBridge", "RouterBridgeContext", "WorkflowPhaseMapping"]

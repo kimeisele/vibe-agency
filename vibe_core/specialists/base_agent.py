@@ -485,7 +485,7 @@ class BaseAgent:
                     "error": result.error,
                     "timestamp": result.timestamp,
                 }
-        except Exception as e:
+        except Exception:
             pass
 
         # Fallback if TaskExecutor not available
