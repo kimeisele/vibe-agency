@@ -12,8 +12,10 @@ Classes:
 from .base_agent import BaseAgent, ExecutionResult, KnowledgeResult
 from .base_specialist import BaseSpecialist, MissionContext, SpecialistResult
 from .planning_specialist import PlanningSpecialist
+from .registry import AgentRegistry
 
 __all__ = [
+    "AgentRegistry",
     "BaseAgent",
     "BaseSpecialist",
     "ExecutionResult",
