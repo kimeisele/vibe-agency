@@ -24,7 +24,12 @@ Version: 0.1 (Logic Foundation)
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+# Import runtime modules with proper package paths
+if TYPE_CHECKING:
+    from agency_os.core_system.runtime.prompt_context import get_prompt_context
+    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -372,17 +377,9 @@ class GraphExecutor:
         # OPERATION VOICE: Check if node has a prompt_key for registry lookup
         if node.prompt_key:
             try:
-                # Import with proper path handling (00_system module structure)
-                import sys
-                from pathlib import Path
-
-                # Get the 00_system directory
-                system_dir = Path(__file__).parent.parent
-                if str(system_dir) not in sys.path:
-                    sys.path.insert(0, str(system_dir))
-
-                from runtime.prompt_context import get_prompt_context
-                from runtime.prompt_registry import PromptRegistry
+                # Import runtime modules with proper package paths
+                from agency_os.core_system.runtime.prompt_context import get_prompt_context
+                from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
                 # Build context dict for prompt interpolation
                 prompt_context = {"node_id": node_id, "action": node.action}

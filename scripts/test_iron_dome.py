@@ -15,13 +15,9 @@ Expected result: Iron Dome blocks dangerous operations while allowing safe ones.
 """
 
 import importlib
-import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Import from 00_system using importlib (directory name starts with digit)
+# Import from agency_os package
 tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ViolationSeverity = tool_safety_guard.ViolationSeverity

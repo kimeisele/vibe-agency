@@ -11,12 +11,7 @@ requiring full infrastructure setup.
 """
 
 import logging
-import sys
 from pathlib import Path
-
-# Setup path
-repo_root = Path(__file__).parent
-sys.path.insert(0, str(repo_root))
 
 # Setup logging to see the integration logs
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
@@ -32,11 +27,9 @@ def test_prompt_registry_integration():
     # Step 1: Import required modules
     print("\n📍 Step 1: Importing modules...")
 
-    # Add the 00_system path for imports
-    sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
-
-    from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
-    from runtime.prompt_registry import PromptRegistry
+    # Use proper package imports
+    from agency_os.core_system.playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
+    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
     # Verify the registry has our test prompts
     print("   ✅ PromptRegistry imported")

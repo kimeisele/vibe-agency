@@ -7,13 +7,9 @@ This script proves that context injection works by:
 3. Printing the result
 """
 
-import sys
 from pathlib import Path
 
-# Add runtime to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/core_system/runtime"))
-
-from context_loader import ContextLoader
+from agency_os.core_system.runtime.context_loader import ContextLoader
 
 
 def main():

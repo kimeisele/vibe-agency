@@ -13,13 +13,7 @@ This test verifies "The Holy Trinity" is complete:
 """
 
 import logging
-import sys
 from pathlib import Path
-
-# Setup path
-repo_root = Path(__file__).parent
-sys.path.insert(0, str(repo_root))
-sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
 # Setup logging to see the integration logs
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")

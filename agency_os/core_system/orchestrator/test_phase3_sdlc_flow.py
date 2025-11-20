@@ -14,13 +14,9 @@ Usage:
 """
 
 import shutil
-import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
+from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectPhase
 
 
 def test_phase3_sdlc_flow():
