@@ -28,12 +28,12 @@ import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
 from agency_os.persistence.sqlite_store import SQLiteStore
 
@@ -57,9 +57,6 @@ except ImportError:
 # =============================================================================
 # DATA STRUCTURES
 # =============================================================================
-
-# Import shared types (extracted to break circular dependency with registry.py)
-from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 
 
 @dataclass
