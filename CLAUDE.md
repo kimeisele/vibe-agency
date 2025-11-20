@@ -4,24 +4,49 @@
 
 ---
 
-## ✅ CLEANUP COMPLETE - FEATURE FREEZE LIFTED
+## 🚀 ACTIVE ROADMAP: PHASE 2.5 - FOUNDATION SCALABILITY
 
-**Cleanup Roadmap:** 16/16 Tasks Complete (100%)
+**Current Roadmap:** `docs/roadmap/phase_2_5_foundation.json`
+**Status:** 0/13 Tasks Complete (0%)
+**Objective:** Architect for scale - SQLite persistence + Hierarchical Agent Pattern (HAP)
 
-All foundation cleanup tasks finished. System ready for feature development.
+**Next Task:** ARCH-001 (Design SQLite schema)
+**Run:** `./bin/next-task.py` to see current task
 
-**Completion Summary:**
-- Phase 0: Quarantine & Triage ✅ COMPLETE (4/4)
-- Phase 1: Stop the Bleeding ✅ COMPLETE (4/4)
-- Phase 2: Clean the Foundation ✅ COMPLETE (4/4)
-- Phase 3: Verify & Document ✅ COMPLETE (4/4)
+**Strategic Goals:**
+1. **Persistence Layer** - SQLite for queryable mission state, tool audit trails
+2. **HAP Architecture** - Specialist agents per SDLC phase (vs monolithic orchestrator)
+3. **Capability Security** - Playbook-driven tool access control
 
-**See:** `CLEANUP_COMPLETION_REPORT.md` for detailed metrics and handoff.
+**Why Before Features?**
+Foundation must scale before adding product features. Current monolithic orchestrator + volatile JSON state won't support autonomous agents.
 
-**Feature Development:** NOW OPEN
-- Subject to Test-First discipline (docs/policies/TEST_FIRST.md)
-- Pre-push checks mandatory (./bin/pre-push-check.sh)
-- Minimum 60% test coverage required
+**See:** `docs/roadmap/README.md` for full plan
+
+---
+
+## ✅ CLEANUP COMPLETE (Archived)
+
+**Previous Roadmap:** Cleanup & Stabilization - 16/16 Tasks (100%)
+**Archived:** `docs/archive/cleanup_roadmap_completed_2025-11-20.json`
+**Completion:** 2025-11-20
+
+**Key Wins:**
+- Boot reliability: Fail → 100% success
+- Tests: 369 → 631 (+71% increase)
+- Import system fixed (40+ sys.path hacks removed)
+- Provider tests: 0% → 70% coverage
+
+**See:** `CLEANUP_COMPLETION_REPORT.md` for metrics
+
+---
+
+## ⚠️ DEVELOPMENT DISCIPLINE
+
+**Test-First Required:**
+- Minimum 80% test coverage for new code (Phase 2.5 standard)
+- Pre-push checks mandatory (`./bin/pre-push-check.sh`)
+- No claims without passing tests
 
 ---
 

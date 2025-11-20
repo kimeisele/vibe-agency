@@ -209,11 +209,17 @@ handle_health() {
 
     # Check 1: Config source of truth exists
     checks_total=$((checks_total + 1))
-    if [ -f "$VIBE_ROOT/docs/cleanup_roadmap.json" ]; then
-        echo "✅ Config: docs/cleanup_roadmap.json exists" >&2
+    ACTIVE_ROADMAP="$VIBE_ROOT/docs/roadmap/phase_2_5_foundation.json"
+    if [ -f "$ACTIVE_ROADMAP" ]; then
+        echo "✅ Config: Active roadmap (Phase 2.5) exists" >&2
+        checks_passed=$((checks_passed + 1))
+    elif [ -f "$VIBE_ROOT/docs/cleanup_roadmap.json" ]; then
+        # Legacy cleanup roadmap (archived)
+        echo "⚠️  Config: Using archived cleanup roadmap (switch to Phase 2.5)" >&2
+        ACTIVE_ROADMAP="$VIBE_ROOT/docs/cleanup_roadmap.json"
         checks_passed=$((checks_passed + 1))
     else
-        echo "❌ Config: docs/cleanup_roadmap.json MISSING (critical git corruption)" >&2
+        echo "❌ Config: No active roadmap found (critical)" >&2
         health_status=1
     fi
 

@@ -1,4 +1,50 @@
-# The Foundation of the Agency Operating System, v1.0
+# Archive Directory
+
+**Purpose:** Historical documentation, completed roadmaps, and deprecated artifacts.
+
+---
+
+## 📋 RECENTLY ARCHIVED
+
+### cleanup_roadmap_completed_2025-11-20.json ✅
+
+**Status:** COMPLETE (16/16 tasks, 100%)
+**Completion:** 2025-11-20
+**Objective:** Foundation cleanup and stabilization
+
+**Key Achievements:**
+- Quarantined 16+ polluted GADs
+- Fixed boot script (zero-config boot works)
+- Removed 40+ sys.path hacks
+- Added 38 tests for provider system
+- Enforced test discipline
+- Corrected status inflation metrics
+
+**See:** `CLEANUP_COMPLETION_REPORT.md` in project root
+
+---
+
+## 🚀 ACTIVE ROADMAP
+
+**Current:** `docs/roadmap/phase_2_5_foundation.json`
+
+**Objective:** Foundation Scalability (HAP + SQLite persistence)
+
+**Phases:**
+1. Persistence Foundation (SQLite) - 4 tasks
+2. Vertical Slice Extraction - 3 tasks
+3. HAP Generalization - 3 tasks
+4. Verification - 3 tasks
+
+---
+
+## 📚 ARCHIVE CONTENTS
+
+This directory contains superseded documentation and completed roadmaps for historical reference.
+
+---
+
+# The Foundation of the Agency Operating System, v1.0 (Historical)
 
 This document defines the four core concepts that form the foundation of the Agency Operating System (Agency OS). These meta-frameworks guide the architecture and implementation of a closed-loop, automated system for managing the entire software development lifecycle (SDLC).
 

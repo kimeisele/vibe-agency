@@ -1,0 +1,394 @@
+{
+  "roadmap_version": "2.5.0-foundation-scale",
+  "roadmap_name": "Foundation Scalability & HAP Architecture",
+  "created_at": "2025-11-20",
+  "strategy": "Sequential foundation hardening: Persistence → Extraction → Generalization",
+  "context": "Post-cleanup phase. System is stable (16/16 cleanup tasks complete). Now architect for scale: move from monolithic orchestrator to Hierarchical Agent Pattern (HAP) with persistent state.",
+
+  "phases": [
+    {
+      "phase_id": "PHASE_0",
+      "phase_name": "Persistence Foundation (SQLite)",
+      "objective": "Add queryable, transactional state layer - prerequisite for all autonomous agent work",
+      "estimated_sessions": 3,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-001",
+          "name": "Design SQLite schema for agent operations",
+          "description": "Create normalized schema for missions, tool_calls, decisions, playbook_runs, agent_memory",
+          "acceptance_criteria": [
+            "docs/tasks/ARCH-001_schema.sql created with tables: missions, tool_calls, decisions, playbook_runs, agent_memory",
+            "Schema supports: mission history, tool call audit trail, decision provenance, playbook metrics",
+            "Foreign keys enforce referential integrity (tool_calls → missions, decisions → missions)",
+            "Indexes on: mission_id, timestamp, phase, agent_name (for fast queries)",
+            "Migration path documented (JSON → SQLite transition strategy)"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P0",
+          "dependencies": [],
+          "deliverables": [
+            "docs/tasks/ARCH-001_schema.sql",
+            "docs/tasks/ARCH-001_migration_plan.md"
+          ]
+        },
+        {
+          "task_id": "ARCH-002",
+          "name": "Implement SQLite store layer",
+          "description": "Create agency_os/persistence/sqlite_store.py with CRUD operations",
+          "acceptance_criteria": [
+            "agency_os/persistence/sqlite_store.py created",
+            "Class SQLiteStore with methods: init_db(), create_mission(), log_tool_call(), record_decision(), get_mission_history()",
+            "Auto-creates .vibe/state/vibe_agency.db on first boot (zero-config)",
+            "Handles migrations gracefully (schema versioning with PRAGMA user_version)",
+            "Thread-safe (sqlite3.connect with check_same_thread=False)",
+            "Tests: tests/persistence/test_sqlite_store.py (15+ tests, 80% coverage)"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P0",
+          "dependencies": ["ARCH-001"],
+          "deliverables": [
+            "agency_os/persistence/__init__.py",
+            "agency_os/persistence/sqlite_store.py",
+            "tests/persistence/test_sqlite_store.py"
+          ]
+        },
+        {
+          "task_id": "ARCH-003",
+          "name": "Migrate mission state from JSON to SQLite",
+          "description": "Update boot_sequence.py and core_orchestrator.py to use SQLite",
+          "acceptance_criteria": [
+            "boot_sequence.py initializes SQLite store (replaces active_mission.json reads)",
+            "core_orchestrator.py writes mission updates to DB (not JSON)",
+            "Backward compatibility: imports existing .vibe/state/active_mission.json if DB empty (one-time migration)",
+            "Session resume works from DB: ./bin/system-boot.sh resumes last mission from sqlite",
+            "Test: rm -rf .vibe/ && ./bin/system-boot.sh (creates DB, no errors)",
+            "Test: Simulate crash mid-mission, boot recovers from DB"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P0",
+          "dependencies": ["ARCH-002"],
+          "deliverables": [
+            "Updated: agency_os/core_system/runtime/boot_sequence.py",
+            "Updated: agency_os/core/core_orchestrator.py",
+            "tests/integration/test_mission_persistence.py"
+          ]
+        },
+        {
+          "task_id": "ARCH-004",
+          "name": "Add tool call logging to tool_executor",
+          "description": "Persist all tool executions to SQLite for audit trail",
+          "acceptance_criteria": [
+            "tool_executor.py logs every tool call to SQLite (tool name, args, result, timestamp, mission_id)",
+            "Logs include: success/failure status, execution duration, error messages if failed",
+            "Query interface: get_tool_history(mission_id), get_failed_tools(mission_id)",
+            "Test: Run planning workflow, query DB shows all tool calls (e.g., SELECT * FROM tool_calls WHERE mission_id = 'test-123')",
+            "Performance: Logging adds < 10ms overhead per tool call"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P0",
+          "dependencies": ["ARCH-003"],
+          "deliverables": [
+            "Updated: agency_os/tools/tool_executor.py",
+            "tests/tools/test_tool_logging.py"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_1",
+      "phase_name": "Vertical Slice Extraction (Prove HAP Pattern)",
+      "objective": "Extract ONE specialist agent (Planning or Coding) to prove delegation pattern works",
+      "estimated_sessions": 3,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-005",
+          "name": "Design BaseSpecialist interface",
+          "description": "Create abstract base class for all specialist agents",
+          "acceptance_criteria": [
+            "agency_os/agents/base_specialist.py created",
+            "Abstract methods: execute(mission_context), validate_preconditions(), persist_state(), load_state()",
+            "Shared functionality: SQLite integration, tool safety guard, playbook loading",
+            "Lifecycle hooks: on_start(), on_complete(), on_error()",
+            "Documentation: docs/architecture/SPECIALIST_AGENT_CONTRACT.md"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P0",
+          "dependencies": ["ARCH-004"],
+          "deliverables": [
+            "agency_os/agents/__init__.py",
+            "agency_os/agents/base_specialist.py",
+            "docs/architecture/SPECIALIST_AGENT_CONTRACT.md"
+          ]
+        },
+        {
+          "task_id": "ARCH-006",
+          "name": "Extract PlanningSpecialist from orchestrator",
+          "description": "Move PLANNING phase logic into dedicated specialist class",
+          "acceptance_criteria": [
+            "agency_os/agents/planning_specialist.py created (inherits BaseSpecialist)",
+            "PlanningSpecialist handles: requirement analysis, architecture design, task breakdown",
+            "Orchestrator delegates to PlanningSpecialist instead of executing inline",
+            "Specialist persists decisions to SQLite (decisions table)",
+            "Existing planning workflow tests still pass (tests/test_planning_workflow.py)",
+            "New test: PlanningSpecialist works standalone (no orchestrator dependency)"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P0",
+          "dependencies": ["ARCH-005"],
+          "deliverables": [
+            "agency_os/agents/planning_specialist.py",
+            "Updated: agency_os/core/core_orchestrator.py (delegates to specialist)",
+            "tests/agents/test_planning_specialist.py"
+          ]
+        },
+        {
+          "task_id": "ARCH-007",
+          "name": "Prove specialist pattern with end-to-end test",
+          "description": "Validate that specialist can run independently and orchestrator delegation works",
+          "acceptance_criteria": [
+            "Test 1: PlanningSpecialist executes planning phase standalone (no orchestrator)",
+            "Test 2: Orchestrator delegates to PlanningSpecialist, transitions to next phase",
+            "Test 3: Specialist state persists to DB, can resume after crash",
+            "Test 4: Tool calls logged to SQLite during specialist execution",
+            "All tests pass: uv run pytest tests/agents/ -v",
+            "Performance baseline: specialist execution within 10% of original orchestrator time"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P0",
+          "dependencies": ["ARCH-006"],
+          "deliverables": [
+            "tests/e2e/test_specialist_delegation.py",
+            "docs/architecture/SPECIALIST_PATTERN_VALIDATION.md"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_2",
+      "phase_name": "HAP Pattern Generalization",
+      "objective": "Scale specialist pattern to all 5 SDLC phases, make orchestrator a pure router",
+      "estimated_sessions": 4,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-008",
+          "name": "Implement remaining 4 specialists",
+          "description": "Create CodingSpecialist, TestingSpecialist, DeploymentSpecialist, MaintenanceSpecialist",
+          "acceptance_criteria": [
+            "All 5 specialists inherit from BaseSpecialist",
+            "Each specialist implements phase-specific logic (extracted from orchestrator)",
+            "Each specialist persists decisions to SQLite",
+            "Existing workflow tests still pass (coding, testing, deployment, maintenance)",
+            "New tests for each specialist (standalone execution)"
+          ],
+          "estimated_time_mins": 300,
+          "priority": "P1",
+          "dependencies": ["ARCH-007"],
+          "deliverables": [
+            "agency_os/agents/coding_specialist.py",
+            "agency_os/agents/testing_specialist.py",
+            "agency_os/agents/deployment_specialist.py",
+            "agency_os/agents/maintenance_specialist.py",
+            "tests/agents/test_coding_specialist.py",
+            "tests/agents/test_testing_specialist.py",
+            "tests/agents/test_deployment_specialist.py",
+            "tests/agents/test_maintenance_specialist.py"
+          ]
+        },
+        {
+          "task_id": "ARCH-009",
+          "name": "Refactor orchestrator to pure routing logic",
+          "description": "Orchestrator becomes < 200 LOC, only routes to specialists",
+          "acceptance_criteria": [
+            "core_orchestrator.py is < 200 LOC (down from current ~500+)",
+            "Orchestrator responsibility: phase detection → specialist selection → delegation → transition",
+            "NO phase-specific logic in orchestrator (all moved to specialists)",
+            "Dynamic specialist loading: specialists registered in config, orchestrator loads at runtime",
+            "All SDLC workflow tests pass (planning, coding, testing, deployment, maintenance)"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P1",
+          "dependencies": ["ARCH-008"],
+          "deliverables": [
+            "Refactored: agency_os/core/core_orchestrator.py",
+            "agency_os/config/specialist_registry.yaml",
+            "tests/core/test_orchestrator_routing.py"
+          ]
+        },
+        {
+          "task_id": "ARCH-010",
+          "name": "Add playbook-driven tool capability declaration",
+          "description": "Playbooks declare which tools each phase can use (capability-based security)",
+          "acceptance_criteria": [
+            "Playbook schema updated: each phase declares 'allowed_tools' list",
+            "BaseSpecialist validates tool calls against allowed_tools before execution",
+            "tool_safety_guard.py enforces playbook-declared capabilities",
+            "Example: PLANNING phase can use [research, analyze] but NOT [deploy, execute]",
+            "Test: Specialist attempting unauthorized tool raises ToolCapabilityError",
+            "Documentation: docs/architecture/CAPABILITY_BASED_SECURITY.md"
+          ],
+          "estimated_time_mins": 150,
+          "priority": "P1",
+          "dependencies": ["ARCH-009"],
+          "deliverables": [
+            "Updated: agency_os/playbooks/*.yaml (add allowed_tools)",
+            "Updated: agency_os/agents/base_specialist.py (capability enforcement)",
+            "Updated: agency_os/tools/tool_safety_guard.py",
+            "tests/security/test_tool_capabilities.py",
+            "docs/architecture/CAPABILITY_BASED_SECURITY.md"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_3",
+      "phase_name": "Verification & Documentation",
+      "objective": "Ensure HAP architecture works, update all documentation",
+      "estimated_sessions": 2,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "ARCH-011",
+          "name": "Run full HAP verification suite",
+          "description": "Validate all specialists work independently and as coordinated system",
+          "acceptance_criteria": [
+            "All specialist tests pass (planning, coding, testing, deployment, maintenance)",
+            "All workflow tests pass (end-to-end SDLC)",
+            "SQLite persistence tests pass (mission recovery, tool logging)",
+            "Performance regression < 10% vs pre-HAP baseline",
+            "Test coverage >= 80% for new specialist code"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P0",
+          "dependencies": ["ARCH-010"],
+          "deliverables": [
+            "tests/e2e/test_hap_full_system.py",
+            "docs/verification/HAP_VERIFICATION_REPORT.md"
+          ]
+        },
+        {
+          "task_id": "ARCH-012",
+          "name": "Update architecture documentation",
+          "description": "Document HAP architecture, specialist contract, capability model",
+          "acceptance_criteria": [
+            "ARCHITECTURE_V2.md updated with HAP design",
+            "New doc: docs/architecture/HAP_ARCHITECTURE.md (specialist pattern, delegation flow)",
+            "New doc: docs/architecture/PERSISTENCE_LAYER.md (SQLite schema, usage)",
+            "CLAUDE.md updated: Phase 2.5 complete, HAP operational",
+            "ARCHITECTURE_REGISTRY.md updated: Add ARCH-001 to ARCH-012 as new ADRs"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P1",
+          "dependencies": ["ARCH-011"],
+          "deliverables": [
+            "Updated: ARCHITECTURE_V2.md",
+            "docs/architecture/HAP_ARCHITECTURE.md",
+            "docs/architecture/PERSISTENCE_LAYER.md",
+            "Updated: CLAUDE.md",
+            "Updated: docs/architecture/ARCHITECTURE_REGISTRY.md"
+          ]
+        },
+        {
+          "task_id": "ARCH-013",
+          "name": "Create Phase 2.5 completion report",
+          "description": "Document HAP implementation, metrics, next steps",
+          "acceptance_criteria": [
+            "docs/PHASE_2_5_COMPLETION_REPORT.md created",
+            "Before/after metrics: orchestrator LOC, specialist count, test coverage, query performance",
+            "HAP benefits documented: delegation working, persistence functional, capability security operational",
+            "Next steps: Phase 3 (product features), optional sandboxing (Phase 4)",
+            "Handoff to product development: system ready for autonomous agents"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P1",
+          "dependencies": ["ARCH-012"],
+          "deliverables": [
+            "docs/PHASE_2_5_COMPLETION_REPORT.md"
+          ]
+        }
+      ]
+    }
+  ],
+
+  "execution_strategy": {
+    "mode": "steward_sessions",
+    "description": "STEWARD executes tasks sequentially, strict dependency enforcement",
+    "workflow": [
+      "1. STEWARD boots, reads this roadmap (phase_2_5_foundation.json)",
+      "2. Checks current phase, finds first pending task with satisfied dependencies",
+      "3. Executes task following acceptance criteria",
+      "4. Marks task complete, updates roadmap JSON",
+      "5. Session ends or continues to next task",
+      "6. Repeat until all 13 tasks complete"
+    ],
+    "safety_rails": [
+      "Strict dependency enforcement: ARCH-N cannot start until ARCH-(N-1) complete",
+      "Each task has testable acceptance criteria (no subjective completion)",
+      "Test-First discipline applies to all code (minimum 80% coverage for new code)",
+      "Session handoff preserves state between runs",
+      "Rollback plan: Each phase can be reverted via git (specialists in separate commits)"
+    ]
+  },
+
+  "progress_tracking": {
+    "current_phase": "PHASE_0",
+    "current_task": null,
+    "completed_tasks": [],
+    "blocked_tasks": [],
+    "estimated_total_time_mins": 1920,
+    "estimated_total_sessions": 12
+  },
+
+  "metrics": {
+    "before": {
+      "orchestrator_loc": "~500+",
+      "specialist_count": 0,
+      "persistence_layer": "JSON files (volatile)",
+      "tool_call_logging": "Text logs only",
+      "delegation_pattern": "Monolithic (all logic in orchestrator)",
+      "phase_isolation": "Low (tight coupling)",
+      "query_capability": "None (grep logs)"
+    },
+    "after_target": {
+      "orchestrator_loc": "< 200 (pure routing)",
+      "specialist_count": 5,
+      "persistence_layer": "SQLite (queryable, transactional)",
+      "tool_call_logging": "Full audit trail in DB",
+      "delegation_pattern": "HAP (hierarchical, autonomous)",
+      "phase_isolation": "High (specialists are independent)",
+      "query_capability": "SQL queries (mission history, tool calls, decisions)"
+    },
+    "key_benefits": [
+      "Traceability: Full audit trail of agent decisions and tool calls",
+      "Debuggability: Query SQLite to understand 'why did agent X do Y?'",
+      "Scalability: Add new specialists without touching orchestrator",
+      "Security: Capability-based tool access (playbook-driven)",
+      "Resilience: Mission state persists across crashes/reboots",
+      "Learning: Historical data enables agent performance analysis"
+    ]
+  },
+
+  "strategic_alignment": {
+    "gemini_recommendations": {
+      "persistence_layer": "✅ Addressed (Phase 0: SQLite foundation)",
+      "hierarchical_agents": "✅ Addressed (Phase 1-2: HAP pattern)",
+      "tool_security": "✅ Addressed (Phase 2: capability-based security)",
+      "sandboxing": "⏳ Deferred (optional Phase 4, only if autonomous spawning added)"
+    },
+    "prerequisites_for_features": [
+      "Phase 2.5 must complete BEFORE product features (Phase 3)",
+      "Reason: Product features will use specialists + persistence",
+      "Without HAP: Adding features makes orchestrator more complex (anti-pattern)",
+      "With HAP: Adding features = adding new specialists (scalable pattern)"
+    ]
+  },
+
+  "rollback_strategy": {
+    "phase_0_rollback": "Revert to JSON-based state (delete SQLite store, restore active_mission.json usage)",
+    "phase_1_rollback": "Disable specialist delegation, restore inline orchestrator logic",
+    "phase_2_rollback": "Remove new specialists, keep PlanningSpecialist as proof-of-concept",
+    "git_strategy": "Each phase in separate branch, merge only after verification passes"
+  }
+}

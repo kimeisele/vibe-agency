@@ -1,0 +1,308 @@
+{
+  "roadmap_version": "1.0.0-cleanup",
+  "roadmap_name": "Foundation Cleanup & Stabilization",
+  "created_at": "2025-11-20",
+  "strategy": "Self-healing through STEWARD sessions",
+  "context": "System grew too complex too fast. This roadmap systematically cleans foundation using STEWARD to execute tasks.",
+
+  "phases": [
+    {
+      "phase_id": "PHASE_0",
+      "phase_name": "Quarantine & Triage",
+      "objective": "Separate good architecture from polluted GADs, establish clean baseline",
+      "estimated_sessions": 2,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "Q001",
+          "name": "Create quarantine structure",
+          "description": "Move unclear/polluted GADs to docs/architecture/quarantine/",
+          "acceptance_criteria": [
+            "docs/architecture/quarantine/ directory exists",
+            "GAD-100, 101, 102, 103, 200, 300 moved to quarantine (they're features, not architecture)",
+            "Unclear GADs (105, 201-204, 301-304, 503-504, 601-602, 701-702, 901-909) moved to quarantine/unknown/",
+            "README in quarantine explains why files are there"
+          ],
+          "estimated_time_mins": 45,
+          "priority": "P0",
+          "dependencies": []
+        },
+        {
+          "task_id": "Q002",
+          "name": "Document GOOD GADs (Architecture Only)",
+          "description": "Create clean registry with only 8 verified architectural decisions",
+          "acceptance_criteria": [
+            "docs/architecture/ARCHITECTURE_REGISTRY.md created",
+            "Lists only: ADR-003, GAD-500, 501, 502, 509, 510, 800, 801",
+            "Each entry has: code evidence, integration status, test status",
+            "Clearly separates: Architecture (8) vs Features (moved to quarantine)"
+          ],
+          "estimated_time_mins": 60,
+          "priority": "P0",
+          "dependencies": ["Q001"]
+        },
+        {
+          "task_id": "Q003",
+          "name": "Add VADs and LADs to registry",
+          "description": "Document VADs (4) and LADs (3) in clean registry",
+          "acceptance_criteria": [
+            "VAD-001, 002, 003, 004 documented with implementation status",
+            "LAD-1, 2, 3 documented (deployment modes)",
+            "Total tracked: 8 ADRs + 4 VADs + 3 LADs = 15 architectural decisions"
+          ],
+          "estimated_time_mins": 30,
+          "priority": "P0",
+          "dependencies": ["Q002"]
+        },
+        {
+          "task_id": "Q004",
+          "name": "Update GAD_IMPLEMENTATION_STATUS.md",
+          "description": "Correct inflated statistics with honest numbers",
+          "acceptance_criteria": [
+            "Summary shows: 15 architectural decisions (not 17+ GADs)",
+            "Completion rate honest (~50-60%, not 71%)",
+            "GAD-511 marked as CRITICAL (0% tested)",
+            "Note added: 'See ARCHITECTURE_REGISTRY.md for clean list, quarantine/ for unclear items'"
+          ],
+          "estimated_time_mins": 30,
+          "priority": "P0",
+          "dependencies": ["Q003"]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_1",
+      "phase_name": "Stop the Bleeding",
+      "objective": "Fix critical regressions and disable cost-burning features",
+      "estimated_sessions": 2,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "B001",
+          "name": "Fix boot script auto-provisioning",
+          "description": "Boot script must work on clean checkout without manual setup",
+          "acceptance_criteria": [
+            "system-boot.sh checks for missing .vibe/state/active_mission.json",
+            "Auto-runs Genesis Protocol (python scripts/genesis.py) if missing",
+            "Auto-generates .vibe/system_integrity_manifest.json if missing",
+            "Test: rm -rf .vibe/ && ./bin/system-boot.sh (succeeds without errors)"
+          ],
+          "estimated_time_mins": 45,
+          "priority": "P0",
+          "dependencies": []
+        },
+        {
+          "task_id": "B002",
+          "name": "Disable CI/CD live fire mode",
+          "description": "Stop burning money on real API calls in CI",
+          "acceptance_criteria": [
+            ".github/workflows/test.yml has VIBE_LIVE_FIRE: false",
+            "CI/CD uses mocks only",
+            "Real API calls only in manual workflows"
+          ],
+          "estimated_time_mins": 15,
+          "priority": "P0",
+          "dependencies": []
+        },
+        {
+          "task_id": "B003",
+          "name": "Mark GAD-511 as CRITICAL",
+          "description": "Honest status: implemented but 0% tested",
+          "acceptance_criteria": [
+            "GAD-511 status changed from COMPLETE to CRITICAL",
+            "Note added: '907 LOC, 0 tests - violates Test-First principle'",
+            "Linked to CRITICAL_ANALYSIS findings"
+          ],
+          "estimated_time_mins": 15,
+          "priority": "P0",
+          "dependencies": []
+        },
+        {
+          "task_id": "B004",
+          "name": "FREEZE feature development",
+          "description": "Add FREEZE notice to CLAUDE.md and session handoff",
+          "acceptance_criteria": [
+            "CLAUDE.md has FREEZE banner at top",
+            "Session handoff template includes FREEZE reminder",
+            "New features blocked until Phase 3 complete"
+          ],
+          "estimated_time_mins": 20,
+          "priority": "P0",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_2",
+      "phase_name": "Clean the Foundation",
+      "objective": "Fix architecture violations and technical debt",
+      "estimated_sessions": 4,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "F001",
+          "name": "Fix import system (sys.path cleanup)",
+          "description": "Remove all 40+ sys.path hacks",
+          "acceptance_criteria": [
+            "Decision made: rename 00_system or create symlink",
+            "All sys.path.insert() calls removed from codebase",
+            "Standard Python imports work (from agency_os.core_system import ...)",
+            "IDE autocomplete functional",
+            "grep -r 'sys.path' --include='*.py' returns 0 results (except legitimate uses)"
+          ],
+          "estimated_time_mins": 240,
+          "priority": "P1",
+          "dependencies": ["B004"]
+        },
+        {
+          "task_id": "F002",
+          "name": "Enforce ADR-003 (Delegation)",
+          "description": "Fix or quarantine scripts that bypass delegation",
+          "acceptance_criteria": [
+            "scripts/run_research.py either deleted or refactored to use core_orchestrator",
+            "No demo scripts make direct LLM API calls",
+            "All intelligence operations go through delegation protocol",
+            "Test: grep -r 'llm_client.invoke' scripts/ returns 0 results (only in agency_os allowed)"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P1",
+          "dependencies": ["F001"]
+        },
+        {
+          "task_id": "F003",
+          "name": "Add minimum tests for GAD-511",
+          "description": "Smoke tests for provider system (907 LOC)",
+          "acceptance_criteria": [
+            "tests/test_google_provider.py created (initialization, cost calc, key validation)",
+            "tests/test_anthropic_provider.py created (initialization, cost calc, key validation)",
+            "tests/test_provider_factory.py created (factory pattern)",
+            "Test coverage for providers >= 60%",
+            "All tests pass with mocks (no real API calls)"
+          ],
+          "estimated_time_mins": 180,
+          "priority": "P1",
+          "dependencies": ["B002"]
+        },
+        {
+          "task_id": "F004",
+          "name": "Implement Test Discipline enforcement",
+          "description": "Iron Dome Rule 3 - prevent untested code commits",
+          "acceptance_criteria": [
+            "Pre-commit hook checks for test coverage",
+            "Hook blocks commits if coverage < 60% for new code",
+            "Hook can be bypassed with --no-verify (but warns)",
+            "Documentation updated: docs/policies/TEST_FIRST.md"
+          ],
+          "estimated_time_mins": 120,
+          "priority": "P1",
+          "dependencies": ["F003"]
+        }
+      ]
+    },
+    {
+      "phase_id": "PHASE_3",
+      "phase_name": "Verify & Document",
+      "objective": "Ensure cleanup worked, update all docs",
+      "estimated_sessions": 2,
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "V001",
+          "name": "Run full verification suite",
+          "description": "Verify all claims in documentation",
+          "acceptance_criteria": [
+            "./bin/verify-claude-md.sh passes 100%",
+            "./bin/pre-push-check.sh passes",
+            "uv run pytest tests/ passes >= 95%",
+            "./tests/test_cold_boot.sh passes"
+          ],
+          "estimated_time_mins": 60,
+          "priority": "P0",
+          "dependencies": ["F004"]
+        },
+        {
+          "task_id": "V002",
+          "name": "Verify ADR integration",
+          "description": "Check if GAD-502/509 are actually used in core flow",
+          "acceptance_criteria": [
+            "GAD-502 (inject_context): grep shows usage in core_orchestrator or prompt_composer",
+            "GAD-509 (CircuitBreaker): grep shows usage in llm_client",
+            "Integration tests exist for both",
+            "Update status: LIVE → VERIFIED (if integrated) or LIVE → IMPLEMENTED (if not)"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P1",
+          "dependencies": ["V001"]
+        },
+        {
+          "task_id": "V003",
+          "name": "Update all documentation",
+          "description": "Sync docs with reality",
+          "acceptance_criteria": [
+            "CLAUDE.md updated (test counts, GAD stats, FREEZE removed if Phase 3 complete)",
+            "ARCHITECTURE_REGISTRY.md is canonical source of truth",
+            "GAD_IMPLEMENTATION_STATUS.md references ARCHITECTURE_REGISTRY.md",
+            "README.md updated if needed",
+            "All docs in sync with code"
+          ],
+          "estimated_time_mins": 90,
+          "priority": "P1",
+          "dependencies": ["V002"]
+        },
+        {
+          "task_id": "V004",
+          "name": "Create cleanup completion report",
+          "description": "Document what was fixed and what remains",
+          "acceptance_criteria": [
+            "CLEANUP_COMPLETION_REPORT.md created",
+            "Lists: quarantined items, fixed issues, verified architecture, remaining debt",
+            "Includes before/after metrics",
+            "Next steps clearly defined"
+          ],
+          "estimated_time_mins": 60,
+          "priority": "P1",
+          "dependencies": ["V003"]
+        }
+      ]
+    }
+  ],
+
+  "execution_strategy": {
+    "mode": "steward_sessions",
+    "description": "User spawns STEWARD sessions, each picks up next pending task",
+    "workflow": [
+      "1. STEWARD boots, reads this roadmap",
+      "2. Checks current phase, finds first pending task",
+      "3. Executes task, runs acceptance criteria",
+      "4. Marks task complete, updates roadmap JSON",
+      "5. Session ends, user spawns next STEWARD",
+      "6. Repeat until all phases complete"
+    ],
+    "safety_rails": [
+      "Each task has clear acceptance criteria (testable)",
+      "No task marked complete without passing criteria",
+      "Session handoff preserves state between runs",
+      "User can intervene/adjust between sessions"
+    ]
+  },
+
+  "progress_tracking": {
+    "current_phase": "PHASE_0",
+    "current_task": null,
+    "completed_tasks": [],
+    "blocked_tasks": [],
+    "estimated_total_time_mins": 1305,
+    "estimated_total_sessions": 10
+  },
+
+  "metrics": {
+    "architecture_decisions_before": "40+ polluted (claimed 17 GADs, actually features mixed in)",
+    "architecture_decisions_after": "15 clean (8 ADRs + 4 VADs + 3 LADs)",
+    "test_coverage_before": "96.3% (but 907 LOC untested in GAD-511)",
+    "test_coverage_after_target": ">=95% with no untested critical code",
+    "sys_path_hacks_before": "40+",
+    "sys_path_hacks_after_target": "0",
+    "boot_reliability_before": "Fails on clean checkout",
+    "boot_reliability_after_target": "100% success rate"
+  }
+}

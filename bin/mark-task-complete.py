@@ -12,11 +12,19 @@ from pathlib import Path
 
 
 def load_roadmap():
-    """Load the cleanup roadmap"""
+    """Load the active roadmap (Phase 2.5 or cleanup)"""
+    # Try Phase 2.5 roadmap first
+    roadmap_path = Path(__file__).parent.parent / "docs/roadmap/phase_2_5_foundation.json"
+
+    if roadmap_path.exists():
+        with open(roadmap_path) as f:
+            return json.load(f), roadmap_path
+
+    # Fall back to legacy cleanup roadmap
     roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
 
     if not roadmap_path.exists():
-        print(f"❌ Roadmap not found: {roadmap_path}")
+        print(f"❌ No active roadmap found")
         sys.exit(1)
 
     with open(roadmap_path) as f:

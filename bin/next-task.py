@@ -12,7 +12,15 @@ from pathlib import Path
 
 
 def load_roadmap():
-    """Load the cleanup roadmap"""
+    """Load the active roadmap (Phase 2.5 or cleanup)"""
+    # Try Phase 2.5 roadmap first
+    roadmap_path = Path(__file__).parent.parent / "docs/roadmap/phase_2_5_foundation.json"
+
+    if roadmap_path.exists():
+        with open(roadmap_path) as f:
+            return json.load(f)
+
+    # Fall back to legacy cleanup roadmap
     roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
 
     if not roadmap_path.exists():
@@ -126,18 +134,23 @@ Estimated Time: {task["estimated_time_mins"]} minutes
    Run: ./bin/mark-task-complete.py {task["task_id"]}
    This will update the roadmap and queue the next task.
 
-📖 Full Roadmap: .vibe/config/cleanup_roadmap.json
+📖 Full Roadmap: docs/roadmap/phase_2_5_foundation.json (source of truth)
 """
 
     return output
 
 
 def main():
-    roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
+    # Try Phase 2.5 roadmap first
+    roadmap_path = Path(__file__).parent.parent / "docs/roadmap/phase_2_5_foundation.json"
 
     if not roadmap_path.exists():
-        print("No cleanup roadmap found.")
-        print("The system is either not in cleanup mode or the roadmap hasn't been created.")
+        # Fall back to legacy cleanup roadmap
+        roadmap_path = Path(__file__).parent.parent / ".vibe/config/cleanup_roadmap.json"
+
+    if not roadmap_path.exists():
+        print("No active roadmap found.")
+        print("The system is either not in roadmap mode or the roadmap hasn't been created.")
         sys.exit(0)
 
     with open(roadmap_path) as f:
