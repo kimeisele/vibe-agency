@@ -28,9 +28,9 @@ The test suite was executed via `bin/vibe-test --coverage`.
 
 - **Result:** 49% total coverage.
 - **Implication:** This is a significant risk. Critical modules responsible for state management and agent execution lack sufficient test coverage, including:
-    - `agency_os/00_system/orchestrator/core_orchestrator.py` (65%)
-    - `agency_os/00_system/orchestrator/handlers/planning_handler.py` (44%)
-    - `agency_os/00_system/orchestrator/handlers/testing_handler.py` (0%)
+    - `agency_os/core_system/orchestrator/core_orchestrator.py` (65%)
+    - `agency_os/core_system/orchestrator/handlers/planning_handler.py` (44%)
+    - `agency_os/core_system/orchestrator/handlers/testing_handler.py` (0%)
 
 ---
 

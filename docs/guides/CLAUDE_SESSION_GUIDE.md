@@ -53,7 +53,7 @@ from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
     "prompt_runtime",
-    Path("/home/user/vibe-agency/agency_os/00_system/runtime/prompt_runtime.py")
+    Path("/home/user/vibe-agency/agency_os/core_system/runtime/prompt_runtime.py")
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)
@@ -680,7 +680,7 @@ context = compose_prompt("VIBE_ALIGNER", "04_gap_detection")
 
 ### Key Files
 - `vibe_helper.py` - Helper to load agent contexts
-- `agency_os/00_system/runtime/prompt_runtime.py` - Core runtime
+- `agency_os/core_system/runtime/prompt_runtime.py` - Core runtime
 - `agency_os/01_planning_framework/knowledge/*.yaml` - Knowledge bases
 
 ### Key Concepts

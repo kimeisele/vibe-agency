@@ -247,7 +247,7 @@ Your task: Generate code based on code_gen_spec.json
 
 ### 4.1. Extend ContextLoader
 
-**File:** `agency_os/00_system/runtime/context_loader.py`
+**File:** `agency_os/core_system/runtime/context_loader.py`
 
 **Add at end of class:**
 
@@ -354,7 +354,7 @@ def context(self) -> dict[str, Any]:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/runtime"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/core_system/runtime"))
 
 from context_loader import ContextLoader
 
@@ -444,7 +444,7 @@ import sys
 from pathlib import Path
 
 # Add runtime to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/runtime"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/core_system/runtime"))
 
 from context_loader import ContextLoader
 
@@ -456,7 +456,7 @@ def main():
     print()
 
     # Load task file
-    task_file = Path("agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_02_handle_coding.md")
+    task_file = Path("agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_02_handle_coding.md")
 
     if not task_file.exists():
         print(f"❌ Task file not found: {task_file}")
@@ -552,8 +552,8 @@ if __name__ == "__main__":
 
 - **GAD-500:** Self-Regulating Execution Environment (MOTD foundation)
 - **GAD-501:** Multi-Layered Context Injection (strategy document)
-- **ContextLoader:** `agency_os/00_system/runtime/context_loader.py`
-- **Task Files:** `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/`
+- **ContextLoader:** `agency_os/core_system/runtime/context_loader.py`
+- **Task Files:** `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/`
 
 ---
 

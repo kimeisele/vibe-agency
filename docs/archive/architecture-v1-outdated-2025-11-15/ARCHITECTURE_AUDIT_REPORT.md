@@ -26,7 +26,7 @@
 
 | Agent Name | Location | Called By | Status | Tools? |
 |------------|----------|-----------|--------|--------|
-| **AGENCY_OS_ORCHESTRATOR** | `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/` | core_orchestrator.py | ✅ Active | N/A |
+| **AGENCY_OS_ORCHESTRATOR** | `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/` | core_orchestrator.py | ✅ Active | N/A |
 | **LEAN_CANVAS_VALIDATOR** | `agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR/` | planning_handler.py | ✅ Active | ❌ None |
 | **VIBE_ALIGNER** | `agency_os/01_planning_framework/agents/VIBE_ALIGNER/` | planning_handler.py | ✅ Active | ❌ None |
 | **GENESIS_BLUEPRINT** | `agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT/` | planning_handler.py | ✅ Active | ❌ None |
@@ -131,7 +131,7 @@ jobs:
           GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          python agency_os/00_system/orchestrator/core_orchestrator.py test-project --mode=autonomous
+          python agency_os/core_system/orchestrator/core_orchestrator.py test-project --mode=autonomous
 ```
 
 **In Python:**
@@ -155,7 +155,7 @@ google_api_key = os.getenv('GOOGLE_SEARCH_API_KEY')  # ✅ Works!
 ### Actual State
 
 ```
-✅ prompt_runtime.py EXISTS (agency_os/00_system/runtime/prompt_runtime.py)
+✅ prompt_runtime.py EXISTS (agency_os/core_system/runtime/prompt_runtime.py)
 ❌ prompt_registry/ DOES NOT EXIST (0 matches)
 ✅ Prompts loaded from: agents/X/tasks/*.md
 ```
@@ -259,7 +259,7 @@ Phase 2 (Upcoming):
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CORE ORCHESTRATOR                               │
-│  (agency_os/00_system/orchestrator/core_orchestrator.py)           │
+│  (agency_os/core_system/orchestrator/core_orchestrator.py)           │
 │                                                                     │
 │  Modes:                                                             │
 │  • delegated (default) → hands prompts to Claude Code             │
@@ -490,7 +490,7 @@ jobs:
           GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          python agency_os/00_system/orchestrator/core_orchestrator.py \
+          python agency_os/core_system/orchestrator/core_orchestrator.py \
             /home/runner/work/vibe-agency/vibe-agency \
             ${{ github.event.inputs.project_id }} \
             --mode=autonomous
@@ -499,7 +499,7 @@ jobs:
 ### Step 3: Implement Tool Client
 
 ```python
-# agency_os/00_system/runtime/google_search_client.py
+# agency_os/core_system/runtime/google_search_client.py
 
 import os
 import requests

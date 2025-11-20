@@ -284,8 +284,8 @@ class CoreOrchestrator:
     def __init__(
         self,
         repo_root: Path,
-        workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml",
-        contracts_yaml: str = "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml",
+        workflow_yaml: str = "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml",
+        contracts_yaml: str = "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml",
         execution_mode: str = "delegated",
     ):
         """

@@ -34,7 +34,7 @@ def test_workflow_defines_all_substates():
     print(f"\n{Colors.BLUE}Test 1: Workflow YAML defines all substates{Colors.RESET}")
 
     workflow_path = (
-        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        PROJECT_ROOT / "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)
@@ -75,7 +75,7 @@ def test_transitions_complete():
     print(f"\n{Colors.BLUE}Test 2: Transitions form complete chain{Colors.RESET}")
 
     workflow_path = (
-        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        PROJECT_ROOT / "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)
@@ -157,7 +157,7 @@ def test_handler_execute_logic():
     print(f"\n{Colors.BLUE}Test 4: Handler execute() routes all substates{Colors.RESET}")
 
     # Read handler source code
-    handler_file = PROJECT_ROOT / "agency_os/00_system/orchestrator/handlers/planning_handler.py"
+    handler_file = PROJECT_ROOT / "agency_os/core_system/orchestrator/handlers/planning_handler.py"
     with open(handler_file) as f:
         source = f.read()
 
@@ -192,7 +192,7 @@ def test_expected_artifacts():
     print(f"\n{Colors.BLUE}Test 5: Expected artifacts documented{Colors.RESET}")
 
     workflow_path = (
-        PROJECT_ROOT / "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        PROJECT_ROOT / "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
     with open(workflow_path) as f:
         workflow = yaml.safe_load(f)

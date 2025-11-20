@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from 00_system using importlib (directory name starts with digit)
-tool_safety_guard = importlib.import_module("agency_os.00_system.runtime.tool_safety_guard")
+tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ViolationSeverity = tool_safety_guard.ViolationSeverity
 

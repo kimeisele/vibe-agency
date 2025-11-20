@@ -136,11 +136,11 @@ test_command "DEPLOYMENT workflow" \
 
 # TESTING handler is a stub (expected to be minimal)
 test_file_exists "TESTING handler stub" \
-    "agency_os/00_system/orchestrator/handlers/testing_handler.py"
+    "agency_os/core_system/orchestrator/handlers/testing_handler.py"
 
 # MAINTENANCE handler is a stub (expected to be minimal)
 test_file_exists "MAINTENANCE handler stub" \
-    "agency_os/00_system/orchestrator/handlers/maintenance_handler.py"
+    "agency_os/core_system/orchestrator/handlers/maintenance_handler.py"
 
 print_section "CORE COMPONENTS (SDLC + Quality)"
 

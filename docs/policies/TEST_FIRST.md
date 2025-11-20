@@ -215,7 +215,7 @@ def test_kernel_allows_safe_artifacts():
 
 ```python
 # Step 2: Implement until tests pass
-# agency_os/00_system/orchestrator/core_orchestrator.py
+# agency_os/core_system/orchestrator/core_orchestrator.py
 
 def _kernel_check_save_artifact(self, artifact_name: str):
     CRITICAL_FILES = ["project_manifest.json", ".session_handoff.json"]

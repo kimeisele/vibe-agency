@@ -435,7 +435,7 @@ python3 vibe-cli.py generate VIBE_ALIGNER 02_feature_extraction
 
 ```bash
 # Understand the composition system
-# Read: agency_os/00_system/runtime/prompt_runtime.py
+# Read: agency_os/core_system/runtime/prompt_runtime.py
 # Create your own agents with:
 #   - _prompt_core.md (personality)
 #   - _composition.yaml (assembly rules)
@@ -450,7 +450,7 @@ python3 vibe-cli.py generate VIBE_ALIGNER 02_feature_extraction
 ```
 vibe-agency/
 ├── vibe-cli.py                              # CLI tool (start here!)
-├── agency_os/00_system/runtime/prompt_runtime.py  # Composition engine
+├── agency_os/core_system/runtime/prompt_runtime.py  # Composition engine
 ├── agency_os/01_planning_framework/         # Planning agents
 │   ├── agents/VIBE_ALIGNER/                # Feature extraction
 │   └── agents/GENESIS_BLUEPRINT/           # Architecture

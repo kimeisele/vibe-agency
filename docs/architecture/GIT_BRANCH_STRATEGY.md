@@ -260,7 +260,7 @@ Current behavior (already handled):
 
 ## Related Documents
 
-- **Boot Sequence:** `agency_os/00_system/runtime/boot_sequence.py`
+- **Boot Sequence:** `agency_os/core_system/runtime/boot_sequence.py`
 - **System Prompt:** See `_get_system_prompt()` method
 - **Session Handoff:** `.session_handoff.json` format
 - **Playbook AOS Integration:** `docs/architecture/PLAYBOOK_AOS_INTEGRATION.md`

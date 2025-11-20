@@ -41,7 +41,7 @@ class SemanticAudit:
     """Core semantic audit engine."""
 
     def __init__(self, ontology_path: str = None, verbose: bool = False):
-        self.ontology_path = ontology_path or "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+        self.ontology_path = ontology_path or "agency_os/core_system/knowledge/AOS_Ontology.yaml"
         self.verbose = verbose
         self.errors: list[str] = []
         self.warnings: list[str] = []
@@ -226,7 +226,7 @@ class SemanticAudit:
         # Search patterns
         patterns = [
             "agency_os/*/knowledge/*.yaml",
-            "agency_os/00_system/knowledge/*.yaml",
+            "agency_os/core_system/knowledge/*.yaml",
         ]
 
         for pattern in patterns:
@@ -281,7 +281,7 @@ def main():
     )
     parser.add_argument(
         "--ontology",
-        default="agency_os/00_system/knowledge/AOS_Ontology.yaml",
+        default="agency_os/core_system/knowledge/AOS_Ontology.yaml",
         help="Path to AOS_Ontology.yaml",
     )
     parser.add_argument("--file", help="Single KB file to audit (instead of all)")

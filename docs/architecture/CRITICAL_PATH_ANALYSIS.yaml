@@ -31,7 +31,7 @@ current_state:
     - name: "Prompt Composition System"
       status: "WORKING"
       files:
-        - "agency_os/00_system/runtime/prompt_runtime.py (319 lines)"
+        - "agency_os/core_system/runtime/prompt_runtime.py (319 lines)"
       capabilities:
         - "Loads _composition.yaml configs"
         - "Assembles prompts from markdown + YAML"
@@ -204,7 +204,7 @@ milestones:
           cost_estimate: "$0.50-$5 per agent execution"
 
       - name: "Integration with PromptRuntime"
-        file: "Update: agency_os/00_system/runtime/prompt_runtime.py"
+        file: "Update: agency_os/core_system/runtime/prompt_runtime.py"
         changes:
           - "Add execute_with_llm() method"
           - "Optional: Keep execute_task() returning string for testing"
@@ -234,7 +234,7 @@ milestones:
 
     deliverables:
       - name: "Fix _get_agent_path()"
-        file: "Update: agency_os/00_system/runtime/prompt_runtime.py"
+        file: "Update: agency_os/core_system/runtime/prompt_runtime.py"
         current_code: |
           # Lines 268-276 (HARDCODED)
           def _get_agent_path(self, agent_id: str) -> Path:
@@ -255,7 +255,7 @@ milestones:
               "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
               "AUDITOR": "system_steward_framework/agents/AUDITOR",
               "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
-              "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
+              "AGENCY_OS_ORCHESTRATOR": "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR",
           }
 
           def _get_agent_path(self, agent_id: str) -> Path:
@@ -495,7 +495,7 @@ immediate_next_steps:
       owner: "Backend Engineer"
       priority: "P0"
       files:
-        - "Update: agency_os/00_system/runtime/prompt_runtime.py"
+        - "Update: agency_os/core_system/runtime/prompt_runtime.py"
       estimated_hours: 2
 
   day_3:

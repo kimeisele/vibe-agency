@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 # Add runtime to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/runtime"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/core_system/runtime"))
 
 from context_loader import ContextLoader
 
@@ -24,7 +24,7 @@ def main():
 
     # Load task file
     task_file = Path(
-        "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_02_handle_coding.md"
+        "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_02_handle_coding.md"
     )
 
     if not task_file.exists():

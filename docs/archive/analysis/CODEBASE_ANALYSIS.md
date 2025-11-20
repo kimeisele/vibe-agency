@@ -278,11 +278,11 @@ class ArtifactManager:
 
 **sys.path.insert() calls found in 6 files:**
 ```
-/agency_os/00_system/orchestrator/core_orchestrator.py:38
-/agency_os/00_system/orchestrator/test_phase3_sdlc_flow.py:30
-/agency_os/00_system/orchestrator/test_phase3_smoke.py:39-40
-/agency_os/00_system/runtime/prompt_runtime.py:39
-/agency_os/00_system/runtime/prompt_registry.py:XX
+/agency_os/core_system/orchestrator/core_orchestrator.py:38
+/agency_os/core_system/orchestrator/test_phase3_sdlc_flow.py:30
+/agency_os/core_system/orchestrator/test_phase3_smoke.py:39-40
+/agency_os/core_system/runtime/prompt_runtime.py:39
+/agency_os/core_system/runtime/prompt_registry.py:XX
 /tests/test_workspace_golden/test_prompt_registry.py:8-9
 ```
 

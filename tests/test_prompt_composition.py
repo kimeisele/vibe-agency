@@ -15,7 +15,7 @@ import pytest
 @pytest.fixture(scope="module")
 def prompt_runtime():
     """Load PromptRuntime module dynamically."""
-    runtime_path = Path("agency_os/00_system/runtime/prompt_runtime.py")
+    runtime_path = Path("agency_os/core_system/runtime/prompt_runtime.py")
 
     if not runtime_path.exists():
         pytest.skip(f"prompt_runtime.py not found at {runtime_path.absolute()}")

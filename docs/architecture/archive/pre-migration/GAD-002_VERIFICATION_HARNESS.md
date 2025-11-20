@@ -34,7 +34,7 @@
 **Check #1: Handler files exist**
 ```bash
 # List all handler files
-ls -lh agency_os/00_system/orchestrator/handlers/*.py
+ls -lh agency_os/core_system/orchestrator/handlers/*.py
 # Expected: 5 handler files (planning, coding, testing, deployment, maintenance)
 ```
 
@@ -51,7 +51,7 @@ ls -lh agency_os/00_system/orchestrator/handlers/*.py
 **Check #2: Handlers imported in core_orchestrator.py**
 ```bash
 # Check if handlers are imported
-grep -n "CodingHandler\|TestingHandler\|DeploymentHandler\|MaintenanceHandler" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "CodingHandler\|TestingHandler\|DeploymentHandler\|MaintenanceHandler" agency_os/core_system/orchestrator/core_orchestrator.py
 # Expected: Import statements for all 4 handlers
 ```
 
@@ -92,11 +92,11 @@ uv run pytest tests/test_deployment_workflow.py -v
 # Expected: 5 tests pass ✅
 
 # Check TESTING handler for stub markers
-grep -i "stub\|todo\|not implemented" agency_os/00_system/orchestrator/handlers/testing_handler.py
+grep -i "stub\|todo\|not implemented" agency_os/core_system/orchestrator/handlers/testing_handler.py
 # Expected: Evidence of stub implementation
 
 # Check MAINTENANCE handler for stub markers
-grep -i "stub\|todo\|not implemented" agency_os/00_system/orchestrator/handlers/maintenance_handler.py
+grep -i "stub\|todo\|not implemented" agency_os/core_system/orchestrator/handlers/maintenance_handler.py
 # Expected: Evidence of stub implementation
 ```
 
@@ -142,11 +142,11 @@ find agency_os -type d -name "LEAD_ARCHITECT" 2>/dev/null
 **Check #3: Agents are invoked in orchestrator**
 ```bash
 # Check if AUDITOR is called
-grep -rn "AUDITOR" agency_os/00_system/orchestrator/*.py
+grep -rn "AUDITOR" agency_os/core_system/orchestrator/*.py
 # Expected: References to AUDITOR agent execution
 
 # Check if LEAD_ARCHITECT is called
-grep -rn "LEAD_ARCHITECT" agency_os/00_system/orchestrator/*.py
+grep -rn "LEAD_ARCHITECT" agency_os/core_system/orchestrator/*.py
 # Expected: References to LEAD_ARCHITECT agent execution
 ```
 
@@ -173,21 +173,21 @@ grep -rn "LEAD_ARCHITECT" agency_os/00_system/orchestrator/*.py
 **Check #1: Data contracts file exists**
 ```bash
 # Find data contracts
-ls -la agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+ls -la agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
 # Expected: File exists
 ```
 
 **Check #2: Schema validation in orchestrator**
 ```bash
 # Check for validation calls
-grep -rn "validate\|schema\|contract" agency_os/00_system/orchestrator/core_orchestrator.py | head -20
+grep -rn "validate\|schema\|contract" agency_os/core_system/orchestrator/core_orchestrator.py | head -20
 # Expected: Evidence of schema validation enforcement
 ```
 
 **Check #3: Validation failures are handled**
 ```bash
 # Look for validation error handling
-grep -rn "ValidationError\|SchemaError\|ContractError" agency_os/00_system/orchestrator/*.py
+grep -rn "ValidationError\|SchemaError\|ContractError" agency_os/core_system/orchestrator/*.py
 # Expected: Error handling for invalid artifacts
 ```
 
@@ -215,14 +215,14 @@ grep -rn "ValidationError\|SchemaError\|ContractError" agency_os/00_system/orche
 **Check #1: Quality gates exist**
 ```bash
 # Check workflow for quality gates
-grep -A 5 "quality_gates\|validation_gates" agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+grep -A 5 "quality_gates\|validation_gates" agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
 # Expected: Quality gates defined in workflow
 ```
 
 **Check #2: Quality gate execution**
 ```bash
 # Look for quality gate enforcement
-grep -rn "quality_gate\|validation_gate" agency_os/00_system/orchestrator/*.py
+grep -rn "quality_gate\|validation_gate" agency_os/core_system/orchestrator/*.py
 # Expected: Gate execution in orchestrator
 ```
 
@@ -245,14 +245,14 @@ grep -rn "quality_gate\|validation_gate" agency_os/00_system/orchestrator/*.py
 **Check #1: Workspace isolation**
 ```bash
 # Check if orchestrator handles multiple projects
-grep -rn "workspace\|project_id" agency_os/00_system/orchestrator/core_orchestrator.py | head -20
+grep -rn "workspace\|project_id" agency_os/core_system/orchestrator/core_orchestrator.py | head -20
 # Expected: Evidence of project-scoped execution
 ```
 
 **Check #2: Concurrent execution support**
 ```bash
 # Look for locks, queues, or concurrency primitives
-grep -rn "lock\|mutex\|Queue\|concurrent" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -rn "lock\|mutex\|Queue\|concurrent" agency_os/core_system/orchestrator/core_orchestrator.py
 # Expected: Mechanism to prevent workspace conflicts
 ```
 
@@ -271,7 +271,7 @@ grep -rn "lock\|mutex\|Queue\|concurrent" agency_os/00_system/orchestrator/core_
 **Verification:**
 ```bash
 # Check for real LLM calls (vs. mocks)
-grep -rn "_execute_agent\|_request_intelligence" agency_os/00_system/orchestrator/core_orchestrator.py | head -10
+grep -rn "_execute_agent\|_request_intelligence" agency_os/core_system/orchestrator/core_orchestrator.py | head -10
 # Expected: Real LLM integration (file-based delegation to Claude Code operator)
 ```
 
@@ -286,7 +286,7 @@ grep -rn "_execute_agent\|_request_intelligence" agency_os/00_system/orchestrato
 **Verification:**
 ```bash
 # Look for cost tracking
-grep -rn "cost\|budget\|rate_limit\|quota" agency_os/00_system/orchestrator/*.py
+grep -rn "cost\|budget\|rate_limit\|quota" agency_os/core_system/orchestrator/*.py
 # Expected: Budget tracking and rate limiting
 ```
 
@@ -301,7 +301,7 @@ grep -rn "cost\|budget\|rate_limit\|quota" agency_os/00_system/orchestrator/*.py
 **Verification:**
 ```bash
 # Check for AWAITING_QA_APPROVAL implementation
-grep -rn "AWAITING_QA_APPROVAL\|human.*loop\|manual.*approval" agency_os/00_system/orchestrator/*.py
+grep -rn "AWAITING_QA_APPROVAL\|human.*loop\|manual.*approval" agency_os/core_system/orchestrator/*.py
 # Expected: Human approval mechanism
 ```
 
@@ -316,7 +316,7 @@ grep -rn "AWAITING_QA_APPROVAL\|human.*loop\|manual.*approval" agency_os/00_syst
 **Verification:**
 ```bash
 # Look for checkpointing/recovery
-grep -rn "checkpoint\|save_state\|restore\|recover" agency_os/00_system/orchestrator/*.py
+grep -rn "checkpoint\|save_state\|restore\|recover" agency_os/core_system/orchestrator/*.py
 # Expected: State persistence and recovery logic
 ```
 
@@ -354,11 +354,11 @@ echo ""
 
 # Decision 1: SDLC Orchestrator
 echo "Decision 1: SDLC Orchestrator Architecture"
-handler_count=$(find agency_os/00_system/orchestrator/handlers -name "*_handler.py" -type f | wc -l)
+handler_count=$(find agency_os/core_system/orchestrator/handlers -name "*_handler.py" -type f | wc -l)
 [ "$handler_count" -eq 5 ] && echo "✅ 5 phase handlers exist" || echo "❌ FAIL (expected 5, got $handler_count)"
 
 # Check handler integration
-grep -q "CodingHandler\|TestingHandler\|DeploymentHandler" agency_os/00_system/orchestrator/core_orchestrator.py && \
+grep -q "CodingHandler\|TestingHandler\|DeploymentHandler" agency_os/core_system/orchestrator/core_orchestrator.py && \
   echo "✅ Handlers imported in core_orchestrator" || echo "❌ Handlers not integrated"
 
 # Test complete handlers
@@ -369,9 +369,9 @@ python3 -m pytest tests/test_coding_workflow.py -v >/dev/null 2>&1 && echo "  �
 uv run pytest tests/test_deployment_workflow.py -v >/dev/null 2>&1 && echo "  ✅ DEPLOYMENT handler works" || echo "  ⚠️  DEPLOYMENT handler needs check"
 
 # Check stub handlers
-grep -qi "stub\|not implemented" agency_os/00_system/orchestrator/handlers/testing_handler.py && \
+grep -qi "stub\|not implemented" agency_os/core_system/orchestrator/handlers/testing_handler.py && \
   echo "  ⚠️  TESTING handler is stub" || echo "  ✅ TESTING handler complete"
-grep -qi "stub\|not implemented" agency_os/00_system/orchestrator/handlers/maintenance_handler.py && \
+grep -qi "stub\|not implemented" agency_os/core_system/orchestrator/handlers/maintenance_handler.py && \
   echo "  ⚠️  MAINTENANCE handler is stub" || echo "  ✅ MAINTENANCE handler complete"
 
 # Decision 2: Governance Integration
@@ -382,7 +382,7 @@ echo "Decision 2: Governance Integration"
 # Decision 3: Schema Validation
 echo ""
 echo "Decision 3: Schema Validation"
-[ -f "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml" ] && \
+[ -f "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml" ] && \
   echo "✅ Data contracts file exists" || echo "❌ Data contracts missing"
 
 # Decision 4: Quality Gates
@@ -393,7 +393,7 @@ echo "⚠️  Deferred to GAD-004 verification"
 # Decision 5: Multi-Project Support
 echo ""
 echo "Decision 5: Multi-Project Support"
-grep -q "workspace\|project_id" agency_os/00_system/orchestrator/core_orchestrator.py && \
+grep -q "workspace\|project_id" agency_os/core_system/orchestrator/core_orchestrator.py && \
   echo "⚠️  Workspace handling exists (needs deeper verification)" || echo "❌ No workspace handling"
 
 echo ""
@@ -460,8 +460,8 @@ Main issue is **documentation lag** (DRAFT document but real implementation).
 1. **Verify stub handlers:**
    ```bash
    # Check if TESTING and MAINTENANCE are truly stubs
-   cat agency_os/00_system/orchestrator/handlers/testing_handler.py
-   cat agency_os/00_system/orchestrator/handlers/maintenance_handler.py
+   cat agency_os/core_system/orchestrator/handlers/testing_handler.py
+   cat agency_os/core_system/orchestrator/handlers/maintenance_handler.py
    ```
 
 2. **Complete handler tests:**

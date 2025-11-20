@@ -91,7 +91,7 @@ terms:
 /agency_os/03_qa_framework/knowledge/QA_constraints.yaml @aos-knowledge-curator-qa
 
 # Central Ontology (requires ALL curators)
-/agency_os/00_system/knowledge/AOS_Ontology.yaml @aos-knowledge-curators
+/agency_os/core_system/knowledge/AOS_Ontology.yaml @aos-knowledge-curators
 
 # Fallback
 * @aos-system-architect

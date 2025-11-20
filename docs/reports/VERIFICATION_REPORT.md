@@ -23,7 +23,7 @@
 
 ## Test 1: google_search_client.py
 
-**File:** `/home/user/vibe-agency/agency_os/00_system/orchestrator/tools/google_search_client.py`
+**File:** `/home/user/vibe-agency/agency_os/core_system/orchestrator/tools/google_search_client.py`
 
 ### Test Command:
 ```python
@@ -31,7 +31,7 @@ from pathlib import Path
 import importlib.util
 spec = importlib.util.spec_from_file_location(
     'google_search_client',
-    Path('agency_os/00_system/orchestrator/tools/google_search_client.py')
+    Path('agency_os/core_system/orchestrator/tools/google_search_client.py')
 )
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
@@ -272,7 +272,7 @@ None (verification only, no changes made)
 
 ## Files Analyzed
 
-- `agency_os/00_system/orchestrator/tools/google_search_client.py`
+- `agency_os/core_system/orchestrator/tools/google_search_client.py`
 - `agency_os/01_planning_framework/agents/MARKET_RESEARCHER/tasks/*.meta.yaml`
 - `agency_os/01_planning_framework/agents/VIBE_ALIGNER/`
 - `vibe-cli.py`

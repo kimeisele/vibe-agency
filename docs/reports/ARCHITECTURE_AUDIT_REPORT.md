@@ -47,7 +47,7 @@
   # Definiert die JSON-Schemas für alle Artefakte
   # Basiert auf der Analyse in Teil 2 dieses Berichts
   ```
-- **Location:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+- **Location:** `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 - **Impact:** Reduced accessibility for non-German speakers
 
 #### 1.2 Strengths Found
@@ -117,7 +117,7 @@ Files to update:
 **Action 3: Language Standardization**
 
 Translate all German comments to English:
-- `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+- `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 - Any other files with mixed language
 
 **Action 4: Enforce in Code Reviews**
@@ -657,7 +657,7 @@ Priority order:
 
 Create new gates:
 ```
-agency_os/00_system/gates/
+agency_os/core_system/gates/
 ├── gate_nfr_performance.md    # Check token limits
 ├── gate_nfr_security.md       # Audit sensitive data
 └── gate_nfr_reliability.md    # Validate error handling

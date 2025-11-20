@@ -34,7 +34,7 @@ Agency OS is a governance system for software development, executed by AI agents
         ```
     *   **Analysis:** This knowledge file acts as the "enforcer" for the philosophy. The `VIBE_ALIGNER` agent uses this structured data to automatically identify and reject features that are too complex for a v1.0, and it even provides simpler alternatives. This is the core mechanism for preventing scope creep.
 
-3.  **Evidence File:** `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`
+3.  **Evidence File:** `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml`
     *   **Quote:**
         ```yaml
         - state: AWAITING_QA_APPROVAL
@@ -57,7 +57,7 @@ The architecture is a set of interlocking abstractions that create a formal, aud
 ### Evidence & Analysis
 
 1.  **Abstraction: The State Machine**
-    *   **Evidence File:** `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
+    *   **Evidence File:** `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
     *   **Quote:** `"You are the master conductor... Your SOLE RESPONSIBILITY is to execute the SDLC state machine defined in ORCHESTRATION_workflow_design.yaml. You do not perform any specialist tasks... You read the project_manifest.json to determine the current state... and invoke the correct specialist agent."`
     *   **Analysis:** This prompt clearly separates the orchestration logic from the specialist work. The `ORCHESTRATOR` is the "CPU" of the system, and the YAML file is its instruction set.
 
@@ -183,7 +183,7 @@ The framework's primary weakness is its over-reliance on the "happy path" and pe
 *   **The Intent:** To pause the automated workflow for necessary human judgment.
 *   **The Gap:** The pause is indefinite and has no built-in mechanism for handling delays.
 *   **Evidence:**
-    *   `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`: The `AWAITING_QA_APPROVAL` state has only one exit transition, which is triggered by a `manual_qa_approved_signal`. There are no alternative transitions for a timeout or escalation.
+    *   `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml`: The `AWAITING_QA_APPROVAL` state has only one exit transition, which is triggered by a `manual_qa_approved_signal`. There are no alternative transitions for a timeout or escalation.
     *   `system_steward_framework/knowledge/sops/SOP_003_Execute_HITL_Approval.md`: This procedure for the human approver contains no mention of SLAs, reminders, or what to do if the primary approver is unavailable.
 *   **Analysis:** This creates a critical single point of failure. A human who is on vacation, sick, or simply distracted can permanently halt the entire development pipeline for a project.
 

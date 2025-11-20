@@ -270,7 +270,7 @@ knowledge_gap:
     - "Rollback plan (if ontology change breaks production)"
 
   integration_target:
-    file: "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+    file: "agency_os/core_system/knowledge/AOS_Ontology.yaml"
     section: "NEW header section: versioning_policy"
     action: "Add formal versioning rules + update SOP_006 with ontology change process"
 
@@ -365,7 +365,7 @@ expected_deliverable:
   integration_checklist:
     - "Update CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md Part 7 (resolve blindspots)"
     - "Update docs/GOVERNANCE_MODEL.md (add new patterns/layers)"
-    - "Update agency_os/00_system/knowledge/AOS_Ontology.yaml (if versioning needed)"
+    - "Update agency_os/core_system/knowledge/AOS_Ontology.yaml (if versioning needed)"
     - "Create new SOPs if research reveals missing processes"
     - "Update Phase 2-3 roadmap if research changes priorities"
 

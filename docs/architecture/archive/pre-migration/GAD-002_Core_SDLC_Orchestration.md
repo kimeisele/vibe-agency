@@ -99,7 +99,7 @@ class Orchestrator:
 **Description:** Split into a Core Orchestrator (state machine) + specialized Phase Handlers (framework-specific logic).
 
 ```
-agency_os/00_system/orchestrator/
+agency_os/core_system/orchestrator/
 ├── core_orchestrator.py         # State machine, transitions, manifest management
 ├── phase_handlers/
 │   ├── planning_handler.py      # Existing handle_planning_phase() logic
@@ -881,7 +881,7 @@ class LLMClient:
 
 **Implementation:**
 ```python
-# agency_os/00_system/runtime/llm_client.py
+# agency_os/core_system/runtime/llm_client.py
 class LLMClient:
     """Thin wrapper around LLM providers with retry, cost tracking, and error handling"""
 

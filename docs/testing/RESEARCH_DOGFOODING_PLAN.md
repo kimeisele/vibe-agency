@@ -185,7 +185,7 @@ VERDICT: Research infrastructure is FUNCTIONAL! 🎉
 ## Files Created/Modified
 
 ### Modified:
-- `agency_os/00_system/orchestrator/tools/tool_executor.py` - Fixed method name bug
+- `agency_os/core_system/orchestrator/tools/tool_executor.py` - Fixed method name bug
 
 ### Created:
 - `scripts/test_research_dogfood.py` - Dogfooding test script
@@ -194,9 +194,9 @@ VERDICT: Research infrastructure is FUNCTIONAL! 🎉
 
 ### Verified (Exists):
 - `vibe-cli` - Complete tool use loop (vibe-cli:394-521)
-- `agency_os/00_system/orchestrator/tools/google_search_client.py` - Google API client
-- `agency_os/00_system/orchestrator/tools/web_fetch_client.py` - Web fetch client
-- `agency_os/00_system/orchestrator/tools/tool_definitions.yaml` - Tool schemas
+- `agency_os/core_system/orchestrator/tools/google_search_client.py` - Google API client
+- `agency_os/core_system/orchestrator/tools/web_fetch_client.py` - Web fetch client
+- `agency_os/core_system/orchestrator/tools/tool_definitions.yaml` - Tool schemas
 
 ---
 

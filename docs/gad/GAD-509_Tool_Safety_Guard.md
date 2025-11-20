@@ -75,7 +75,7 @@ A runtime circuit breaker that sits between Agent and Tools, enforcing hard rule
 
 ### Core Class: `ToolSafetyGuard`
 
-**Location:** `agency_os/00_system/runtime/tool_safety_guard.py`
+**Location:** `agency_os/core_system/runtime/tool_safety_guard.py`
 
 **Key Methods:**
 - `check_action(tool_name, args) -> (allowed: bool, violation: SafetyViolation | None)`
@@ -90,7 +90,7 @@ A runtime circuit breaker that sits between Agent and Tools, enforcing hard rule
 
 ### Integration Point: `ToolExecutor`
 
-**Location:** `agency_os/00_system/orchestrator/tools/tool_executor.py`
+**Location:** `agency_os/core_system/orchestrator/tools/tool_executor.py`
 
 The safety guard is integrated into the tool executor's `execute_tool()` method:
 

@@ -494,7 +494,7 @@ class VibeCLI:
 
         # Orchestrator path
         self.orchestrator_path = (
-            self.repo_root / "agency_os" / "00_system" / "orchestrator" / "core_orchestrator.py"
+            self.repo_root / "agency_os" / "core_system" / "orchestrator" / "core_orchestrator.py"
         )
 
         if not self.orchestrator_path.exists():
@@ -504,7 +504,7 @@ class VibeCLI:
         self.tool_definitions_path = (
             self.repo_root
             / "agency_os"
-            / "00_system"
+            / "core_system"
             / "orchestrator"
             / "tools"
             / "tool_definitions.yaml"
@@ -512,7 +512,7 @@ class VibeCLI:
 
         # Tool executor path (for local tool execution)
         self.tool_executor_path = (
-            self.repo_root / "agency_os" / "00_system" / "orchestrator" / "tools"
+            self.repo_root / "agency_os" / "core_system" / "orchestrator" / "tools"
         )
 
         # Playbook registry path
@@ -1187,7 +1187,7 @@ Execute the workflow with domain expertise.
         """
         # Import BootSequence from agency_os runtime
         try:
-            sys.path.insert(0, str(self.repo_root / "agency_os" / "00_system" / "runtime"))
+            sys.path.insert(0, str(self.repo_root / "agency_os" / "core_system" / "runtime"))
             from boot_sequence import BootSequence
             
             # Run the integrated boot sequence

@@ -19,7 +19,7 @@ inputs:
       - features[].output
 
   - type: knowledge
-    ref: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    ref: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Artifact schema definitions"
     critical: true
 

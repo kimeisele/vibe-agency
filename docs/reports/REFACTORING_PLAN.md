@@ -52,7 +52,7 @@ clients/
    grep -rE '\.\./' agency_os/ system_steward_framework/
 
    # But MISSED 14 hardcoded references like:
-   "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+   "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
    "agency_os/01_planning_framework/prompts/VIBE_ALIGNER_v3.md"
    ```
 
@@ -603,7 +603,7 @@ done
 - Original plan: `REFACTORING_PLAN.md` (v1.0, now obsolete)
 - System overview: `docs/AGENCY_OS_FUNDAMENTAL_UNDERSTANDING.md`
 - Deep dive: `docs/AGENCY_OS_DEEP_DIVE_ANALYSIS.md`
-- State machine: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`
+- State machine: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml`
 
 ---
 

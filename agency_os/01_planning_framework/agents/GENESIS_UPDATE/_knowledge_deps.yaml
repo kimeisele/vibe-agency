@@ -18,7 +18,7 @@ knowledge_files:
       - task_02_feasibility_check
 
   - id: ORCHESTRATION_data_contracts
-    path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     required: true
     purpose: "Schemas for architecture.json and update_spec.json"
     used_by_tasks:

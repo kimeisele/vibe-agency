@@ -241,8 +241,8 @@ If we're deferring GAD-003 Phase 2, we could:
 
 - **GAD-003 Implementation Status:** `docs/architecture/GAD-003_IMPLEMENTATION_STATUS.md`
 - **Failing Test:** `tests/test_research_agent_e2e.py`
-- **Tool Executor:** `agency_os/00_system/orchestrator/tools/tool_executor.py` (exists but unused)
-- **Core Orchestrator:** `agency_os/00_system/orchestrator/core_orchestrator.py` (missing ToolExecutor import)
+- **Tool Executor:** `agency_os/core_system/orchestrator/tools/tool_executor.py` (exists but unused)
+- **Core Orchestrator:** `agency_os/core_system/orchestrator/core_orchestrator.py` (missing ToolExecutor import)
 
 ---
 

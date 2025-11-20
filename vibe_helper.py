@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Load prompt runtime
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime", Path(__file__).parent / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", Path(__file__).parent / "agency_os/core_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)

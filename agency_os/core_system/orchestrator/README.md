@@ -69,12 +69,12 @@ Single Source of Truth (SSoT) for project state:
 ### Basic Usage
 
 ```bash
-python3 agency_os/00_system/orchestrator/orchestrator.py <repo_root> <project_id>
+python3 agency_os/core_system/orchestrator/orchestrator.py <repo_root> <project_id>
 ```
 
 **Example:**
 ```bash
-python3 agency_os/00_system/orchestrator/orchestrator.py /home/user/vibe-agency my-project-001
+python3 agency_os/core_system/orchestrator/orchestrator.py /home/user/vibe-agency my-project-001
 ```
 
 ### Workflow
@@ -227,7 +227,7 @@ The orchestrator uses `project_manifest.json` as the Single Source of Truth (SSo
 ### Test 1: Skip Research Phase
 
 ```bash
-echo "n" | python3 agency_os/00_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-001
+echo "n" | python3 agency_os/core_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-001
 ```
 
 **Expected:**
@@ -239,7 +239,7 @@ echo "n" | python3 agency_os/00_system/orchestrator/orchestrator.py /home/user/v
 ### Test 2: Enable Research Phase
 
 ```bash
-printf "y\ny\n" | python3 agency_os/00_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-002
+printf "y\ny\n" | python3 agency_os/core_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-002
 ```
 
 **Expected:**
@@ -251,7 +251,7 @@ printf "y\ny\n" | python3 agency_os/00_system/orchestrator/orchestrator.py /home
 ### Test 3: FACT_VALIDATOR Blocking
 
 ```bash
-TEST_FACT_VALIDATOR_FAILURE=1 printf "y\nn\n" | python3 agency_os/00_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-003
+TEST_FACT_VALIDATOR_FAILURE=1 printf "y\nn\n" | python3 agency_os/core_system/orchestrator/orchestrator.py /home/user/vibe-agency test-project-003
 ```
 
 **Expected:**
@@ -307,7 +307,7 @@ uv sync --all-extras    # Install from lockfile (deterministic)
 ## File Structure
 
 ```
-agency_os/00_system/orchestrator/
+agency_os/core_system/orchestrator/
 ├── orchestrator.py              # Python orchestrator (Phase 2)
 ├── ORCHESTRATOR_PROMPT.md       # AI personality and communication
 ├── requirements.txt             # Python dependencies

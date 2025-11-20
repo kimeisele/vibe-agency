@@ -14,7 +14,7 @@ required_knowledge:
     description: |
       Defines ontology, CODEOWNERS, semantic audit, and SOP layers.
 
-  - path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+  - path: agency_os/core_system/knowledge/AOS_Ontology.yaml
     purpose: "Master semantic definition"
     critical: true
     description: |

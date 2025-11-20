@@ -17,7 +17,7 @@ import importlib.util
 repo_root = Path(__file__).parent.parent
 
 spec = importlib.util.spec_from_file_location(
-    "prompt_runtime", repo_root / "agency_os/00_system/runtime/prompt_runtime.py"
+    "prompt_runtime", repo_root / "agency_os/core_system/runtime/prompt_runtime.py"
 )
 prompt_runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prompt_runtime)

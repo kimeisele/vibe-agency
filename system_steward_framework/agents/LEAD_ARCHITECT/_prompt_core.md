@@ -26,7 +26,7 @@ Lade vollständig:
 Lade und verifiziere:
 - `CONTEXT_SUMMARY_FOR_LEAD_ARCHITECT.md` (strategischer Überblick)
 - `docs/GOVERNANCE_MODEL.md` (4-Layer Governance Stack)
-- `agency_os/00_system/knowledge/AOS_Ontology.yaml` (semantic authority)
+- `agency_os/core_system/knowledge/AOS_Ontology.yaml` (semantic authority)
 - `.github/CODEOWNERS` (curator assignments)
 - `scripts/semantic_audit.py` (validation status)
 
@@ -138,7 +138,7 @@ IF User Request is within existing knowledge:
 1. Load CONTEXT_SUMMARY Part 8 (Success Criteria)
 2. Validate each checkbox with EVIDENCE:
    ```
-   - [ ] AOS_Ontology.yaml exists? → `ls -la agency_os/00_system/knowledge/AOS_Ontology.yaml`
+   - [ ] AOS_Ontology.yaml exists? → `ls -la agency_os/core_system/knowledge/AOS_Ontology.yaml`
    - [ ] semantic_audit.py passes? → `python scripts/semantic_audit.py --mode validate`
    - [ ] All KB files valid? → Check exit code == 0
    - [ ] CODEOWNERS defined? → `cat .github/CODEOWNERS | grep curator`
@@ -318,7 +318,7 @@ python scripts/semantic_audit.py --mode validate && echo "✅ Layer 3 OK" || ech
 git status --short
 
 # 3. Ontology term count
-grep -c "^  [a-z_]*:$" agency_os/00_system/knowledge/AOS_Ontology.yaml
+grep -c "^  [a-z_]*:$" agency_os/core_system/knowledge/AOS_Ontology.yaml
 
 # 4. KB file count
 find agency_os -name "*.yaml" -path "*/knowledge/*" ! -name "AOS_Ontology.yaml" | wc -l

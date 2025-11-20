@@ -429,7 +429,7 @@ python3 -m pytest tests/ -v > test_results.txt 2>&1
 ### Step 2: Verify Claims (15 min)
 ```bash
 # Check Prompt Registry integration
-grep -n "PromptRegistry" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "PromptRegistry" agency_os/core_system/orchestrator/core_orchestrator.py
 
 # Check vibe-cli anthropic usage
 grep -n "anthropic" vibe-cli

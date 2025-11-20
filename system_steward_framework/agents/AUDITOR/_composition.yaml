@@ -24,7 +24,7 @@ composition_order:
 variables:
   audit_mode: ${runtime_context.audit_mode}
   target_files: ${runtime_context.target_files}
-  ontology_path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+  ontology_path: agency_os/core_system/knowledge/AOS_Ontology.yaml
 
 conflict_resolution:
   strategy: last_wins

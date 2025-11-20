@@ -76,7 +76,7 @@ Dieser Plan beschreibt die konkreten Schritte zur Implementierung der im "Fulfil
 ### 4.1 Aktualisierung: `ORCHESTRATION_data_contracts.yaml`
 
 *   **Beschreibung:** Aktualisierung des Schemas für `feature_spec.json`, um die neue, erweiterte Struktur mit `nfr_requirements` und `lean_canvas_summary` widerzuspiegeln.
-*   **Speicherort:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+*   **Speicherort:** `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 *   **Änderungen:** Erweiterung des `feature_spec.json`-Schemas um die Felder `lean_canvas_summary` und `nfr_requirements`.
 
 ---
@@ -88,7 +88,7 @@ Dieser Plan beschreibt die konkreten Schritte zur Implementierung der im "Fulfil
 ### 5.1 Aktualisierung: `AGENCY_OS_ORCHESTRATOR_v1.md`
 
 *   **Beschreibung:** Aktualisierung der Intent-Routing-Logik, um den neuen zweistufigen Planungsprozess (Lean Canvas -> Vibe Aligner) korrekt zu orchestrieren.
-*   **Speicherort:** `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
+*   **Speicherort:** `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
 *   **Annahme:** Diese Datei wird als korrekte Entsprechung für den im Fulfillment-Bericht erwähnten, aber nicht existierenden `SYSTEM_STEWARD_ENTRY_PROMPT.md` angenommen.
 *   **Änderungen:** Anpassung der Logik, um den `LEAN_CANVAS_VALIDATOR` als ersten Schritt für neue Projektplanungsanfragen zu identifizieren und aufzurufen.
 

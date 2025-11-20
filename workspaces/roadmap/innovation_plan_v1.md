@@ -155,7 +155,7 @@ class SemanticAction:
 
 Replace hardcoded Python rules with declarative YAML workflow definitions:
 
-**File:** `agency_os/00_system/playbook/workflows/`
+**File:** `agency_os/core_system/playbook/workflows/`
 ```
 workflows/
 ├── _schema.json          # JSON Schema for workflow validation
@@ -358,7 +358,7 @@ Time 8.5s: User sees system failure
 #### Architecture
 
 ```python
-# agency_os/00_system/runtime/circuit_breaker.py
+# agency_os/core_system/runtime/circuit_breaker.py
 
 class CircuitBreakerState(Enum):
     CLOSED = "healthy"           # Normal operation
@@ -465,7 +465,7 @@ API Down Scenario:
 #### Missing Instrumentation
 
 ```python
-# agency_os/00_system/runtime/quota_manager.py
+# agency_os/core_system/runtime/quota_manager.py
 
 class OperationalQuota:
     """Tracks requests/tokens/cost to prevent surprises"""
@@ -597,7 +597,7 @@ class BaseAgent:
 
 **Phase 1: Semantic Action Registry**
 ```
-agency_os/00_system/runtime/
+agency_os/core_system/runtime/
 ├── semantic_actions.py          # SemanticAction dataclass + registry
 └── action_catalog/              # Library of predefined actions
     ├── analysis_actions.py       # identify_patterns, validate_assumptions
@@ -608,7 +608,7 @@ agency_os/00_system/runtime/
 
 **Phase 2: Workflow Execution**
 ```
-agency_os/00_system/playbook/
+agency_os/core_system/playbook/
 ├── workflow_engine.py            # Orchestrate workflow steps
 ├── workflow_parser.py            # Parse YAML definitions
 ├── workflow_schema.json          # JSON Schema validator
@@ -621,7 +621,7 @@ agency_os/00_system/playbook/
 
 **Phase 2.5: Safety Infrastructure**
 ```
-agency_os/00_system/runtime/
+agency_os/core_system/runtime/
 ├── circuit_breaker.py            # GAD-509 Circuit Breaker Protocol
 ├── quota_manager.py              # GAD-510 Operational Quota Management
 └── safety_monitor.py             # Cost alerts, rate limit monitoring
@@ -648,7 +648,7 @@ agency_os/03_agents/
 ### 4.2 Code Skeleton
 
 ```python
-# agency_os/00_system/runtime/circuit_breaker.py
+# agency_os/core_system/runtime/circuit_breaker.py
 from enum import Enum
 from dataclasses import dataclass
 import time
@@ -706,7 +706,7 @@ class CircuitBreaker:
         # HALF_OPEN - allow one test request
         return True, "Testing recovery"
 
-# agency_os/00_system/runtime/quota_manager.py
+# agency_os/core_system/runtime/quota_manager.py
 class OperationalQuota:
     """Track and enforce request quotas"""
 
@@ -811,7 +811,7 @@ class OperationalQuota:
 ## APPENDIX A: Existing Safety Code (Reference)
 
 ### LLMClient Budget Checking (GOOD)
-**File:** `agency_os/00_system/runtime/llm_client.py:277-282`
+**File:** `agency_os/core_system/runtime/llm_client.py:277-282`
 ```python
 if self.budget_limit and self.cost_tracker.total_cost >= self.budget_limit:
     raise BudgetExceededError(
@@ -821,7 +821,7 @@ if self.budget_limit and self.cost_tracker.total_cost >= self.budget_limit:
 ```
 
 ### LLMClient Retry Logic (GOOD)
-**File:** `agency_os/00_system/runtime/llm_client.py:318-337`
+**File:** `agency_os/core_system/runtime/llm_client.py:318-337`
 ```python
 retryable_errors = ["RateLimitError", "APIConnectionError", "APITimeoutError"]
 is_retryable = any(err in error_name for err in retryable_errors)
@@ -836,7 +836,7 @@ if is_retryable and attempt < max_retries - 1:
 ```
 
 ### NoOpClient Graceful Failover (GOOD)
-**File:** `agency_os/00_system/runtime/llm_client.py:152-186`
+**File:** `agency_os/core_system/runtime/llm_client.py:152-186`
 Implements fallback when ANTHROPIC_API_KEY not set.
 
 ---

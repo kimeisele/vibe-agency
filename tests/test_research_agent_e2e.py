@@ -40,7 +40,7 @@ def test_e2e_research_agent_with_tools():
     import yaml
 
     tool_defs_path = (
-        repo_root / "agency_os" / "00_system" / "orchestrator" / "tools" / "tool_definitions.yaml"
+        repo_root / "agency_os" / "core_system" / "orchestrator" / "tools" / "tool_definitions.yaml"
     )
     with open(tool_defs_path) as f:
         tool_defs = yaml.safe_load(f)

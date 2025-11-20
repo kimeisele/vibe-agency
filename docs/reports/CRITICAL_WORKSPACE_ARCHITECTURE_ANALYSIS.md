@@ -115,7 +115,7 @@ $ grep -r "from.*workspace_utils" **/*.py
 
 The `prompt_runtime.py` (which composes prompts for agents) and `vibe-cli.py` (which invokes the runtime) both operate **independently** of `workspace_utils.py`.
 
-**File:** `agency_os/00_system/runtime/prompt_runtime.py`
+**File:** `agency_os/core_system/runtime/prompt_runtime.py`
 
 ```python
 def _format_runtime_context(self, context: Dict[str, Any]) -> str:
@@ -197,7 +197,7 @@ get_active_workspace()
 
 #### Evidence
 
-**File:** `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
+**File:** `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
 
 ```markdown
 ## CORE WORKFLOW (STATE MACHINE EXECUTION)
@@ -261,7 +261,7 @@ This is **pseudocode documentation**, not executable code. The ORCHESTRATOR is a
 
 #### Evidence
 
-**File:** `agency_os/00_system/runtime/prompt_runtime.py`
+**File:** `agency_os/core_system/runtime/prompt_runtime.py`
 
 ```python
 def execute_task(self, agent_id: str, task_id: str, context: Dict[str, Any]) -> str:
@@ -455,7 +455,7 @@ Two different teams/iterations created manifests without a shared schema definit
 └──────────────────────────────────────────────┘
                     ↓ NO IMPORTS ↓
 ┌──────────────────────────────────────────────┐
-│ agency_os/00_system/runtime/prompt_runtime.py│
+│ agency_os/core_system/runtime/prompt_runtime.py│
 │ - execute_task() ✅                          │
 │ - _compose_prompt() ✅                       │
 │ STATUS: Works, but ignores workspace_utils   │
@@ -468,7 +468,7 @@ Two different teams/iterations created manifests without a shared schema definit
 └──────────────────────────────────────────────┘
                     ↓ NO RUNTIME ↓
 ┌──────────────────────────────────────────────┐
-│ agency_os/00_system/prompts/ORCHESTRATOR.md │
+│ agency_os/core_system/prompts/ORCHESTRATOR.md │
 │ STATUS: Markdown documentation only          │
 └──────────────────────────────────────────────┘
 ```
@@ -605,7 +605,7 @@ These fixes address the immediate breakage and restore basic functionality.
 
 #### Fix #1: Integrate workspace_utils.py into prompt_runtime.py
 
-**File:** `agency_os/00_system/runtime/prompt_runtime.py`
+**File:** `agency_os/core_system/runtime/prompt_runtime.py`
 
 **Changes:**
 ```python
@@ -778,7 +778,7 @@ These address the systemic issues but require more extensive changes.
 
 #### Fix #4: Implement Python Orchestrator Runtime
 
-**New File:** `agency_os/00_system/runtime/orchestrator_runtime.py`
+**New File:** `agency_os/core_system/runtime/orchestrator_runtime.py`
 
 ```python
 """
@@ -895,7 +895,7 @@ class OrchestrationRuntime:
 
 #### Fix #5: Add Validation Gates to ORCHESTRATOR Prompt
 
-**File:** `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
+**File:** `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
 
 **Add section:**
 ```markdown
@@ -1091,9 +1091,9 @@ assert 'workspaces/prabhupad_os/artifacts' in prompt
 | Component | Path | Status |
 |-----------|------|--------|
 | Workspace Utils | `scripts/workspace_utils.py` | ✅ Implemented, unused |
-| Prompt Runtime | `agency_os/00_system/runtime/prompt_runtime.py` | ✅ Works, missing integration |
+| Prompt Runtime | `agency_os/core_system/runtime/prompt_runtime.py` | ✅ Works, missing integration |
 | CLI | `vibe-cli.py` | ✅ Works, missing workspace cmd |
-| Orchestrator Prompt | `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md` | ⚠️ Documentation only |
+| Orchestrator Prompt | `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md` | ⚠️ Documentation only |
 | Root Manifest | `project_manifest.json` | ⚠️ Wrong location |
 | Workspace Manifests | `workspaces/*/project_manifest.json` | ⚠️ Wrong schema |
 

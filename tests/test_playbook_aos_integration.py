@@ -140,7 +140,7 @@ def test_boot_sequence():
 
 def test_task_playbooks_exist():
     """Test that all task playbooks were created"""
-    tasks_dir = Path("agency_os/00_system/playbook/tasks")
+    tasks_dir = Path("agency_os/core_system/playbook/tasks")
 
     required_tasks = ["debug.md", "implement.md", "test.md", "plan.md", "document.md", "analyze.md"]
 
@@ -157,7 +157,7 @@ def test_task_playbooks_exist():
 
 def test_registry_moved_to_aos():
     """Test that registry was moved to agency_os"""
-    registry_path = Path("agency_os/00_system/playbook/_registry.yaml")
+    registry_path = Path("agency_os/core_system/playbook/_registry.yaml")
 
     assert registry_path.exists(), "Registry not moved to agency_os"
 

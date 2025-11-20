@@ -58,13 +58,13 @@
 **Handler Stubs (To Be Implemented):**
 
 ```python
-# agency_os/00_system/orchestrator/handlers/testing_handler.py
+# agency_os/core_system/orchestrator/handlers/testing_handler.py
 # TODO (Phase 3): Full implementation
 
-# agency_os/00_system/orchestrator/handlers/deployment_handler.py
+# agency_os/core_system/orchestrator/handlers/deployment_handler.py
 # TODO (Phase 3): Full implementation
 
-# agency_os/00_system/orchestrator/handlers/maintenance_handler.py
+# agency_os/core_system/orchestrator/handlers/maintenance_handler.py
 # TODO (Phase 3): Full implementation
 ```
 
@@ -256,8 +256,8 @@ vibe-cli maintenance --run
 **Estimate:** 2-4 hours
 
 **Files to create:**
-1. `agency_os/00_system/agents/JANITOR/_prompt_core.md` (~200 lines)
-2. `agency_os/00_system/orchestrator/handlers/maintenance_handler.py` (extend existing)
+1. `agency_os/core_system/agents/JANITOR/_prompt_core.md` (~200 lines)
+2. `agency_os/core_system/orchestrator/handlers/maintenance_handler.py` (extend existing)
 3. `vibe-cli` - add `maintenance` subcommand
 
 **Is it worth it?**

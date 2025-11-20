@@ -21,12 +21,12 @@ CONSTRAINTS (NON-NEGOTIABLE):
 
 DELIVERABLES (Total 8 Files):
 **I. Code Files (7):**
-1.  `agency_os/00_system/task_management/__init__.py` (Expose TaskManager)
-2.  `agency_os/00_system/task_management/models.py` (The Pydantic Models)
-3.  `agency_os/00_system/task_management/file_lock.py` (The Atomic Write Logic)
-4.  `agency_os/00_system/task_management/validator_registry.py` (The Plugin System)
-5.  `agency_os/00_system/task_management/task_manager.py` (The Core Logic)
-6.  `agency_os/00_system/task_management/next_task_generator.py` (Simple stub logic)
+1.  `agency_os/core_system/task_management/__init__.py` (Expose TaskManager)
+2.  `agency_os/core_system/task_management/models.py` (The Pydantic Models)
+3.  `agency_os/core_system/task_management/file_lock.py` (The Atomic Write Logic)
+4.  `agency_os/core_system/task_management/validator_registry.py` (The Plugin System)
+5.  `agency_os/core_system/task_management/task_manager.py` (The Core Logic)
+6.  `agency_os/core_system/task_management/next_task_generator.py` (Simple stub logic)
 7.  `tests/test_task_manager.py` (Create 3 basic unit tests: Persistence, Lock, Validation)
 
 **II. Documentation File (1):**
@@ -178,7 +178,7 @@ def atomic_write_json(path: Path, data: Dict[str, Any]):
 #### 3\. VALIDATOR REGISTRY (`validator_registry.py`)
 
 ```python
-# FILE: agency_os/00_system/task_management/validator_registry.py
+# FILE: agency_os/core_system/task_management/validator_registry.py
 
 from pathlib import Path
 from typing import Dict, Callable, Any
@@ -269,7 +269,7 @@ def run_validators(task: Any, vibe_root: Path) -> Dict[str, Any]:
 #### 4\. TASK MANAGER (`task_manager.py`)
 
 ```python
-# FILE: agency_os/00_system/task_management/task_manager.py
+# FILE: agency_os/core_system/task_management/task_manager.py
 
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -495,7 +495,7 @@ class TaskManager:
 #### 5\. NEXT TASK GENERATOR (`next_task_generator.py`)
 
 ```python
-# FILE: agency_os/00_system/task_management/next_task_generator.py
+# FILE: agency_os/core_system/task_management/next_task_generator.py
 
 from typing import Optional, Dict, Any
 from .models import Roadmap, ActiveMission

@@ -195,7 +195,7 @@ ln -s show-context.py bin/show-context.sh
 ### Strengths
 
 **1. STATE MACHINE ARCHITECTURE**
-- Location: `agency_os/00_system/orchestrator/core_orchestrator.py`
+- Location: `agency_os/core_system/orchestrator/core_orchestrator.py`
 - Design: 5 SDLC phases with explicit state transitions
 - Evidence: All state transition tests passing (5/5)
 - Benefit: Prevents invalid state sequences, clear workflow
@@ -464,9 +464,9 @@ uv run pytest tests/test_kernel_checks.py tests/test_layer0_integrity.py tests/t
 ## APPENDIX: FILE LOCATIONS REFERENCE
 
 ### CRITICAL PATHS
-- State machine: `agency_os/00_system/orchestrator/core_orchestrator.py`
+- State machine: `agency_os/core_system/orchestrator/core_orchestrator.py`
 - MOTD implementation: `vibe-cli` (lines 380-420)
-- Kernel safety: `agency_os/00_system/orchestrator/core_orchestrator.py` (methods _kernel_check_*)
+- Kernel safety: `agency_os/core_system/orchestrator/core_orchestrator.py` (methods _kernel_check_*)
 - Test suite: `tests/` (107 test files)
 - Verification script: `./bin/verify-all.sh`
 

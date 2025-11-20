@@ -63,7 +63,7 @@ operational_requirements:
       post_install_check: |
         # Verify installation
         python3 validate_knowledge_index.py
-        python3 agency_os/00_system/runtime/prompt_runtime.py
+        python3 agency_os/core_system/runtime/prompt_runtime.py
 
       expected_output: |
         ✓ Knowledge index validated

@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 # Add runtime directory to path
-runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
+runtime_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "playbook"
 
 from executor import (
     ExecutionStatus,

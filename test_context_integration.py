@@ -22,7 +22,7 @@ from pathlib import Path
 # Setup path
 repo_root = Path(__file__).parent
 sys.path.insert(0, str(repo_root))
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
 
 # Custom log handler to capture logs

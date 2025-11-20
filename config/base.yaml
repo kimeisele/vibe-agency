@@ -50,27 +50,27 @@ sdlc:
     - name: "PLANNING"
       number: 1
       workflow: "agency_os/01_planning_framework/workflow.yaml"
-      handler: "agency_os/00_system/orchestrator/handlers/planning_handler.py"
+      handler: "agency_os/core_system/orchestrator/handlers/planning_handler.py"
 
     - name: "CODING"
       number: 2
       workflow: "agency_os/02_coding_framework/workflow.yaml"
-      handler: "agency_os/00_system/orchestrator/handlers/coding_handler.py"
+      handler: "agency_os/core_system/orchestrator/handlers/coding_handler.py"
 
     - name: "TESTING"
       number: 3
       workflow: "agency_os/03_testing_framework/workflow.yaml"
-      handler: "agency_os/00_system/orchestrator/handlers/testing_handler.py"
+      handler: "agency_os/core_system/orchestrator/handlers/testing_handler.py"
 
     - name: "DEPLOYMENT"
       number: 4
       workflow: "agency_os/04_deployment_framework/workflow.yaml"
-      handler: "agency_os/00_system/orchestrator/handlers/deployment_handler.py"
+      handler: "agency_os/core_system/orchestrator/handlers/deployment_handler.py"
 
     - name: "MAINTENANCE"
       number: 5
       workflow: "agency_os/05_maintenance_framework/workflow.yaml"
-      handler: "agency_os/00_system/orchestrator/handlers/maintenance_handler.py"
+      handler: "agency_os/core_system/orchestrator/handlers/maintenance_handler.py"
 
 # =============================================================================
 # BUDGET DEFAULTS

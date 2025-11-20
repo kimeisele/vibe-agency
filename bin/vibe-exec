@@ -18,16 +18,16 @@ Usage:
 
 Examples:
   # Mock execution (default, safe)
-  ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety"
+  ./bin/vibe-exec agency_os/core_system/playbook/workflows/research_topic.yaml "AI Safety"
 
   # With semantic lens (GAD-906/907: Intelligence injection)
-  ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
+  ./bin/vibe-exec agency_os/core_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
 
   # Live fire execution (requires API key)
-  VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety"
+  VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/core_system/playbook/workflows/research_topic.yaml "AI Safety"
 
   # Live fire + lens (maximum intelligence)
-  VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/00_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
+  VIBE_LIVE_FIRE=true ./bin/vibe-exec agency_os/core_system/playbook/workflows/research_topic.yaml "AI Safety" --lens first_principles
 
 Environment Variables:
   VIBE_LIVE_FIRE=true        Enable real LLM execution (default: false)
@@ -111,12 +111,12 @@ def main():
 
         # Load workflow loader module from numeric directory
         # Import executor first to set up the module properly
-        sys.path.insert(0, str(repo_root / "agency_os" / "00_system" / "playbook"))
+        sys.path.insert(0, str(repo_root / "agency_os" / "core_system" / "playbook"))
         import executor  # noqa: F401 - needed for loader imports
         sys.path.pop(0)  # Remove so we can import normally
 
         # Now import from the proper package path
-        loader_path = repo_root / "agency_os" / "00_system" / "playbook" / "loader.py"
+        loader_path = repo_root / "agency_os" / "core_system" / "playbook" / "loader.py"
         spec = spec_from_file_location("playbook_loader", loader_path)
         loader_module = module_from_spec(spec)
         sys.modules["playbook_loader"] = loader_module
@@ -141,7 +141,7 @@ def main():
 
             try:
                 # Load lens loader module
-                lens_loader_path = repo_root / "agency_os" / "00_system" / "knowledge" / "lens_loader.py"
+                lens_loader_path = repo_root / "agency_os" / "core_system" / "knowledge" / "lens_loader.py"
                 spec = spec_from_file_location("lens_loader", lens_loader_path)
                 lens_module = module_from_spec(spec)
                 sys.modules["lens_loader"] = lens_module
@@ -314,7 +314,7 @@ def main():
         print("-" * 80)
 
         # Load router module
-        router_path = repo_root / "agency_os" / "00_system" / "playbook" / "router.py"
+        router_path = repo_root / "agency_os" / "core_system" / "playbook" / "router.py"
         spec = spec_from_file_location("playbook_router", router_path)
         router_module = module_from_spec(spec)
         sys.modules["playbook_router"] = router_module
@@ -335,7 +335,7 @@ def main():
         print("-" * 80)
 
         # Load executor module
-        executor_path = repo_root / "agency_os" / "00_system" / "playbook" / "executor.py"
+        executor_path = repo_root / "agency_os" / "core_system" / "playbook" / "executor.py"
         spec = spec_from_file_location("playbook_executor", executor_path)
         exec_module = module_from_spec(spec)
         sys.modules["playbook_executor"] = exec_module

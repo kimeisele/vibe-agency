@@ -12,6 +12,6 @@ required_knowledge:
   - path: agency_os/05_maintenance_framework/knowledge/MAINTENANCE_triage_rules.yaml
     purpose: "Bug classification, severity assignment, hotfix criteria"
     critical: true
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Schemas for bug_report.json, code_gen_spec.json"
     critical: true

@@ -54,7 +54,7 @@ CRITICAL_FILES = {
     ],
     "core": [
         (
-            "agency_os/00_system/orchestrator/core_orchestrator.py",
+            "agency_os/core_system/orchestrator/core_orchestrator.py",
             "Core orchestrator with kernel checks",
             True,
         ),

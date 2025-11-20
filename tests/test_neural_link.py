@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 # Import SemanticAction definitions
-runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
+runtime_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "runtime"
 from runtime.semantic_actions import SemanticAction, SemanticActionType
 
 # Import personas and router
@@ -27,7 +27,7 @@ class DummyAgent:
 # from coder import CoderAgent
 # from researcher import ResearcherAgent
 
-router_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
+router_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "playbook"
 from executor import GraphExecutor, WorkflowGraph, WorkflowNode
 from router import AgentRouter
 

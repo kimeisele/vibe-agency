@@ -292,7 +292,7 @@ File: `project_manifest.json` (project-scoped, committed)
 
 #### 3.2.2. Orchestrator Changes
 
-**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+**File:** `agency_os/core_system/orchestrator/core_orchestrator.py`
 
 **New Method:**
 
@@ -857,7 +857,7 @@ uv run ruff format .
 
 #### 4.2.1. Extend `core_orchestrator.py`
 
-**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+**File:** `agency_os/core_system/orchestrator/core_orchestrator.py`
 
 **Add new method after line 1169 (after `run_horizontal_audits`):**
 
@@ -1395,7 +1395,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # Add orchestrator to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/00_system/orchestrator"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "agency_os/core_system/orchestrator"))
 
 from core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
 

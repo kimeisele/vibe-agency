@@ -30,14 +30,14 @@ All recommendations follow **Test-First Policy** (docs/policies/TEST_FIRST.md):
 
 **Critical Issue:** Exception classes are defined in 2 separate modules with different inheritance hierarchies.
 
-**Location 1:** `agency_os/00_system/orchestrator/orchestrator.py` (lines 93-108)
+**Location 1:** `agency_os/core_system/orchestrator/orchestrator.py` (lines 93-108)
 ```python
 class QualityGateFailure(Exception)
 class ArtifactNotFoundError(Exception)
 class StateTransitionError(Exception)
 ```
 
-**Location 2:** `agency_os/00_system/orchestrator/core_orchestrator.py` (lines 117-187)
+**Location 2:** `agency_os/core_system/orchestrator/core_orchestrator.py` (lines 117-187)
 ```python
 class OrchestratorError(Exception)
 class QualityGateFailure(OrchestratorError)

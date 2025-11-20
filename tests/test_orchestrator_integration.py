@@ -29,7 +29,7 @@ print()
 
 cmd = [
     "python3",
-    str(repo_root / "agency_os/00_system/orchestrator/core_orchestrator.py"),
+    str(repo_root / "agency_os/core_system/orchestrator/core_orchestrator.py"),
     str(repo_root),
     "golden-test-registry",
     "--mode=delegated",

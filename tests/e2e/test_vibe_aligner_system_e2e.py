@@ -150,7 +150,7 @@ class TestVibeAlignerSystemE2E:
         # Patch BEFORE CoreOrchestrator init
         import importlib
 
-        llm_module = importlib.import_module("agency_os.00_system.runtime.llm_client")
+        llm_module = importlib.import_module("agency_os.core_system.runtime.llm_client")
 
         mock_llm = MagicMock(spec=LLMClient)
         mock_llm.invoke.side_effect = mock_invoke

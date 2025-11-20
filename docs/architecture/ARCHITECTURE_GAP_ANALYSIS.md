@@ -22,7 +22,7 @@
 
 ### What Actually Exists (Working Code)
 
-✅ **Prompt Composition Engine** (`agency_os/00_system/runtime/prompt_runtime.py`, 319 lines)
+✅ **Prompt Composition Engine** (`agency_os/core_system/runtime/prompt_runtime.py`, 319 lines)
 - Loads `_composition.yaml` configs
 - Assembles prompts from markdown fragments
 - Injects knowledge base YAML files
@@ -198,7 +198,7 @@ docs/user-guide/
 > No implementation of the PromptRuntime..."
 
 **Reality:**
-`agency_os/00_system/runtime/prompt_runtime.py` **exists** and is **functional** (319 lines).
+`agency_os/core_system/runtime/prompt_runtime.py` **exists** and is **functional** (319 lines).
 
 **What's actually missing:** LLM API integration (separate gap)
 

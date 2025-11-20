@@ -99,7 +99,7 @@ vibe-agency/
 
 ### 2. Governance Foundation - 4 Layers
 
-**Layer 1: Ontology** - `agency_os/00_system/knowledge/AOS_Ontology.yaml`
+**Layer 1: Ontology** - `agency_os/core_system/knowledge/AOS_Ontology.yaml`
 - 21 semantic terms defined
 - Types: concept, constraint, pattern, process, role, framework
 - Audit rules: AUDIT_001-006

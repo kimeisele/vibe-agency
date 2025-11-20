@@ -51,7 +51,7 @@ ModuleNotFoundError: No module named 'yaml'
 **Evidence:**
 ```
 INTERNALERROR> ModuleNotFoundError: No module named 'yaml'
-  File "/home/user/vibe-agency/agency_os/00_system/runtime/prompt_runtime.py", line 23
+  File "/home/user/vibe-agency/agency_os/core_system/runtime/prompt_runtime.py", line 23
     import yaml
 ```
 
@@ -127,7 +127,7 @@ vibe-cli: error: argument command: invalid choice: 'plan' (choose from 'run')
 
 **Verification:**
 ```bash
-wc -l agency_os/00_system/orchestrator/core_orchestrator.py
+wc -l agency_os/core_system/orchestrator/core_orchestrator.py
 # 1286 lines (substantial implementation)
 ```
 
@@ -242,10 +242,10 @@ pip install -r requirements.txt
 
 ### Files Blocked by Missing `yaml`:
 ```
-agency_os/00_system/orchestrator/core_orchestrator.py (line 23)
-agency_os/00_system/orchestrator/handlers/planning_handler.py
-agency_os/00_system/runtime/prompt_runtime.py (line 23)
-agency_os/00_system/runtime/prompt_registry.py
+agency_os/core_system/orchestrator/core_orchestrator.py (line 23)
+agency_os/core_system/orchestrator/handlers/planning_handler.py
+agency_os/core_system/runtime/prompt_runtime.py (line 23)
+agency_os/core_system/runtime/prompt_registry.py
 ```
 
 **Impact:** Entire orchestration system non-functional

@@ -33,7 +33,7 @@ Das System ist ein **Prompt-Composition-Tool** für Claude Code (oder jede Claud
 
 **Prompt Composition Engine:**
 ```bash
-agency_os/00_system/runtime/prompt_runtime.py
+agency_os/core_system/runtime/prompt_runtime.py
 ```
 - ✅ Funktioniert einwandfrei
 - ✅ Lädt Personality + Knowledge + Tasks + Gates

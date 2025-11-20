@@ -3,7 +3,7 @@
 
 ## Purpose
 
-This document provides a high-level overview of the `agency_os/00_system/` directory, which forms the core governance and orchestration layer of the Agency Operating System (AOS). This directory contains the "brain" of the entire system, defining the rules, states, data structures, and recommended technology for the master SDLC workflow.
+This document provides a high-level overview of the `agency_os/core_system/` directory, which forms the core governance and orchestration layer of the Agency Operating System (AOS). This directory contains the "brain" of the entire system, defining the rules, states, data structures, and recommended technology for the master SDLC workflow.
 
 ---
 

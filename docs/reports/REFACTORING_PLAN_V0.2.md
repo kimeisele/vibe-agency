@@ -247,7 +247,7 @@ The Core layer MUST use only Python stdlib modules. NO external libraries.
 
 ## NEW RUNTIME COMPONENT
 
-### `agency_os/00_system/runtime/prompt_runtime.py`
+### `agency_os/core_system/runtime/prompt_runtime.py`
 **NEW FILE**
 **Purpose**: Prompt composition engine
 

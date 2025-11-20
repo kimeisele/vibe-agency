@@ -131,26 +131,26 @@ All 6 research knowledge files present:
 **Verification:**
 ```bash
 # Check RESEARCH sub-state exists
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
 # Expected: RESEARCH sub-state with 4 responsible agents, optional: true
 
 # Verify responsible agents
-grep -A 6 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "MARKET_RESEARCHER\|TECH_RESEARCHER\|FACT_VALIDATOR\|USER_RESEARCHER"
+grep -A 6 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "MARKET_RESEARCHER\|TECH_RESEARCHER\|FACT_VALIDATOR\|USER_RESEARCHER"
 # Expected: All 4 research agents listed
 
 # Verify optional flag
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "optional: true"
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "optional: true"
 # Expected: RESEARCH is marked as optional
 
 # Verify output artifact
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep 'output_artifact: "research_brief.json"'
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep 'output_artifact: "research_brief.json"'
 # Expected: research_brief.json is output artifact
 ```
 
 **Result:** ✅ PASS
 
 RESEARCH sub-state properly configured:
-- Location: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:36-45`
+- Location: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml:36-45`
 - Name: "RESEARCH"
 - Description: "Optional: Fact-based market, technical, and user research before business planning"
 - Responsible agents: MARKET_RESEARCHER, TECH_RESEARCHER, FACT_VALIDATOR, USER_RESEARCHER
@@ -167,15 +167,15 @@ RESEARCH sub-state properly configured:
 **Verification:**
 ```bash
 # Check workflow definition
-grep -A 5 'name: "BUSINESS_VALIDATION"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep 'input_artifact: "research_brief.json"'
+grep -A 5 'name: "BUSINESS_VALIDATION"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep 'input_artifact: "research_brief.json"'
 # Expected: research_brief.json listed as input artifact (with "Optional input" comment)
 
 # Verify transition from RESEARCH
-grep -A 5 "T0a_ResearchToBusiness" agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+grep -A 5 "T0a_ResearchToBusiness" agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
 # Expected: Transition from PLANNING.RESEARCH to PLANNING.BUSINESS_VALIDATION exists
 
 # Verify skip-research transition
-grep -A 5 "T0b_SkipResearchStartBusiness" agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+grep -A 5 "T0b_SkipResearchStartBusiness" agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
 # Expected: Transition to skip research and go directly to BUSINESS_VALIDATION exists
 ```
 
@@ -183,7 +183,7 @@ grep -A 5 "T0b_SkipResearchStartBusiness" agency_os/00_system/state_machine/ORCH
 
 BUSINESS_VALIDATION properly updated:
 - Input artifact: "research_brief.json" (with comment: "# Optional input")
-- Location: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:50`
+- Location: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml:50`
 - Transition T0a_ResearchToBusiness: PLANNING.RESEARCH → PLANNING.BUSINESS_VALIDATION (lines 120-125)
 - Transition T0b_SkipResearchStartBusiness: PLANNING → PLANNING.BUSINESS_VALIDATION (lines 127-132)
 - Both paths supported: with research AND without research ✅
@@ -201,7 +201,7 @@ python tests/test_planning_workflow.py
 # Expected: All tests pass (PLANNING workflow works without RESEARCH)
 
 # Verify optional flag enforcement
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "optional: true"
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep "optional: true"
 # Expected: RESEARCH is optional, so skipping it should not break workflow
 ```
 
@@ -338,15 +338,15 @@ knowledge_count=$(ls -1 agency_os/01_planning_framework/knowledge/research/*.yam
 
 # Phase 1 Task 5: RESEARCH sub-state
 echo "Task 5: RESEARCH sub-state in workflow"
-grep -q 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ RESEARCH sub-state exists" || echo "❌ FAIL"
+grep -q 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ RESEARCH sub-state exists" || echo "❌ FAIL"
 
 # Phase 1 Task 6: LEAN_CANVAS_VALIDATOR input
 echo "Task 6: LEAN_CANVAS_VALIDATOR accepts research_brief.json"
-grep -q 'input_artifact: "research_brief.json"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ research_brief.json input configured" || echo "❌ FAIL"
+grep -q 'input_artifact: "research_brief.json"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ research_brief.json input configured" || echo "❌ FAIL"
 
 # Phase 1 Task 7: Backward compatibility (optional flag)
 echo "Task 7: Backward compatibility (RESEARCH is optional)"
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep -q "optional: true" && echo "✅ RESEARCH is optional" || echo "❌ FAIL"
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep -q "optional: true" && echo "✅ RESEARCH is optional" || echo "❌ FAIL"
 
 # Phase 1 Task 8: Git tracking
 echo "Task 8: Files committed to git"

@@ -114,8 +114,8 @@ Translated all German comments to English in YAML files:
 Translated:
 ├── agency_os/03_qa_framework/knowledge/*.yaml (3)
 ├── agency_os/05_maintenance_framework/knowledge/*.yaml (3)
-├── agency_os/00_system/contracts/*.yaml (1)
-├── agency_os/00_system/state_machine/*.yaml (1)
+├── agency_os/core_system/contracts/*.yaml (1)
+├── agency_os/core_system/state_machine/*.yaml (1)
 ├── agency_os/02_code_gen_framework/knowledge/*.yaml (2)
 └── agency_os/04_deploy_framework/knowledge/*.yaml (3)
 
@@ -131,7 +131,7 @@ Total: 30 German comments → English
 Created comprehensive validation gates:
 
 ```
-agency_os/00_system/gates/
+agency_os/core_system/gates/
 ├── gate_nfr_performance.md (3,500 lines)
 │   ├── Prompt size validation
 │   ├── Composition time tracking
@@ -234,7 +234,7 @@ docs/requirements/NFR_*.yaml        (6 files, 11,900 lines)
 
 ### Validation (3 files)
 ```
-agency_os/00_system/gates/
+agency_os/core_system/gates/
 ├── gate_nfr_performance.md         (3,500 lines)
 ├── gate_nfr_security.md            (3,800 lines)
 └── gate_nfr_reliability.md         (3,600 lines)
@@ -538,7 +538,7 @@ Remaining LOW priority items (log rotation, backup automation, type hints) can b
 - `docs/GLOSSARY.md` - Ubiquitous Language
 - `docs/API_KEY_MANAGEMENT.md` - Security guide
 - `docs/requirements/NFR_*.yaml` - All NFRs (6 files)
-- `agency_os/00_system/gates/gate_nfr_*.md` - Validation gates (3 files)
+- `agency_os/core_system/gates/gate_nfr_*.md` - Validation gates (3 files)
 
 **Testing Commands:**
 ```bash

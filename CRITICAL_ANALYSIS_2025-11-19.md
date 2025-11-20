@@ -157,7 +157,7 @@ focus:
 ```
 
 **Evidence:**
-- Files: `agency_os/00_system/runtime/providers/*.py` (907 LOC)
+- Files: `agency_os/core_system/runtime/providers/*.py` (907 LOC)
 - Commits: 8cf9cf0, fdabc18, 4987afd, 05768e4
 - Severity: 🔴 CRITICAL
 - Impact: Roadmap komplett ignoriert
@@ -446,7 +446,7 @@ repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
 # Setup path for 00_system modules (numeric prefix)
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 ```
 
 **Warum das schlecht ist:**
@@ -467,7 +467,7 @@ sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
 
 **Empfohlener Fix:**
 1. Rename `00_system` → `core_system`
-2. Oder: Symlink `agency_os/core_system` → `agency_os/00_system`
+2. Oder: Symlink `agency_os/core_system` → `agency_os/core_system`
 3. Remove ALL sys.path manipulations
 4. Use standard Python imports
 
@@ -839,7 +839,7 @@ def test_api_key_validation():
 
 #### 5. sys.path Problem Lösen
 **Option A:** Rename `00_system` → `core_system`
-**Option B:** Symlink `agency_os/core_system` → `agency_os/00_system`
+**Option B:** Symlink `agency_os/core_system` → `agency_os/core_system`
 
 **Dann:** Remove ALL 40+ sys.path.insert() calls
 

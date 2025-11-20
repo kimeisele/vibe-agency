@@ -284,7 +284,7 @@ fields:
 ### 1. prompt_runtime.py
 **Purpose:** Compose prompts from fragments
 
-**Status:** ✅ **EXISTS** (`agency_os/00_system/runtime/prompt_runtime.py`, 20KB)
+**Status:** ✅ **EXISTS** (`agency_os/core_system/runtime/prompt_runtime.py`, 20KB)
 
 **Methods:**
 - `execute_task(agent_name, task_id, inputs)` → composed prompt
@@ -299,7 +299,7 @@ fields:
 ### 2. llm_client.py
 **Purpose:** Wrapper around Anthropic API
 
-**Status:** ✅ **EXISTS** (`agency_os/00_system/runtime/llm_client.py`, 12KB)
+**Status:** ✅ **EXISTS** (`agency_os/core_system/runtime/llm_client.py`, 12KB)
 
 **Features:**
 - Cost tracking

@@ -718,7 +718,7 @@ agency_os/04_deploy_framework/knowledge/DEPLOY_dependencies.yaml
 
 **Sample file:**
 ```
-agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml
+agency_os/core_system/knowledge/ORCHESTRATION_technology_comparison.yaml
 ```
 
 #### Structure H
@@ -938,7 +938,7 @@ agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml
 
 **Sample file:**
 ```
-agency_os/00_system/knowledge/AOS_Ontology.yaml
+agency_os/core_system/knowledge/AOS_Ontology.yaml
 ```
 
 #### Structure I

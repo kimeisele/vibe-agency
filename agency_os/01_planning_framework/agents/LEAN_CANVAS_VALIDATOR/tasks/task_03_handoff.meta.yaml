@@ -21,4 +21,4 @@ notes: |
   VIBE_ALIGNER will consume as input.
 
   Schema is defined in:
-  agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml

@@ -28,7 +28,7 @@ required_knowledge:
       - quality_assurance_packaging
     description: "Defines linting rules, coverage targets, security checks"
 
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Data contracts and schemas for all artifacts"
     critical: true
     used_in_tasks:

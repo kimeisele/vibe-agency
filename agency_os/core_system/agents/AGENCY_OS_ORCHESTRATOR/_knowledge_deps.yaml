@@ -4,7 +4,7 @@ agent_id: AGENCY_OS_ORCHESTRATOR
 # Knowledge files this agent depends on
 knowledge_files:
   - id: ORCHESTRATION_workflow_design
-    path: agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+    path: agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
     required: true
     purpose: "State machine logic and transition rules"
     used_by_tasks:
@@ -16,7 +16,7 @@ knowledge_files:
       - task_06_handle_maintenance
 
   - id: ORCHESTRATION_data_contracts
-    path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+    path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     required: true
     purpose: "Schemas for project_manifest.json and all artifacts"
     used_by_tasks:
@@ -28,7 +28,7 @@ knowledge_files:
       - task_06_handle_maintenance
 
   - id: ORCHESTRATION_technology_comparison
-    path: agency_os/00_system/knowledge/ORCHESTRATION_technology_comparison.yaml
+    path: agency_os/core_system/knowledge/ORCHESTRATION_technology_comparison.yaml
     required: false
     purpose: "Principles of Durable Execution (for understanding the underlying engine)"
     used_by_tasks:

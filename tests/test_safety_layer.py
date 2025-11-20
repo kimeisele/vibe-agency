@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Add runtime directory to path to handle numeric module names
-runtime_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "runtime"
+runtime_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "runtime"
 
 # Now we can import from the runtime modules
 from runtime.circuit_breaker import (

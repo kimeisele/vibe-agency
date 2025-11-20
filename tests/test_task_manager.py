@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 # Import task_management module dynamically (00_system starts with digit)
-task_management = importlib.import_module("agency_os.00_system.task_management")
+task_management = importlib.import_module("agency_os.core_system.task_management")
 TaskManager = task_management.TaskManager
 Task = task_management.Task
 ActiveMission = task_management.ActiveMission

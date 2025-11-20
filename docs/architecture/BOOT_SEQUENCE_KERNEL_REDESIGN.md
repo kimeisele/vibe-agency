@@ -139,7 +139,7 @@ Still there, but not drowning the output.
 ## Implementation
 
 ### File Changes
-- `agency_os/00_system/runtime/boot_sequence.py` - redesign `_display_dashboard()`
+- `agency_os/core_system/runtime/boot_sequence.py` - redesign `_display_dashboard()`
 - New method: `_format_kernel_boot()` - compose output
 
 ### Output Flow

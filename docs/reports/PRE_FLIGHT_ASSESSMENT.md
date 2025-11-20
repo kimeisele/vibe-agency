@@ -103,7 +103,7 @@ task_05_quality_assurance_packaging.md
 
 **Implementation:**
 ```bash
-agency_os/00_system/orchestrator/tools/
+agency_os/core_system/orchestrator/tools/
 ├── google_search_client.py (95 lines) ✅
 ├── web_fetch_client.py (assumed similar) ✅
 ├── tool_executor.py (64 lines) ✅

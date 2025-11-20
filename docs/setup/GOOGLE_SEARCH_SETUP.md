@@ -88,7 +88,7 @@ Run this in your terminal (replace with your actual values):
 export GOOGLE_SEARCH_API_KEY="your-api-key-here"
 export GOOGLE_SEARCH_ENGINE_ID="your-search-engine-id-here"
 
-python agency_os/00_system/orchestrator/tools/google_search_client.py
+python agency_os/core_system/orchestrator/tools/google_search_client.py
 ```
 
 You should see:

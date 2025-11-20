@@ -49,13 +49,13 @@
             "component": "tool_definitions.yaml",
             "reason": "YAML definitions for google_search and web_fetch tools",
             "source": "GAD-003",
-            "status": "EXISTS (agency_os/00_system/orchestrator/tools/tool_definitions.yaml)"
+            "status": "EXISTS (agency_os/core_system/orchestrator/tools/tool_definitions.yaml)"
           },
           {
             "component": "tool_executor.py",
             "reason": "Executes tools locally (google_search, web_fetch)",
             "source": "GAD-003",
-            "status": "EXISTS (agency_os/00_system/orchestrator/tools/tool_executor.py)"
+            "status": "EXISTS (agency_os/core_system/orchestrator/tools/tool_executor.py)"
           },
           {
             "component": "yaml_to_anthropic_schema_converter",
@@ -306,7 +306,7 @@
       "estimated_effort": "2-3 days (DEFERRED to v2.0)",
       "implementation_order": null,
       "lead_architect_notes": "DEFERRED TO v2.0 - Tool execution is ALREADY separated in tools/tool_executor.py (GAD-003). Orchestrator already has clear modes (delegated/autonomous) per ADR-003. This is solving a documentation problem, not an architecture problem. Defer until v1.0 proves there's an actual issue.",
-      "deferred_reason": "Premature optimization. Tool execution is already isolated in agency_os/00_system/orchestrator/tools/tool_executor.py. Orchestrator has clear separation between delegated mode (state machine only) and autonomous mode (includes LLM calls). ADR-003 documents this clearly. No evidence of coupling problems. Defer to v2.0 IF implementation reveals actual issues.",
+      "deferred_reason": "Premature optimization. Tool execution is already isolated in agency_os/core_system/orchestrator/tools/tool_executor.py. Orchestrator has clear separation between delegated mode (state machine only) and autonomous mode (includes LLM calls). ADR-003 documents this clearly. No evidence of coupling problems. Defer to v2.0 IF implementation reveals actual issues.",
       "input": {
         "format": "Current core_orchestrator.py (1252 lines)",
         "example": "Orchestrator handles state machine (phase transitions, agent routing) + execution mode routing (delegated vs autonomous)",
@@ -314,7 +314,7 @@
       },
       "technical_reality": {
         "orchestrator_size": "1252 lines",
-        "tool_execution_location": "agency_os/00_system/orchestrator/tools/tool_executor.py (ALREADY SEPARATE)",
+        "tool_execution_location": "agency_os/core_system/orchestrator/tools/tool_executor.py (ALREADY SEPARATE)",
         "state_machine_clarity": "ProjectPhase enum, clear phase transitions, delegated vs autonomous modes",
         "coupling_evidence": "LOW - tools are already in separate directory with separate executor"
       },

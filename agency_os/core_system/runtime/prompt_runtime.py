@@ -119,7 +119,7 @@ class PromptRuntime:
     def __init__(self, base_path: str | None = None):
         if base_path is None:
             # Auto-detect repo root (4 levels up from prompt_runtime.py)
-            # agency_os/00_system/runtime/prompt_runtime.py -> vibe-agency/
+            # agency_os/core_system/runtime/prompt_runtime.py -> vibe-agency/
             self.base_path = Path(__file__).resolve().parent.parent.parent.parent
         else:
             self.base_path = Path(base_path)
@@ -511,7 +511,7 @@ class PromptRuntime:
             "AUDITOR": "system_steward_framework/agents/AUDITOR",
             "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
             # System Agents
-            "AGENCY_OS_ORCHESTRATOR": "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR",
+            "AGENCY_OS_ORCHESTRATOR": "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR",
         }
 
         if agent_id not in AGENT_REGISTRY:

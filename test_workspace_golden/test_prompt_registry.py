@@ -8,7 +8,7 @@ import sys
 
 # Add agency_os to path
 sys.path.insert(0, "/home/user/vibe-agency")
-sys.path.insert(0, "/home/user/vibe-agency/agency_os/00_system/runtime")
+sys.path.insert(0, "/home/user/vibe-agency/agency_os/core_system/runtime")
 
 print("=" * 80)
 print("GOLDEN PATH TEST - Prompt Registry Integration")

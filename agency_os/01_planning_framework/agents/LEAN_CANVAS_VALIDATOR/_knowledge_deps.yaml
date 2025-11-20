@@ -5,7 +5,7 @@ agent_version: "1.0"
 required_knowledge: []
 
 optional_knowledge:
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Data contracts for lean_canvas_summary.json schema"
     critical: false
     used_in_tasks:

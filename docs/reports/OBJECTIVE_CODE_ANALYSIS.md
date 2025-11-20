@@ -18,7 +18,7 @@ The repository contains **1,222 lines of executable Python code** across 4 files
 
 | File | Lines | Status | Purpose |
 |------|-------|--------|---------|
-| `agency_os/00_system/runtime/prompt_runtime.py` | 319 | **Executable** | Prompt composition engine |
+| `agency_os/core_system/runtime/prompt_runtime.py` | 319 | **Executable** | Prompt composition engine |
 | `scripts/workspace_utils.py` | 561 | **Executable** | Workspace management utilities |
 | `scripts/semantic_audit.py` | 342 | **Executable** | YAML validation script |
 | `validate_knowledge_index.py` | (root) | **Executable** | Knowledge base validator |
@@ -134,7 +134,7 @@ agency_os/01_planning_framework/agents/VIBE_ALIGNER/
 
 ### 3.2 State Machine (Design Document Only)
 
-**File:** `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`
+**File:** `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml`
 
 **Content:** YAML description of desired workflow states and transitions
 
@@ -155,7 +155,7 @@ agency_os/01_planning_framework/agents/VIBE_ALIGNER/
 
 ### 3.3 Data Contracts (Schemas Only)
 
-**File:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+**File:** `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 
 **Content:** YAML schemas defining expected JSON structure for artifacts
 
@@ -268,7 +268,7 @@ From `README.md`:
 
 ```bash
 # 1. Compose a prompt for GENESIS_BLUEPRINT agent
-python3 agency_os/00_system/runtime/prompt_runtime.py
+python3 agency_os/core_system/runtime/prompt_runtime.py
 
 # Output: COMPOSED_PROMPT_EXAMPLE.md (16,683 characters)
 ```
@@ -458,7 +458,7 @@ validate_knowledge_index.py
 **Minimal setup:**
 ```bash
 pip install pyyaml
-python3 agency_os/00_system/runtime/prompt_runtime.py
+python3 agency_os/core_system/runtime/prompt_runtime.py
 ```
 
 **Result:** Generates composed prompt text files

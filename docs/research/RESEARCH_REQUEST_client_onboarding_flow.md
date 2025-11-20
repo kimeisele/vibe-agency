@@ -69,7 +69,7 @@ Design the **missing integration layer** that connects SSF (governance/routing) 
 - FAE_constraints.yaml, APCE_rules.yaml, FDG_dependencies.yaml
 - 17 KB files, 6090 lines, ✅ validated (semantic_audit.py)
 
-**Orchestrator:** `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/`
+**Orchestrator:** `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/`
 - State machine executor
 - Artifact-driven workflow
 
@@ -142,7 +142,7 @@ Design the **missing integration layer** that connects SSF (governance/routing) 
 
 **Reference Files:**
 - `agency_os/01_planning_framework/agents/VIBE_ALIGNER/_composition.yaml`
-- `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/_prompt_core.md`
+- `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/_prompt_core.md`
 
 ### Q4: Client Delivery Mechanism
 
@@ -175,7 +175,7 @@ Design the **missing integration layer** that connects SSF (governance/routing) 
 
 **Reference Files:**
 - `docs/research/phase-03/KI-Systemarchitektur und Steward-Framework-Entwurf.txt` (lines 437-460: Table)
-- `agency_os/00_system/state_machine/` (if exists - need to check)
+- `agency_os/core_system/state_machine/` (if exists - need to check)
 
 ---
 
@@ -245,17 +245,17 @@ Design the **missing integration layer** that connects SSF (governance/routing) 
 7. `agency_os/01_planning_framework/agents/VIBE_ALIGNER/_composition.yaml`
    - Example agent composition (how to make workspace-aware?)
 
-8. `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/_prompt_core.md`
+8. `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/_prompt_core.md`
    - How orchestrator executes workflows (scoping needed?)
 
-9. `agency_os/00_system/knowledge/AOS_Ontology.yaml`
+9. `agency_os/core_system/knowledge/AOS_Ontology.yaml`
    - Semantic terms (does "workspace" exist as term?)
 
 ### Supporting Files
 10. `project_manifest.json` (ROOT)
     - Compare with workspace manifests
 
-11. `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml` (if exists)
+11. `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml` (if exists)
     - Data contracts for artifacts
 
 12. `.knowledge_index.yaml`

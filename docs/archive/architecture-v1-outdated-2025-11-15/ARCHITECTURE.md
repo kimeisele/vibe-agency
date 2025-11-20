@@ -28,7 +28,7 @@ The vibe-agency is a **hierarchical AI-driven SDLC orchestration system** that m
 
 ### 1. Core Orchestrator (`core_orchestrator.py`)
 
-**Location:** `agency_os/00_system/orchestrator/core_orchestrator.py` (1,252 lines)
+**Location:** `agency_os/core_system/orchestrator/core_orchestrator.py` (1,252 lines)
 
 **Responsibilities:**
 - Manages SDLC state machine across 7 phases
@@ -74,7 +74,7 @@ class ProjectManifest:
 
 ### 2. Phase Handlers
 
-**Location:** `agency_os/00_system/orchestrator/handlers/`
+**Location:** `agency_os/core_system/orchestrator/handlers/`
 
 Each handler executes a phase by invoking agents sequentially:
 
@@ -120,7 +120,7 @@ Each handler executes a phase by invoking agents sequentially:
 
 ### 3. Prompt Runtime (`prompt_runtime.py`)
 
-**Location:** `agency_os/00_system/runtime/prompt_runtime.py` (660 lines)
+**Location:** `agency_os/core_system/runtime/prompt_runtime.py` (660 lines)
 
 **Purpose:** Dynamically compose prompts from modular fragments
 
@@ -161,7 +161,7 @@ class PromptRuntime:
 
 ### 4. LLM Client (`llm_client.py`)
 
-**Location:** `agency_os/00_system/runtime/llm_client.py`
+**Location:** `agency_os/core_system/runtime/llm_client.py`
 
 **Features:**
 - Graceful failover (NoOpClient if no API key)
@@ -179,7 +179,7 @@ class PromptRuntime:
 
 ### 5. Tool Infrastructure (GAD-003 Phase 1 & 2)
 
-**Location:** `agency_os/00_system/orchestrator/tools/`
+**Location:** `agency_os/core_system/orchestrator/tools/`
 
 #### Tool Definitions (`tool_definitions.yaml`)
 Defines 2 research tools:
@@ -744,7 +744,7 @@ response_line = sys.stdin.readline()  # ← BLOCKS FOREVER
 - **Result: DEADLOCK**
 
 **Evidence:**
-- File: `agency_os/00_system/orchestrator/core_orchestrator.py:631`
+- File: `agency_os/core_system/orchestrator/core_orchestrator.py:631`
 - Status: **NO INTEGRATION LAYER EXISTS**
 
 **Impact:**
@@ -920,7 +920,7 @@ But Anthropic Claude API has **native tool use** with JSON:
 
 ### Core System (2,328+ lines)
 ```
-agency_os/00_system/
+agency_os/core_system/
 ├── orchestrator/
 │   ├── core_orchestrator.py (1,252 lines) - Main orchestrator
 │   ├── state_manager.py - State persistence
@@ -1051,8 +1051,8 @@ tests/
    ```python
    orchestrator = CoreOrchestrator(
        repo_root=".",
-       workflow_yaml="agency_os/00_system/schemas/ORCHESTRATION_workflow.yaml",
-       contracts_yaml="agency_os/00_system/schemas/ORCHESTRATION_data_contracts.yaml",
+       workflow_yaml="agency_os/core_system/schemas/ORCHESTRATION_workflow.yaml",
+       contracts_yaml="agency_os/core_system/schemas/ORCHESTRATION_data_contracts.yaml",
        execution_mode="autonomous"  # ← Force autonomous mode
    )
    ```
@@ -1065,7 +1065,7 @@ tests/
 3. **Run orchestrator directly:**
    ```bash
    python -c "
-   from agency_os.00_system.orchestrator.core_orchestrator import CoreOrchestrator
+   from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator
    orch = CoreOrchestrator('.', execution_mode='autonomous')
    manifest = orch.load_project_manifest('my_project')
    orch.execute_phase(manifest)

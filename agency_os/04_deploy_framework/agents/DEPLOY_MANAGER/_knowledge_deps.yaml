@@ -12,6 +12,6 @@ required_knowledge:
   - path: agency_os/04_deploy_framework/knowledge/DEPLOY_quality_rules.yaml
     purpose: "Deployment standards, best practices, health checks"
     critical: true
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Schemas for qa_report.json, deploy_receipt.json"
     critical: true

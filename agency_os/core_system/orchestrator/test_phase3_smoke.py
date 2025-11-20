@@ -24,7 +24,7 @@ repo_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(repo_root))
 
 # Add 00_system to path (Python doesn't like numeric module names)
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
 
 def test_imports():
@@ -125,7 +125,7 @@ def test_schema_validator():
         from orchestrator.core_orchestrator import SchemaValidator
 
         contracts_path = (
-            Path.cwd() / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+            Path.cwd() / "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
         )
         validator = SchemaValidator(contracts_path)
 
@@ -199,7 +199,7 @@ def test_knowledge_metadata():
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_market_sizing_formulas.yaml",
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_competitor_analysis_templates.yaml",
             "agency_os/01_planning_framework/knowledge/research/RESEARCH_red_flag_taxonomy.yaml",
-            "agency_os/00_system/knowledge/AOS_Ontology.yaml",
+            "agency_os/core_system/knowledge/AOS_Ontology.yaml",
         ]
 
         for file_path in test_files:

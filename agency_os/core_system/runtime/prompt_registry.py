@@ -360,7 +360,7 @@ class PromptRegistry:
         tool_defs_path = (
             _REPO_ROOT
             / "agency_os"
-            / "00_system"
+            / "core_system"
             / "orchestrator"
             / "tools"
             / "tool_definitions.yaml"

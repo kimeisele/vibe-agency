@@ -330,7 +330,7 @@ class TestDeploymentWorkflow:
 
                 sys.path.insert(
                     0,
-                    str(Path(__file__).parent.parent / "agency_os" / "00_system" / "orchestrator"),
+                    str(Path(__file__).parent.parent / "agency_os" / "core_system" / "orchestrator"),
                 )
                 from core_orchestrator import ArtifactNotFoundError
 

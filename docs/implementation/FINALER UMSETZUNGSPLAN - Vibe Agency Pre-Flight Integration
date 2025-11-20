@@ -57,7 +57,7 @@
 
 ### 1.1 State Machine präzisieren
 
-**Datei:** `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml`
+**Datei:** `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml`
 
 **Problem:** `PLANNING` ist zu vage - wer ist dafür verantwortlich?
 
@@ -214,7 +214,7 @@ Your Lean Canvas is validated and saved. Here's what happens next:
 
 ### 1.5 Data Contract für lean_canvas_summary.json
 
-**Datei:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+**Datei:** `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 
 **Hinzufügen:**
 
@@ -275,7 +275,7 @@ lean_canvas_summary:
 
 ### 2.1 Skip-Logik in AGENCY_OS_ORCHESTRATOR
 
-**Datei:** `agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_01_workflow_init.md`
+**Datei:** `agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/tasks/task_01_workflow_init.md`
 
 **Neue Sektion:**
 

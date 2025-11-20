@@ -32,7 +32,7 @@
 
 ### Test Command
 ```bash
-python agency_os/00_system/orchestrator/core_orchestrator.py \
+python agency_os/core_system/orchestrator/core_orchestrator.py \
   /home/user/vibe-agency \
   test_cli_password_gen \
   --mode delegated \
@@ -132,7 +132,7 @@ python agency_os/00_system/orchestrator/core_orchestrator.py \
 
 #### 1. Stub Mode Shortcut (Not Production-Ready)
 
-**Location:** `agency_os/00_system/orchestrator/handlers/planning_handler.py:247-249`
+**Location:** `agency_os/core_system/orchestrator/handlers/planning_handler.py:247-249`
 
 ```python
 # NOTE: Using task 03_handoff which generates lean_canvas_summary.json

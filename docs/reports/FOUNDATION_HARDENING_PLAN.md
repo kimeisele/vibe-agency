@@ -131,7 +131,7 @@ pip install pre-commit
 
 **Implementation:**
 ```python
-# agency_os/00_system/utils/logging_config.py
+# agency_os/core_system/utils/logging_config.py
 import logging
 from pathlib import Path
 

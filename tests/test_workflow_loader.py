@@ -16,7 +16,7 @@ import pytest
 import yaml
 
 # Add playbook directory to path
-playbook_dir = Path(__file__).parent.parent / "agency_os" / "00_system" / "playbook"
+playbook_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "playbook"
 
 from executor import WorkflowEdge, WorkflowGraph, WorkflowNode
 from loader import WorkflowLoader, WorkflowLoaderError, WorkflowValidationError

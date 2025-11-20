@@ -22,8 +22,8 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# project_root = Path(__file__).parent.parent
+# sys.path.insert(0, str(project_root))
 
 
 def mask_value(value: str) -> str:
@@ -134,32 +134,20 @@ def check_provider_detection():
     print_section("3. PROVIDER FACTORY DETECTION")
 
     try:
-        # Import factory detection functions using importlib to bypass naming issues
-        import importlib.util
-        import sys
+        from agency_os.core_system.runtime.providers import factory
 
-        factory_path = (
-            project_root / "agency_os" / "00_system" / "runtime" / "providers" / "factory.py"
-        )
-        spec = importlib.util.spec_from_file_location("factory", factory_path)
-        if spec and spec.loader:
-            factory = importlib.util.module_from_spec(spec)
-            sys.modules["factory"] = factory
-            spec.loader.exec_module(factory)
+        print("\nProvider Detection:")
+        detected = factory._detect_provider()
+        print(f"  Detected Provider: {detected}")
 
-            print("\nProvider Detection:")
-            detected = factory._detect_provider()
-            print(f"  Detected Provider: {detected}")
+        print("\nAPI Key Lookup for Each Provider:")
+        for provider in ["google", "anthropic", "openai", "local"]:
+            api_key = factory._get_api_key_for_provider(provider)
+            status = "✅ FOUND" if api_key else "❌ NOT FOUND"
+            print(f"  {provider}: {status}")
+            if api_key:
+                print(f"    (masked: {mask_value(api_key)})")
 
-            print("\nAPI Key Lookup for Each Provider:")
-            for provider in ["google", "anthropic", "openai", "local"]:
-                api_key = factory._get_api_key_for_provider(provider)
-                status = "✅ FOUND" if api_key else "❌ NOT FOUND"
-                print(f"  {provider}: {status}")
-                if api_key:
-                    print(f"    (masked: {mask_value(api_key)})")
-        else:
-            print("\n❌ Failed to load factory module")
 
     except Exception as e:
         print(f"\n❌ Failed to check provider detection: {e}")
@@ -173,19 +161,10 @@ def check_llm_client_init():
     print_section("4. LLM CLIENT INITIALIZATION")
 
     try:
-        # Import LLMClient using importlib to bypass naming issues
-        import importlib.util
-        import sys
+        from agency_os.core_system.runtime.llm_client import LLMClient
 
-        llm_client_path = project_root / "agency_os" / "00_system" / "runtime" / "llm_client.py"
-        spec = importlib.util.spec_from_file_location("llm_client", llm_client_path)
-        if spec and spec.loader:
-            llm_client = importlib.util.module_from_spec(spec)
-            sys.modules["llm_client"] = llm_client
-            spec.loader.exec_module(llm_client)
-
-            print("\nInitializing LLMClient...")
-            client = llm_client.LLMClient()
+        print("\nInitializing LLMClient...")
+        client = LLMClient()
 
             print(f"  Mode: {client.mode}")
             print(f"  Provider: {client.provider.get_provider_name()}")
@@ -199,8 +178,7 @@ def check_llm_client_init():
                     f"\n✅ Client initialized with {client.provider.get_provider_name()} provider"
                 )
                 print("   Real LLM invocations are possible.")
-        else:
-            print("\n❌ Failed to load llm_client module")
+
 
     except Exception as e:
         print(f"\n❌ Failed to initialize LLMClient: {e}")

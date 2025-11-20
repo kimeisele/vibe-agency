@@ -116,7 +116,7 @@ framework_constraints:
 
     fae_integration:
       - rule: "TECH_RESEARCHER references existing FAE rules"
-        note: "No duplication; FAE rules in agency_os/00_system/knowledge/FAE_constraints.yaml"
+        note: "No duplication; FAE rules in agency_os/core_system/knowledge/FAE_constraints.yaml"
 
       - rule: "FAE violations are warnings, not blockers"
         rationale: "User may choose to proceed despite FAE flags"

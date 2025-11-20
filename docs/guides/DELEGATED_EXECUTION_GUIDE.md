@@ -40,7 +40,7 @@ Run the orchestrator directly for testing:
 
 ```bash
 # From vibe-agency root
-python agency_os/00_system/orchestrator/core_orchestrator.py \
+python agency_os/core_system/orchestrator/core_orchestrator.py \
   /home/user/vibe-agency \
   test-orchestrator-003 \
   --mode=autonomous
@@ -178,7 +178,7 @@ EOF
 export ANTHROPIC_API_KEY="sk-..."
 
 # Run directly (no vibe-cli wrapper)
-python agency_os/00_system/orchestrator/core_orchestrator.py \
+python agency_os/core_system/orchestrator/core_orchestrator.py \
   $(pwd) \
   my-project-001 \
   --mode=autonomous \
@@ -191,7 +191,7 @@ For testing, you can manually provide intelligence responses:
 
 ```bash
 # Run orchestrator in delegated mode
-python agency_os/00_system/orchestrator/core_orchestrator.py \
+python agency_os/core_system/orchestrator/core_orchestrator.py \
   $(pwd) \
   my-project-001 \
   --mode=delegated &
@@ -261,7 +261,7 @@ tail -f debug.log | grep "INTELLIGENCE_REQUEST"
 # Test prompt runtime directly
 python -c "
 from pathlib import Path
-from agency_os.00_system.runtime.prompt_runtime import PromptRuntime
+from agency_os.core_system.runtime.prompt_runtime import PromptRuntime
 
 runtime = PromptRuntime(base_path=Path('.'))
 prompt = runtime.execute_task('VIBE_ALIGNER', 'scope_negotiation', {})
@@ -273,7 +273,7 @@ print(prompt)
 
 ```bash
 # Check manifest schema
-python agency_os/00_system/orchestrator/core_orchestrator.py \
+python agency_os/core_system/orchestrator/core_orchestrator.py \
   $(pwd) \
   my-project-001 \
   --mode=autonomous \
@@ -350,7 +350,7 @@ A: YES! In MVP, vibe-cli prints delegation requests to STDOUT. Claude Code opera
 
 **Q: What if prompt_runtime doesn't exist?**
 
-A: Then you'll get an import error. Check that `agency_os/00_system/runtime/prompt_runtime.py` exists and implements the `PromptRuntime` class.
+A: Then you'll get an import error. Check that `agency_os/core_system/runtime/prompt_runtime.py` exists and implements the `PromptRuntime` class.
 
 ---
 

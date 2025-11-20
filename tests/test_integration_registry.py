@@ -16,8 +16,8 @@ from pathlib import Path
 
 # Add paths
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_RUNTIME_PATH = _REPO_ROOT / "agency_os" / "00_system" / "runtime"
-_ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "00_system" / "orchestrator"
+_RUNTIME_PATH = _REPO_ROOT / "agency_os" / "core_system" / "runtime"
+_ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "core_system" / "orchestrator"
 
 
 from agency_os_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator

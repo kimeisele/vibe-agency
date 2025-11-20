@@ -48,7 +48,7 @@
 3. Output: Single composed prompt string
 4. Execution: User manually provides prompt to Claude AI
 
-**Implementation:** `agency_os/00_system/runtime/prompt_runtime.py` (319 lines)
+**Implementation:** `agency_os/core_system/runtime/prompt_runtime.py` (319 lines)
 
 **Key Principle:** Single-LLM, manual execution (not autonomous)
 
@@ -262,7 +262,7 @@ context = {
 ### Prompt Runtime
 **Definition:** The Python module responsible for composing prompts from fragments.
 
-**Implementation:** `agency_os/00_system/runtime/prompt_runtime.py` (319 lines)
+**Implementation:** `agency_os/core_system/runtime/prompt_runtime.py` (319 lines)
 
 **Key Methods:**
 - `execute_task(agent_id, task_id, context)` - Main entry point

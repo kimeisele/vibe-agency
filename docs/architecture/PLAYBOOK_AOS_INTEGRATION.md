@@ -5,10 +5,10 @@
 ### Move Playbook into AOS
 ```bash
 # Create structure
-mkdir -p agency_os/00_system/playbook/{tasks,templates}
+mkdir -p agency_os/core_system/playbook/{tasks,templates}
 
 # Move registry
-mv docs/playbook/_registry.yaml agency_os/00_system/playbook/
+mv docs/playbook/_registry.yaml agency_os/core_system/playbook/
 
 # Keep docs/playbook for reference/vision docs only
 # (ENTRY_POINTS.md, VISION.md stay as documentation)
@@ -35,7 +35,7 @@ Each follows _composition.yaml pattern:
 
 ## PHASE 2: Context Loader (45min)
 
-### agency_os/00_system/runtime/context_loader.py
+### agency_os/core_system/runtime/context_loader.py
 
 **Purpose:** Conveyor Belt #1 - Collect ALL signals
 
@@ -80,7 +80,7 @@ class ContextLoader:
 
 ## PHASE 3: Playbook Engine (1h)
 
-### agency_os/00_system/runtime/playbook_engine.py
+### agency_os/core_system/runtime/playbook_engine.py
 
 **Purpose:** Conveyor Belt #2 - Route to task
 
@@ -123,7 +123,7 @@ class PlaybookEngine:
 
 ## PHASE 4: Prompt Composer (45min)
 
-### agency_os/00_system/runtime/prompt_composer.py
+### agency_os/core_system/runtime/prompt_composer.py
 
 **Purpose:** Conveyor Belt #3 - Compose final prompt
 
@@ -165,7 +165,7 @@ class PromptComposer:
 
 ## PHASE 5: Boot Sequence (30min)
 
-### agency_os/00_system/runtime/boot_sequence.py
+### agency_os/core_system/runtime/boot_sequence.py
 
 **Purpose:** Orchestrate the conveyor belt
 
@@ -224,7 +224,7 @@ python3 ./vibe-cli boot "$@"
 
 ## SUCCESS CRITERIA
 
-✅ Playbook is part of AOS (agency_os/00_system/playbook/)
+✅ Playbook is part of AOS (agency_os/core_system/playbook/)
 ✅ Context flows from system → STEWARD (no information loss)
 ✅ User can: explicit intent OR context-driven OR inspiration mode
 ✅ Boot sequence < 3 seconds

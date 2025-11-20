@@ -25,15 +25,15 @@ knowledge_count=$(ls -1 agency_os/01_planning_framework/knowledge/research/*.yam
 
 # Phase 1 Task 5: RESEARCH sub-state
 echo "Task 5: RESEARCH sub-state in workflow"
-grep -q 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ RESEARCH sub-state exists" || echo "❌ FAIL"
+grep -q 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ RESEARCH sub-state exists" || echo "❌ FAIL"
 
 # Phase 1 Task 6: LEAN_CANVAS_VALIDATOR input
 echo "Task 6: LEAN_CANVAS_VALIDATOR accepts research_brief.json"
-grep -q 'input_artifact: "research_brief.json"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ research_brief.json input configured" || echo "❌ FAIL"
+grep -q 'input_artifact: "research_brief.json"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml && echo "✅ research_brief.json input configured" || echo "❌ FAIL"
 
 # Phase 1 Task 7: Backward compatibility (optional flag)
 echo "Task 7: Backward compatibility (RESEARCH is optional)"
-grep -A 10 'name: "RESEARCH"' agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep -q "optional: true" && echo "✅ RESEARCH is optional" || echo "❌ FAIL"
+grep -A 10 'name: "RESEARCH"' agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml | grep -q "optional: true" && echo "✅ RESEARCH is optional" || echo "❌ FAIL"
 
 # Phase 1 Task 8: Git tracking
 echo "Task 8: Files committed to git"

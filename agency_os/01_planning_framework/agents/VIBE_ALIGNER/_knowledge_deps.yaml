@@ -27,7 +27,7 @@ required_knowledge:
     size: "52KB"
     description: "Base complexity per feature type, multipliers, v1.0 thresholds (50-60 points)"
 
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "Data contracts and schemas for all artifacts (feature_spec.json, etc.)"
     critical: true
     used_in_tasks:

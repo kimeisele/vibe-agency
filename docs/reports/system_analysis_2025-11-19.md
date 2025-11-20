@@ -55,7 +55,7 @@ Here is the breakdown for the requested GAD components:
 - **Key Files:**
     - `docs/architecture/GAD-2XX/GAD-200.md` (EPIC Document)
     - `agency_os/02_code_gen_framework/` (Implementation)
-    - `agency_os/00_system/orchestrator/core_orchestrator.py`
+    - `agency_os/core_system/orchestrator/core_orchestrator.py`
 - **Capabilities:** Manages the SDLC workflow, connecting the different phases from planning to maintenance. The `core_orchestrator.py` acts as a state machine. It uses a hierarchical architecture with phase handlers.
 - **Missing Pieces:** While the core is implemented, specific handlers for Testing (GAD-300) and Maintenance are still stubs.
 
@@ -89,7 +89,7 @@ Here is the breakdown for the requested GAD components:
     - `vibe-cli` (Session Shell)
     - `.vibe/` (Runtime artifacts)
     - `scripts/verify-system-integrity.py`
-    - `agency_os/00_system/runtime/`
+    - `agency_os/core_system/runtime/`
 - **Capabilities:** This is the foundational pillar of the entire system. It provides the self-regulating execution environment, including the `vibe-cli` shell, context injection, system integrity checks (Layer 0), an "Unavoidable MOTD" (Layer 1), and a "Pre-Action Kernel" (Layer 2) that intercepts operations for validation. It also includes the "Iron Dome" circuit breaker (GAD-509) and a Quota Manager (GAD-510).
 - **Missing Pieces:** Some advanced features like ambient context improvements and commit watermarking are planned for the future.
 
@@ -110,7 +110,7 @@ Here is the breakdown for the requested GAD components:
 - **Key Files:**
     - `docs/architecture/GAD-7XX/GAD-700.md` (VISION Document)
     - `system_steward_framework/`
-    - `agency_os/00_system/task_management/`
+    - `agency_os/core_system/task_management/`
     - `bin/mission`
 - **Capabilities:** Acts as the "Brain" of the system, providing mission control, task orchestration, and governance. The `bin/mission` tool is the CLI for this pillar. It handles playbook routing and delegation.
 - **Missing Pieces:** The GAD document is a "VISION" document, suggesting the full hybrid governance framework is not yet complete, but the core task management and orchestration are operational.
@@ -320,7 +320,7 @@ In summary, while the project has a strong testing culture, the documentation ha
 -   **`docs/architecture/STRUCTURE.md`**: Explains the GAD/LAD/VAD three-dimensional documentation system.
 -   **`docs/architecture/GAD_IMPLEMENTATION_STATUS.md`**: Tracks the official implementation status of all GADs.
 -   **`docs/architecture/GAD-5XX/GAD-501.md`**: Detailed specification of the multi-layered context injection architecture and system integrity verification (Layer 0).
--   **`agency_os/00_system/orchestrator/core_orchestrator.py`**: The core Python implementation of the SDLC state machine and delegated execution model.
+-   **`agency_os/core_system/orchestrator/core_orchestrator.py`**: The core Python implementation of the SDLC state machine and delegated execution model.
 -   **`bin/vibe-shell`**: The runtime kernel, demonstrating Layer 0 integrity checks and context injection at the lowest level.
 -   **`scripts/verify-system-integrity.py`**: The Python script responsible for the crucial Layer 0 self-verification.
 -   **`.vibe/system_integrity_manifest.json`**: The manifest containing cryptographic checksums for critical system files.

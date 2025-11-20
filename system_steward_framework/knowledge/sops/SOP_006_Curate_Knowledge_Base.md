@@ -4,7 +4,7 @@
 
 **SCOPE:** Applies to all knowledge base files in:
 - `/agency_os/*/knowledge/` (Framework-specific KBs)
-- `/agency_os/00_system/knowledge/` (System-wide KBs, including AOS_Ontology.yaml)
+- `/agency_os/core_system/knowledge/` (System-wide KBs, including AOS_Ontology.yaml)
 
 **PRE-CONDITION:** A change to a KB file is identified (via bug report, feedback loop, or proactive governance review).
 
@@ -199,7 +199,7 @@ on:
   pull_request:
     paths:
       - 'agency_os/*/knowledge/*.yaml'
-      - 'agency_os/00_system/knowledge/*.yaml'
+      - 'agency_os/core_system/knowledge/*.yaml'
 
 jobs:
   semantic-audit:

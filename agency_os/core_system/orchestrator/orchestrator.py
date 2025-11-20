@@ -128,7 +128,7 @@ class Orchestrator:
     def __init__(
         self,
         repo_root: Path,
-        workflow_yaml: str = "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml",
+        workflow_yaml: str = "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml",
     ):
         """
         Initialize orchestrator.

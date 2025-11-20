@@ -80,7 +80,7 @@ Stored in `.vibe/project_memory.json`:
 
 ### Components Added
 
-1. **ProjectMemoryManager** (`agency_os/00_system/runtime/project_memory.py`, 330 lines)
+1. **ProjectMemoryManager** (`agency_os/core_system/runtime/project_memory.py`, 330 lines)
    - `load_memory()` - Read from `.vibe/project_memory.json`
    - `update_session()` - Add session to narrative
    - `extract_intents()` - Rule-based intent extraction
@@ -180,15 +180,15 @@ Stripe and you're concerned about PCI compliance."
 ## Files Changed
 
 ### New Files
-- `agency_os/00_system/runtime/project_memory.py` (330 lines)
+- `agency_os/core_system/runtime/project_memory.py` (330 lines)
 - `tests/test_project_memory.py` (12 tests)
 - `.vibe/project_memory.json` (runtime - created on first boot)
 
 ### Modified Files
-- `agency_os/00_system/runtime/boot_sequence.py` (memory loading)
-- `agency_os/00_system/runtime/prompt_composer.py` (context injection)
+- `agency_os/core_system/runtime/boot_sequence.py` (memory loading)
+- `agency_os/core_system/runtime/prompt_composer.py` (context injection)
 - `agency_os/__init__.py` (package marker)
-- `agency_os/00_system/__init__.py` (package marker)
+- `agency_os/core_system/__init__.py` (package marker)
 
 ---
 

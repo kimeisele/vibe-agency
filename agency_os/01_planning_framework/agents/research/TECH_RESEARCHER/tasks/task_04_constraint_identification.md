@@ -15,7 +15,7 @@ Identify technical constraints and FAE violations. Reference existing FAE rules 
 ## Instructions
 
 ### Step 1: Review Features Against FAE Rules
-- Load `agency_os/00_system/knowledge/FAE_constraints.yaml`
+- Load `agency_os/core_system/knowledge/FAE_constraints.yaml`
 - Check each feature against FAE constraints
 - Identify violations
 

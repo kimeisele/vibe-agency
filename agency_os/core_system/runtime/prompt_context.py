@@ -52,7 +52,7 @@ class PromptContext:
             vibe_root: Root directory of vibe-agency. If None, auto-detected.
         """
         if vibe_root is None:
-            # Auto-detect: assume we're in agency_os/00_system/runtime
+            # Auto-detect: assume we're in agency_os/core_system/runtime
             vibe_root = Path(__file__).parent.parent.parent.parent
 
         self.vibe_root = Path(vibe_root)

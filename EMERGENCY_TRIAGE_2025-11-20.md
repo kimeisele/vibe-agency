@@ -34,7 +34,7 @@ GAD-300: Testing Phase Handlers
 
 **1. Execution Modes (ADR-003)**
 ```python
-# agency_os/00_system/orchestrator/core_orchestrator.py
+# agency_os/core_system/orchestrator/core_orchestrator.py
 execution_mode: "delegated" | "autonomous"
 ```
 - ✅ THIS IS ARCHITECTURAL
@@ -54,7 +54,7 @@ execution_mode: "delegated" | "autonomous"
 
 **3. Circuit Breaker Pattern (GAD-509)**
 ```python
-# agency_os/00_system/runtime/circuit_breaker.py
+# agency_os/core_system/runtime/circuit_breaker.py
 class CircuitBreaker:
     # Three-state: CLOSED → OPEN → HALF_OPEN
 ```
@@ -63,7 +63,7 @@ class CircuitBreaker:
 
 **4. Context Injection (GAD-502)**
 ```python
-# agency_os/00_system/runtime/context_loader.py
+# agency_os/core_system/runtime/context_loader.py
 class ContextLoader:
     def inject_context(template) -> str
 ```

@@ -63,7 +63,7 @@ components:
   - component_id: "PROMPT_RUNTIME"
     name: "Prompt Composition Engine"
     type: "text_assembler"
-    location: "agency_os/00_system/runtime/prompt_runtime.py"
+    location: "agency_os/core_system/runtime/prompt_runtime.py"
     status: "EXISTS (319 lines)"
     role: "Assembles prompts from fragments"
 
@@ -159,7 +159,7 @@ components:
         purpose: "High-level design decisions"
 
       - id: "AGENCY_OS_ORCHESTRATOR"
-        framework: "00_system"
+        framework: "core_system"
         purpose: "State machine coordination"
 
       - id: "GENESIS_UPDATE"
@@ -190,7 +190,7 @@ components:
   - component_id: "STATE_MACHINE"
     name: "SDLC Workflow State Machine"
     type: "specification"
-    location: "agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+    location: "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
     status: "DESIGNED (not implemented)"
     role: "Defines valid state transitions"
 
@@ -214,7 +214,7 @@ components:
   - component_id: "DATA_CONTRACTS"
     name: "Artifact Schemas"
     type: "specification"
-    location: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+    location: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
     status: "COMPLETE (9 schemas)"
     role: "Define expected JSON structure for artifacts"
 

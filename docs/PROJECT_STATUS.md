@@ -183,7 +183,7 @@ export VIBE_QUOTA_HOURLY_USD=20.0
 ## File Structure (v0.5)
 
 ```
-agency_os/00_system/
+agency_os/core_system/
 ├── runtime/
 │   ├── circuit_breaker.py       # GAD-509: Failure protection
 │   ├── quota_manager.py         # GAD-510: Cost management

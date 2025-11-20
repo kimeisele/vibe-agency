@@ -33,7 +33,7 @@ def test_prompt_registry_integration():
     print("\n📍 Step 1: Importing modules...")
 
     # Add the 00_system path for imports
-    sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+    sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
     from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
     from runtime.prompt_registry import PromptRegistry

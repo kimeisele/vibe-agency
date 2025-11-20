@@ -25,16 +25,16 @@
 
 | Component | Status | Evidence | Lines |
 |-----------|--------|----------|-------|
-| `tool_executor.py` | ✅ Implemented | `agency_os/00_system/orchestrator/tools/tool_executor.py` | 66 |
-| `google_search_client.py` | ✅ Implemented | `agency_os/00_system/orchestrator/tools/google_search_client.py` | 106 |
-| `web_fetch_client.py` | ✅ Implemented | `agency_os/00_system/orchestrator/tools/web_fetch_client.py` | 57 |
-| `tool_definitions.yaml` | ✅ Implemented | `agency_os/00_system/orchestrator/tools/tool_definitions.yaml` | 35 |
-| `github_secrets_loader.py` | ✅ Implemented | `agency_os/00_system/orchestrator/tools/github_secrets_loader.py` | 111 |
+| `tool_executor.py` | ✅ Implemented | `agency_os/core_system/orchestrator/tools/tool_executor.py` | 66 |
+| `google_search_client.py` | ✅ Implemented | `agency_os/core_system/orchestrator/tools/google_search_client.py` | 106 |
+| `web_fetch_client.py` | ✅ Implemented | `agency_os/core_system/orchestrator/tools/web_fetch_client.py` | 57 |
+| `tool_definitions.yaml` | ✅ Implemented | `agency_os/core_system/orchestrator/tools/tool_definitions.yaml` | 35 |
+| `github_secrets_loader.py` | ✅ Implemented | `agency_os/core_system/orchestrator/tools/github_secrets_loader.py` | 111 |
 
 **Verification:**
 ```bash
 # All tool files exist
-ls -la agency_os/00_system/orchestrator/tools/
+ls -la agency_os/core_system/orchestrator/tools/
 # Expected output: All 5 files present ✅
 ```
 
@@ -83,7 +83,7 @@ grep -A 3 "^tools:" agency_os/01_planning_framework/agents/research/MARKET_RESEA
 **Evidence:**
 ```bash
 # Search for ToolExecutor import/usage
-grep -n "ToolExecutor\|tool_executor" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "ToolExecutor\|tool_executor" agency_os/core_system/orchestrator/core_orchestrator.py
 # Result: Line 17 (comment only), NO actual imports or usage ❌
 ```
 
@@ -192,7 +192,7 @@ orchestrator = CoreOrchestrator(workspace_root='/tmp/test')
 ### Verify Phase 1 (Tool Infrastructure)
 ```bash
 # 1. Tool files exist
-ls -la agency_os/00_system/orchestrator/tools/tool_executor.py
+ls -la agency_os/core_system/orchestrator/tools/tool_executor.py
 # Expected: File exists (66 lines) ✅
 
 # 2. GoogleSearchClient works (requires API keys)
@@ -247,17 +247,17 @@ grep -A 3 "^tools:" agency_os/01_planning_framework/agents/research/FACT_VALIDAT
 ### Verify Phase 2b (Orchestrator Integration) ❌ FAILS
 ```bash
 # 1. Check if ToolExecutor is imported
-grep -n "^from.*ToolExecutor\|^import.*tool_executor" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "^from.*ToolExecutor\|^import.*tool_executor" agency_os/core_system/orchestrator/core_orchestrator.py
 # Expected: Import statement
 # Actual: ❌ No matches (not imported)
 
 # 2. Check if tool execution loop exists
-grep -n "tool_use\|ToolExecutor()" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "tool_use\|ToolExecutor()" agency_os/core_system/orchestrator/core_orchestrator.py
 # Expected: Tool execution loop code
 # Actual: ❌ No matches (not implemented)
 
 # 3. Check if _parse_tool_use exists
-grep -n "def _parse_tool_use" agency_os/00_system/orchestrator/core_orchestrator.py
+grep -n "def _parse_tool_use" agency_os/core_system/orchestrator/core_orchestrator.py
 # Expected: Method definition
 # Actual: ❌ No matches (not implemented)
 ```
@@ -418,8 +418,8 @@ grep -n "def _parse_tool_use" agency_os/00_system/orchestrator/core_orchestrator
 
 - **GAD-003:** [Research Capability Restoration](./GAD-003_Research_Capability_Restoration.md)
 - **Critical Report:** [Real API Calls in Tests](../reports/CRITICAL_REAL_API_CALLS_IN_TESTS.md)
-- **Tool Executor:** `agency_os/00_system/orchestrator/tools/tool_executor.py`
-- **Core Orchestrator:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+- **Tool Executor:** `agency_os/core_system/orchestrator/tools/tool_executor.py`
+- **Core Orchestrator:** `agency_os/core_system/orchestrator/core_orchestrator.py`
 - **MARKET_RESEARCHER:** `agency_os/01_planning_framework/agents/research/MARKET_RESEARCHER/_composition.yaml`
 
 ---

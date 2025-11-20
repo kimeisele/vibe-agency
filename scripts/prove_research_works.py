@@ -15,7 +15,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 
 # Add the orchestrator tools to the Python path
-sys.path.insert(0, str(REPO_ROOT / "agency_os" / "00_system" / "orchestrator" / "tools"))
+# Add the orchestrator tools to the Python path
+# sys.path.insert(0, str(REPO_ROOT / "agency_os" / "core_system" / "orchestrator" / "tools"))
 
 print("=" * 70)
 print("RESEARCH TOOLS PROOF (Claude Code WebSearch Backend)")
@@ -29,7 +30,7 @@ print("TEST 1: Web Fetch Tool")
 print("-" * 70)
 
 try:
-    from web_fetch_client import WebFetchClient
+    from agency_os.core_system.orchestrator.tools.web_fetch_client import WebFetchClient
 
     client = WebFetchClient()
     print("✅ WebFetchClient initialized")
@@ -48,7 +49,7 @@ print("TEST 2: Tool Executor (Lazy Loading)")
 print("-" * 70)
 
 try:
-    from tool_executor import ToolExecutor
+    from agency_os.core_system.orchestrator.tools.tool_executor import ToolExecutor
 
     executor = ToolExecutor()
     print("✅ ToolExecutor initialized")

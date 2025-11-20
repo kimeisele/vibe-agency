@@ -84,7 +84,7 @@
 
 6. **(Steward) [Validate Manifest Against Data Contract]**
    - Announce: "Validating manifest structure..."
-   - Validate the generated manifest against `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`.
+   - Validate the generated manifest against `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`.
    - Required fields check:
      - `metadata.projectId` (UUID format)
      - `metadata.name` (non-empty string)

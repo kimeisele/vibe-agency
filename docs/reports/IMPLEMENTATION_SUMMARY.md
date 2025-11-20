@@ -168,8 +168,8 @@ detect-secrets>=1.4.0
 ```
 agency_os/03_qa_framework/knowledge/*.yaml
 agency_os/05_maintenance_framework/knowledge/*.yaml
-agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
-agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml
+agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
+agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml
 agency_os/02_code_gen_framework/knowledge/*.yaml
 agency_os/04_deploy_framework/knowledge/*.yaml
 ```
@@ -184,7 +184,7 @@ agency_os/04_deploy_framework/knowledge/*.yaml
 
 **Missing Gates:**
 ```
-agency_os/00_system/gates/
+agency_os/core_system/gates/
 ├── gate_nfr_performance.md    # Check prompt size < 200k
 ├── gate_nfr_security.md       # Verify no hardcoded secrets
 └── gate_nfr_reliability.md    # Validate error handling
@@ -307,7 +307,7 @@ docs/requirements/NFR_MAINTAINABILITY.yaml
 
 ```
 README.md (terminology update)
-agency_os/00_system/runtime/prompt_runtime.py (error handling)
+agency_os/core_system/runtime/prompt_runtime.py (error handling)
 ```
 
 **Total Lines Changed:** ~4,000 lines added

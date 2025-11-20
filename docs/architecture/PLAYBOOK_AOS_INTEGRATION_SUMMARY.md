@@ -9,13 +9,13 @@
 Implemented the lean MVP plan for integrating the playbook system into Agency OS runtime, following the plan in `docs/architecture/PLAYBOOK_AOS_INTEGRATION.md`.
 
 ### Phase 1: Structure Migration ✅
-- Created `agency_os/00_system/playbook/` directory structure
+- Created `agency_os/core_system/playbook/` directory structure
 - Moved `_registry.yaml` from docs to AOS
 - Created 6 task playbooks (debug, implement, test, plan, document, analyze)
 - Each playbook follows VIBE_ALIGNER composition pattern
 
 ### Phase 2: Context Loader ✅
-- **File:** `agency_os/00_system/runtime/context_loader.py`
+- **File:** `agency_os/core_system/runtime/context_loader.py`
 - Loads context from 5 sources:
   - Session handoff (`.session_handoff.json`)
   - Git status (branch, uncommitted files, recent commits)
@@ -26,7 +26,7 @@ Implemented the lean MVP plan for integrating the playbook system into Agency OS
 - **No crashes:** All methods wrapped in try/except
 
 ### Phase 3: Playbook Engine ✅
-- **File:** `agency_os/00_system/runtime/playbook_engine.py`
+- **File:** `agency_os/core_system/runtime/playbook_engine.py`
 - Routes user intent + context → task playbook
 - **3-tier routing:**
   - Tier 1: Explicit keyword matching (user says "fix tests")
@@ -35,14 +35,14 @@ Implemented the lean MVP plan for integrating the playbook system into Agency OS
 - **LEAN logic:** Simple if/else, no ML/embeddings
 
 ### Phase 4: Prompt Composer ✅
-- **File:** `agency_os/00_system/runtime/prompt_composer.py`
+- **File:** `agency_os/core_system/runtime/prompt_composer.py`
 - Composes task playbook + context → enriched prompt
 - Injects context into placeholders (e.g., `${git.branch}`)
 - Adds current context section with status indicators
 - Wraps with STEWARD operational protocol
 
 ### Phase 5: Boot Sequence ✅
-- **File:** `agency_os/00_system/runtime/boot_sequence.py`
+- **File:** `agency_os/core_system/runtime/boot_sequence.py`
 - Orchestrates the complete conveyor belt:
   1. Load context (all sources)
   2. Route to task (3-tier matching)
@@ -163,7 +163,7 @@ You are STEWARD, the senior orchestration agent at vibe-agency.
 
 ## Success Criteria (from plan)
 
-✅ Playbook is part of AOS (agency_os/00_system/playbook/)  
+✅ Playbook is part of AOS (agency_os/core_system/playbook/)  
 ✅ Context flows from system → STEWARD (no information loss)  
 ✅ User can: explicit intent OR context-driven OR inspiration mode  
 ✅ Boot sequence < 3 seconds  
@@ -176,12 +176,12 @@ You are STEWARD, the senior orchestration agent at vibe-agency.
 ## Files Changed
 
 **New files:**
-- `agency_os/00_system/playbook/tasks/*.md` (6 files)
-- `agency_os/00_system/playbook/_registry.yaml` (moved)
-- `agency_os/00_system/runtime/context_loader.py`
-- `agency_os/00_system/runtime/playbook_engine.py`
-- `agency_os/00_system/runtime/prompt_composer.py`
-- `agency_os/00_system/runtime/boot_sequence.py`
+- `agency_os/core_system/playbook/tasks/*.md` (6 files)
+- `agency_os/core_system/playbook/_registry.yaml` (moved)
+- `agency_os/core_system/runtime/context_loader.py`
+- `agency_os/core_system/runtime/playbook_engine.py`
+- `agency_os/core_system/runtime/prompt_composer.py`
+- `agency_os/core_system/runtime/boot_sequence.py`
 - `tests/test_playbook_aos_integration.py`
 
 **Modified files:**

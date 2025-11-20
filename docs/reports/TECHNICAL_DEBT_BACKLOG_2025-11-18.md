@@ -37,11 +37,11 @@
 
 **Locations:**
 ```
-agency_os/00_system/orchestrator/handlers/planning_handler.py (2)
-agency_os/00_system/orchestrator/handlers/coding_handler.py (1)
-agency_os/00_system/orchestrator/handlers/deployment_handler.py (3)
-agency_os/00_system/orchestrator/handlers/maintenance_handler.py (1)
-agency_os/00_system/orchestrator/handlers/testing_handler.py (1)
+agency_os/core_system/orchestrator/handlers/planning_handler.py (2)
+agency_os/core_system/orchestrator/handlers/coding_handler.py (1)
+agency_os/core_system/orchestrator/handlers/deployment_handler.py (3)
+agency_os/core_system/orchestrator/handlers/maintenance_handler.py (1)
+agency_os/core_system/orchestrator/handlers/testing_handler.py (1)
 ```
 
 **TODO Comments:** "Add schema validation in Phase 4"
@@ -63,7 +63,7 @@ agency_os/00_system/orchestrator/handlers/testing_handler.py (1)
 
 **Current Stub:**
 ```python
-# agency_os/00_system/orchestrator/handlers/testing_handler.py
+# agency_os/core_system/orchestrator/handlers/testing_handler.py
 # TODO (Phase 3): Full implementation
 # Minimal passthrough currently
 ```

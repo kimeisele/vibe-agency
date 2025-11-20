@@ -12,7 +12,7 @@ required_knowledge:
       Defines which features are incompatible with v1.0 scope.
       Includes technical constraints, recommended alternatives.
 
-  - path: agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml
+  - path: agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml
     purpose: "JSON schemas for all artifacts (feature_spec, architecture, etc.)"
     critical: true
     used_by_tasks:

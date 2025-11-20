@@ -104,7 +104,7 @@ STATUS IN GAD_IMPLEMENTATION_STATUS.md: NOT TRACKED ❌
 ### GAD-502 (Context Projection) - VERIFICATION
 
 **Claimed:** ✅ LIVE
-**File:** `agency_os/00_system/runtime/context_loader.py:201-257`
+**File:** `agency_os/core_system/runtime/context_loader.py:201-257`
 **Code Quality:** ✅ Implementation exists, well-documented
 
 **Integration Test:**
@@ -123,8 +123,8 @@ grep -r "inject_context" agency_os/
 
 **Claimed:** ✅ LIVE
 **Files:**
-- `agency_os/00_system/runtime/circuit_breaker.py` (full implementation)
-- `agency_os/00_system/runtime/tool_safety_guard.py`
+- `agency_os/core_system/runtime/circuit_breaker.py` (full implementation)
+- `agency_os/core_system/runtime/tool_safety_guard.py`
 - `tests/test_safety_layer.py` (tests exist!)
 
 **Code Quality:** ✅ Comprehensive implementation
@@ -133,7 +133,7 @@ grep -r "inject_context" agency_os/
 **Integration Test:**
 ```bash
 # Is it actually USED in llm_client?
-grep -r "CircuitBreaker" agency_os/00_system/runtime/llm_client.py
+grep -r "CircuitBreaker" agency_os/core_system/runtime/llm_client.py
 ```
 
 **VERDICT:** ✅ **IMPLEMENTED AND TESTED** (needs integration verification)

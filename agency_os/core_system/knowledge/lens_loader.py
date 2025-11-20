@@ -9,13 +9,13 @@ Purpose:
   Transform raw lens YAML → Powerful system prompt injection
 
 Architecture:
-  - Reads lens YAML from agency_os/00_system/knowledge/lenses/
+  - Reads lens YAML from agency_os/core_system/knowledge/lenses/
   - Extracts key_concepts, framing_questions, execution_protocol
   - Formats into a strong, imperative mindset injection prompt
   - Returns formatted string ready for context injection
 
 Usage:
-  from agency_os.00_system.knowledge.lens_loader import load_lens
+  from agency_os.core_system.knowledge.lens_loader import load_lens
 
   lens_prompt = load_lens("first_principles")
   # Use lens_prompt to enrich agent context
@@ -57,7 +57,7 @@ def load_lens(lens_id: str) -> str:
     """
     # Locate lens file
     repo_root = Path(__file__).parent.parent.parent.parent
-    lens_path = repo_root / "agency_os" / "00_system" / "knowledge" / "lenses" / f"{lens_id}.yaml"
+    lens_path = repo_root / "agency_os" / "core_system" / "knowledge" / "lenses" / f"{lens_id}.yaml"
 
     if not lens_path.exists():
         available_lenses = list_available_lenses()
@@ -272,7 +272,7 @@ def list_available_lenses() -> list[str]:
         List of lens IDs (e.g., ["first_principles", "systems_thinking"])
     """
     repo_root = Path(__file__).parent.parent.parent.parent
-    lenses_dir = repo_root / "agency_os" / "00_system" / "knowledge" / "lenses"
+    lenses_dir = repo_root / "agency_os" / "core_system" / "knowledge" / "lenses"
 
     if not lenses_dir.exists():
         return []
@@ -293,7 +293,7 @@ def get_lens_metadata(lens_id: str) -> dict | None:
         or None if lens not found
     """
     repo_root = Path(__file__).parent.parent.parent.parent
-    lens_path = repo_root / "agency_os" / "00_system" / "knowledge" / "lenses" / f"{lens_id}.yaml"
+    lens_path = repo_root / "agency_os" / "core_system" / "knowledge" / "lenses" / f"{lens_id}.yaml"
 
     if not lens_path.exists():
         return None

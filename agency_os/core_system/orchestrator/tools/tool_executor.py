@@ -12,7 +12,7 @@ except ImportError:
     from web_fetch_client import WebFetchClient
 
 # Import Iron Dome protection (directory name starts with digit, use importlib)
-tool_safety_guard = importlib.import_module("agency_os.00_system.runtime.tool_safety_guard")
+tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ToolSafetyGuardError = tool_safety_guard.ToolSafetyGuardError
 

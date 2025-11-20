@@ -73,7 +73,7 @@ User → vibe-cli (STDIN/STDOUT bridge)
 ### agency_os/ Directory:
 
 **Anthropic imports found:** 1 file only
-**Location:** `agency_os/00_system/runtime/llm_client.py:240`
+**Location:** `agency_os/core_system/runtime/llm_client.py:240`
 
 **Analysis:**
 ```python

@@ -17,7 +17,7 @@ Implements the lean MVP plan for integrating the playbook system into Agency OS 
 ### Phase 1-6: Complete Implementation ✅
 
 1. **Structure Migration**
-   - Created `agency_os/00_system/playbook/` with 6 task playbooks (debug, implement, test, plan, document, analyze)
+   - Created `agency_os/core_system/playbook/` with 6 task playbooks (debug, implement, test, plan, document, analyze)
    - Moved registry from docs to AOS
 
 2. **Context Loader** (`context_loader.py`, 207 LOC)
@@ -84,7 +84,7 @@ tests/test_playbook_aos_integration.py::test_health_check PASSED
 
 ## Success Criteria (All Met) ✅
 
-- ✅ Playbook is part of AOS (`agency_os/00_system/playbook/`)
+- ✅ Playbook is part of AOS (`agency_os/core_system/playbook/`)
 - ✅ Context flows from system → STEWARD (no information loss)
 - ✅ User can: explicit intent OR context-driven OR inspiration mode
 - ✅ Boot sequence < 3 seconds
@@ -108,12 +108,12 @@ tests/test_playbook_aos_integration.py::test_health_check PASSED
 ## Files Changed
 
 **New files (14):**
-- `agency_os/00_system/playbook/tasks/*.md` (6 task playbooks)
-- `agency_os/00_system/playbook/_registry.yaml` (moved from docs)
-- `agency_os/00_system/runtime/context_loader.py`
-- `agency_os/00_system/runtime/playbook_engine.py`
-- `agency_os/00_system/runtime/prompt_composer.py`
-- `agency_os/00_system/runtime/boot_sequence.py`
+- `agency_os/core_system/playbook/tasks/*.md` (6 task playbooks)
+- `agency_os/core_system/playbook/_registry.yaml` (moved from docs)
+- `agency_os/core_system/runtime/context_loader.py`
+- `agency_os/core_system/runtime/playbook_engine.py`
+- `agency_os/core_system/runtime/prompt_composer.py`
+- `agency_os/core_system/runtime/boot_sequence.py`
 - `tests/test_playbook_aos_integration.py`
 - `docs/architecture/PLAYBOOK_AOS_INTEGRATION_SUMMARY.md`
 

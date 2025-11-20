@@ -166,7 +166,7 @@ agent.context["execution_prompt"] = context  ← Available downstream
 | File | Change | Commit |
 |------|--------|--------|
 | `agency_os/03_agents/base_agent.py` | Updated execute_command signature | Fixed interface mismatch |
-| `agency_os/00_system/playbook/executor.py` | Added context parameter to execute_step | Threaded context through execution |
+| `agency_os/core_system/playbook/executor.py` | Added context parameter to execute_step | Threaded context through execution |
 | `scripts/run_research.py` | Pass topic as context | Connected topic to executor |
 
 ## Testing Status

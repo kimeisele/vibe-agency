@@ -161,8 +161,8 @@ actors:
     name: "Agency OS Orchestrator"
     type: "orchestrator"
     layer: "execution"
-    framework: "00_system"
-    location: "agency_os/00_system/agents/AGENCY_OS_ORCHESTRATOR/"
+    framework: "core_system"
+    location: "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR/"
     role: "State machine executor - drives SDLC workflow"
     inputs: ["project_manifest.json", "trigger_events"]
     outputs: ["state_transitions", "agent_invocations"]
@@ -182,7 +182,7 @@ artifacts:
   - id: "project_manifest"
     name: "project_manifest.json"
     type: "state_document"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#project_manifest"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#project_manifest"
     purpose: "Single Source of Truth (SSoT) for project state"
     producer: ["SSF_ROUTER", "AGENCY_OS_ORCHESTRATOR"]
     consumers: ["ALL"]
@@ -196,7 +196,7 @@ artifacts:
   - id: "feature_spec"
     name: "feature_spec.json"
     type: "specification"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#feature_spec"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#feature_spec"
     purpose: "Validated, prioritized feature list for implementation"
     producer: ["VIBE_ALIGNER"]
     consumers: ["GENESIS_BLUEPRINT", "GENESIS_UPDATE"]
@@ -209,7 +209,7 @@ artifacts:
   - id: "architecture"
     name: "architecture.json"
     type: "specification"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#architecture"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#architecture"
     purpose: "Technical architecture and implementation plan"
     producer: ["GENESIS_BLUEPRINT", "GENESIS_UPDATE"]
     consumers: ["CODE_GENERATOR"]
@@ -223,7 +223,7 @@ artifacts:
   - id: "code_gen_spec"
     name: "code_gen_spec.json"
     type: "specification"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#code_gen_spec"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#code_gen_spec"
     purpose: "Detailed instructions for code generation"
     producer: ["GENESIS_BLUEPRINT", "BUG_TRIAGE"]
     consumers: ["CODE_GENERATOR"]
@@ -251,7 +251,7 @@ artifacts:
   - id: "test_plan"
     name: "test_plan.json"
     type: "specification"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#test_plan"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#test_plan"
     purpose: "Test pyramid configuration and scope"
     producer: ["GENESIS_BLUEPRINT", "CODE_GENERATOR"]
     consumers: ["QA_VALIDATOR"]
@@ -264,7 +264,7 @@ artifacts:
   - id: "qa_report"
     name: "qa_report.json"
     type: "report"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#qa_report"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#qa_report"
     purpose: "Quality validation results (exit gate for deployment)"
     producer: ["QA_VALIDATOR"]
     consumers: ["SSF_ROUTER (SOP_003)", "DEPLOY_MANAGER", "AGENCY_OS_ORCHESTRATOR"]
@@ -280,7 +280,7 @@ artifacts:
   - id: "deploy_receipt"
     name: "deploy_receipt.json"
     type: "receipt"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#deploy_receipt"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#deploy_receipt"
     purpose: "Proof of deployment with health metrics"
     producer: ["DEPLOY_MANAGER"]
     consumers: ["AGENCY_OS_ORCHESTRATOR", "SSF_ROUTER (SOP_009)"]
@@ -295,7 +295,7 @@ artifacts:
   - id: "bug_report"
     name: "bug_report.json"
     type: "report"
-    schema: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml#bug_report"
+    schema: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml#bug_report"
     purpose: "Structured bug report for maintenance workflow"
     producer: ["SSF_ROUTER (SOP_002)"]
     consumers: ["BUG_TRIAGE", "AGENCY_OS_ORCHESTRATOR"]
@@ -364,12 +364,12 @@ knowledge_bases:
     used_by: ["BUG_TRIAGE"]
 
   - id: "AOS_Ontology"
-    path: "agency_os/00_system/knowledge/AOS_Ontology.yaml"
+    path: "agency_os/core_system/knowledge/AOS_Ontology.yaml"
     purpose: "Master semantic terms dictionary (21 terms)"
     used_by: ["AUDITOR"]
 
   - id: "data_contracts"
-    path: "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+    path: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
     purpose: "JSON schemas for all artifacts"
     used_by: ["ALL agents for validation"]
 

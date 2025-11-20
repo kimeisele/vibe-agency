@@ -6,11 +6,11 @@ echo ""
 
 # Decision 1: SDLC Orchestrator
 echo "Decision 1: SDLC Orchestrator Architecture"
-handler_count=$(find agency_os/00_system/orchestrator/handlers -name "*_handler.py" -type f | wc -l)
+handler_count=$(find agency_os/core_system/orchestrator/handlers -name "*_handler.py" -type f | wc -l)
 [ "$handler_count" -eq 5 ] && echo "✅ 5 phase handlers exist" || echo "❌ FAIL (expected 5, got $handler_count)"
 
 # Check handler integration
-grep -q "CodingHandler\|TestingHandler\|DeploymentHandler" agency_os/00_system/orchestrator/core_orchestrator.py && \
+grep -q "CodingHandler\|TestingHandler\|DeploymentHandler" agency_os/core_system/orchestrator/core_orchestrator.py && \
   echo "✅ Handlers imported in core_orchestrator" || echo "❌ Handlers not integrated"
 
 # Test complete handlers
@@ -21,9 +21,9 @@ python3 -m pytest tests/test_coding_workflow.py -v >/dev/null 2>&1 && echo "  �
 uv run pytest tests/test_deployment_workflow.py -v >/dev/null 2>&1 && echo "  ✅ DEPLOYMENT handler works" || echo "  ⚠️  DEPLOYMENT handler needs check"
 
 # Check stub handlers
-grep -qi "stub\|not implemented" agency_os/00_system/orchestrator/handlers/testing_handler.py && \
+grep -qi "stub\|not implemented" agency_os/core_system/orchestrator/handlers/testing_handler.py && \
   echo "  ⚠️  TESTING handler is stub" || echo "  ✅ TESTING handler complete"
-grep -qi "stub\|not implemented" agency_os/00_system/orchestrator/handlers/maintenance_handler.py && \
+grep -qi "stub\|not implemented" agency_os/core_system/orchestrator/handlers/maintenance_handler.py && \
   echo "  ⚠️  MAINTENANCE handler is stub" || echo "  ✅ MAINTENANCE handler complete"
 
 # Decision 2: Governance Integration
@@ -34,7 +34,7 @@ echo "Decision 2: Governance Integration"
 # Decision 3: Schema Validation
 echo ""
 echo "Decision 3: Schema Validation"
-[ -f "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml" ] && \
+[ -f "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml" ] && \
   echo "✅ Data contracts file exists" || echo "❌ Data contracts missing"
 
 # Decision 4: Quality Gates
@@ -45,7 +45,7 @@ echo "⚠️  Deferred to GAD-004 verification"
 # Decision 5: Multi-Project Support
 echo ""
 echo "Decision 5: Multi-Project Support"
-grep -q "workspace\|project_id" agency_os/00_system/orchestrator/core_orchestrator.py && \
+grep -q "workspace\|project_id" agency_os/core_system/orchestrator/core_orchestrator.py && \
   echo "⚠️  Workspace handling exists (needs deeper verification)" || echo "❌ No workspace handling"
 
 echo ""

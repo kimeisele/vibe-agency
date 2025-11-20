@@ -9,7 +9,7 @@ repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
 # Add 00_system to path (Python doesn't like numeric module names)
-sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
 
 # Dynamically load modules from 00_system (which has numeric prefix, not importable directly)
@@ -25,15 +25,15 @@ def _load_module_from_path(module_name: str, file_path: str) -> None:
 
 
 # Load real modules (no longer shims in root)
-_load_module_from_path("orchestrator", "agency_os/00_system/orchestrator/__init__.py")
-_load_module_from_path("executor", "agency_os/00_system/playbook/executor.py")
-_load_module_from_path("prompt_registry", "agency_os/00_system/runtime/prompt_registry.py")
-_load_module_from_path("router", "agency_os/00_system/playbook/router.py")
-_load_module_from_path("loader", "agency_os/00_system/playbook/loader.py")
+_load_module_from_path("orchestrator", "agency_os/core_system/orchestrator/__init__.py")
+_load_module_from_path("executor", "agency_os/core_system/playbook/executor.py")
+_load_module_from_path("prompt_registry", "agency_os/core_system/runtime/prompt_registry.py")
+_load_module_from_path("router", "agency_os/core_system/playbook/router.py")
+_load_module_from_path("loader", "agency_os/core_system/playbook/loader.py")
 _load_module_from_path("legacy_config_loader", "config/legacy_config_loader.py")
 
 # Load handlers module
-_load_module_from_path("handlers", "agency_os/00_system/orchestrator/handlers/__init__.py")
+_load_module_from_path("handlers", "agency_os/core_system/orchestrator/handlers/__init__.py")
 
 # Legacy shim names for backward compatibility (map to real modules)
 sys.modules["agency_os_orchestrator"] = sys.modules.get("orchestrator", type(sys)("orchestrator"))

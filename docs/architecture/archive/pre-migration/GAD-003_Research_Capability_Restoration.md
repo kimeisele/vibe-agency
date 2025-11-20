@@ -107,13 +107,13 @@ metadata:
 - **API:** Google Custom Search JSON API
 - **Free Tier:** 100 queries/day
 - **Setup Time:** 30 min (API key + CSE ID)
-- **Implementation:** `agency_os/00_system/orchestrator/tools/google_search_client.py`
+- **Implementation:** `agency_os/core_system/orchestrator/tools/google_search_client.py`
 
 #### Tool #2: `web_fetch` (CRITICAL PATH)
 - **API:** Built-in (Python `requests`)
 - **Free Tier:** Unlimited (respect robots.txt)
 - **Setup Time:** 15 min
-- **Implementation:** `agency_os/00_system/orchestrator/tools/web_fetch_client.py`
+- **Implementation:** `agency_os/core_system/orchestrator/tools/web_fetch_client.py`
 
 #### Tool #3: `crunchbase_lookup` (OPTIONAL - Post-MVP)
 - **API:** Crunchbase Basic Tier
@@ -193,22 +193,22 @@ metadata:
 ### 4.2 New Components
 
 **Component #1: Tool Executor Wrapper**
-- **File:** `agency_os/00_system/orchestrator/tools/tool_executor.py`
+- **File:** `agency_os/core_system/orchestrator/tools/tool_executor.py`
 - **Purpose:** Parse `<tool_use>` from STDIN, dispatch to tool clients, return `<tool_result>`
 - **Lines of Code:** ~150
 
 **Component #2: Google Search Client**
-- **File:** `agency_os/00_system/orchestrator/tools/google_search_client.py`
+- **File:** `agency_os/core_system/orchestrator/tools/google_search_client.py`
 - **Purpose:** Wrapper around Google Custom Search API
 - **Lines of Code:** ~80
 
 **Component #3: Web Fetch Client**
-- **File:** `agency_os/00_system/orchestrator/tools/web_fetch_client.py`
+- **File:** `agency_os/core_system/orchestrator/tools/web_fetch_client.py`
 - **Purpose:** Safe HTTP GET with robots.txt respect
 - **Lines of Code:** ~60
 
 **Component #4: Tool Definitions Schema**
-- **File:** `agency_os/00_system/orchestrator/tools/tool_definitions.yaml`
+- **File:** `agency_os/core_system/orchestrator/tools/tool_definitions.yaml`
 - **Purpose:** Canonical tool definitions (name, description, parameters)
 - **Lines of Code:** ~100 (YAML)
 
@@ -238,7 +238,7 @@ jobs:
 ```
 
 #### Step 1.2: Tool Definitions Schema (1 hour)
-**File:** `agency_os/00_system/orchestrator/tools/tool_definitions.yaml`
+**File:** `agency_os/core_system/orchestrator/tools/tool_definitions.yaml`
 
 ```yaml
 tools:
@@ -281,7 +281,7 @@ tools:
 ```
 
 #### Step 1.3: Google Search Client (2 hours)
-**File:** `agency_os/00_system/orchestrator/tools/google_search_client.py`
+**File:** `agency_os/core_system/orchestrator/tools/google_search_client.py`
 
 ```python
 import os
@@ -351,11 +351,11 @@ if __name__ == "__main__":
 ```bash
 export GOOGLE_SEARCH_API_KEY=<your-key>
 export GOOGLE_SEARCH_ENGINE_ID=a4daf97169d994fc9
-python agency_os/00_system/orchestrator/tools/google_search_client.py
+python agency_os/core_system/orchestrator/tools/google_search_client.py
 ```
 
 #### Step 1.4: Web Fetch Client (1.5 hours)
-**File:** `agency_os/00_system/orchestrator/tools/web_fetch_client.py`
+**File:** `agency_os/core_system/orchestrator/tools/web_fetch_client.py`
 
 ```python
 import requests
@@ -422,11 +422,11 @@ if __name__ == "__main__":
 
 **Test:**
 ```bash
-python agency_os/00_system/orchestrator/tools/web_fetch_client.py
+python agency_os/core_system/orchestrator/tools/web_fetch_client.py
 ```
 
 #### Step 1.5: Tool Executor Dispatcher (1 hour)
-**File:** `agency_os/00_system/orchestrator/tools/tool_executor.py`
+**File:** `agency_os/core_system/orchestrator/tools/tool_executor.py`
 
 ```python
 import json
@@ -504,7 +504,7 @@ composition:
 
 #### Step 2.2: Update PromptRuntime (3 hours)
 
-**File:** `agency_os/00_system/orchestrator/prompt_runtime.py`
+**File:** `agency_os/core_system/orchestrator/prompt_runtime.py`
 
 **Change #1: Load tool definitions**
 ```python
@@ -548,7 +548,7 @@ def compose_prompt(self, agent_name: str, task_id: str, context: dict) -> str:
 
 #### Step 2.3: Update Core Orchestrator (3 hours)
 
-**File:** `agency_os/00_system/orchestrator/core_orchestrator.py`
+**File:** `agency_os/core_system/orchestrator/core_orchestrator.py`
 
 **Change #1: Tool execution loop**
 ```python

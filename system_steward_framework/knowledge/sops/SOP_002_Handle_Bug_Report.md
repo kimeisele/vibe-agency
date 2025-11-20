@@ -24,7 +24,7 @@
     *   **Ask:** "How severe is this bug? (Critical, Major, Minor, Trivial)"
     *   **Ask:** "What is the impact? (How many users are affected? High, Medium, Low)"
 9.  **(Steward) [Generate Artifact]** Assemble all collected data into the `bug_report.json` format.
-10. **(Steward) [Validate Artifact]** Validate the generated JSON against the `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`.
+10. **(Steward) [Validate Artifact]** Validate the generated JSON against the `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`.
 11. **(Steward) Save the validated artifact.**
 12. **(Steward) Guide the user to set the `project_manifest.json` `current_state` to 'MAINTENANCE_TRIAGE'.**
 13. **(Steward) Announce:** "SOP_002 complete. The `bug_report.json` is filed. The AOS Orchestrator will now invoke the `BUG_TRIAGE_v1` agent for analysis."

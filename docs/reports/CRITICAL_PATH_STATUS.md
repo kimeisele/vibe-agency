@@ -84,7 +84,7 @@ grep -n "tool_use\|tool_result" vibe-cli
 ---
 
 ### 2. Core Orchestrator (State Machine)
-**File:** `agency_os/00_system/orchestrator/core_orchestrator.py` (1,286 lines)
+**File:** `agency_os/core_system/orchestrator/core_orchestrator.py` (1,286 lines)
 **Status:** 🟢 **FUNCTIONAL**
 
 **Evidence:**
@@ -127,7 +127,7 @@ Phases:
 ### 3. Phase Handlers
 
 #### 3a. PLANNING Handler
-**File:** `agency_os/00_system/orchestrator/handlers/planning_handler.py` (461 lines)
+**File:** `agency_os/core_system/orchestrator/handlers/planning_handler.py` (461 lines)
 **Status:** 🟢 **FUNCTIONAL**
 
 **Evidence:**
@@ -150,7 +150,7 @@ ls agency_os/01_planning_framework/agents/
 ---
 
 #### 3b. CODING Handler
-**File:** `agency_os/00_system/orchestrator/handlers/coding_handler.py` (211 lines)
+**File:** `agency_os/core_system/orchestrator/handlers/coding_handler.py` (211 lines)
 **Status:** 🟡 **UNTESTED** (code exists, no E2E test)
 
 **Implementation:**
@@ -177,7 +177,7 @@ Invokes CODE_GENERATOR agent with 5-phase sequential workflow:
 ---
 
 #### 3c. TESTING Handler
-**File:** `agency_os/00_system/orchestrator/handlers/testing_handler.py` (108 lines)
+**File:** `agency_os/core_system/orchestrator/handlers/testing_handler.py` (108 lines)
 **Status:** 🔴 **STUB**
 
 **Evidence:**
@@ -198,7 +198,7 @@ Current: Stub that creates QA report and transitions to AWAITING_QA_APPROVAL
 ---
 
 #### 3d. DEPLOYMENT Handler
-**File:** `agency_os/00_system/orchestrator/handlers/deployment_handler.py` (112 lines)
+**File:** `agency_os/core_system/orchestrator/handlers/deployment_handler.py` (112 lines)
 **Status:** 🔴 **STUB**
 
 **Evidence:**
@@ -214,7 +214,7 @@ Current: Stub that creates QA report and transitions to AWAITING_QA_APPROVAL
 ---
 
 #### 3e. MAINTENANCE Handler
-**File:** `agency_os/00_system/orchestrator/handlers/maintenance_handler.py` (106 lines)
+**File:** `agency_os/core_system/orchestrator/handlers/maintenance_handler.py` (106 lines)
 **Status:** 🔴 **STUB**
 
 **Evidence:**
@@ -259,8 +259,8 @@ research/USER_RESEARCHER/     # ✅ No tools needed
 ### 5. Tool Execution System
 **Files:**
 - `vibe-cli` (L336-383): Tool use loop
-- `agency_os/00_system/orchestrator/tools/tool_executor.py` (2,041 bytes)
-- `agency_os/00_system/orchestrator/tools/tool_definitions.yaml` (1,020 bytes)
+- `agency_os/core_system/orchestrator/tools/tool_executor.py` (2,041 bytes)
+- `agency_os/core_system/orchestrator/tools/tool_definitions.yaml` (1,020 bytes)
 
 **Status:** 🟡 **DEGRADED** (implementation exists, WebSearch may fail)
 
@@ -271,7 +271,7 @@ research/USER_RESEARCHER/     # ✅ No tools needed
 
 **Supported Tools (from tool_definitions.yaml):**
 ```bash
-ls agency_os/00_system/orchestrator/tools/
+ls agency_os/core_system/orchestrator/tools/
 # tool_executor.py
 # google_search_client.py
 # web_fetch_client.py

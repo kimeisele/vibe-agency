@@ -3,7 +3,7 @@
 
 ## Purpose
 
-This document provides a summary of the 6 central data contracts that govern the flow of information between the different frameworks of the Agency Operating System (AOS). These schemas are the "lingua franca" of the system, ensuring that each specialist agent produces and consumes data in a predictable and validated format. They are defined in `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`.
+This document provides a summary of the 6 central data contracts that govern the flow of information between the different frameworks of the Agency Operating System (AOS). These schemas are the "lingua franca" of the system, ensuring that each specialist agent produces and consumes data in a predictable and validated format. They are defined in `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`.
 
 ---
 

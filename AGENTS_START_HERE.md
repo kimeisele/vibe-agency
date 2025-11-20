@@ -152,7 +152,7 @@ def test_yoga_mvp():
 
 ### ❌ Anti-Pattern 4: Confusing "Code Exists" With "Works"
 ```
-# File exists: agency_os/00_system/orchestrator/handlers/testing_handler.py
+# File exists: agency_os/core_system/orchestrator/handlers/testing_handler.py
 # Lines: 108
 # Status: ⚠️ STUB ONLY (allows transitions, no real functionality)
 
@@ -196,7 +196,7 @@ def test_yoga_mvp():
 **Correct steps:**
 ```bash
 # 1. Verify CODING phase implementation exists
-ls -la agency_os/00_system/orchestrator/handlers/coding_handler.py
+ls -la agency_os/core_system/orchestrator/handlers/coding_handler.py
 
 # 2. Check if tests already exist
 ls -la tests/test_coding_workflow.py

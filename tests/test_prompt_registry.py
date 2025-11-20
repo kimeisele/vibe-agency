@@ -25,7 +25,7 @@ import pytest
 
 # Add repo root and runtime directory to path
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_RUNTIME_PATH = _REPO_ROOT / "agency_os" / "00_system" / "runtime"
+_RUNTIME_PATH = _REPO_ROOT / "agency_os" / "core_system" / "runtime"
 
 # Import directly from the runtime directory (since folder starts with number)
 from runtime.prompt_registry import PromptRegistry

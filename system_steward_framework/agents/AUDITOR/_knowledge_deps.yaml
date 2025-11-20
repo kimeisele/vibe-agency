@@ -2,7 +2,7 @@ version: "1.0"
 agent_id: AUDITOR
 
 required_knowledge:
-  - path: agency_os/00_system/knowledge/AOS_Ontology.yaml
+  - path: agency_os/core_system/knowledge/AOS_Ontology.yaml
     purpose: "Master semantic definition - audit rules and term definitions"
     critical: true
     description: |

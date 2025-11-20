@@ -134,7 +134,7 @@ def test_data_contracts_has_audit_schema():
     logger.info("\nTest 5: Data contracts audit_report schema validation")
 
     repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    contracts_path = repo_root / "agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml"
+    contracts_path = repo_root / "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
 
     import yaml
 

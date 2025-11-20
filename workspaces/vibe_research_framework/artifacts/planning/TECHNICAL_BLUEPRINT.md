@@ -157,7 +157,7 @@ vibe-research-framework/
 │       └── state_machine/
 │           └── RESEARCH_workflow_design.yaml
 │
-├── agency_os/00_system/
+├── agency_os/core_system/
 │   ├── contracts/
 │   │   └── ORCHESTRATION_data_contracts.yaml         # UPDATED
 │   │       (adds: research_brief.schema.json)
@@ -181,7 +181,7 @@ vibe-research-framework/
 
 ### research_brief.schema.json
 
-**Location:** `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml`
+**Location:** `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml`
 
 ```yaml
 - name: "research_brief.schema.json"

@@ -888,7 +888,7 @@ Tests: Manual verification + schema validation
 **Implementation:**
 
 ```python
-# In agency_os/00_system/orchestrator/core_orchestrator.py
+# In agency_os/core_system/orchestrator/core_orchestrator.py
 # Add these methods to CoreOrchestrator class:
 
 def __init__(self, ...):

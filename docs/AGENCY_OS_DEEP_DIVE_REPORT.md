@@ -97,7 +97,7 @@ agency_os/ (26 Dateien total, ~350 KB)
 ## 2. STATE MACHINE ANALYSIS
 
 ### Definierte States (7 total)
-Quelle: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:12-50`
+Quelle: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml:12-50`
 
 | # | State Name | Description | Responsible Framework | Output Artifact |
 |--:|:-----------|:------------|:----------------------|:----------------|
@@ -110,7 +110,7 @@ Quelle: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:12
 | 7 | **MAINTENANCE** | Event-driven Bug Fixes | MAINTENANCE | `code_gen_spec.json` |
 
 ### Transitions (6 total)
-Quelle: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:52-88`
+Quelle: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml:52-88`
 
 | ID | Name | From → To | Trigger | Type |
 |:---|:-----|:----------|:--------|:-----|
@@ -122,7 +122,7 @@ Quelle: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:52
 | T6 | TriggerMaintenance | **EXTERNAL_EVENT** → MAINTENANCE | Async `bug_report_received` signal | Event-Driven |
 
 ### Loops (4 total)
-Quelle: `agency_os/00_system/state_machine/ORCHESTRATION_workflow_design.yaml:90-117`
+Quelle: `agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml:90-117`
 
 | ID | Name | From → To | Trigger | Action |
 |:---|:-----|:----------|:--------|:-------|
@@ -216,7 +216,7 @@ stateDiagram-v2
 ## 3. DATA CONTRACT MATRIX
 
 ### Schema Overview
-Quelle: `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml:39-190`
+Quelle: `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml:39-190`
 
 | Schema Name | Version | Required Fields | Optional Fields | Enum Status Fields |
 |:------------|:--------|:----------------|:----------------|:-------------------|
@@ -228,7 +228,7 @@ Quelle: `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml:39-190`
 | `bug_report.schema.json` | 1.0.0 | `severity`, `category`, `context`, `reproducible` | `correlated_trace_id` | `severity` (P1-P5), `category` (enum not specified) |
 
 ### Schema Evolution Rules
-Quelle: `agency_os/00_system/contracts/ORCHESTRATION_data_contracts.yaml:12-36`
+Quelle: `agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml:12-36`
 
 | Change Type | Compatibility | Version Bump | Allowed in v1.0? |
 |:------------|:--------------|:-------------|:-----------------|
@@ -330,7 +330,7 @@ optional:
 
 ## 4. ORCHESTRATOR LOGIC REPORT
 
-Quelle: `agency_os/00_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
+Quelle: `agency_os/core_system/prompts/AGENCY_OS_ORCHESTRATOR_v1.md`
 
 ### Decision-Making Mechanism
 
@@ -882,7 +882,7 @@ Based on this analysis, refactoring should prioritize **implementation over spec
    - **Effort:** 1 hour (requires adding status fields to all agents)
 
 6. **Add Global Precedence Rules** (KB-4.1)
-   - **Scope:** Create new file `agency_os/00_system/knowledge/META_rules.yaml`
+   - **Scope:** Create new file `agency_os/core_system/knowledge/META_rules.yaml`
    - **Content:** Document precedence hierarchy + conflict resolution
    - **Effort:** 20 minutes
 
