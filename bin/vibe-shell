@@ -203,13 +203,13 @@ handle_health() {
     echo "╚════════════════════════════════════════════════════════════════════════════╝" >&2
     echo "" >&2
 
-    # Check 1: Config exists
+    # Check 1: Config exists (source of truth)
     checks_total=$((checks_total + 1))
-    if [ -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]; then
-        echo "✅ Config: .vibe/config/roadmap.yaml exists" >&2
+    if [ -f "$VIBE_ROOT/docs/cleanup_roadmap.json" ]; then
+        echo "✅ Config: docs/cleanup_roadmap.json exists" >&2
         checks_passed=$((checks_passed + 1))
     else
-        echo "❌ Config: .vibe/config/roadmap.yaml MISSING" >&2
+        echo "❌ Config: docs/cleanup_roadmap.json MISSING (critical git corruption)" >&2
         health_status=1
     fi
 
