@@ -14,6 +14,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 
+# Add the orchestrator tools to the Python path
+sys.path.insert(0, str(REPO_ROOT / "agency_os" / "00_system" / "orchestrator" / "tools"))
+
 print("=" * 70)
 print("RESEARCH TOOLS PROOF (Claude Code WebSearch Backend)")
 print("=" * 70)

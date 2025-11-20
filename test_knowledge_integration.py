@@ -22,10 +22,8 @@ sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
 
 # Setup logging to see the integration logs
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s - %(name)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
+
 
 def test_knowledge_integration():
     """Test that executor queries knowledge system when knowledge_context is True."""
@@ -36,10 +34,9 @@ def test_knowledge_integration():
 
     # Step 1: Import required modules
     print("\n📍 Step 1: Importing modules...")
-    from runtime.prompt_registry import PromptRegistry
     from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
 
-    print(f"   ✅ Modules imported")
+    print("   ✅ Modules imported")
 
     # Step 2: Create a test workflow with knowledge_context=True
     print("\n📍 Step 2: Creating test workflow with knowledge_context=True...")
@@ -51,7 +48,7 @@ def test_knowledge_integration():
             description="Analyze agent patterns",
             required_skills=[],
             prompt_key="research.analyze_topic",
-            knowledge_context=True  # <-- THE KEY INTEGRATION
+            knowledge_context=True,  # <-- THE KEY INTEGRATION
         )
     }
 
@@ -63,10 +60,10 @@ def test_knowledge_integration():
         edges=[],
         entry_point="analyze_request",
         exit_points=["analyze_request"],
-        estimated_cost_usd=0.0
+        estimated_cost_usd=0.0,
     )
 
-    print(f"   ✅ Workflow created")
+    print("   ✅ Workflow created")
     print(f"   ✅ Node knowledge_context: {workflow.nodes['analyze_request'].knowledge_context}")
 
     # Step 3: Execute the workflow step with a query that should match our knowledge
@@ -77,10 +74,10 @@ def test_knowledge_integration():
     result = executor.execute_step(
         workflow,
         "analyze_request",
-        context="Agent Patterns"  # This should match our test knowledge file
+        context="Agent Patterns",  # This should match our test knowledge file
     )
 
-    print(f"\n   ✅ Execution completed")
+    print("\n   ✅ Execution completed")
     print(f"   Status: {result.status.value}")
 
     # Step 4: Verify the output contains knowledge content
@@ -141,6 +138,7 @@ def test_knowledge_integration():
 
     print("=" * 80)
 
+
 if __name__ == "__main__":
     try:
         exit_code = test_knowledge_integration()
@@ -148,5 +146,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

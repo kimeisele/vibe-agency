@@ -29,9 +29,9 @@ Version: 1.0 (MVP - Core Resolvers)
 
 import logging
 import subprocess
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class PromptContext:
                 cwd=self.vibe_root,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -158,7 +158,7 @@ class PromptContext:
                 cwd=self.vibe_root,
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -220,7 +220,7 @@ class PromptContext:
         Returns:
             ISO 8601 formatted timestamp
         """
-        return datetime.now().isoformat(timespec='seconds')
+        return datetime.now().isoformat(timespec="seconds")
 
     def _resolve_current_branch(self) -> str:
         """
@@ -235,7 +235,7 @@ class PromptContext:
                 cwd=self.vibe_root,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -258,7 +258,7 @@ class PromptContext:
                 cwd=self.vibe_root,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
@@ -297,8 +297,6 @@ def get_prompt_context() -> PromptContext:
 # ========================================================================
 
 if __name__ == "__main__":
-    import sys
-
     # Setup logging
     logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 

@@ -18,12 +18,12 @@ with real system data.
 import logging
 import sys
 from pathlib import Path
-from io import StringIO
 
 # Setup path
 repo_root = Path(__file__).parent
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+
 
 # Custom log handler to capture logs
 class LogCapture(logging.Handler):
@@ -34,6 +34,7 @@ class LogCapture(logging.Handler):
     def emit(self, record):
         self.records.append(self.format(record))
 
+
 # Setup logging with capture
 log_capture = LogCapture()
 log_capture.setFormatter(logging.Formatter("%(levelname)s - %(name)s - %(message)s"))
@@ -43,9 +44,10 @@ logging.basicConfig(
     format="%(levelname)s - %(name)s - %(message)s",
     handlers=[
         logging.StreamHandler(),  # Still print to console
-        log_capture  # Capture for testing
-    ]
+        log_capture,  # Capture for testing
+    ],
 )
+
 
 def test_context_integration():
     """Test that executor resolves and injects dynamic context into prompts."""
@@ -61,7 +63,7 @@ def test_context_integration():
     context_engine = get_prompt_context()
     system_context = context_engine.resolve(["system_time", "current_branch", "git_status"])
 
-    print(f"   ✅ Context engine initialized")
+    print("   ✅ Context engine initialized")
     print(f"   ✅ Resolved {len(system_context)} contexts:")
     for key, value in system_context.items():
         preview = value[:50] + "..." if len(value) > 50 else value
@@ -69,7 +71,6 @@ def test_context_integration():
 
     # Step 2: Test the full integration with executor
     print("\n📍 Step 2: Testing full integration with executor...")
-    from runtime.prompt_registry import PromptRegistry
     from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
 
     # Clear previous logs
@@ -82,7 +83,7 @@ def test_context_integration():
             description="Analyze with context",
             required_skills=[],
             prompt_key="research.analyze_topic",
-            knowledge_context=False  # Disable knowledge to simplify test
+            knowledge_context=False,  # Disable knowledge to simplify test
         )
     }
 
@@ -94,7 +95,7 @@ def test_context_integration():
         edges=[],
         entry_point="analyze_request",
         exit_points=["analyze_request"],
-        estimated_cost_usd=0.0
+        estimated_cost_usd=0.0,
     )
 
     print(f"   ✅ Workflow created with prompt_key: {workflow.nodes['analyze_request'].prompt_key}")
@@ -102,12 +103,10 @@ def test_context_integration():
     # Execute with a test query
     executor = GraphExecutor()
     result = executor.execute_step(
-        workflow,
-        "analyze_request",
-        context="Test Query for Context Injection"
+        workflow, "analyze_request", context="Test Query for Context Injection"
     )
 
-    print(f"\n   ✅ Execution completed")
+    print("\n   ✅ Execution completed")
     print(f"   Status: {result.status.value}")
 
     # Step 3: Verify the logs show context resolution
@@ -121,7 +120,7 @@ def test_context_integration():
         "system_time": "System time was resolved",
         "current_branch": "Current branch was resolved",
         "git_status": "Git status was resolved",
-        "🎙️ VOICE: Retrieved prompt": "Prompt registry was queried"
+        "🎙️ VOICE: Retrieved prompt": "Prompt registry was queried",
     }
 
     results = {}
@@ -144,25 +143,18 @@ def test_context_integration():
     print("=" * 80)
 
     # Required checks (must pass)
-    required = [
-        "🔌 CONTEXT: Resolved",
-        "🎙️ VOICE: Retrieved prompt"
-    ]
+    required = ["🔌 CONTEXT: Resolved", "🎙️ VOICE: Retrieved prompt"]
 
     # Nice-to-have checks (bonus - shows what was resolved)
-    bonus = [
-        "system_time",
-        "current_branch",
-        "git_status"
-    ]
+    bonus = ["system_time", "current_branch", "git_status"]
 
     required_pass = all(results.get(r, False) for r in required)
     bonus_pass = all(results.get(b, False) for b in bonus)
 
     if required_pass and bonus_pass:
         print("✅ PERFECT SUCCESS: The Flesh is Alive!")
-        print(f"   - All required checks passed ✅")
-        print(f"   - All bonus checks passed ✅")
+        print("   - All required checks passed ✅")
+        print("   - All bonus checks passed ✅")
         print("\n   🦴 The Skeleton (Workflows): ✅")
         print("   🎙️ The Voice (Prompt Registry): ✅")
         print("   👁️ The Eyes (Knowledge System): ✅")
@@ -171,8 +163,8 @@ def test_context_integration():
         return 0
     elif required_pass:
         print("✅ SUCCESS: Context Integration Working!")
-        print(f"   - All required checks passed ✅")
-        print(f"   - Some bonus checks missing (may be logged at different level)")
+        print("   - All required checks passed ✅")
+        print("   - Some bonus checks missing (may be logged at different level)")
         print("\n   🦴 The Skeleton (Workflows): ✅")
         print("   🎙️ The Voice (Prompt Registry): ✅")
         print("   🔌 The Flesh (Context Engine): ✅")
@@ -184,6 +176,7 @@ def test_context_integration():
         print(f"   - Failed checks: {failed}")
         return 1
 
+
 if __name__ == "__main__":
     try:
         exit_code = test_context_integration()
@@ -191,5 +184,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

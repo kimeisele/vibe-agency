@@ -19,10 +19,8 @@ repo_root = Path(__file__).parent
 sys.path.insert(0, str(repo_root))
 
 # Setup logging to see the integration logs
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s - %(name)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
+
 
 def test_prompt_registry_integration():
     """Test that executor uses prompt registry when prompt_key is present."""
@@ -37,11 +35,11 @@ def test_prompt_registry_integration():
     # Add the 00_system path for imports
     sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
 
-    from runtime.prompt_registry import PromptRegistry
     from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
+    from runtime.prompt_registry import PromptRegistry
 
     # Verify the registry has our test prompts
-    print(f"   ✅ PromptRegistry imported")
+    print("   ✅ PromptRegistry imported")
     print(f"   ✅ Registered prompts: {list(PromptRegistry._prompts.keys())}")
 
     # Step 2: Create a test workflow with prompt_key
@@ -53,7 +51,7 @@ def test_prompt_registry_integration():
             action="analyze",
             description="Fallback description (should not be used)",
             required_skills=[],
-            prompt_key="research.analyze_topic"  # <-- THE KEY INTEGRATION
+            prompt_key="research.analyze_topic",  # <-- THE KEY INTEGRATION
         )
     }
 
@@ -65,7 +63,7 @@ def test_prompt_registry_integration():
         edges=[],
         entry_point="analyze_request",
         exit_points=["analyze_request"],
-        estimated_cost_usd=0.0
+        estimated_cost_usd=0.0,
     )
 
     print(f"   ✅ Workflow created with node: {workflow.nodes['analyze_request'].id}")
@@ -77,12 +75,10 @@ def test_prompt_registry_integration():
 
     executor = GraphExecutor()
     result = executor.execute_step(
-        workflow,
-        "analyze_request",
-        context="Test Research Topic: Quantum Computing"
+        workflow, "analyze_request", context="Test Research Topic: Quantum Computing"
     )
 
-    print(f"\n   ✅ Execution completed")
+    print("\n   ✅ Execution completed")
     print(f"   Status: {result.status.value}")
 
     # Step 4: Verify the output contains registry content
@@ -131,6 +127,7 @@ def test_prompt_registry_integration():
 
     print("=" * 80)
 
+
 if __name__ == "__main__":
     try:
         exit_code = test_prompt_registry_integration()
@@ -138,5 +135,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

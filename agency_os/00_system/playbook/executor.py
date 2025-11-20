@@ -381,8 +381,8 @@ class GraphExecutor:
                 if str(system_dir) not in sys.path:
                     sys.path.insert(0, str(system_dir))
 
-                from runtime.prompt_registry import PromptRegistry
                 from runtime.prompt_context import get_prompt_context
+                from runtime.prompt_registry import PromptRegistry
 
                 # Build context dict for prompt interpolation
                 prompt_context = {"node_id": node_id, "action": node.action}
@@ -393,11 +393,9 @@ class GraphExecutor:
                 # Load standard system context for prompt placeholders
                 try:
                     context_engine = get_prompt_context()
-                    system_context = context_engine.resolve([
-                        "system_time",
-                        "current_branch",
-                        "git_status"
-                    ])
+                    system_context = context_engine.resolve(
+                        ["system_time", "current_branch", "git_status"]
+                    )
                     # Merge system context into prompt context
                     prompt_context.update(system_context)
                     logger.debug(f"🔌 CONTEXT: Resolved {len(system_context)} system contexts")
@@ -426,7 +424,9 @@ class GraphExecutor:
                 # Import with proper path handling
                 import importlib.util
 
-                retriever_path = Path(__file__).parent.parent.parent / "02_knowledge" / "retriever.py"
+                retriever_path = (
+                    Path(__file__).parent.parent.parent / "02_knowledge" / "retriever.py"
+                )
 
                 spec = importlib.util.spec_from_file_location("retriever", retriever_path)
                 retriever_module = importlib.util.module_from_spec(spec)
@@ -457,7 +457,9 @@ class GraphExecutor:
                     for i, hit in enumerate(hits, 1):
                         rel_path = hit.path.relative_to(retriever.knowledge_base)
                         knowledge_section += f"## Artifact {i}: {hit.title}\n"
-                        knowledge_section += f"**Domain:** {hit.domain} | **Relevance:** {hit.relevance_score:.1%}\n"
+                        knowledge_section += (
+                            f"**Domain:** {hit.domain} | **Relevance:** {hit.relevance_score:.1%}\n"
+                        )
                         knowledge_section += f"**Path:** {rel_path}\n\n"
 
                         # Read full content for high-relevance matches
@@ -482,7 +484,9 @@ class GraphExecutor:
                     logger.info("👁️ INSIGHT: No relevant knowledge found")
 
             except Exception as e:
-                logger.warning(f"⚠️  Knowledge retrieval failed: {e}. Continuing without knowledge context.")
+                logger.warning(
+                    f"⚠️  Knowledge retrieval failed: {e}. Continuing without knowledge context."
+                )
                 # Continue execution without knowledge context
 
         # GAD-906/907: Semantic lens injection for mindset transformation

@@ -12,12 +12,12 @@ This test captures logs to verify "The Holy Trinity" is complete.
 import logging
 import sys
 from pathlib import Path
-from io import StringIO
 
 # Setup path
 repo_root = Path(__file__).parent
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "agency_os" / "00_system"))
+
 
 # Custom log handler to capture logs
 class LogCapture(logging.Handler):
@@ -28,6 +28,7 @@ class LogCapture(logging.Handler):
     def emit(self, record):
         self.records.append(self.format(record))
 
+
 # Setup logging with capture
 log_capture = LogCapture()
 log_capture.setFormatter(logging.Formatter("%(levelname)s - %(name)s - %(message)s"))
@@ -37,9 +38,10 @@ logging.basicConfig(
     format="%(levelname)s - %(name)s - %(message)s",
     handlers=[
         logging.StreamHandler(),  # Still print to console
-        log_capture  # Capture for testing
-    ]
+        log_capture,  # Capture for testing
+    ],
 )
+
 
 def test_knowledge_integration():
     """Test that executor queries knowledge system when knowledge_context is True."""
@@ -50,10 +52,9 @@ def test_knowledge_integration():
 
     # Step 1: Import required modules
     print("\n📍 Step 1: Importing modules...")
-    from runtime.prompt_registry import PromptRegistry
     from playbook.executor import GraphExecutor, WorkflowGraph, WorkflowNode
 
-    print(f"   ✅ Modules imported")
+    print("   ✅ Modules imported")
 
     # Step 2: Create a test workflow with knowledge_context=True
     print("\n📍 Step 2: Creating test workflow with knowledge_context=True...")
@@ -65,7 +66,7 @@ def test_knowledge_integration():
             description="Analyze agent patterns",
             required_skills=[],
             prompt_key="research.analyze_topic",
-            knowledge_context=True  # <-- THE KEY INTEGRATION
+            knowledge_context=True,  # <-- THE KEY INTEGRATION
         )
     }
 
@@ -77,10 +78,10 @@ def test_knowledge_integration():
         edges=[],
         entry_point="analyze_request",
         exit_points=["analyze_request"],
-        estimated_cost_usd=0.0
+        estimated_cost_usd=0.0,
     )
 
-    print(f"   ✅ Workflow created")
+    print("   ✅ Workflow created")
     print(f"   ✅ Node knowledge_context: {workflow.nodes['analyze_request'].knowledge_context}")
 
     # Step 3: Execute the workflow step with a query that should match our knowledge
@@ -94,10 +95,10 @@ def test_knowledge_integration():
     result = executor.execute_step(
         workflow,
         "analyze_request",
-        context="Agent Patterns"  # This should match our test knowledge file
+        context="Agent Patterns",  # This should match our test knowledge file
     )
 
-    print(f"\n   ✅ Execution completed")
+    print("\n   ✅ Execution completed")
     print(f"   Status: {result.status.value}")
 
     # Step 4: Verify the logs show knowledge retrieval
@@ -112,7 +113,7 @@ def test_knowledge_integration():
         "👁️ INSIGHT: Injected": "Knowledge injected into prompt",
         "🎙️ VOICE: Retrieved prompt": "Prompt registry queried",
         "agent_patterns": "Our test knowledge file was found",
-        "The Holy Trinity": "Knowledge content was retrieved"
+        "The Holy Trinity": "Knowledge content was retrieved",
     }
 
     results = {}
@@ -132,22 +133,19 @@ def test_knowledge_integration():
         "👁️ INSIGHT: Retrieving knowledge",
         "👁️ INSIGHT: Found",
         "👁️ INSIGHT: Injected",
-        "🎙️ VOICE: Retrieved prompt"
+        "🎙️ VOICE: Retrieved prompt",
     ]
 
     # Nice-to-have checks (bonus)
-    bonus = [
-        "agent_patterns",
-        "The Holy Trinity"
-    ]
+    bonus = ["agent_patterns", "The Holy Trinity"]
 
     required_pass = all(results.get(r, False) for r in required)
     bonus_pass = all(results.get(b, False) for b in bonus)
 
     if required_pass and bonus_pass:
         print("✅ PERFECT SUCCESS: The Holy Trinity is Complete!")
-        print(f"   - All required checks passed ✅")
-        print(f"   - All bonus checks passed ✅")
+        print("   - All required checks passed ✅")
+        print("   - All bonus checks passed ✅")
         print("\n   🧠 The Brain (Executor): ✅")
         print("   🎙️ The Voice (Prompt Registry): ✅")
         print("   👁️ The Eyes (Knowledge System): ✅")
@@ -155,8 +153,8 @@ def test_knowledge_integration():
         return 0
     elif required_pass:
         print("✅ SUCCESS: Knowledge Integration Working!")
-        print(f"   - All required checks passed ✅")
-        print(f"   - Some bonus checks missing (expected in mock mode)")
+        print("   - All required checks passed ✅")
+        print("   - Some bonus checks missing (expected in mock mode)")
         print("\n   🧠 The Brain (Executor): ✅")
         print("   🎙️ The Voice (Prompt Registry): ✅")
         print("   👁️ The Eyes (Knowledge System): ✅")
@@ -168,6 +166,7 @@ def test_knowledge_integration():
         print(f"   - Failed checks: {failed}")
         return 1
 
+
 if __name__ == "__main__":
     try:
         exit_code = test_knowledge_integration()
@@ -175,5 +174,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
