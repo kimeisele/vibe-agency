@@ -1,8 +1,8 @@
 # GAD-100 IMPLEMENTATION PACKAGE - MASTER PROMPT
 
-**YOU ARE IMPLEMENTING:** GAD-100 Configuration & Environment Management  
-**REPOSITORY:** vibe-agency  
-**RISK LEVEL:** 🔴 CRITICAL (Open heart surgery on system core)  
+**YOU ARE IMPLEMENTING:** GAD-100 Configuration & Environment Management
+**REPOSITORY:** vibe-agency
+**RISK LEVEL:** 🔴 CRITICAL (Open heart surgery on system core)
 **EXECUTION MODE:** Autonomous phased rollout with checkpoints
 
 -----
@@ -61,7 +61,7 @@ if use_phoenix:
     manifest = load_from_phoenix()
 else:
     # 20 lines of old code here
-    
+
 if use_phoenix:
     handoff = load_from_phoenix()
 else:
@@ -100,18 +100,18 @@ manifest = self.config.get_project_manifest(project_id)
 # test_vad_100_migration.py (NEW - CRITICAL!)
 def test_migration_is_lossless():
     """Verify state_migrator.py preserves all data"""
-    
+
     # 1. Load with legacy system
     legacy_loader = LegacyConfigLoader()
     old_data = legacy_loader.get_project_manifest("test_workspace_golden")
-    
+
     # 2. Run migration
     migrate_workspace("test_workspace_golden")
-    
+
     # 3. Load with new system
     new_loader = VibeConfig()
     new_data = new_loader.get_project_manifest("test_workspace_golden")
-    
+
     # 4. PROVE equivalence
     assert old_data == new_data, "Migration lost data!"
 ```
@@ -342,13 +342,13 @@ def test_vad000_phoenix_config_loads():
     """Verify GAD-100 config loads correctly"""
     config = VibeConfig(env="test")
     assert config.system_integrity is not None
-    
+
 def test_vad000_schema_validation():
     """Verify invalid state is caught"""
     invalid = {"bad": "data"}
     with pytest.raises(SchemaValidationError):
         config.validate_project_manifest(invalid)
-        
+
 def test_vad000_migration_lossless():
     """CRITICAL: Verify migration preserves data"""
     # See Phase 5 for full implementation
