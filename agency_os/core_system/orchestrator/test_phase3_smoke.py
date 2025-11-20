@@ -16,15 +16,7 @@ Usage:
     python test_phase3_smoke.py
 """
 
-import sys
 from pathlib import Path
-
-# Get repo root
-repo_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(repo_root))
-
-# Add 00_system to path (Python doesn't like numeric module names)
-sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
 
 
 def test_imports():

@@ -31,31 +31,39 @@ Version: 1.0 (MVP)
 """
 
 import logging
-import sys
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-# Import PromptRuntime (same directory)
-# Use try/except to handle both direct execution and module import
-try:
-    from .prompt_runtime import PromptRuntime
-except ImportError:
-    # Package-qualified import (00_system in sys.path)
-    from runtime.prompt_runtime import PromptRuntime
+# Import PromptRuntime using proper package path
+from agency_os.core_system.runtime.prompt_runtime import PromptRuntime
 
-# Import workspace utilities
+# Import workspace utilities without sys.path manipulation
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_REPO_ROOT / "scripts"))
+_WORKSPACE_UTILS_PATH = _REPO_ROOT / "scripts" / "workspace_utils.py"
 
 try:
-    from workspace_utils import get_active_workspace, load_workspace_manifest, resolve_manifest_path
-
-    WORKSPACE_UTILS_AVAILABLE = True
+    if _WORKSPACE_UTILS_PATH.exists():
+        spec = spec_from_file_location("workspace_utils", _WORKSPACE_UTILS_PATH)
+        if spec and spec.loader:
+            workspace_utils = module_from_spec(spec)
+            spec.loader.exec_module(workspace_utils)
+            get_active_workspace = workspace_utils.get_active_workspace
+            load_workspace_manifest = workspace_utils.load_workspace_manifest
+            resolve_manifest_path = workspace_utils.resolve_manifest_path
+            WORKSPACE_UTILS_AVAILABLE = True
+        else:
+            raise ImportError("Failed to load workspace_utils spec")
+    else:
+        raise ImportError(f"workspace_utils.py not found at {_WORKSPACE_UTILS_PATH}")
 except ImportError as e:
     logging.warning(f"workspace_utils not available: {e}")
     WORKSPACE_UTILS_AVAILABLE = False
+    get_active_workspace = None  # type: ignore
+    load_workspace_manifest = None  # type: ignore
+    resolve_manifest_path = None  # type: ignore
 
 
 logger = logging.getLogger(__name__)

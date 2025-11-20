@@ -21,8 +21,8 @@ Error Handling:
 """
 
 import logging
-import sys
 from dataclasses import dataclass
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any
 
@@ -34,18 +34,29 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# CRITICAL FIX #1: Import workspace utilities
-# Add scripts directory to path to enable workspace_utils import
+# CRITICAL FIX #1: Import workspace utilities without sys.path manipulation
+# Load workspace_utils dynamically from scripts directory
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_REPO_ROOT / "scripts"))
+_WORKSPACE_UTILS_PATH = _REPO_ROOT / "scripts" / "workspace_utils.py"
 
 try:
-    from workspace_utils import get_active_workspace, resolve_artifact_base_path
-
-    WORKSPACE_UTILS_AVAILABLE = True
+    if _WORKSPACE_UTILS_PATH.exists():
+        spec = spec_from_file_location("workspace_utils", _WORKSPACE_UTILS_PATH)
+        if spec and spec.loader:
+            workspace_utils = module_from_spec(spec)
+            spec.loader.exec_module(workspace_utils)
+            get_active_workspace = workspace_utils.get_active_workspace
+            resolve_artifact_base_path = workspace_utils.resolve_artifact_base_path
+            WORKSPACE_UTILS_AVAILABLE = True
+        else:
+            raise ImportError("Failed to load workspace_utils spec")
+    else:
+        raise ImportError(f"workspace_utils.py not found at {_WORKSPACE_UTILS_PATH}")
 except ImportError as e:
     logger.warning(f"workspace_utils not available: {e}")
     WORKSPACE_UTILS_AVAILABLE = False
+    get_active_workspace = None  # type: ignore
+    resolve_artifact_base_path = None  # type: ignore
 
 
 # Custom Exceptions

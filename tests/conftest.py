@@ -1,39 +1,53 @@
-"""Pytest configuration for vibe-agency tests."""
+"""Pytest configuration for vibe-agency tests.
+
+With proper package installation (uv pip install -e .), all imports work naturally.
+No sys.path manipulation needed.
+"""
 
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-# Add project root to sys.path for proper package discovery
+# Legacy backward compatibility: Create module aliases for old test code
+# These map old bare imports to new package imports
+try:
+    import agency_os.core_system.orchestrator as orchestrator_module
+    import agency_os.core_system.playbook.executor as executor_module
+    import agency_os.core_system.playbook.loader as loader_module
+    import agency_os.core_system.playbook.router as router_module
+    import agency_os.core_system.runtime.prompt_registry as prompt_registry_module
+
+    sys.modules["orchestrator"] = orchestrator_module
+    sys.modules["executor"] = executor_module
+    sys.modules["prompt_registry"] = prompt_registry_module
+    sys.modules["router"] = router_module
+    sys.modules["loader"] = loader_module
+    sys.modules["agency_os_orchestrator"] = orchestrator_module
+except ImportError as e:
+    # If package not installed, provide helpful error message
+    print(
+        f"\n❌ Import error: {e}\n"
+        "Please install the package in editable mode:\n"
+        "  uv pip install -e .\n"
+        "Or:\n"
+        "  make install\n"
+    )
+    raise
+
+# Load legacy_config_loader dynamically (it's not in the main package)
 repo_root = Path(__file__).parent.parent
-sys.path.insert(0, str(repo_root))
+legacy_config_path = repo_root / "config" / "legacy_config_loader.py"
+if legacy_config_path.exists():
+    spec = spec_from_file_location("legacy_config_loader", legacy_config_path)
+    if spec and spec.loader:
+        legacy_config = module_from_spec(spec)
+        sys.modules["legacy_config_loader"] = legacy_config
+        spec.loader.exec_module(legacy_config)
 
-# Add 00_system to path (Python doesn't like numeric module names)
-sys.path.insert(0, str(repo_root / "agency_os" / "core_system"))
+# Load handlers module with fallback
+try:
+    import agency_os.core_system.orchestrator.handlers as handlers_module
 
-
-# Dynamically load modules from 00_system (which has numeric prefix, not importable directly)
-def _load_module_from_path(module_name: str, file_path: str) -> None:
-    """Load a module from a file path and inject into sys.modules."""
-    target = repo_root / file_path
-    if target.exists():
-        spec = spec_from_file_location(module_name, target)
-        if spec and spec.loader:
-            module = module_from_spec(spec)
-            sys.modules[module_name] = module
-            spec.loader.exec_module(module)
-
-
-# Load real modules (no longer shims in root)
-_load_module_from_path("orchestrator", "agency_os/core_system/orchestrator/__init__.py")
-_load_module_from_path("executor", "agency_os/core_system/playbook/executor.py")
-_load_module_from_path("prompt_registry", "agency_os/core_system/runtime/prompt_registry.py")
-_load_module_from_path("router", "agency_os/core_system/playbook/router.py")
-_load_module_from_path("loader", "agency_os/core_system/playbook/loader.py")
-_load_module_from_path("legacy_config_loader", "config/legacy_config_loader.py")
-
-# Load handlers module
-_load_module_from_path("handlers", "agency_os/core_system/orchestrator/handlers/__init__.py")
-
-# Legacy shim names for backward compatibility (map to real modules)
-sys.modules["agency_os_orchestrator"] = sys.modules.get("orchestrator", type(sys)("orchestrator"))
+    sys.modules["handlers"] = handlers_module
+except ImportError:
+    pass  # handlers module might not exist in all configs

@@ -4,12 +4,6 @@ Golden Path Test - Prompt Registry Integration Validation
 Tests if PromptRegistry correctly loads and injects Guardian Directives
 """
 
-import sys
-
-# Add agency_os to path
-sys.path.insert(0, "/home/user/vibe-agency")
-sys.path.insert(0, "/home/user/vibe-agency/agency_os/core_system/runtime")
-
 print("=" * 80)
 print("GOLDEN PATH TEST - Prompt Registry Integration")
 print("=" * 80)
@@ -19,7 +13,7 @@ print()
 print("TEST 1: Import PromptRegistry")
 print("-" * 80)
 try:
-    from prompt_registry import PromptRegistry
+    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
     print("✅ PASS: PromptRegistry imported successfully")
     print(f"   Location: {PromptRegistry.__module__}")

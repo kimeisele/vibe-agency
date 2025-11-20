@@ -35,6 +35,10 @@ jobs:
 
       - name: Run E2E test suite
         id: e2e-tests
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VIBE_LIVE_FIRE: "false"
         run: |
           echo "Running E2E tests..."
           uv run pytest tests/e2e/ -v --tb=short --junitxml=e2e-results.xml
@@ -42,6 +46,10 @@ jobs:
       - name: Run performance tests (non-blocking)
         id: perf-tests
         continue-on-error: true
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VIBE_LIVE_FIRE: "false"
         run: |
           echo "Running performance tests..."
           uv run pytest tests/performance/ -v --tb=short --junitxml=perf-results.xml || true

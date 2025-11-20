@@ -49,11 +49,9 @@ from typing import Any
 
 import yaml
 
-# Add lib to path for phoenix_config import
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
-
+# Import from lib package (phoenix_config)
 try:
-    from phoenix_config import ConfigurationError, UniversalConfig
+    from lib.phoenix_config import ConfigurationError, UniversalConfig
 
     PHOENIX_AVAILABLE = True
 except ImportError:
@@ -61,9 +59,23 @@ except ImportError:
     logger = logging.getLogger(__name__)
     logger.error("phoenix_config not available - ensure lib/phoenix_config exists")
 
-# Import interface from legacy loader
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from legacy_config_loader import ConfigLoaderInterface
+# Import interface from config directory (loaded via conftest.py for tests)
+# For direct script use, we use importlib
+try:
+    from config.legacy_config_loader import ConfigLoaderInterface
+except ImportError:
+    # Fallback: load dynamically
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    _legacy_path = Path(__file__).resolve().parent / "legacy_config_loader.py"
+    if _legacy_path.exists():
+        spec = spec_from_file_location("legacy_config_loader", _legacy_path)
+        if spec and spec.loader:
+            legacy_module = module_from_spec(spec)
+            spec.loader.exec_module(legacy_module)
+            ConfigLoaderInterface = legacy_module.ConfigLoaderInterface
+    else:
+        raise ImportError("legacy_config_loader.py not found")
 
 logger = logging.getLogger(__name__)
 

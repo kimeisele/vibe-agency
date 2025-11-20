@@ -23,7 +23,6 @@ import json
 import logging
 import re
 import subprocess
-import sys
 import time
 import uuid
 import xml.etree.ElementTree as ET
@@ -35,10 +34,7 @@ from typing import Any
 
 import yaml
 
-# Add 00_system to path for package-qualified imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from runtime.llm_client import BudgetExceededError, LLMClient
+from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -46,12 +42,12 @@ logger = logging.getLogger(__name__)
 # GAD-003 Phase 2: Use PromptRegistry instead of PromptRuntime
 # PromptRegistry provides automatic governance injection
 try:
-    from runtime.prompt_registry import PromptRegistry
+    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
     PROMPT_REGISTRY_AVAILABLE = True
 except ImportError:
     # Fallback to PromptRuntime if Registry not available
-    from runtime.prompt_runtime import PromptRuntime
+    from agency_os.core_system.runtime.prompt_runtime import PromptRuntime
 
     PROMPT_REGISTRY_AVAILABLE = False
     logger.warning("PromptRegistry not available, falling back to PromptRuntime")

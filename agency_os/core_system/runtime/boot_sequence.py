@@ -6,13 +6,12 @@ Orchestrates the conveyor belt:
 3. Prompt Composer → Compose final prompt
 """
 
-import sys
 from pathlib import Path
 
-from runtime.context_loader import ContextLoader
-from runtime.playbook_engine import PlaybookEngine
-from runtime.project_memory import ProjectMemoryManager
-from runtime.prompt_composer import PromptComposer
+from agency_os.core_system.runtime.context_loader import ContextLoader
+from agency_os.core_system.runtime.playbook_engine import PlaybookEngine
+from agency_os.core_system.runtime.project_memory import ProjectMemoryManager
+from agency_os.core_system.runtime.prompt_composer import PromptComposer
 
 
 class BootSequence:
