@@ -14,6 +14,8 @@ Responsibilities:
 This agent consults patterns/snippets knowledge domains by default.
 """
 
+from pathlib import Path
+
 from agency_os.agents import BaseAgent, KnowledgeResult
 
 

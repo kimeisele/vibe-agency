@@ -14,6 +14,7 @@ Responsibilities:
 This agent consults decisions/research knowledge domains by default.
 """
 
+from pathlib import Path
 from typing import Any
 
 from agency_os.agents import BaseAgent, KnowledgeResult
