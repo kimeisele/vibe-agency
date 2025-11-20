@@ -121,6 +121,12 @@ fi
 
 python3 bin/mission status 2>&1 || echo "⚠️  Mission Control not initialized (run scripts/bootstrap_mission.py)"
 
+# Auto-provision system integrity manifest if missing (GAD-501 Layer 0)
+if [ ! -f .vibe/system_integrity_manifest.json ]; then
+    echo "⚠️  System integrity manifest not found. Auto-generating..."
+    python3 scripts/generate-integrity-manifest.py > /dev/null 2>&1 && echo "✅ System integrity manifest auto-generated" || echo "❌ Failed to generate integrity manifest."
+fi
+
 # Auto-provision cleanup roadmap if missing
 if [ ! -f .vibe/config/cleanup_roadmap.json ] && [ -f docs/cleanup_roadmap.json ]; then
     mkdir -p .vibe/config

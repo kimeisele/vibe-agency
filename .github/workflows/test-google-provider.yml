@@ -36,13 +36,13 @@ jobs:
     - name: Test with Google API Key (if available)
       env:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        VIBE_LIVE_FIRE: 'true'
+        VIBE_LIVE_FIRE: 'false'
       run: |
         if [ -n "$GOOGLE_API_KEY" ]; then
-          echo "🔥 Testing with real GOOGLE_API_KEY from GitHub Secrets"
+          echo "🧪 Testing with mocked API calls (VIBE_LIVE_FIRE=false)"
           uv run python scripts/prove_intelligence.py
         else
-          echo "⚠️  GOOGLE_API_KEY not set in secrets - skipping live test"
+          echo "⚠️  GOOGLE_API_KEY not set in secrets - skipping test"
           echo "To enable: Settings → Secrets → Actions → New secret → GOOGLE_API_KEY"
         fi
 

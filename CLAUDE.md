@@ -4,6 +4,34 @@
 
 ---
 
+## 🚨 FEATURE FREEZE IN EFFECT
+
+**⚠️ NO NEW FEATURES UNTIL PHASE 3 COMPLETE ⚠️**
+
+**Why:** System foundation needs cleanup before adding more complexity.
+**Status:** Phase 1 in progress (6/16 tasks complete, 37.5%)
+**Roadmap:** `.vibe/config/cleanup_roadmap.json`
+
+**What's blocked:**
+- ❌ New GADs, VADs, or LADs
+- ❌ New agents or workflows
+- ❌ New integrations or APIs
+- ❌ New features or capabilities
+
+**What's allowed:**
+- ✅ Bug fixes (P0/P1 only)
+- ✅ Cleanup roadmap tasks
+- ✅ Test coverage improvements
+- ✅ Documentation updates
+
+**FREEZE will be lifted after:**
+- Phase 0: Quarantine & Triage ✅ COMPLETE (4/4)
+- Phase 1: Stop the Bleeding ⏳ IN PROGRESS (2/4)
+- Phase 2: Clean the Foundation ⏳ PENDING
+- Phase 3: Verify & Document ⏳ PENDING
+
+---
+
 ## 🎯 CORE PRINCIPLES (Never Change)
 
 1. Don't trust "Complete ✅" without passing tests
