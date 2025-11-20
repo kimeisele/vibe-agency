@@ -149,6 +149,7 @@ Commands:
   --help             Show this help message
   --status           Show runtime status
   --health           Run system health check (Anti-Decay mechanism)
+  --verify-db        Validate SQLite shadow mode (ARCH-004)
   [COMMAND] [ARGS]   Execute command with context injection
 
 Environment:
@@ -265,6 +266,13 @@ handle_health() {
         echo "⚪ VirtualEnv: Not active" >&2
     fi
 
+    # Observation 3: Shadow Mode Status (ARCH-003)
+    if [ -f "$VIBE_ROOT/.vibe/state/vibe_agency.db" ]; then
+        echo "👉 Shadow Mode: Database initialized (dual-write active)" >&2
+    else
+        echo "⚪ Shadow Mode: Not initialized (database not found)" >&2
+    fi
+
     echo "" >&2
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
     echo "Infrastructure: $checks_passed/$checks_total capability checks passed" >&2
@@ -278,6 +286,25 @@ handle_health() {
     echo "" >&2
 
     return $health_status
+}
+
+# Shadow Mode Validation (ARCH-004)
+handle_verify_db() {
+    echo "╔════════════════════════════════════════════════════════════════════════════╗" >&2
+    echo "║                  ARCH-004: Shadow Mode Validation                         ║" >&2
+    echo "╚════════════════════════════════════════════════════════════════════════════╝" >&2
+    echo "" >&2
+
+    # Check if validation script exists
+    if [ ! -f "$VIBE_ROOT/bin/verify-shadow-mode.py" ]; then
+        echo "❌ Error: verify-shadow-mode.py not found" >&2
+        echo "   Expected: $VIBE_ROOT/bin/verify-shadow-mode.py" >&2
+        return 1
+    fi
+
+    # Run validation script with verbose output
+    python3 "$VIBE_ROOT/bin/verify-shadow-mode.py" --verbose --project-root "$VIBE_ROOT"
+    return $?
 }
 
 # ============================================================================
@@ -309,6 +336,10 @@ main() {
             ;;
         --health)
             handle_health
+            exit $?
+            ;;
+        --verify-db)
+            handle_verify_db
             exit $?
             ;;
         -c)
