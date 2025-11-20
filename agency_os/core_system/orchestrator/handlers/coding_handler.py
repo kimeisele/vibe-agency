@@ -47,13 +47,7 @@ class CodingHandler:
         feature_spec = self.orchestrator.load_artifact(manifest.project_id, "feature_spec.json")
 
         if not feature_spec:
-            try:
-                from core_orchestrator import ArtifactNotFoundError  # legacy relative
-            except ModuleNotFoundError:
-                try:
-                    from orchestrator.core_orchestrator import ArtifactNotFoundError  # shim
-                except ModuleNotFoundError:
-                    from agency_os_orchestrator import ArtifactNotFoundError  # top-level alias
+            from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
             raise ArtifactNotFoundError(
                 "feature_spec.json not found - PLANNING phase must complete first"
             )

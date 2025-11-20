@@ -46,13 +46,7 @@ class DeploymentHandler:
         qa_report = self.orchestrator.load_artifact(manifest.project_id, "qa_report.json")
 
         if not qa_report:
-            try:
-                from core_orchestrator import ArtifactNotFoundError
-            except ModuleNotFoundError:
-                try:
-                    from orchestrator.core_orchestrator import ArtifactNotFoundError
-                except ModuleNotFoundError:
-                    from agency_os_orchestrator import ArtifactNotFoundError
+            from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
             raise ArtifactNotFoundError(
                 "qa_report.json not found - TESTING phase must complete first"
             )
