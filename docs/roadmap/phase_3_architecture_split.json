@@ -1,0 +1,328 @@
+{
+  "name": "Phase 3: Kernel/Agency Architecture Split",
+  "description": "Separate Vibe OS (domain-agnostic kernel) from Vibe Agency (SDLC application)",
+  "status": "in_progress",
+  "start_date": "2025-11-20",
+  "objective": "Extract 36 kernel modules to vibe_core/ and 12 agency modules to apps/agency/ to create true OS/App separation",
+  "success_criteria": [
+    "All kernel modules in vibe_core/ with zero agency dependencies",
+    "All agency modules in apps/agency/ depending only on kernel",
+    "All 631 tests passing",
+    "System boots successfully via ./bin/system-boot.sh",
+    "Git history preserved for all moved files"
+  ],
+  "phases": [
+    {
+      "id": "SPLIT-001",
+      "name": "Phase 1: Preparation",
+      "status": "completed",
+      "completed_date": "2025-11-20",
+      "description": "Resolve blockers: consolidate config, break circular dependencies",
+      "tasks": [
+        {
+          "id": "SPLIT-001-A",
+          "name": "Consolidate Phoenix Config",
+          "status": "completed",
+          "description": "Merge agency_os/config/phoenix.py (v1.1) + core_system/config/phoenix.py (v1.0) into vibe_core/config/phoenix.py",
+          "deliverables": [
+            "vibe_core/config/phoenix.py (v2.0)",
+            "Updated imports (4 files)",
+            "Deleted old configs"
+          ]
+        },
+        {
+          "id": "SPLIT-001-B",
+          "name": "Break Circular Dependencies",
+          "status": "completed",
+          "description": "Extract shared types to break orchestrator ↔ registry circular import",
+          "deliverables": [
+            "agency_os/core_system/orchestrator/types.py",
+            "Updated registry.py imports",
+            "Updated orchestrator.py imports"
+          ]
+        },
+        {
+          "id": "SPLIT-001-C",
+          "name": "Verify Phase 1",
+          "status": "completed",
+          "description": "Run smoke tests and verify config loading",
+          "acceptance_criteria": [
+            "Config loads from vibe_core.config",
+            "No circular imports",
+            "12/12 smoke tests passing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SPLIT-002",
+      "name": "Phase 2: Kernel Extraction",
+      "status": "in_progress",
+      "started_date": "2025-11-20",
+      "description": "Move 36 domain-agnostic modules to vibe_core/",
+      "estimated_hours": 5,
+      "tasks": [
+        {
+          "id": "SPLIT-002-A",
+          "name": "Move Persistence Layer",
+          "status": "pending",
+          "description": "git mv agency_os/persistence/ → vibe_core/store/",
+          "files": [
+            "agency_os/persistence/sqlite_store.py",
+            "agency_os/persistence/__init__.py"
+          ],
+          "target": "vibe_core/store/"
+        },
+        {
+          "id": "SPLIT-002-B",
+          "name": "Move Runtime Infrastructure",
+          "status": "pending",
+          "description": "git mv agency_os/core_system/runtime/ → vibe_core/runtime/",
+          "files": [
+            "agency_os/core_system/runtime/*.py (18 files)",
+            "agency_os/core_system/runtime/providers/*.py (4 files)"
+          ],
+          "target": "vibe_core/runtime/"
+        },
+        {
+          "id": "SPLIT-002-C",
+          "name": "Move Playbook System",
+          "status": "pending",
+          "description": "git mv agency_os/core_system/playbook/ → vibe_core/playbook/",
+          "files": [
+            "agency_os/core_system/playbook/*.py (3 files)",
+            "agency_os/core_system/playbook/_registry.yaml"
+          ],
+          "target": "vibe_core/playbook/"
+        },
+        {
+          "id": "SPLIT-002-D",
+          "name": "Move Specialist Base Framework",
+          "status": "pending",
+          "description": "git mv base classes → vibe_core/specialists/",
+          "files": [
+            "agency_os/03_agents/base_specialist.py",
+            "agency_os/03_agents/registry.py"
+          ],
+          "target": "vibe_core/specialists/"
+        },
+        {
+          "id": "SPLIT-002-E",
+          "name": "Move Task Management",
+          "status": "pending",
+          "description": "git mv agency_os/core_system/task_management/ → vibe_core/task_management/",
+          "files": [
+            "agency_os/core_system/task_management/*.py (9 files)"
+          ],
+          "target": "vibe_core/task_management/"
+        },
+        {
+          "id": "SPLIT-002-F",
+          "name": "Move Generic Tools",
+          "status": "pending",
+          "description": "git mv generic tools → vibe_core/tools/",
+          "files": [
+            "agency_os/core_system/orchestrator/tools/web_fetch_client.py",
+            "agency_os/core_system/orchestrator/tools/google_search_client.py",
+            "agency_os/core_system/orchestrator/tools/tool_executor.py"
+          ],
+          "target": "vibe_core/tools/",
+          "note": "Leave github_secrets_loader.py in agency (SDLC-specific)"
+        },
+        {
+          "id": "SPLIT-002-G",
+          "name": "Update All Imports",
+          "status": "pending",
+          "description": "Update ~200-300 import paths across codebase",
+          "strategy": "Use find + sed for bulk updates, verify with tests",
+          "affected_areas": [
+            "agency_os/ modules",
+            "tests/",
+            "scripts/",
+            "bin/"
+          ]
+        },
+        {
+          "id": "SPLIT-002-H",
+          "name": "Verify Kernel Extraction",
+          "status": "pending",
+          "description": "Run full test suite and system boot",
+          "acceptance_criteria": [
+            "All 631 tests passing",
+            "./bin/system-boot.sh succeeds",
+            "No import errors",
+            "vibe_core/ has no agency dependencies"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SPLIT-003",
+      "name": "Phase 3: Agency Extraction",
+      "status": "pending",
+      "description": "Move 12 SDLC-specific modules to apps/agency/",
+      "estimated_hours": 4,
+      "tasks": [
+        {
+          "id": "SPLIT-003-A",
+          "name": "Create apps/agency Structure",
+          "status": "pending",
+          "description": "Create directory structure for agency app"
+        },
+        {
+          "id": "SPLIT-003-B",
+          "name": "Move SDLC Specialists",
+          "status": "pending",
+          "description": "git mv specialists → apps/agency/specialists/",
+          "files": [
+            "agency_os/03_agents/planning_specialist.py",
+            "agency_os/03_agents/specialists/*.py (4 files)"
+          ]
+        },
+        {
+          "id": "SPLIT-003-C",
+          "name": "Move Software Development Personas",
+          "status": "pending",
+          "description": "git mv personas → apps/agency/personas/",
+          "files": [
+            "agency_os/03_agents/personas/*.py (4 files)"
+          ]
+        },
+        {
+          "id": "SPLIT-003-D",
+          "name": "Move Core Orchestrator",
+          "status": "pending",
+          "description": "git mv orchestrator → apps/agency/orchestrator/",
+          "files": [
+            "agency_os/core_system/orchestrator/core_orchestrator.py",
+            "agency_os/core_system/orchestrator/orchestrator.py",
+            "agency_os/core_system/orchestrator/types.py"
+          ]
+        },
+        {
+          "id": "SPLIT-003-E",
+          "name": "Move SDLC Handlers",
+          "status": "pending",
+          "description": "git mv handlers → apps/agency/handlers/",
+          "files": [
+            "agency_os/core_system/orchestrator/handlers/*.py"
+          ]
+        },
+        {
+          "id": "SPLIT-003-F",
+          "name": "Move SDLC-Specific Tools",
+          "status": "pending",
+          "description": "git mv github tools → apps/agency/tools/",
+          "files": [
+            "agency_os/core_system/orchestrator/tools/github_secrets_loader.py"
+          ]
+        },
+        {
+          "id": "SPLIT-003-G",
+          "name": "Update Agency Imports",
+          "status": "pending",
+          "description": "Update import paths for agency modules"
+        },
+        {
+          "id": "SPLIT-003-H",
+          "name": "Verify Agency Extraction",
+          "status": "pending",
+          "description": "Run full test suite and verify boot",
+          "acceptance_criteria": [
+            "All tests passing",
+            "System boots successfully",
+            "Agency modules depend only on vibe_core"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SPLIT-004",
+      "name": "Phase 4: Integration & Validation",
+      "status": "pending",
+      "description": "Wire playbook-registry integration and validate split",
+      "estimated_hours": 3,
+      "tasks": [
+        {
+          "id": "SPLIT-004-A",
+          "name": "Implement RouterBridge",
+          "status": "pending",
+          "description": "Create vibe_core/runtime/router_bridge.py to connect playbook → registry"
+        },
+        {
+          "id": "SPLIT-004-B",
+          "name": "Update Boot Sequence",
+          "status": "pending",
+          "description": "Update boot_sequence.py to use RouterBridge"
+        },
+        {
+          "id": "SPLIT-004-C",
+          "name": "Create Bootstrap Playbook",
+          "status": "pending",
+          "description": "Create core/bootstrap.md playbook"
+        },
+        {
+          "id": "SPLIT-004-D",
+          "name": "Create Session Resume Playbook",
+          "status": "pending",
+          "description": "Create core/session_resume.md playbook"
+        },
+        {
+          "id": "SPLIT-004-E",
+          "name": "End-to-End Testing",
+          "status": "pending",
+          "description": "Test: User input → Playbook → Specialist → Execution"
+        },
+        {
+          "id": "SPLIT-004-F",
+          "name": "Update Documentation",
+          "status": "pending",
+          "description": "Update ARCHITECTURE_V2.md, SSOT.md, INDEX.md, CLAUDE.md"
+        },
+        {
+          "id": "SPLIT-004-G",
+          "name": "Final Validation",
+          "status": "pending",
+          "acceptance_criteria": [
+            "All 631 tests passing",
+            "System boots successfully",
+            "Playbook routing works end-to-end",
+            "Documentation reflects new architecture",
+            "Git history preserved"
+          ]
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "total_files_to_move": 48,
+    "kernel_files": 36,
+    "agency_files": 12,
+    "estimated_import_updates": 250,
+    "total_estimated_hours": 16,
+    "sessions_required": 4
+  },
+  "risks": [
+    {
+      "risk": "Import breakage during bulk moves",
+      "severity": "HIGH",
+      "mitigation": "Test after each module move; use IDE refactoring tools"
+    },
+    {
+      "risk": "Test failures cascade across modules",
+      "severity": "MEDIUM",
+      "mitigation": "Run subset tests per module; fix immediately"
+    },
+    {
+      "risk": "Lost git history",
+      "severity": "LOW",
+      "mitigation": "Use git mv (preserves history); verify with git log --follow"
+    }
+  ],
+  "rollback_plan": "Keep old structure until new one passes all tests. Can revert via git reset --hard if issues arise.",
+  "next_actions": [
+    "Execute SPLIT-002-A through SPLIT-002-H (Kernel extraction)",
+    "Update session_handoff.json to reference this roadmap",
+    "Commit after each successful module move"
+  ]
+}

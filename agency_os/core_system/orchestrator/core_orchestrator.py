@@ -35,7 +35,7 @@ import yaml
 
 from agency_os.core_system.orchestrator.types import PlanningSubState, ProjectPhase
 from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)

@@ -1,28 +1,34 @@
 {
-  "_schema_version": "2.0_phase3_transition",
+  "_schema_version": "3.0_kernel_agency_split",
   "_token_budget": 450,
-  "_verified_date": "2025-11-20T17:30:00Z",
-  "_note": "PHASE 2.5 COMPLETE - Architecture transformation successful. System ready for Phase 3.",
-  "_ARCHITECTURE": "v2.5 - HAP Pattern Active (100% SDLC coverage, Registry-driven routing)",
+  "_verified_date": "2025-11-20T19:20:00Z",
+  "_note": "PHASE 3 IN PROGRESS - Kernel/Agency architecture split. Phase 1 (Prep) complete. Phase 2 (Kernel extraction) starting.",
+  "_ARCHITECTURE": "v3.0 - Vibe OS/Agency Separation (Config consolidated, circular deps broken)",
 
   "layer0_bedrock": {
-    "from": "STEWARD - claude/implement-specialist-handler-adapter-01YA634JPWMiDw5MmHsjT1y8",
+    "from": "STEWARD - claude/fix-architecture-flaw-01CGfqwXffkx223HK4zDysXE",
     "date": "2025-11-20",
-    "state": "PHASE_2_5_COMPLETE",
-    "phase": "Phase 2.5: Foundation Scalability (COMPLETE)",
-    "next_phase": "Phase 3: Product Feature Implementation",
+    "state": "PHASE_3_SPLIT_IN_PROGRESS",
+    "phase": "Phase 3: Kernel/Agency Architecture Split (IN PROGRESS)",
+    "next_phase": "Phase 4: Integration & Validation",
+    "roadmap": "docs/roadmap/phase_3_architecture_split.json",
     "completed": [
       "ARCH-001 through ARCH-005: SQLite persistence foundation",
       "ARCH-006: PlanningSpecialist extraction (HAP proof)",
       "ARCH-007: CodingSpecialist with ToolSafetyGuard",
       "ARCH-008: Full SDLC scale-out (Testing, Deployment, Maintenance)",
-      "ARCH-009: AgentRegistry + legacy handler removal (-1,861 LOC)"
+      "ARCH-009: AgentRegistry + legacy handler removal (-1,861 LOC)",
+      "SPLIT-001: Phase 1 Preparation (Config consolidation + circular dependency fix)",
+      "SPLIT-001-A: Phoenix config consolidated to vibe_core/config/",
+      "SPLIT-001-B: Circular dependency broken (orchestrator ↔ registry)",
+      "SPLIT-001-C: Verification complete (12/12 tests passing)"
     ],
-    "achievement": "Deleted 1,861 lines of legacy code. Monolith transformed to registry-driven agent OS."
+    "achievement": "Phase 2.5: Monolith → HAP. Phase 3 Phase 1: Config consolidated, circular deps broken. Ready for kernel extraction.",
+    "current_task": "SPLIT-002: Kernel Extraction (36 modules → vibe_core/)"
   },
 
   "layer1_runtime": {
-    "current_status": "✅ PHASE 2.5 COMPLETE: System architecture transformed. HAP pattern deployed at scale. Registry-driven routing operational. Ready for Phase 3 feature development.",
+    "current_status": "🔄 PHASE 3 IN PROGRESS: Kernel/Agency split initiated. Phase 1 (Prep) complete: config consolidated (vibe_core/config/), circular deps broken. Phase 2 (Kernel extraction) starting: 36 modules → vibe_core/.",
     "architecture_status": {
       "pattern": "Hierarchical Agent Pattern (HAP)",
       "coverage": "100% SDLC (5 specialists)",

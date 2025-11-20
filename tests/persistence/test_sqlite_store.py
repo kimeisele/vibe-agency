@@ -27,7 +27,7 @@ import sqlite3
 import tempfile
 import threading
 
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 
 class TestSQLiteStoreInitialization:

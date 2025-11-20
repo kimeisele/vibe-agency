@@ -16,7 +16,7 @@ from agency_os.core_system.runtime.context_loader import ContextLoader
 from agency_os.core_system.runtime.playbook_engine import PlaybookEngine
 from agency_os.core_system.runtime.project_memory import ProjectMemoryManager
 from agency_os.core_system.runtime.prompt_composer import PromptComposer
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 
 class BootSequence:

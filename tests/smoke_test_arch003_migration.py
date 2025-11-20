@@ -21,7 +21,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 
 def create_dummy_mission_json():

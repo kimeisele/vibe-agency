@@ -19,7 +19,7 @@ import pytest
 
 from agency_os.agents import BaseSpecialist, MissionContext, SpecialistResult
 from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 # ============================================================================
 # TEST 1: ABC ENFORCEMENT

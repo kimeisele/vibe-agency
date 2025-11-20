@@ -15,7 +15,7 @@ import json
 
 from agency_os.agents import MissionContext, PlanningSpecialist
 from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.store.sqlite_store import SQLiteStore
 
 # ============================================================================
 # TEST 1: INSTANTIATION
