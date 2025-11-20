@@ -1,6 +1,31 @@
 # Architecture Index
 
-📖 **New here?** Read [STRUCTURE.md](STRUCTURE.md) first to understand the 3-document-type system (GAD/LAD/VAD).
+📖 **New here?** Read [STRUCTURE.md](STRUCTURE.md) first to understand the 4-dimensional architecture system.
+
+---
+
+## 🎯 The Vibe Stack (4D Hypercube)
+
+Vibe Agency OS architecture is organized along **four orthogonal dimensions**:
+
+| Dimension | Acronym | Metaphor | What It Defines |
+|-----------|---------|----------|-----------------|
+| **Global** | **GAD** | The Constitution | System-wide rules, capabilities, and pillars |
+| **Layer** | **LAD** | The Anatomy | Horizontal infrastructure slices (Browser/Code/Runtime) |
+| **Verification** | **VAD** | The Soul | Quality standards and cross-pillar integration tests |
+| **Playbook** | **PAD** | The Choreography | Time-based workflows and SDLC phase orchestration |
+
+**Why a Hypercube?**
+- **GAD** answers: "What capabilities exist?"
+- **LAD** answers: "What infrastructure layer am I in?"
+- **VAD** answers: "How do I verify quality?"
+- **PAD** answers: "What sequence of steps do I execute?"
+
+Together, these 4 dimensions create a navigable architecture space where:
+- GAD × LAD = "What can I do in this layer?"
+- GAD × PAD = "What pillar handles this workflow phase?"
+- LAD × VAD = "How do I test this layer?"
+- All 4 dimensions = Complete system understanding
 
 ---
 
@@ -62,6 +87,40 @@ The Verification Architecture Documents test cross-pillar integration:
 
 ---
 
+## Playbooks (PAD) ✅
+
+**PAD = Playbook Architecture Document** - The Z-axis (Time/Choreography)
+
+Playbooks define **time-ordered workflows** that orchestrate capabilities across pillars and layers:
+
+- [**Playbook AoS Integration**](PLAYBOOK_AOS_INTEGRATION.md) - Deep dive into playbook system architecture
+- [**Playbook Integration Summary**](PLAYBOOK_AOS_INTEGRATION_SUMMARY.md) - Quick reference guide
+
+**Key Playbook Concepts:**
+- **SDLC Phase Routing**: Maps user intent → specialist workflow
+- **Capability Composition**: Combines GAD pillars into coherent workflows
+- **Layer Adaptation**: Same workflow runs differently across LAD-1/2/3
+- **Quality Enforcement**: VAD checks embedded at workflow checkpoints
+
+**Example Flow:**
+```
+User: "Plan restaurant app"
+  ↓ PAD routes to PLANNING playbook
+  ↓ Loads GAD-100 (Planning/Research) + GAD-300 (Agent Framework)
+  ↓ Executes in LAD-2 (Claude Code layer)
+  ↓ Runs VAD-001 verification at completion
+  ↓ Result: Validated architecture artifact
+```
+
+**Future PAD Documents (Phase 2.5+):**
+- PAD-001: Planning Workflow Choreography
+- PAD-002: Coding Workflow Choreography
+- PAD-003: Testing Workflow Choreography
+- PAD-004: Deployment Workflow Choreography
+- PAD-005: Maintenance Workflow Choreography
+
+---
+
 ## Other Architecture Documents
 
 ### Foundation
@@ -98,13 +157,16 @@ These files have been archived after migration to new structure:
 
 ## Navigation Tips
 
-1. **Start with STRUCTURE.md** to understand the 3-tier system
+1. **Start with STRUCTURE.md** to understand the 4-dimensional architecture system
 2. **Use ARCHITECTURE_MAP.md** for the big picture
-3. **Browse by pillar** (GAD-XXX) for vertical slices
-4. **Browse by layer** (LAD-X) for horizontal views across pillars
-5. **Check VAD** for cross-pillar integration tests
+3. **Navigate by dimension:**
+   - **GAD (Pillar)** - Browse GAD-XXX for vertical capability slices
+   - **LAD (Layer)** - Browse LAD-X for horizontal infrastructure views
+   - **VAD (Verification)** - Check VAD-XXX for cross-pillar integration tests
+   - **PAD (Playbook)** - Follow workflow choreographies for time-based orchestration
+4. **Use the Hypercube** to find intersections (e.g., "What can Planning do in Layer 2?")
 
 ---
 
-**Last Updated**: 2025-11-19
-**Version**: 3.1 (Infrastructure Sync - GAD-509, GAD-510, GAD-511 documented)
+**Last Updated**: 2025-11-20
+**Version**: 4.0 (Hypercube Formalization - PAD dimension added, ARCH-003/004 complete)

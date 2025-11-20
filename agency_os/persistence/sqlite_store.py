@@ -33,23 +33,41 @@ class SQLiteStore:
     - Row factory for dict-like access
 
     Usage:
+        # Production (persistent database)
         with SQLiteStore(".vibe/state/vibe_agency.db") as store:
             mission_id = store.create_mission("uuid-001", "PLANNING", "pending")
             store.log_tool_call(mission_id, "WebFetch", {...}, {...}, timestamp, 100, True)
+
+        # Testing (in-memory, ephemeral)
+        with SQLiteStore(":memory:") as store:
+            # Test code here...
     """
 
-    def __init__(self, db_path: str = ":memory:"):
+    def __init__(self, db_path: str):
         """
         Initialize SQLiteStore
 
         Args:
-            db_path: Path to SQLite database file (default: in-memory)
+            db_path: Path to SQLite database file (REQUIRED).
+                     Use ":memory:" for ephemeral testing.
+                     Use ".vibe/state/vibe_agency.db" for production.
+
+        Raises:
+            ValueError: If db_path is None or empty string
 
         Note:
             - If db_path is a file path and doesn't exist, it will be created
             - Schema is loaded automatically on first creation
             - Existing databases are opened without schema reload
+            - CRITICAL: db_path is REQUIRED to prevent silent data loss
         """
+        if not db_path:
+            raise ValueError(
+                "db_path is REQUIRED. "
+                "Use ':memory:' for tests or '.vibe/state/vibe_agency.db' for production. "
+                "Silent defaults are forbidden to prevent data loss."
+            )
+
         self.db_path = db_path
         self.conn: sqlite3.Connection | None = None
         self._lock = threading.RLock()  # Reentrant lock for thread-safe access
