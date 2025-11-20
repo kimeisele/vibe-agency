@@ -16,7 +16,7 @@ This agent consults research knowledge domain by default.
 
 from pathlib import Path
 
-from agency_os.agents import BaseAgent, KnowledgeResult
+from vibe_core.specialists import BaseAgent, KnowledgeResult
 
 
 class ResearcherAgent(BaseAgent):

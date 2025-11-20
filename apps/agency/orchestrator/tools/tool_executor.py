@@ -11,8 +11,8 @@ except ImportError:
     from google_search_client import GoogleSearchClient
     from web_fetch_client import WebFetchClient
 
-# Import Iron Dome protection (directory name starts with digit, use importlib)
-tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")
+# Import Iron Dome protection (moved from agency_os to vibe_core post-split)
+tool_safety_guard = importlib.import_module("vibe_core.runtime.tool_safety_guard")
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ToolSafetyGuardError = tool_safety_guard.ToolSafetyGuardError
 

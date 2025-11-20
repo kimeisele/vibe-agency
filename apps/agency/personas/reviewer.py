@@ -16,7 +16,7 @@ This agent consults patterns/decisions knowledge domains by default.
 
 from pathlib import Path
 
-from agency_os.agents import BaseAgent, KnowledgeResult
+from vibe_core.specialists import BaseAgent, KnowledgeResult
 
 
 class ReviewerAgent(BaseAgent):
