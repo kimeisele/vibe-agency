@@ -11,9 +11,11 @@
 set -euo pipefail
 
 # --- TERM CHECK (GAD-501: CI/CD Compatibility) ---
-# If TERM is not set (e.g., in CI), disable color output
-if [ -z "${TERM:-}" ]; then
+# If TERM is not set (e.g., in CI), set it to dumb and disable color output
+if [ -z "${TERM:-}" ] || [ "${TERM:-}" = "" ]; then
     export TERM=dumb
+    USE_COLOR=false
+elif [ "${TERM}" = "dumb" ]; then
     USE_COLOR=false
 else
     USE_COLOR=true

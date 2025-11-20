@@ -201,9 +201,24 @@ This document tracks the implementation status of all GADs in the vibe-agency re
 - ✅ CI/CD gates exist
 - 🔄 Enhancement pending
 
-### GAD-502: Haiku Hardening
-**Status:** 📋 PLANNED (Approved, awaiting implementation)
-**Documentation:** `docs/architecture/GAD-5XX/GAD-502.md`
+### GAD-502: Context Projection - Runtime Vibe Injection
+**Status:** ✅ LIVE
+**Completion Date:** 2025-11-20
+**Documentation:** `docs/architecture/GAD-5XX/GAD-502_Context_Projection.md`
+
+**Implemented:**
+- Runtime context injection mechanism
+- Hypodermic Needle pattern (inject template with live context)
+- Dynamic prompt template substitution
+- Real-time system state projection (git status, tests, session phase)
+
+**Impact:** Agents now receive accurate, real-time context in their prompts.
+
+**Note:** Previous GAD-502 ("Haiku Hardening") has been moved to GAD-503.
+
+### GAD-503: Haiku Hardening
+**Status:** 📋 PLANNED (Moved from GAD-502)
+**Documentation:** `docs/architecture/GAD-5XX/GAD-503.md` (pending)
 
 **Current Protection Coverage:** 2/19 scenarios (10.5%)
 
@@ -215,6 +230,35 @@ This document tracks the implementation status of all GADs in the vibe-agency re
 - Phase 5: Recovery mechanisms (not started)
 
 **Note:** This is a validation/hardening initiative, NOT a feature. Tests delegation architecture with less capable models.
+
+### GAD-509: Iron Dome - Tool Safety Guard
+**Status:** ✅ LIVE
+**Completion Date:** 2025-11-18
+**Documentation:** `docs/architecture/GAD-5XX/GAD-509.md`
+
+**Implemented:**
+- Circuit Breaker Pattern for LLM API protection
+- Three-state circuit breaker (CLOSED → OPEN → HALF_OPEN)
+- Automatic failure detection and recovery
+- Fast-fail during API outages
+- Configurable thresholds (5 failures/60s, 30s recovery timeout)
+
+**Impact:** System remains stable during API outages, automatically recovers when service is restored.
+
+### GAD-501.1: Boot Script Robustness
+**Status:** ✅ VERIFIED
+**Completion Date:** 2025-11-20
+**Documentation:** Integrated into GAD-501 implementation
+
+**Implemented:**
+- TERM environment variable handling for CI/CD compatibility
+- Graceful degradation when TERM is not set
+- Color output disabled in non-terminal environments
+- Fixed clear command crash on missing TERM
+
+**Verification:** `unset TERM; ./bin/system-boot.sh` (passes without errors)
+
+**Impact:** Boot script works reliably in all environments (CI/CD, Docker, SSH, etc.).
 
 ---
 
@@ -272,11 +316,11 @@ This document tracks the implementation status of all GADs in the vibe-agency re
 
 ## Summary Statistics
 
-**Total GADs:** 15 documented
-**Complete:** 9 (60%)
-**Partial:** 2 (13%)
-**Planned:** 3 (20%)
-**Deferred:** 1 (7%)
+**Total GADs:** 17 documented (including GAD-503, GAD-509, GAD-501.1)
+**Complete:** 12 (71%)
+**Partial:** 2 (12%)
+**Planned:** 2 (12%)
+**Deferred:** 1 (6%)
 
 **Test Coverage:**
 - Total tests: 383
@@ -384,3 +428,8 @@ pytest tests/ -v
 | 2025-11-18 | **Completed GAD-500 Week 1 (MOTD + Pre-Action Kernel)** | Claude Code |
 | 2025-11-18 | **Completed GAD-501 Layer 1 (Session Shell/MOTD)** | Claude Code |
 | 2025-11-18 | Fixed system integrity verification bug (now checks all 9 files) | Claude Code |
+| 2025-11-20 | **Marked GAD-502 as LIVE (Context Projection)** | Claude Code |
+| 2025-11-20 | **Marked GAD-509 as LIVE (Iron Dome - Tool Safety Guard)** | Claude Code |
+| 2025-11-20 | **Added GAD-501.1 VERIFIED (Boot Script Robustness)** | Claude Code |
+| 2025-11-20 | Moved old GAD-502 (Haiku Hardening) to GAD-503 | Claude Code |
+| 2025-11-20 | Updated summary statistics (12/17 complete = 71%) | Claude Code |
