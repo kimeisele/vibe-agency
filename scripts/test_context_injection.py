@@ -7,6 +7,7 @@ This script proves that context injection works by:
 3. Printing the result
 """
 
+import sys
 from pathlib import Path
 
 from agency_os.core_system.runtime.context_loader import ContextLoader

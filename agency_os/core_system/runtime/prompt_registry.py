@@ -646,7 +646,6 @@ PromptRegistry.initialize_defaults()
 # =================================================================
 
 if __name__ == "__main__":
-
     # Example usage
     context = {"test_mode": True, "example_key": "example_value"}
 

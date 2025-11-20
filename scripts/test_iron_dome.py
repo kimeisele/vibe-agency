@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import sys
 Test script for GAD-509 Iron Dome (Tool Safety Guard)
 
 This script verifies that the Iron Dome protection layer prevents
@@ -15,6 +16,7 @@ Expected result: Iron Dome blocks dangerous operations while allowing safe ones.
 """
 
 import importlib
+import sys
 
 # Import from agency_os package
 tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")

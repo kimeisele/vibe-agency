@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import sys
 Test Knowledge Integration (OPERATION INSIGHT)
 ===============================================
 
@@ -13,6 +14,7 @@ This test verifies "The Holy Trinity" is complete:
 """
 
 import logging
+import sys
 
 # Setup logging to see the integration logs
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")

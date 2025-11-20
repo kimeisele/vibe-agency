@@ -24,6 +24,7 @@ Version: 0.1 (Logic Foundation)
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 # Import runtime modules with proper package paths

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import sys
 Test Knowledge Integration v2 (OPERATION INSIGHT)
 ==================================================
 
@@ -10,6 +11,7 @@ This test captures logs to verify "The Holy Trinity" is complete.
 """
 
 import logging
+import sys
 
 
 # Custom log handler to capture logs

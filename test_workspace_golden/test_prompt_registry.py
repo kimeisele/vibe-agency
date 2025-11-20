@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
+import sys
 Golden Path Test - Prompt Registry Integration Validation
 Tests if PromptRegistry correctly loads and injects Guardian Directives
 """
+
+import sys
 
 print("=" * 80)
 print("GOLDEN PATH TEST - Prompt Registry Integration")

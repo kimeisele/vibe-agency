@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+import sys
 Test Context Integration (OPERATION CONTEXT / GAD-909)
 =======================================================
 
@@ -16,6 +17,7 @@ with real system data.
 """
 
 import logging
+import sys
 
 
 # Custom log handler to capture logs
