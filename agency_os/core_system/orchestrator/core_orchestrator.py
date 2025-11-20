@@ -386,9 +386,16 @@ class CoreOrchestrator:
                 )
                 logger.info("✅ PLANNING handler: Using PlanningSpecialist (HAP)")
             elif phase == ProjectPhase.CODING:
-                from handlers.coding_handler import CodingHandler
+                # ARCH-007: Use CodingSpecialist via adapter (Hierarchical Agent Pattern)
+                from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
-                self._handlers[phase] = CodingHandler(self)
+                from agency_os.agents.specialists import CodingSpecialist
+
+                self._handlers[phase] = SpecialistHandlerAdapter(
+                    specialist_class=CodingSpecialist,
+                    orchestrator=self,
+                )
+                logger.info("✅ CODING handler: Using CodingSpecialist (HAP)")
             elif phase == ProjectPhase.TESTING:
                 from handlers.testing_handler import TestingHandler
 

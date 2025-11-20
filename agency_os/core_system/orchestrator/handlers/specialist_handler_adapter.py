@@ -83,6 +83,10 @@ class SpecialistHandlerAdapter:
                 f"Preconditions failed for {self._specialist.role} phase. Check logs for details."
             )
 
+        # Inject manifest for specialists that need it (temporary hack)
+        # TODO: Remove this once specialists have direct tool access
+        self._specialist._manifest = manifest
+
         # Call specialist lifecycle hooks
         self._specialist.on_start(context)
 
