@@ -25,49 +25,6 @@ else
   WORKING_DIR_CLEAN="false"
 fi
 
-# Run test suite status (quick check)
-TESTS_STATUS="unknown"
-if [ -f "tests/test_planning_workflow.py" ]; then
-  if python3 tests/test_planning_workflow.py &>/dev/null; then
-    TESTS_STATUS="passing"
-  else
-    TESTS_STATUS="failing"
-  fi
-fi
-
-# Check linting status (ruff check)
-LINTING_STATUS="unknown"
-LINTING_ERROR_COUNT=0
-if command -v uv &>/dev/null; then
-  # Run ruff check and capture output (set +e to not exit on error)
-  set +e
-  LINTING_OUTPUT=$(uv run ruff check . 2>&1)
-  RUFF_EXIT_CODE=$?
-  set -e
-
-  if [ $RUFF_EXIT_CODE -eq 0 ]; then
-    LINTING_STATUS="passing"
-  else
-    LINTING_STATUS="failing"
-    # Count errors (ruff outputs "Found X errors")
-    LINTING_ERROR_COUNT=$(echo "$LINTING_OUTPUT" | grep -oP 'Found \K\d+' || echo "0")
-  fi
-else
-  LINTING_STATUS="uv_not_available"
-fi
-
-# Check formatting status (ruff format)
-FORMATTING_STATUS="unknown"
-if command -v uv &>/dev/null; then
-  if uv run ruff format --check . &>/dev/null; then
-    FORMATTING_STATUS="passing"
-  else
-    FORMATTING_STATUS="failing"
-  fi
-else
-  FORMATTING_STATUS="uv_not_available"
-fi
-
 # Check if session handoff exists
 SESSION_HANDOFF_EXISTS="false"
 if [ -f ".session_handoff.json" ]; then
@@ -87,18 +44,9 @@ cat > "$STATUS_FILE" <<EOF
     },
     "working_directory_clean": $WORKING_DIR_CLEAN
   },
-  "tests": {
-    "planning_workflow": "$TESTS_STATUS"
-  },
-  "linting": {
-    "status": "$LINTING_STATUS",
-    "errors_count": $LINTING_ERROR_COUNT
-  },
-  "formatting": {
-    "status": "$FORMATTING_STATUS"
-  },
   "session_handoff_exists": $SESSION_HANDOFF_EXISTS,
   "steward": "manifest=truth | read>write | edit>create | test>claim | health>features",
+  "note": "Quality checks (tests, linting, formatting) run via pre-push hook, not here",
   "generated_by": "bin/update-system-status.sh"
 }
 EOF

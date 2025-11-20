@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# pre-push hook
+# ENFORCES quality checks before push (automated defense line)
+#
+# This hook is automatically configured by bin/system-boot.sh
+# It runs bin/pre-push-check.sh which includes:
+# - Dependency integrity check
+# - Linting (ruff check)
+# - Formatting (ruff format --check)
+# - Tests (pytest)
+# - Coverage check (minimum 60%)
+#
+# If ANY check fails, the push is BLOCKED.
+
+set -euo pipefail
+
+echo ""
+echo "🛡️  PRE-PUSH HOOK: Running automated quality checks..."
+echo ""
+
+# Run the pre-push check script
+if ./bin/pre-push-check.sh; then
+    echo ""
+    echo "✅ Pre-push hook: All checks passed - push allowed"
+    echo ""
+    exit 0
+else
+    echo ""
+    echo "❌ Pre-push hook: Checks failed - push BLOCKED"
+    echo ""
+    echo "Fix the errors above and try again."
+    echo ""
+    exit 1
+fi
