@@ -20,7 +20,6 @@ Current Status: STUB (Phase 3)
 See: docs/architecture/SPECIALIST_AGENT_CONTRACT.md for implementation guide
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -165,7 +164,9 @@ class MaintenanceSpecialist(BaseSpecialist):
         )
 
         # Load deploy_receipt from DEPLOYMENT
-        deploy_receipt = self.orchestrator.load_artifact(context.mission_uuid, "deploy_receipt.json")
+        _deploy_receipt = self.orchestrator.load_artifact(
+            context.mission_uuid, "deploy_receipt.json"
+        )
         logger.info("✅ Loaded deploy_receipt.json from DEPLOYMENT phase")
 
         # STUB: Create mock maintenance_log

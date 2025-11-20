@@ -23,7 +23,6 @@ Future Evolution (5D/6D):
 
 import logging
 from enum import Enum
-from typing import Type
 
 from agency_os.agents import BaseSpecialist, PlanningSpecialist
 from agency_os.agents.specialists import (
@@ -57,7 +56,7 @@ class AgentRegistry:
 
     def __init__(self):
         """Initialize the agent registry with default specialists"""
-        self._registry: dict[Enum, Type[BaseSpecialist]] = {}
+        self._registry: dict[Enum, type[BaseSpecialist]] = {}
         self._initialize_default_registry()
 
     def _initialize_default_registry(self) -> None:
@@ -80,7 +79,7 @@ class AgentRegistry:
 
         logger.info(f"✅ AgentRegistry initialized with {len(self._registry)} specialists")
 
-    def get_specialist(self, phase: Enum) -> Type[BaseSpecialist]:
+    def get_specialist(self, phase: Enum) -> type[BaseSpecialist]:
         """
         Get specialist class for a given phase
 
@@ -108,7 +107,7 @@ class AgentRegistry:
 
         return specialist_class
 
-    def register_specialist(self, phase: Enum, specialist_class: Type[BaseSpecialist]) -> None:
+    def register_specialist(self, phase: Enum, specialist_class: type[BaseSpecialist]) -> None:
         """
         Register or override a specialist for a phase
 

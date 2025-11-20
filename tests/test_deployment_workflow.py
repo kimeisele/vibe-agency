@@ -322,15 +322,13 @@ class TestDeploymentWorkflow:
             # Attempt to run DEPLOYMENT phase - should raise error
             print("\nAttempting to run DEPLOYMENT without qa_report...")
 
-            # Import with proper package path
-            from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
-
             manifest = orchestrator.load_project_manifest("test_deployment_001")
 
-            with pytest.raises(ArtifactNotFoundError, match="qa_report.json not found"):
+            # v2.5: Specialists raise RuntimeError on precondition failure
+            with pytest.raises(RuntimeError, match="Preconditions failed"):
                 orchestrator.execute_phase(manifest)
 
-            print("✓ Correctly raised ArtifactNotFoundError")
+            print("✓ Correctly raised RuntimeError for missing qa_report")
             print("\n" + "=" * 60)
             print("✅ Error Handling Test PASSED")
             print("=" * 60 + "\n")
@@ -374,8 +372,8 @@ class TestDeploymentWorkflow:
             manifest = orchestrator.load_project_manifest("test_deployment_001")
             print("\nAttempting to run DEPLOYMENT with REJECTED qa_report...")
 
-            # Should raise ValueError due to non-APPROVED status
-            with pytest.raises(ValueError, match="QA report must be APPROVED"):
+            # v2.5: Specialists raise RuntimeError on precondition failure
+            with pytest.raises(RuntimeError, match="Preconditions failed"):
                 orchestrator.execute_phase(manifest)
 
             print("✓ Correctly blocked on non-APPROVED QA status")

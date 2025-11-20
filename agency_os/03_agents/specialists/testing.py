@@ -19,7 +19,6 @@ Current Status: STUB (Phase 3)
 See: docs/architecture/SPECIALIST_AGENT_CONTRACT.md for implementation guide
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -113,7 +112,9 @@ class TestingSpecialist(BaseSpecialist):
                 logger.error(f"Precondition failed: Error loading code_gen_spec.json: {e}")
                 return False
         else:
-            logger.error("Precondition failed: orchestrator not available (required for load_artifact)")
+            logger.error(
+                "Precondition failed: orchestrator not available (required for load_artifact)"
+            )
             return False
 
         # Check: phase is TESTING
@@ -161,7 +162,7 @@ class TestingSpecialist(BaseSpecialist):
         )
 
         # Load code_gen_spec from CODING
-        code_gen_spec = self.orchestrator.load_artifact(context.mission_uuid, "code_gen_spec.json")
+        _code_gen_spec = self.orchestrator.load_artifact(context.mission_uuid, "code_gen_spec.json")
         logger.info("✅ Loaded code_gen_spec.json from CODING phase")
 
         # STUB: Create mock qa_report

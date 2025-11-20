@@ -20,7 +20,6 @@ Critical Safety Features:
 See: docs/architecture/SPECIALIST_AGENT_CONTRACT.md for implementation guide
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path

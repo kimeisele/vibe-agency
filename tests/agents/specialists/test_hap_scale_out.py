@@ -11,7 +11,6 @@ Tests that verify all 3 new specialists (Testing, Deployment, Maintenance) corre
 This test proves the HAP pattern scales across all SDLC phases.
 """
 
-import json
 from unittest.mock import MagicMock
 
 import pytest

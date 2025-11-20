@@ -327,15 +327,13 @@ class TestCodingWorkflow:
             # Attempt to run CODING phase - should raise error
             print("\nAttempting to run CODING without feature_spec...")
 
-            # Import with proper package path
-            from agency_os.core_system.orchestrator.core_orchestrator import ArtifactNotFoundError
-
             manifest = orchestrator.load_project_manifest("test_coding_001")
 
-            with pytest.raises(ArtifactNotFoundError, match="feature_spec.json not found"):
+            # v2.5: Specialists raise RuntimeError on precondition failure
+            with pytest.raises(RuntimeError, match="Preconditions failed"):
                 orchestrator.execute_phase(manifest)
 
-            print("✓ Correctly raised ArtifactNotFoundError")
+            print("✓ Correctly raised RuntimeError for missing feature_spec")
             print("\n" + "=" * 60)
             print("✅ Error Handling Test PASSED")
             print("=" * 60 + "\n")
@@ -388,8 +386,8 @@ class TestCodingWorkflow:
                 manifest = orchestrator.load_project_manifest("test_coding_001")
                 print("\nAttempting to run CODING with failing quality gates...")
 
-                # Should raise ValueError due to quality gates failure
-                with pytest.raises(ValueError, match="quality gates failed"):
+                # v2.5: Specialists raise RuntimeError on execution failure
+                with pytest.raises(RuntimeError, match="Quality gates failed"):
                     orchestrator.execute_phase(manifest)
 
                 print("✓ Correctly blocked on quality gate failure")

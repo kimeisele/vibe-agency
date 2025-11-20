@@ -17,7 +17,7 @@ from .testing import TestingSpecialist
 
 __all__ = [
     "CodingSpecialist",
-    "TestingSpecialist",
     "DeploymentSpecialist",
     "MaintenanceSpecialist",
+    "TestingSpecialist",
 ]
