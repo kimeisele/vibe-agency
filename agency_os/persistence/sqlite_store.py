@@ -16,7 +16,7 @@ import os
 import sqlite3
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class SQLiteStore:
@@ -49,7 +49,7 @@ class SQLiteStore:
             - Existing databases are opened without schema reload
         """
         self.db_path = db_path
-        self.conn: Optional[sqlite3.Connection] = None
+        self.conn: sqlite3.Connection | None = None
         self._lock = threading.RLock()  # Reentrant lock for thread-safe access
 
         # Create parent directory if needed (for file-based DBs)
@@ -96,12 +96,10 @@ class SQLiteStore:
                 break
             project_root = project_root.parent
         else:
-            raise FileNotFoundError(
-                "Could not find docs/tasks/ARCH-001_schema.sql in project tree"
-            )
+            raise FileNotFoundError("Could not find docs/tasks/ARCH-001_schema.sql in project tree")
 
         # Load and execute schema
-        with open(schema_path, "r") as f:
+        with open(schema_path) as f:
             schema_sql = f.read()
             self.conn.executescript(schema_sql)
             self.conn.commit()
@@ -135,7 +133,7 @@ class SQLiteStore:
         phase: str,
         status: str,
         created_at: str = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> int:
         """
         Create a new mission
@@ -172,7 +170,7 @@ class SQLiteStore:
             self._commit()
             return cursor.lastrowid
 
-    def get_mission(self, mission_id: int) -> Optional[Dict[str, Any]]:
+    def get_mission(self, mission_id: int) -> dict[str, Any] | None:
         """
         Get mission by ID
 
@@ -182,9 +180,7 @@ class SQLiteStore:
         Returns:
             Mission dict or None if not found
         """
-        cursor = self.conn.execute(
-            "SELECT * FROM missions WHERE id = ?", (mission_id,)
-        )
+        cursor = self.conn.execute("SELECT * FROM missions WHERE id = ?", (mission_id,))
         row = cursor.fetchone()
         if row is None:
             return None
@@ -195,7 +191,7 @@ class SQLiteStore:
             mission["metadata"] = json.loads(mission["metadata"])
         return mission
 
-    def get_mission_by_uuid(self, mission_uuid: str) -> Optional[Dict[str, Any]]:
+    def get_mission_by_uuid(self, mission_uuid: str) -> dict[str, Any] | None:
         """
         Get mission by UUID
 
@@ -205,9 +201,7 @@ class SQLiteStore:
         Returns:
             Mission dict or None if not found
         """
-        cursor = self.conn.execute(
-            "SELECT * FROM missions WHERE mission_uuid = ?", (mission_uuid,)
-        )
+        cursor = self.conn.execute("SELECT * FROM missions WHERE mission_uuid = ?", (mission_uuid,))
         row = cursor.fetchone()
         if row is None:
             return None
@@ -217,9 +211,7 @@ class SQLiteStore:
             mission["metadata"] = json.loads(mission["metadata"])
         return mission
 
-    def update_mission_status(
-        self, mission_id: int, status: str, completed_at: Optional[str] = None
-    ):
+    def update_mission_status(self, mission_id: int, status: str, completed_at: str | None = None):
         """
         Update mission status
 
@@ -234,16 +226,14 @@ class SQLiteStore:
         )
         self._commit()
 
-    def get_mission_history(self) -> List[Dict[str, Any]]:
+    def get_mission_history(self) -> list[dict[str, Any]]:
         """
         Get all missions (history)
 
         Returns:
             List of mission dicts, ordered by created_at DESC
         """
-        cursor = self.conn.execute(
-            "SELECT * FROM missions ORDER BY created_at DESC"
-        )
+        cursor = self.conn.execute("SELECT * FROM missions ORDER BY created_at DESC")
         missions = []
         for row in cursor.fetchall():
             mission = dict(row)
@@ -252,7 +242,7 @@ class SQLiteStore:
             missions.append(mission)
         return missions
 
-    def get_all_missions(self) -> List[Dict[str, Any]]:
+    def get_all_missions(self) -> list[dict[str, Any]]:
         """Alias for get_mission_history()"""
         return self.get_mission_history()
 
@@ -274,12 +264,12 @@ class SQLiteStore:
         self,
         mission_id: int,
         tool_name: str,
-        args: Dict[str, Any],
-        result: Optional[Dict[str, Any]],
+        args: dict[str, Any],
+        result: dict[str, Any] | None,
         timestamp: str,
         duration_ms: int,
         success: bool,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> int:
         """
         Log tool execution
@@ -317,11 +307,9 @@ class SQLiteStore:
         self._commit()
         return cursor.lastrowid
 
-    def get_tool_call(self, tool_call_id: int) -> Optional[Dict[str, Any]]:
+    def get_tool_call(self, tool_call_id: int) -> dict[str, Any] | None:
         """Get tool call by ID"""
-        cursor = self.conn.execute(
-            "SELECT * FROM tool_calls WHERE id = ?", (tool_call_id,)
-        )
+        cursor = self.conn.execute("SELECT * FROM tool_calls WHERE id = ?", (tool_call_id,))
         row = cursor.fetchone()
         if row is None:
             return None
@@ -334,7 +322,7 @@ class SQLiteStore:
             tool_call["result"] = json.loads(tool_call["result"])
         return tool_call
 
-    def get_tool_calls_for_mission(self, mission_id: int) -> List[Dict[str, Any]]:
+    def get_tool_calls_for_mission(self, mission_id: int) -> list[dict[str, Any]]:
         """
         Get all tool calls for a mission
 
@@ -369,7 +357,7 @@ class SQLiteStore:
         rationale: str,
         timestamp: str,
         agent_name: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> int:
         """
         Record agent decision
@@ -403,7 +391,7 @@ class SQLiteStore:
         self._commit()
         return cursor.lastrowid
 
-    def get_decisions_for_mission(self, mission_id: int) -> List[Dict[str, Any]]:
+    def get_decisions_for_mission(self, mission_id: int) -> list[dict[str, Any]]:
         """
         Get all decisions for a mission
 
@@ -435,7 +423,7 @@ class SQLiteStore:
         key: str,
         value: Any,
         timestamp: str,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ):
         """
         Set agent memory (key-value storage)
@@ -478,7 +466,7 @@ class SQLiteStore:
             )
         self._commit()
 
-    def get_memory(self, mission_id: int, key: str) -> Optional[Dict[str, Any]]:
+    def get_memory(self, mission_id: int, key: str) -> dict[str, Any] | None:
         """
         Get agent memory by key
 
@@ -540,7 +528,7 @@ class SQLiteStore:
         run_id: int,
         completed_at: str,
         success: bool,
-        metrics: Optional[Dict[str, Any]] = None,
+        metrics: dict[str, Any] | None = None,
     ):
         """
         Complete playbook run with metrics
@@ -561,11 +549,9 @@ class SQLiteStore:
         )
         self._commit()
 
-    def get_playbook_run(self, run_id: int) -> Optional[Dict[str, Any]]:
+    def get_playbook_run(self, run_id: int) -> dict[str, Any] | None:
         """Get playbook run by ID"""
-        cursor = self.conn.execute(
-            "SELECT * FROM playbook_runs WHERE id = ?", (run_id,)
-        )
+        cursor = self.conn.execute("SELECT * FROM playbook_runs WHERE id = ?", (run_id,))
         row = cursor.fetchone()
         if row is None:
             return None
