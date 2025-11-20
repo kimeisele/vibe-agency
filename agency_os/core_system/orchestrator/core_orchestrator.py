@@ -35,6 +35,7 @@ from typing import Any
 import yaml
 
 from agency_os.core_system.runtime.llm_client import BudgetExceededError, LLMClient
+from agency_os.persistence.sqlite_store import SQLiteStore
 
 # Initialize logger BEFORE using it
 logger = logging.getLogger(__name__)
@@ -324,6 +325,12 @@ class CoreOrchestrator:
         # Paths
         self.workspaces_dir = self.repo_root / "workspaces"
 
+        # Initialize SQLite persistence (ARCH-003: Dual Write Mode)
+        db_path = self.repo_root / ".vibe" / "state" / "vibe_agency.db"
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.sqlite_store = SQLiteStore(str(db_path))
+        logger.info(f"✅ SQLite persistence initialized: {db_path}")
+
         # Lazy-load handlers
         self._handlers = {}
 
@@ -487,9 +494,17 @@ class CoreOrchestrator:
         manifest.metadata["budget"] = manifest.budget
         manifest.metadata["status"]["lastUpdate"] = datetime.utcnow().isoformat() + "Z"
 
-        # Write to disk
+        # Write to disk (JSON)
         with open(manifest_path, "w") as f:
             json.dump(manifest.metadata, f, indent=2)
+
+        # ARCH-003: Dual Write Mode - also write to SQLite (Shadow Mode Phase 1)
+        try:
+            mission_id = self.sqlite_store.import_project_manifest(manifest.metadata)
+            logger.debug(f"✅ Dual-write to SQLite: mission_id={mission_id}")
+        except Exception as e:
+            # Non-fatal - JSON is source of truth in Shadow Mode Phase 1
+            logger.warning(f"⚠️ SQLite dual-write failed (non-fatal): {e}")
 
         logger.info(
             f"Saved manifest: {manifest.project_id} (phase: {manifest.current_phase.value})"

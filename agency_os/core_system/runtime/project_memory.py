@@ -5,17 +5,28 @@ across sessions. This is the "brain" that makes STEWARD understand the full pict
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectMemoryManager:
     """Manages semantic project memory across sessions"""
 
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path, sqlite_store=None):
+        """
+        Initialize project memory manager.
+
+        Args:
+            project_root: Root directory of the project
+            sqlite_store: Optional SQLiteStore instance for dual-write mode (ARCH-003)
+        """
         self.project_root = project_root
         self.memory_file = project_root / ".vibe" / "project_memory.json"
+        self.sqlite_store = sqlite_store
         self._ensure_vibe_dir()
 
     def _ensure_vibe_dir(self):
@@ -35,11 +46,31 @@ class ProjectMemoryManager:
             # Corrupted file - fallback to default
             return self._create_default_memory()
 
-    def save(self, memory: dict[str, Any]):
-        """Save project memory to disk"""
+    def save(self, memory: dict[str, Any], mission_id: int | None = None):
+        """
+        Save project memory to disk (and optionally to SQLite).
+
+        Args:
+            memory: Project memory dict
+            mission_id: Optional mission ID for dual-write to SQLite (ARCH-003)
+        """
         self._ensure_vibe_dir()
+
+        # Write to JSON (source of truth in Shadow Mode Phase 1)
         with open(self.memory_file, "w") as f:
             json.dump(memory, f, indent=2)
+
+        # ARCH-003: Dual Write Mode - also write to SQLite if mission_id provided
+        if self.sqlite_store and mission_id:
+            try:
+                from datetime import datetime
+
+                timestamp = datetime.utcnow().isoformat() + "Z"
+                self.sqlite_store._map_project_memory_to_sql(memory, mission_id, timestamp)
+                logger.debug(f"✅ Dual-write project memory to SQLite: mission_id={mission_id}")
+            except Exception as e:
+                # Non-fatal - JSON is source of truth in Shadow Mode Phase 1
+                logger.warning(f"⚠️ SQLite dual-write for project memory failed (non-fatal): {e}")
 
     def update_after_session(
         self,

@@ -1,9 +1,26 @@
 # ARCH-001: SQLite Migration Plan
 
-**Version:** 1.0
+**Version:** 2.0 (Post-Reality Check)
 **Created:** 2025-11-20
-**Status:** Design Phase
+**Updated:** 2025-11-20 (Schema v2 revisions)
+**Status:** Schema Design Complete - Awaiting Implementation
 **Target Implementation:** ARCH-002, ARCH-003
+
+---
+
+## ⚠️ UPDATE: Schema v2 Revisions (2025-11-20)
+
+**Context:** Phase 0 Reality Check revealed critical gaps in original schema.
+
+**Changes Made:**
+- ✅ Schema expanded from 5 → 11 tables (6 new tables added)
+- ✅ Missions table: +10 columns (budget tracking, metadata extraction)
+- ✅ New tables: session_narrative, domain_concepts, domain_concerns, trajectory, artifacts, quality_gates
+- ✅ Adapter complexity increased: 150 → 300-500 LOC (estimated)
+
+**See:** `docs/tasks/SCHEMA_REALITY_CHECK.md` for full analysis.
+
+**Decision:** Option A (Dedicated Tables) approved for ProjectMemory and Artifacts - prioritize queryability over simplicity.
 
 ---
 
@@ -38,6 +55,31 @@ This document outlines the strategy for migrating vibe-agency from volatile JSON
 3. **Decision Provenance**: No record of agent decisions or rationale
 4. **Performance Metrics**: No playbook execution timing data
 5. **Agent Memory**: Context lost between sessions (no long-term memory)
+
+---
+
+## Adapter Complexity (v2 Impact)
+
+**Original Estimate (v1):** ~150 LOC for basic mission serialization
+**Revised Estimate (v2):** ~300-500 LOC due to:
+
+1. **ProjectMemory Flattening** (High Complexity)
+   - narrative array → session_narrative rows (1→N mapping)
+   - domain.concepts → domain_concepts rows (array flattening)
+   - domain.concerns → domain_concerns rows (array flattening)
+   - trajectory object → trajectory row (1→1 mapping with JSON fields)
+
+2. **Artifacts Flattening** (High Complexity)
+   - Nested artifacts object → artifacts rows (recursive traversal)
+   - Example: `artifacts.planning.architecture.ref` → `artifacts(mission_id, artifact_type='planning', artifact_name='architecture', ref=...)`
+
+3. **Budget Extraction** (Medium Complexity)
+   - budget object → missions columns (simple field mapping)
+
+4. **Metadata Extraction** (Low Complexity)
+   - metadata.owner → missions.owner (simple field mapping)
+
+**See:** `docs/tasks/SCHEMA_REALITY_CHECK.md` Section 6.1 for detailed adapter logic examples.
 
 ---
 
@@ -241,9 +283,10 @@ def migrate_to_v2(conn: sqlite3.Connection):
 
 | Version | Changes | Date | Migration Script |
 |---------|---------|------|------------------|
-| v1 | Initial schema (5 tables) | 2025-11-20 | `ARCH-001_schema.sql` |
-| v2 | (Future) Add `archived` column to missions | TBD | `scripts/migrate_to_v2.py` |
-| v3 | (Future) Add `agent_sessions` table | TBD | `scripts/migrate_to_v3.py` |
+| v1 | Initial schema (5 tables) | 2025-11-20 | `ARCH-001_schema.sql` (deprecated) |
+| **v2** | **Reality Check revisions: +6 tables (session_narrative, domain_concepts, domain_concerns, trajectory, artifacts, quality_gates), +10 columns to missions (budget, metadata)** | **2025-11-20** | **`ARCH-001_schema.sql` (current)** |
+| v3 | (Future) Add `archived` column to missions | TBD | `scripts/migrate_to_v3.py` |
+| v4 | (Future) Add `agent_sessions` table | TBD | `scripts/migrate_to_v4.py` |
 
 ---
 
@@ -298,15 +341,21 @@ python scripts/export_sqlite_to_json.py \
 
 **Usage:**
 ```bash
-# Verify schema matches ARCH-001_schema.sql
+# Verify schema matches ARCH-001_schema.sql (v2)
 python scripts/validate_schema.py --db .vibe/state/missions.db
 
-# Expected output:
-# ✅ Schema version: 1
-# ✅ Table 'missions' exists (7 columns)
+# Expected output (v2):
+# ✅ Schema version: 2
+# ✅ Table 'missions' exists (17 columns)  # v2: expanded with budget/metadata
 # ✅ Table 'tool_calls' exists (9 columns)
+# ✅ Table 'session_narrative' exists (6 columns)  # v2: new
+# ✅ Table 'domain_concepts' exists (4 columns)    # v2: new
+# ✅ Table 'domain_concerns' exists (4 columns)    # v2: new
+# ✅ Table 'trajectory' exists (7 columns)         # v2: new
+# ✅ Table 'artifacts' exists (10 columns)         # v2: new
+# ✅ Table 'quality_gates' exists (6 columns)      # v2: new
 # ✅ Foreign keys enabled
-# ✅ All indexes present (12 indexes)
+# ✅ All indexes present (28 indexes)  # v2: increased from 12
 ```
 
 ---
