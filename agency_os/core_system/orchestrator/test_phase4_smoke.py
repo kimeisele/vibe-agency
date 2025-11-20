@@ -153,9 +153,9 @@ def test_data_contracts_has_audit_schema():
             required_fields = ["check_type", "severity", "blocking", "status", "timestamp"]
 
             for req_field in required_fields:
-                assert req_field in fields, (
-                    f"Required field '{req_field}' missing from audit_report schema"
-                )
+                assert (
+                    req_field in fields
+                ), f"Required field '{req_field}' missing from audit_report schema"
                 logger.info(f"     ✓ {req_field}")
 
             break
