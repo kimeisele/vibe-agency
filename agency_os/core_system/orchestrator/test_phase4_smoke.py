@@ -16,7 +16,11 @@ Run:
 import logging
 from pathlib import Path
 
-from agency_os.core_system.orchestrator.core_orchestrator import CoreOrchestrator, ProjectManifest, ProjectPhase
+from agency_os.core_system.orchestrator.core_orchestrator import (
+    CoreOrchestrator,
+    ProjectManifest,
+    ProjectPhase,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)

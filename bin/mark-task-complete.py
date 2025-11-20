@@ -55,7 +55,7 @@ def mark_complete(roadmap, task_id):
 
 def save_roadmap(roadmap_path, roadmap):
     """Save updated roadmap"""
-    with open(roadmap_path, 'w') as f:
+    with open(roadmap_path, "w") as f:
         json.dump(roadmap, f, indent=2)
     print(f"💾 Roadmap updated: {roadmap_path}")
 
@@ -73,7 +73,7 @@ def show_progress(roadmap):
 
     print(f"\n📊 Progress: {completed}/{total_tasks} tasks complete ({pct:.1f}%)")
     print(f"   Current Phase: {progress.get('current_phase', 'UNKNOWN')}")
-    print(f"\n💡 Next: Run ./bin/next-task.py to see what's next")
+    print("\n💡 Next: Run ./bin/next-task.py to see what's next")
 
 
 def main():

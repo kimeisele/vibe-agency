@@ -131,9 +131,64 @@ fi
 echo ""
 
 # ============================================================================
-# CHECK 4: Update system status
+# CHECK 4: Tests (pytest)
 # ============================================================================
-echo "4️⃣  Updating system status..."
+echo "4️⃣  Running tests (pytest)..."
+
+if ! command -v uv &>/dev/null; then
+  echo "   ⚠️  uv not available - skipping test check"
+else
+  if ! uv run pytest tests/ -q --tb=short 2>&1 | tee /tmp/pytest.log; then
+    FAILURES=$(grep -c "FAILED" /tmp/pytest.log 2>/dev/null || echo "0")
+    echo ""
+    echo "   ❌ TESTS FAILED: $FAILURES test(s) failed"
+    echo ""
+    echo "   How to fix:"
+    echo "     uv run pytest tests/ -v         # Run with verbose output"
+    echo "     uv run pytest tests/ -x         # Stop at first failure"
+    echo ""
+    FAILED=1
+  else
+    echo "   ✅ Tests passed"
+  fi
+fi
+
+echo ""
+
+# ============================================================================
+# CHECK 5: Test Coverage
+# ============================================================================
+echo "5️⃣  Checking test coverage (minimum 60%)..."
+
+if ! command -v uv &>/dev/null; then
+  echo "   ⚠️  uv not available - skipping coverage check"
+else
+  if uv run pytest tests/ -q --cov=agency_os --cov-report=term 2>&1 | grep -q "TOTAL"; then
+    COVERAGE=$(uv run pytest tests/ -q --cov=agency_os --cov-report=term 2>&1 | tail -1 | awk '{print $NF}' || echo "0%")
+    COVERAGE_NUM=${COVERAGE%\%}
+
+    if (( COVERAGE_NUM < 60 )); then
+      echo "   ❌ COVERAGE TOO LOW: $COVERAGE (minimum 60% required)"
+      echo ""
+      echo "   How to improve:"
+      echo "     uv run pytest tests/ --cov=agency_os --cov-report=html"
+      echo "     open htmlcov/index.html                              # View detailed report"
+      echo ""
+      FAILED=1
+    else
+      echo "   ✅ Coverage acceptable: $COVERAGE (minimum 60% required)"
+    fi
+  else
+    echo "   ⚠️  Could not calculate coverage (non-critical)"
+  fi
+fi
+
+echo ""
+
+# ============================================================================
+# CHECK 6: Update system status
+# ============================================================================
+echo "6️⃣  Updating system status..."
 
 if [ -f "bin/update-system-status.sh" ]; then
   if ./bin/update-system-status.sh &>/dev/null; then

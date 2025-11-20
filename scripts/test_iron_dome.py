@@ -15,7 +15,6 @@ Expected result: Iron Dome blocks dangerous operations while allowing safe ones.
 """
 
 import importlib
-from pathlib import Path
 
 # Import from agency_os package
 tool_safety_guard = importlib.import_module("agency_os.core_system.runtime.tool_safety_guard")

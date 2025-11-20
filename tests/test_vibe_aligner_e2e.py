@@ -25,7 +25,7 @@ import yaml
 # Add paths
 repo_root = Path(__file__).parent.parent
 
-from runtime.prompt_runtime import PromptRuntime
+from agency_os.core_system.runtime.prompt_runtime import PromptRuntime
 
 
 class TestVibeAlignerE2E:

@@ -10,7 +10,6 @@ This test captures logs to verify "The Holy Trinity" is complete.
 """
 
 import logging
-from pathlib import Path
 
 
 # Custom log handler to capture logs

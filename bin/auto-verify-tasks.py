@@ -10,8 +10,8 @@ It auto-fixes the roadmap if it finds discrepancies.
 
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
 
 
 def load_roadmap():
@@ -27,8 +27,8 @@ def load_roadmap():
 
 def save_roadmap(roadmap, roadmap_path):
     """Save updated roadmap"""
-    roadmap["progress_tracking"]["last_updated"] = datetime.now(timezone.utc).isoformat()
-    with open(roadmap_path, 'w') as f:
+    roadmap["progress_tracking"]["last_updated"] = datetime.now(UTC).isoformat()
+    with open(roadmap_path, "w") as f:
         json.dump(roadmap, f, indent=2)
 
 
@@ -54,7 +54,7 @@ def check_q001_complete():
         "GAD-102.md",
         "GAD-103.md",
         "GAD-200.md",
-        "GAD-300.md"
+        "GAD-300.md",
     ]
 
     for file in required_files:

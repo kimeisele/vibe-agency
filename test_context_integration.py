@@ -16,7 +16,6 @@ with real system data.
 """
 
 import logging
-from pathlib import Path
 
 
 # Custom log handler to capture logs

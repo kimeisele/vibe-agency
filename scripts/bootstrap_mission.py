@@ -6,8 +6,8 @@ Called automatically by bin/system-boot.sh if mission state missing.
 """
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def bootstrap_mission():
@@ -27,12 +27,9 @@ def bootstrap_mission():
         "objectives": [
             "Complete cleanup roadmap tasks",
             "Maintain system health",
-            "Execute strategic priorities"
+            "Execute strategic priorities",
         ],
-        "context": {
-            "mode": "steward",
-            "auto_provisioned": True
-        }
+        "context": {"mode": "steward", "auto_provisioned": True},
     }
 
     # Write mission state

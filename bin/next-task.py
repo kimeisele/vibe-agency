@@ -53,7 +53,7 @@ def find_next_task(roadmap, roadmap_path):
                 return {
                     "phase_id": current_phase_id,
                     "phase_name": current_phase["phase_name"],
-                    "task": task
+                    "task": task,
                 }
 
     # No pending tasks in current phase - move to next phase
@@ -72,7 +72,7 @@ def find_next_task(roadmap, roadmap_path):
             return {
                 "phase_id": next_phase["phase_id"],
                 "phase_name": next_phase["phase_name"],
-                "task": first_task
+                "task": first_task,
             }
 
     return None  # All tasks complete
@@ -80,7 +80,7 @@ def find_next_task(roadmap, roadmap_path):
 
 def save_progress(roadmap_path, roadmap):
     """Save updated roadmap"""
-    with open(roadmap_path, 'w') as f:
+    with open(roadmap_path, "w") as f:
         json.dump(roadmap, f, indent=2)
 
 
@@ -103,27 +103,27 @@ Run: ./bin/cleanup-report.sh for completion summary.
 ╚════════════════════════════════════════════════════════════════════════════╝
 
 Phase: {phase}
-Task ID: {task['task_id']}
-Priority: {task['priority']}
-Estimated Time: {task['estimated_time_mins']} minutes
+Task ID: {task["task_id"]}
+Priority: {task["priority"]}
+Estimated Time: {task["estimated_time_mins"]} minutes
 
-📋 TASK: {task['name']}
+📋 TASK: {task["name"]}
 
-{task['description']}
+{task["description"]}
 
 ✅ ACCEPTANCE CRITERIA:
 """
 
-    for i, criteria in enumerate(task.get('acceptance_criteria', []), 1):
+    for i, criteria in enumerate(task.get("acceptance_criteria", []), 1):
         output += f"   {i}. {criteria}\n"
 
-    deps = task.get('dependencies', [])
+    deps = task.get("dependencies", [])
     if deps:
         output += f"\n⚠️  Dependencies: {', '.join(deps)} (must be complete first)\n"
 
     output += f"""
 💡 When complete:
-   Run: ./bin/mark-task-complete.py {task['task_id']}
+   Run: ./bin/mark-task-complete.py {task["task_id"]}
    This will update the roadmap and queue the next task.
 
 📖 Full Roadmap: .vibe/config/cleanup_roadmap.json

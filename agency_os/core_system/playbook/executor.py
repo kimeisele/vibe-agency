@@ -24,12 +24,11 @@ Version: 0.1 (Logic Foundation)
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 # Import runtime modules with proper package paths
 if TYPE_CHECKING:
-    from agency_os.core_system.runtime.prompt_context import get_prompt_context
-    from agency_os.core_system.runtime.prompt_registry import PromptRegistry
+    pass
 
 logger = logging.getLogger(__name__)
 

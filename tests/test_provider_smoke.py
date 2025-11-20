@@ -1,6 +1,7 @@
-import pytest
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Define mocks
 mock_genai = MagicMock()
@@ -13,16 +14,15 @@ mock_anthropic.Anthropic.return_value = mock_anthropic_client
 # Since the classes import the modules inside __init__, we can import classes globally
 # and then patch sys.modules when calling __init__.
 
-from agency_os.core_system.runtime.providers.google import GoogleProvider
 from agency_os.core_system.runtime.providers.anthropic import AnthropicProvider
+from agency_os.core_system.runtime.providers.google import GoogleProvider
+
 
 @pytest.fixture(autouse=True)
 def mock_providers():
-    with patch.dict(sys.modules, {
-        "google.generativeai": mock_genai,
-        "anthropic": mock_anthropic
-    }):
+    with patch.dict(sys.modules, {"google.generativeai": mock_genai, "anthropic": mock_anthropic}):
         yield
+
 
 class TestGoogleProviderSmoke:
     def test_initialization(self):
@@ -35,7 +35,7 @@ class TestGoogleProviderSmoke:
     def test_invoke_mock(self):
         """Test basic invocation with mocked backend."""
         provider = GoogleProvider(api_key="fake_key")
-        
+
         # Mock the response
         mock_model = MagicMock()
         mock_response = MagicMock()
@@ -45,16 +45,17 @@ class TestGoogleProviderSmoke:
         mock_usage.prompt_token_count = 10
         mock_usage.candidates_token_count = 5
         mock_response.usage_metadata = mock_usage
-        
+
         mock_model.generate_content.return_value = mock_response
         provider.genai.GenerativeModel.return_value = mock_model
 
         response = provider.invoke("Hello")
-        
+
         assert response.content == "Hello from Gemini"
         assert response.usage.input_tokens == 10
         assert response.usage.output_tokens == 5
         assert response.provider == "google"
+
 
 class TestAnthropicProviderSmoke:
     def test_initialization(self):
@@ -66,7 +67,7 @@ class TestAnthropicProviderSmoke:
     def test_invoke_mock(self):
         """Test basic invocation with mocked backend."""
         provider = AnthropicProvider(api_key="fake_key")
-        
+
         # Mock the response
         mock_message = MagicMock()
         mock_content = MagicMock()
@@ -76,11 +77,11 @@ class TestAnthropicProviderSmoke:
         mock_message.usage.output_tokens = 5
         mock_message.model = "claude-3-5-sonnet-20241022"
         mock_message.stop_reason = "end_turn"
-        
+
         provider.client.messages.create.return_value = mock_message
 
         response = provider.invoke("Hello")
-        
+
         assert response.content == "Hello from Claude"
         assert response.usage.input_tokens == 10
         assert response.usage.output_tokens == 5

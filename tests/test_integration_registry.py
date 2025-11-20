@@ -21,7 +21,8 @@ _ORCHESTRATOR_PATH = _REPO_ROOT / "agency_os" / "core_system" / "orchestrator"
 
 
 from agency_os_orchestrator import PROMPT_REGISTRY_AVAILABLE, CoreOrchestrator
-from runtime.prompt_registry import PromptRegistry
+
+from agency_os.core_system.runtime.prompt_registry import PromptRegistry
 
 
 def test_prompt_registry_integration():

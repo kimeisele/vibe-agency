@@ -23,7 +23,8 @@ from typing import Any
 
 import jsonschema
 import yaml
-from executor import WorkflowEdge, WorkflowGraph, WorkflowNode
+
+from agency_os.core_system.playbook.executor import WorkflowEdge, WorkflowGraph, WorkflowNode
 
 logger = logging.getLogger(__name__)
 

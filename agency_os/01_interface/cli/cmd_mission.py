@@ -33,7 +33,9 @@ TaskStatus = _task_mgmt.TaskStatus
 Roadmap = _task_mgmt.Roadmap
 
 # Load metrics module dynamically
-_metrics_path = Path(__file__).parent.parent.parent / "core_system" / "task_management" / "metrics.py"
+_metrics_path = (
+    Path(__file__).parent.parent.parent / "core_system" / "task_management" / "metrics.py"
+)
 _metrics_spec = importlib.util.spec_from_file_location("metrics", _metrics_path)
 _metrics_module = importlib.util.module_from_spec(_metrics_spec)
 _metrics_spec.loader.exec_module(_metrics_module)

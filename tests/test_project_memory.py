@@ -10,7 +10,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 runtime_path = PROJECT_ROOT / "agency_os" / "core_system" / "runtime"
 
-from runtime.project_memory import ProjectMemoryManager
+from agency_os.core_system.runtime.project_memory import ProjectMemoryManager
 
 
 class TestProjectMemoryManager:

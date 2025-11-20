@@ -18,8 +18,6 @@ Version: 1.0 (GAD-100 Emergency)
 """
 
 import os
-import sys
-from pathlib import Path
 
 # Add project root to path
 # project_root = Path(__file__).parent.parent
@@ -148,7 +146,6 @@ def check_provider_detection():
             if api_key:
                 print(f"    (masked: {mask_value(api_key)})")
 
-
     except Exception as e:
         print(f"\n❌ Failed to check provider detection: {e}")
         import traceback
@@ -166,19 +163,16 @@ def check_llm_client_init():
         print("\nInitializing LLMClient...")
         client = LLMClient()
 
-            print(f"  Mode: {client.mode}")
-            print(f"  Provider: {client.provider.get_provider_name()}")
+        print(f"  Mode: {client.mode}")
+        print(f"  Provider: {client.provider.get_provider_name()}")
 
-            if client.mode == "noop":
-                print("\n⚠️  WARNING: Client is in NoOp mode!")
-                print("   This means no API keys were detected.")
-                print("   Real LLM invocations will be mocked.")
-            else:
-                print(
-                    f"\n✅ Client initialized with {client.provider.get_provider_name()} provider"
-                )
-                print("   Real LLM invocations are possible.")
-
+        if client.mode == "noop":
+            print("\n⚠️  WARNING: Client is in NoOp mode!")
+            print("   This means no API keys were detected.")
+            print("   Real LLM invocations will be mocked.")
+        else:
+            print(f"\n✅ Client initialized with {client.provider.get_provider_name()} provider")
+            print("   Real LLM invocations are possible.")
 
     except Exception as e:
         print(f"\n❌ Failed to initialize LLMClient: {e}")
