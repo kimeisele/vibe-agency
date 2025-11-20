@@ -53,8 +53,8 @@ __     __  _   _               _
   \ V /   | | | |_) | |  __/  |_|
    \_/    |_| |_.__/   \___|  (_)
 
-   >>> AGENCY OPERATING SYSTEM <<<
-   🚀 Vibe Agency OS (v2.5 Architecture Active)
+   >>> VIBE OS v3.0 <<<
+   🏗️ Kernel + Agency Architecture (Post-Split)
 EOF
 echo -e "${NC}"
 echo "════════════════════════════════════════════════════════════════"
