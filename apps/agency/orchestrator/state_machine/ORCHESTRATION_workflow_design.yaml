@@ -1,0 +1,60 @@
+# Minimal ORCHESTRATION workflow design (post-migration)
+# This file was previously in agency_os/core_system/state_machine/
+# Now located in the apps/agency orchestrator for post-split architecture
+
+id: orchestration_workflow
+name: SDLC Orchestration Workflow
+version: "3.0"
+
+# Phases in order
+phases:
+  - PLANNING
+  - CODING
+  - TESTING
+  - AWAITING_QA_APPROVAL
+  - DEPLOYMENT
+  - PRODUCTION
+  - MAINTENANCE
+
+# Simple state machine: each phase can transition to the next
+transitions:
+  PLANNING:
+    - target: CODING
+      condition: planning_complete
+    - target: PLANNING
+      condition: rework_needed
+  CODING:
+    - target: TESTING
+      condition: coding_complete
+    - target: CODING
+      condition: rework_needed
+  TESTING:
+    - target: AWAITING_QA_APPROVAL
+      condition: testing_complete
+    - target: CODING
+      condition: bugs_found
+  AWAITING_QA_APPROVAL:
+    - target: DEPLOYMENT
+      condition: qa_approved
+    - target: TESTING
+      condition: qa_rejected
+  DEPLOYMENT:
+    - target: PRODUCTION
+      condition: deployment_successful
+    - target: CODING
+      condition: deployment_failed
+  PRODUCTION:
+    - target: MAINTENANCE
+      condition: ongoing_ops
+  MAINTENANCE:
+    - target: PLANNING
+      condition: new_feature_requested
+    - target: CODING
+      condition: hotfix_needed
+    - target: PRODUCTION
+      condition: issue_resolved
+
+metadata:
+  description: "Post-Split (v3.0) SDLC orchestration workflow"
+  created: "2025-11-20"
+  migrated_from: "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"

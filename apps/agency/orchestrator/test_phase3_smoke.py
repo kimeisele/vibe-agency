@@ -118,7 +118,7 @@ def test_schema_validator():
         from orchestrator.core_orchestrator import SchemaValidator
 
         contracts_path = (
-            Path.cwd() / "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
+            Path.cwd() / "apps/agency/orchestrator/contracts/ORCHESTRATION_data_contracts.yaml"
         )
         validator = SchemaValidator(contracts_path)
 

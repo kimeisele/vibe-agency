@@ -118,7 +118,9 @@ class RouterBridge:
         Returns:
             RouterBridgeContext with routed actions and phase assignment
         """
-        logger.info(f"🌉 Bridging workflow: {workflow_graph.name} (intent: {workflow_graph.intent})")
+        logger.info(
+            f"🌉 Bridging workflow: {workflow_graph.name} (intent: {workflow_graph.intent})"
+        )
 
         # Step 1: Determine target phase from workflow intent
         target_phase = self._map_intent_to_phase(workflow_graph.intent)

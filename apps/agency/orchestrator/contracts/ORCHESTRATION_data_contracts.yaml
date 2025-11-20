@@ -1,0 +1,17 @@
+# ORCHESTRATION Data Contracts (post-migration)
+# This file was previously in agency_os/core_system/contracts/
+# Now located in the apps/agency orchestrator for post-split architecture
+
+contracts:
+  - name: planning_output
+    schema: {}  # Minimal placeholder
+  - name: feature_spec
+    schema: {}  # Minimal placeholder
+  - name: qa_report
+    schema: {}  # Minimal placeholder
+  - name: deployment_manifest
+    schema: {}  # Minimal placeholder
+
+metadata:
+  version: "3.0"
+  migrated_from: "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"

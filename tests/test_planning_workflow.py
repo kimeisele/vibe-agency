@@ -55,7 +55,7 @@ def test_state_machine_yaml():
     print_test("State Machine YAML validation")
 
     yaml_path = (
-        PROJECT_ROOT / "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        PROJECT_ROOT / "apps/agency/orchestrator/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
 
     if not yaml_path.exists():
@@ -111,7 +111,7 @@ def test_transitions():
     print_test("Transition validation")
 
     yaml_path = (
-        PROJECT_ROOT / "agency_os/core_system/state_machine/ORCHESTRATION_workflow_design.yaml"
+        PROJECT_ROOT / "apps/agency/orchestrator/state_machine/ORCHESTRATION_workflow_design.yaml"
     )
 
     with open(yaml_path) as f:
@@ -197,7 +197,7 @@ def test_data_contracts():
     print_test("Data contract validation")
 
     contracts_path = (
-        PROJECT_ROOT / "agency_os/core_system/contracts/ORCHESTRATION_data_contracts.yaml"
+        PROJECT_ROOT / "apps/agency/orchestrator/contracts/ORCHESTRATION_data_contracts.yaml"
     )
 
     if not contracts_path.exists():
