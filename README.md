@@ -1,8 +1,24 @@
 # 🤖 VIBE AGENCY OS - Self-Constructing Software Factory
 
-> **Status:** 🟢 **OPERATIONAL**
+> **Status:** 🟢 **OPERATIONAL** | **Version:** 2.5
 >
 > A self-managing AI agency system that builds itself. The system is now live with agents, runtime, knowledge retrieval, mission control, and quality assurance fully integrated.
+
+## 🎉 v2.5 Architecture - NOW OPERATIONAL
+
+**Date:** 2025-11-20 | **Status:** ✅ **VERIFIED IN PRODUCTION**
+
+The v2.5 architecture upgrade is complete and operational:
+
+- **✅ HAP (Hierarchical Agent Pattern)** - Specialist-based execution model
+- **✅ SQLite Shadow Mode** - Persistent decision logging and audit trails
+- **✅ Registry Pattern** - Dynamic agent selection and routing
+- **✅ Tool Safety Guard** - Strict file operation security layer
+- **✅ 5 Specialized Agents** - Planning, Coding, Testing, Deployment, Maintenance
+
+**Verification:** Maiden voyage test successfully validated all components. See [`MAIDEN_VOYAGE_REPORT.md`](MAIDEN_VOYAGE_REPORT.md) for details.
+
+**What This Means:** The system now scales with dedicated specialists for each SDLC phase, persistent state management, and production-grade security controls.
 
 ---
 

@@ -386,7 +386,7 @@ class CoreOrchestrator:
         """
         if phase not in self._handlers:
             # Import adapter (constant across all phases)
-            from handlers.specialist_handler_adapter import SpecialistHandlerAdapter
+            from agency_os.core_system.orchestrator.handlers.specialist_handler_adapter import SpecialistHandlerAdapter
 
             # Get specialist class from registry (ARCH-009: Dynamic lookup)
             specialist_class = self.agent_registry.get_specialist(phase)
