@@ -465,6 +465,7 @@ class TestPlaybookRuns:
 # INTEGRATION TEST: Full workflow
 # ============================================================================
 
+
 class TestFullWorkflow:
     """Test complete mission lifecycle"""
 
