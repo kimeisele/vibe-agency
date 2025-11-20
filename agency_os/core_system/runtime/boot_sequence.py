@@ -27,11 +27,13 @@ class BootSequence:
         self.context_loader = ContextLoader(self.project_root)
         self.playbook_engine = PlaybookEngine()
         self.prompt_composer = PromptComposer()
-        self.memory_manager = ProjectMemoryManager(self.project_root)
 
-        # Initialize SQLite persistence (ARCH-003)
+        # Initialize SQLite persistence (ARCH-003: Dual Write Mode)
         db_path = self.project_root / ".vibe" / "state" / "vibe_agency.db"
         self.sqlite_store = SQLiteStore(str(db_path))
+
+        # Initialize memory manager with SQLite store for dual-write
+        self.memory_manager = ProjectMemoryManager(self.project_root, self.sqlite_store)
 
     def run(self, user_input: str | None = None):
         """Execute the boot sequence"""

@@ -843,3 +843,198 @@ class TestFullWorkflow:
         assert len(store.get_quality_gates(mission_id)) == 1
         trajectory = store.get_trajectory(mission_id)
         assert trajectory["current_phase"] == "CODING"
+
+
+# =============================================================================
+# ARCH-003: DUAL WRITE MODE (Shadow Mode Phase 1)
+# =============================================================================
+
+
+class TestProjectManifestImport:
+    """Test import_project_manifest method (ARCH-003)"""
+
+    def test_import_project_manifest_creates_mission(self):
+        """Test importing project_manifest.json creates mission with all fields"""
+        store = SQLiteStore(":memory:")
+
+        manifest = {
+            "apiVersion": "agency.os/v1alpha1",
+            "kind": "Project",
+            "metadata": {
+                "projectId": "test-manifest-001",
+                "name": "Test Manifest Import",
+                "description": "Testing manifest import",
+                "owner": "test@vibe.agency",
+                "createdAt": "2025-11-20T00:00:00Z",
+                "lastUpdatedAt": "2025-11-20T01:00:00Z",
+            },
+            "status": {
+                "projectPhase": "CODING",
+                "planningSubState": None,
+                "lastUpdate": "2025-11-20T01:00:00Z",
+                "message": "Test in progress",
+            },
+            "budget": {
+                "max_cost_usd": 50.0,
+                "current_cost_usd": 15.0,
+                "alert_threshold": 0.75,
+                "cost_breakdown": {"PLANNING": 5.0, "CODING": 10.0},
+            },
+            "artifacts": {
+                "planning": {"feature_spec": "specs/feature.json"},
+                "code": {"repo": "github.com/test/repo"},
+            },
+        }
+
+        mission_id = store.import_project_manifest(manifest)
+
+        # Verify mission was created
+        assert mission_id > 0
+
+        mission = store.get_mission(mission_id)
+        assert mission["mission_uuid"] == "test-manifest-001"
+        assert mission["phase"] == "CODING"
+        assert mission["status"] == "in_progress"
+        assert mission["owner"] == "test@vibe.agency"
+        assert mission["description"] == "Testing manifest import"
+        assert mission["max_cost_usd"] == 50.0
+        assert mission["current_cost_usd"] == 15.0
+        assert mission["alert_threshold"] == 0.75
+
+    def test_import_project_manifest_with_memory(self):
+        """Test importing project_manifest with project_memory"""
+        store = SQLiteStore(":memory:")
+
+        manifest = {
+            "apiVersion": "agency.os/v1alpha1",
+            "kind": "Project",
+            "metadata": {
+                "projectId": "test-manifest-002",
+                "name": "Test With Memory",
+                "owner": "test@vibe.agency",
+                "createdAt": "2025-11-20T00:00:00Z",
+            },
+            "status": {
+                "projectPhase": "TESTING",
+                "lastUpdate": "2025-11-20T01:00:00Z",
+            },
+            "budget": {"max_cost_usd": 100.0},
+        }
+
+        project_memory = {
+            "narrative": [
+                {
+                    "session": 1,
+                    "summary": "Initial setup",
+                    "date": "2025-11-20T00:00:00Z",
+                    "phase": "PLANNING",
+                },
+                {
+                    "session": 2,
+                    "summary": "Built core features",
+                    "date": "2025-11-20T01:00:00Z",
+                    "phase": "CODING",
+                },
+            ],
+            "domain": {
+                "concepts": ["authentication", "database"],
+                "concerns": ["security", "performance"],
+            },
+            "trajectory": {
+                "phase": "TESTING",
+                "current_focus": "Integration tests",
+                "completed": ["PLANNING", "CODING"],
+                "blockers": [],
+            },
+        }
+
+        mission_id = store.import_project_manifest(manifest, project_memory)
+
+        # Verify mission created
+        assert mission_id > 0
+
+        # Verify memory imported
+        narrative = store.get_session_narrative(mission_id)
+        assert len(narrative) == 2
+        assert narrative[0]["summary"] == "Initial setup"
+        assert narrative[1]["summary"] == "Built core features"
+
+        concepts = store.get_domain_concepts(mission_id)
+        assert len(concepts) == 2
+
+        concerns = store.get_domain_concerns(mission_id)
+        assert len(concerns) == 2
+
+        trajectory = store.get_trajectory(mission_id)
+        assert trajectory["current_phase"] == "TESTING"
+        assert trajectory["current_focus"] == "Integration tests"
+
+    def test_import_project_manifest_idempotent(self):
+        """Test that importing same manifest twice updates instead of duplicating"""
+        store = SQLiteStore(":memory:")
+
+        manifest = {
+            "apiVersion": "agency.os/v1alpha1",
+            "kind": "Project",
+            "metadata": {
+                "projectId": "test-idempotent-001",
+                "name": "Test Idempotent",
+                "owner": "test@vibe.agency",
+                "createdAt": "2025-11-20T00:00:00Z",
+            },
+            "status": {"projectPhase": "PLANNING", "lastUpdate": "2025-11-20T00:00:00Z"},
+            "budget": {"max_cost_usd": 100.0, "current_cost_usd": 10.0},
+        }
+
+        # Import first time
+        mission_id_1 = store.import_project_manifest(manifest)
+
+        # Modify manifest
+        manifest["budget"]["current_cost_usd"] = 25.0
+        manifest["status"]["projectPhase"] = "CODING"
+
+        # Import second time (should update, not create new)
+        mission_id_2 = store.import_project_manifest(manifest)
+
+        # Should be same mission ID
+        assert mission_id_1 == mission_id_2
+
+        # Verify updated values
+        mission = store.get_mission(mission_id_1)
+        assert mission["current_cost_usd"] == 25.0
+        assert mission["phase"] == "CODING"
+
+        # Verify no duplicates
+        all_missions = store.get_mission_history()
+        assert len(all_missions) == 1
+
+    def test_import_real_project_manifest(self):
+        """Test importing a real project_manifest.json from workspaces"""
+        import json
+        from pathlib import Path
+
+        store = SQLiteStore(":memory:")
+
+        # Load real manifest from workspaces
+        manifest_path = Path("workspaces/test_orchestrator/project_manifest.json")
+        if not manifest_path.exists():
+            # Skip if workspace doesn't exist (CI environment)
+            return
+
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+
+        # Import real manifest
+        mission_id = store.import_project_manifest(manifest)
+
+        # Verify it was imported correctly
+        assert mission_id > 0
+
+        mission = store.get_mission(mission_id)
+        assert mission["mission_uuid"] == "test-orchestrator-003"
+        assert mission["phase"] == "PLANNING"
+        assert mission["owner"] == "system"
+        assert mission["description"] == "Test delegated execution architecture (Claude Code integration)"
+        assert mission["max_cost_usd"] == 10.0
+        assert mission["current_cost_usd"] == 0.0
+        assert mission["planning_sub_state"] == "BUSINESS_VALIDATION"

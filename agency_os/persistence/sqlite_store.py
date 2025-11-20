@@ -16,6 +16,7 @@ import json
 import os
 import sqlite3
 import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -817,6 +818,61 @@ class SQLiteStore:
             created_at=created_at,
             metadata=metadata,
         )
+
+        return mission_id
+
+    def import_project_manifest(
+        self, manifest: dict[str, Any], project_memory: dict[str, Any] | None = None
+    ) -> int:
+        """
+        Import project manifest and optional project memory to SQLite (ARCH-003)
+
+        This implements the Dual Write pattern:
+        - Convert project_manifest.json to missions table row
+        - Optionally import project_memory.json to v2 tables
+        - Idempotent - updates existing mission if UUID matches
+
+        Args:
+            manifest: Project manifest dict (project_manifest.json)
+            project_memory: Optional project memory dict (project_memory.json)
+
+        Returns:
+            mission_id (integer primary key)
+        """
+        # Use adapter to map manifest to missions row
+        mission_data = self._map_manifest_to_missions_row(manifest)
+
+        # Check if mission already exists (idempotent)
+        existing = self.get_mission_by_uuid(mission_data["mission_uuid"])
+
+        if existing:
+            # Mission exists - UPDATE it
+            mission_id = existing["id"]
+
+            # Build UPDATE query dynamically
+            update_fields = []
+            update_values = []
+            for key, value in mission_data.items():
+                if key != "mission_uuid":  # Don't update UUID
+                    update_fields.append(f"{key} = ?")
+                    if isinstance(value, dict):
+                        update_values.append(json.dumps(value))
+                    else:
+                        update_values.append(value)
+
+            update_values.append(mission_id)
+
+            sql = f"UPDATE missions SET {', '.join(update_fields)} WHERE id = ?"
+            self.conn.execute(sql, update_values)
+            self._commit()
+        else:
+            # Mission doesn't exist - CREATE it
+            mission_id = self.create_mission(**mission_data)
+
+        # If project_memory provided, import it too
+        if project_memory:
+            timestamp = datetime.utcnow().isoformat() + "Z"
+            self._map_project_memory_to_sql(project_memory, mission_id, timestamp)
 
         return mission_id
 
