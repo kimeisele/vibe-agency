@@ -819,3 +819,415 @@ class SQLiteStore:
         )
 
         return mission_id
+
+    # ========================================================================
+    # v2: SESSION NARRATIVE (ProjectMemory)
+    # ========================================================================
+
+    def add_session_narrative(
+        self,
+        mission_id: int,
+        session_num: int,
+        summary: str,
+        date: str,
+        phase: str,
+    ) -> int:
+        """
+        Add session narrative entry (v2 - ProjectMemory)
+
+        Args:
+            mission_id: Parent mission ID
+            session_num: Session number (1, 2, 3, ...)
+            summary: Human-readable session summary
+            date: ISO 8601 timestamp of session
+            phase: Phase during this session (PLANNING, CODING, etc.)
+
+        Returns:
+            session_id: Auto-incremented ID
+        """
+        cursor = self.conn.execute(
+            """
+            INSERT INTO session_narrative (mission_id, session_num, summary, date, phase)
+            VALUES (?, ?, ?, ?, ?)
+        """,
+            (mission_id, session_num, summary, date, phase),
+        )
+        self._commit()
+        return cursor.lastrowid
+
+    def get_session_narrative(self, mission_id: int) -> list[dict[str, Any]]:
+        """
+        Get all session narrative for a mission (v2)
+
+        Args:
+            mission_id: Parent mission ID
+
+        Returns:
+            List of session dicts, ordered by session_num
+        """
+        cursor = self.conn.execute(
+            "SELECT * FROM session_narrative WHERE mission_id = ? ORDER BY session_num",
+            (mission_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    # ========================================================================
+    # v2: ARTIFACTS (SDLC Tracking)
+    # ========================================================================
+
+    def add_artifact(
+        self,
+        mission_id: int,
+        artifact_type: str,
+        artifact_name: str,
+        created_at: str,
+        ref: str | None = None,
+        path: str | None = None,
+        url: str | None = None,
+        branch: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> int:
+        """
+        Add artifact entry (v2 - SDLC tracking)
+
+        Args:
+            mission_id: Parent mission ID
+            artifact_type: Artifact category ('planning', 'code', 'test', 'deployment')
+            artifact_name: Artifact name (e.g., 'architecture', 'mainRepository')
+            created_at: ISO 8601 timestamp
+            ref: Git commit ref (optional)
+            path: File path (optional)
+            url: Repository URL (optional)
+            branch: Git branch (optional)
+            metadata: Additional artifact data (optional)
+
+        Returns:
+            artifact_id: Auto-incremented ID
+        """
+        cursor = self.conn.execute(
+            """
+            INSERT INTO artifacts (mission_id, artifact_type, artifact_name, ref, path, url, branch, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                mission_id,
+                artifact_type,
+                artifact_name,
+                ref,
+                path,
+                url,
+                branch,
+                json.dumps(metadata) if metadata else None,
+                created_at,
+            ),
+        )
+        self._commit()
+        return cursor.lastrowid
+
+    def get_artifacts(self, mission_id: int, artifact_type: str | None = None) -> list[dict[str, Any]]:
+        """
+        Get artifacts for a mission (v2)
+
+        Args:
+            mission_id: Parent mission ID
+            artifact_type: Filter by artifact type (optional)
+
+        Returns:
+            List of artifact dicts
+        """
+        if artifact_type:
+            cursor = self.conn.execute(
+                "SELECT * FROM artifacts WHERE mission_id = ? AND artifact_type = ? ORDER BY created_at",
+                (mission_id, artifact_type),
+            )
+        else:
+            cursor = self.conn.execute(
+                "SELECT * FROM artifacts WHERE mission_id = ? ORDER BY created_at",
+                (mission_id,),
+            )
+
+        artifacts = []
+        for row in cursor.fetchall():
+            artifact = dict(row)
+            if artifact.get("metadata"):
+                artifact["metadata"] = json.loads(artifact["metadata"])
+            artifacts.append(artifact)
+        return artifacts
+
+    # ========================================================================
+    # v2: QUALITY GATES (GAD-004 Compliance)
+    # ========================================================================
+
+    def record_quality_gate(
+        self,
+        mission_id: int,
+        gate_name: str,
+        status: str,
+        timestamp: str,
+        details: dict[str, Any] | None = None,
+    ) -> int:
+        """
+        Record quality gate result (v2 - GAD-004)
+
+        Args:
+            mission_id: Parent mission ID
+            gate_name: Gate name (e.g., 'FACT_VALIDATOR', 'TEST_COVERAGE')
+            status: Gate status ('passed', 'failed', 'skipped')
+            timestamp: ISO 8601 timestamp
+            details: Gate-specific details (optional)
+
+        Returns:
+            gate_id: Auto-incremented ID
+        """
+        cursor = self.conn.execute(
+            """
+            INSERT INTO quality_gates (mission_id, gate_name, status, details, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        """,
+            (mission_id, gate_name, status, json.dumps(details) if details else None, timestamp),
+        )
+        self._commit()
+        return cursor.lastrowid
+
+    def get_quality_gates(self, mission_id: int) -> list[dict[str, Any]]:
+        """
+        Get quality gates for a mission (v2)
+
+        Args:
+            mission_id: Parent mission ID
+
+        Returns:
+            List of quality gate dicts
+        """
+        cursor = self.conn.execute(
+            "SELECT * FROM quality_gates WHERE mission_id = ? ORDER BY timestamp",
+            (mission_id,),
+        )
+        gates = []
+        for row in cursor.fetchall():
+            gate = dict(row)
+            if gate.get("details"):
+                gate["details"] = json.loads(gate["details"])
+            gates.append(gate)
+        return gates
+
+    # ========================================================================
+    # v2: DOMAIN CONCEPTS/CONCERNS (ProjectMemory)
+    # ========================================================================
+
+    def add_domain_concept(self, mission_id: int, concept: str, timestamp: str) -> int:
+        """
+        Add domain concept (v2 - ProjectMemory)
+
+        Args:
+            mission_id: Parent mission ID
+            concept: Concept keyword (e.g., 'payment', 'database')
+            timestamp: ISO 8601 timestamp
+
+        Returns:
+            concept_id: Auto-incremented ID
+        """
+        cursor = self.conn.execute(
+            "INSERT INTO domain_concepts (mission_id, concept, timestamp) VALUES (?, ?, ?)",
+            (mission_id, concept, timestamp),
+        )
+        self._commit()
+        return cursor.lastrowid
+
+    def add_domain_concern(self, mission_id: int, concern: str, timestamp: str) -> int:
+        """
+        Add domain concern (v2 - ProjectMemory)
+
+        Args:
+            mission_id: Parent mission ID
+            concern: Concern description (e.g., 'PCI compliance')
+            timestamp: ISO 8601 timestamp
+
+        Returns:
+            concern_id: Auto-incremented ID
+        """
+        cursor = self.conn.execute(
+            "INSERT INTO domain_concerns (mission_id, concern, timestamp) VALUES (?, ?, ?)",
+            (mission_id, concern, timestamp),
+        )
+        self._commit()
+        return cursor.lastrowid
+
+    def get_domain_concepts(self, mission_id: int) -> list[str]:
+        """Get domain concepts for a mission (v2)"""
+        cursor = self.conn.execute(
+            "SELECT concept FROM domain_concepts WHERE mission_id = ? ORDER BY timestamp",
+            (mission_id,),
+        )
+        return [row[0] for row in cursor.fetchall()]
+
+    def get_domain_concerns(self, mission_id: int) -> list[str]:
+        """Get domain concerns for a mission (v2)"""
+        cursor = self.conn.execute(
+            "SELECT concern FROM domain_concerns WHERE mission_id = ? ORDER BY timestamp",
+            (mission_id,),
+        )
+        return [row[0] for row in cursor.fetchall()]
+
+    # ========================================================================
+    # v2: TRAJECTORY (ProjectMemory)
+    # ========================================================================
+
+    def set_trajectory(
+        self,
+        mission_id: int,
+        current_phase: str,
+        updated_at: str,
+        current_focus: str | None = None,
+        completed_phases: list[str] | None = None,
+        blockers: list[str] | None = None,
+    ):
+        """
+        Set trajectory for a mission (v2 - ProjectMemory)
+
+        Note: UPSERT operation - updates if exists, inserts if not
+
+        Args:
+            mission_id: Parent mission ID
+            current_phase: Current phase (PLANNING, CODING, etc.)
+            updated_at: ISO 8601 timestamp
+            current_focus: Current focus area (optional)
+            completed_phases: List of completed phase names (optional)
+            blockers: List of blocker descriptions (optional)
+        """
+        # Check if trajectory exists
+        cursor = self.conn.execute(
+            "SELECT id FROM trajectory WHERE mission_id = ?",
+            (mission_id,),
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            # Update existing
+            self.conn.execute(
+                """
+                UPDATE trajectory
+                SET current_phase = ?, current_focus = ?, completed_phases = ?, blockers = ?, updated_at = ?
+                WHERE mission_id = ?
+            """,
+                (
+                    current_phase,
+                    current_focus,
+                    json.dumps(completed_phases) if completed_phases else None,
+                    json.dumps(blockers) if blockers else None,
+                    updated_at,
+                    mission_id,
+                ),
+            )
+        else:
+            # Insert new
+            self.conn.execute(
+                """
+                INSERT INTO trajectory (mission_id, current_phase, current_focus, completed_phases, blockers, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    mission_id,
+                    current_phase,
+                    current_focus,
+                    json.dumps(completed_phases) if completed_phases else None,
+                    json.dumps(blockers) if blockers else None,
+                    updated_at,
+                ),
+            )
+        self._commit()
+
+    def get_trajectory(self, mission_id: int) -> dict[str, Any] | None:
+        """
+        Get trajectory for a mission (v2)
+
+        Args:
+            mission_id: Parent mission ID
+
+        Returns:
+            Trajectory dict or None if not found
+        """
+        cursor = self.conn.execute(
+            "SELECT * FROM trajectory WHERE mission_id = ?",
+            (mission_id,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        trajectory = dict(row)
+        if trajectory.get("completed_phases"):
+            trajectory["completed_phases"] = json.loads(trajectory["completed_phases"])
+        if trajectory.get("blockers"):
+            trajectory["blockers"] = json.loads(trajectory["blockers"])
+        return trajectory
+
+    # ========================================================================
+    # v2: PROJECT MEMORY ADAPTER (Flattening Logic)
+    # ========================================================================
+
+    def _map_project_memory_to_sql(self, memory: dict[str, Any], mission_id: int, timestamp: str):
+        """
+        Adapter: Flatten project_memory.json into SQL tables (v2)
+
+        This is the complex flattening logic from SCHEMA_REALITY_CHECK.md Section 6.1.
+        Converts:
+        - narrative array → session_narrative rows (1→N)
+        - domain.concepts → domain_concepts rows (array flattening)
+        - domain.concerns → domain_concerns rows (array flattening)
+        - trajectory object → trajectory row (1→1 with JSON fields)
+
+        Args:
+            memory: project_memory.json dict
+            mission_id: Parent mission ID
+            timestamp: ISO 8601 timestamp for records
+
+        Note:
+            This method is idempotent - can be called multiple times.
+            Duplicate concepts/concerns are ignored (UNIQUE constraint).
+        """
+        # 1. Session narrative (array → rows)
+        narrative = memory.get("narrative", [])
+        for entry in narrative:
+            try:
+                self.add_session_narrative(
+                    mission_id=mission_id,
+                    session_num=entry.get("session", 0),
+                    summary=entry.get("summary", ""),
+                    date=entry.get("date", timestamp),
+                    phase=entry.get("phase", "UNKNOWN"),
+                )
+            except Exception:
+                # Skip duplicates (UNIQUE constraint on session_num)
+                pass
+
+        # 2. Domain concepts (array → rows)
+        domain = memory.get("domain", {})
+        concepts = domain.get("concepts", [])
+        for concept in concepts:
+            try:
+                self.add_domain_concept(mission_id, concept, timestamp)
+            except Exception:
+                # Skip duplicates (UNIQUE constraint on concept)
+                pass
+
+        # 3. Domain concerns (array → rows)
+        concerns = domain.get("concerns", [])
+        for concern in concerns:
+            try:
+                self.add_domain_concern(mission_id, concern, timestamp)
+            except Exception:
+                # Skip duplicates (UNIQUE constraint on concern)
+                pass
+
+        # 4. Trajectory (object → row)
+        trajectory_obj = memory.get("trajectory", {})
+        if trajectory_obj:
+            self.set_trajectory(
+                mission_id=mission_id,
+                current_phase=trajectory_obj.get("phase", "UNKNOWN"),
+                current_focus=trajectory_obj.get("current_focus"),
+                completed_phases=trajectory_obj.get("completed", []),
+                blockers=trajectory_obj.get("blockers", []),
+                updated_at=timestamp,
+            )

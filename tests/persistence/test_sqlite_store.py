@@ -539,6 +539,244 @@ class TestPlaybookRuns:
 # ============================================================================
 
 
+class TestSessionNarrative:
+    """Test session narrative (v2 - ProjectMemory)"""
+
+    def test_add_session_narrative(self):
+        """Test adding session narrative"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        session_id = store.add_session_narrative(
+            mission_id=mission_id,
+            session_num=1,
+            summary="Completed planning phase",
+            date="2025-11-20T00:00:00Z",
+            phase="PLANNING",
+        )
+        assert isinstance(session_id, int)
+        assert session_id > 0
+
+    def test_get_session_narrative(self):
+        """Test retrieving session narrative"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.add_session_narrative(mission_id, 1, "Session 1", "2025-11-20T00:00:00Z", "PLANNING")
+        store.add_session_narrative(mission_id, 2, "Session 2", "2025-11-20T01:00:00Z", "CODING")
+
+        narrative = store.get_session_narrative(mission_id)
+        assert len(narrative) == 2
+        assert narrative[0]["session_num"] == 1
+        assert narrative[1]["session_num"] == 2
+
+
+class TestArtifacts:
+    """Test artifacts (v2 - SDLC tracking)"""
+
+    def test_add_artifact(self):
+        """Test adding artifact"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        artifact_id = store.add_artifact(
+            mission_id=mission_id,
+            artifact_type="planning",
+            artifact_name="architecture",
+            created_at="2025-11-20T00:00:00Z",
+            ref="abc123",
+            path="/artifacts/planning/architecture.json",
+        )
+        assert isinstance(artifact_id, int)
+        assert artifact_id > 0
+
+    def test_get_artifacts(self):
+        """Test retrieving artifacts"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.add_artifact(mission_id, "planning", "arch", "2025-11-20T00:00:00Z")
+        store.add_artifact(mission_id, "code", "repo", "2025-11-20T01:00:00Z")
+
+        artifacts = store.get_artifacts(mission_id)
+        assert len(artifacts) == 2
+
+        planning_artifacts = store.get_artifacts(mission_id, "planning")
+        assert len(planning_artifacts) == 1
+        assert planning_artifacts[0]["artifact_type"] == "planning"
+
+
+class TestQualityGates:
+    """Test quality gates (v2 - GAD-004)"""
+
+    def test_record_quality_gate(self):
+        """Test recording quality gate"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        gate_id = store.record_quality_gate(
+            mission_id=mission_id,
+            gate_name="TEST_COVERAGE",
+            status="passed",
+            timestamp="2025-11-20T00:00:00Z",
+            details={"coverage": 85},
+        )
+        assert isinstance(gate_id, int)
+        assert gate_id > 0
+
+    def test_get_quality_gates(self):
+        """Test retrieving quality gates"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.record_quality_gate(mission_id, "GATE1", "passed", "2025-11-20T00:00:00Z")
+        store.record_quality_gate(mission_id, "GATE2", "failed", "2025-11-20T01:00:00Z")
+
+        gates = store.get_quality_gates(mission_id)
+        assert len(gates) == 2
+        assert gates[0]["gate_name"] == "GATE1"
+        assert gates[1]["status"] == "failed"
+
+
+class TestDomainTracking:
+    """Test domain concepts and concerns (v2 - ProjectMemory)"""
+
+    def test_add_domain_concept(self):
+        """Test adding domain concept"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        concept_id = store.add_domain_concept(mission_id, "payment", "2025-11-20T00:00:00Z")
+        assert isinstance(concept_id, int)
+        assert concept_id > 0
+
+    def test_get_domain_concepts(self):
+        """Test retrieving domain concepts"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.add_domain_concept(mission_id, "payment", "2025-11-20T00:00:00Z")
+        store.add_domain_concept(mission_id, "database", "2025-11-20T01:00:00Z")
+
+        concepts = store.get_domain_concepts(mission_id)
+        assert len(concepts) == 2
+        assert "payment" in concepts
+        assert "database" in concepts
+
+    def test_add_domain_concern(self):
+        """Test adding domain concern"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        concern_id = store.add_domain_concern(mission_id, "PCI compliance", "2025-11-20T00:00:00Z")
+        assert isinstance(concern_id, int)
+        assert concern_id > 0
+
+    def test_get_domain_concerns(self):
+        """Test retrieving domain concerns"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.add_domain_concern(mission_id, "PCI compliance", "2025-11-20T00:00:00Z")
+        store.add_domain_concern(mission_id, "performance", "2025-11-20T01:00:00Z")
+
+        concerns = store.get_domain_concerns(mission_id)
+        assert len(concerns) == 2
+        assert "PCI compliance" in concerns
+        assert "performance" in concerns
+
+
+class TestTrajectory:
+    """Test trajectory (v2 - ProjectMemory)"""
+
+    def test_set_trajectory(self):
+        """Test setting trajectory"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        store.set_trajectory(
+            mission_id=mission_id,
+            current_phase="CODING",
+            current_focus="payment integration",
+            completed_phases=["PLANNING"],
+            blockers=["5 failing tests"],
+            updated_at="2025-11-20T00:00:00Z",
+        )
+
+        trajectory = store.get_trajectory(mission_id)
+        assert trajectory is not None
+        assert trajectory["current_phase"] == "CODING"
+        assert trajectory["current_focus"] == "payment integration"
+        assert trajectory["completed_phases"] == ["PLANNING"]
+        assert trajectory["blockers"] == ["5 failing tests"]
+
+    def test_update_trajectory(self):
+        """Test updating trajectory (UPSERT)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        # First set
+        store.set_trajectory(mission_id, "PLANNING", "2025-11-20T00:00:00Z")
+
+        # Update
+        store.set_trajectory(
+            mission_id, "CODING", "2025-11-20T01:00:00Z", current_focus="testing"
+        )
+
+        trajectory = store.get_trajectory(mission_id)
+        assert trajectory["current_phase"] == "CODING"
+        assert trajectory["current_focus"] == "testing"
+
+
+class TestProjectMemoryAdapter:
+    """Test ProjectMemory flattening adapter (v2)"""
+
+    def test_map_project_memory_to_sql(self):
+        """Test flattening project_memory.json into SQL tables"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission("test-001", "PLANNING", "in_progress")
+
+        memory = {
+            "narrative": [
+                {"session": 1, "summary": "Session 1", "date": "2025-11-20T00:00:00Z", "phase": "PLANNING"},
+                {"session": 2, "summary": "Session 2", "date": "2025-11-20T01:00:00Z", "phase": "CODING"},
+            ],
+            "domain": {
+                "concepts": ["payment", "database", "authentication"],
+                "concerns": ["PCI compliance", "performance"],
+            },
+            "trajectory": {
+                "phase": "CODING",
+                "current_focus": "payment integration",
+                "completed": ["PLANNING"],
+                "blockers": ["5 failing tests"],
+            },
+        }
+
+        store._map_project_memory_to_sql(memory, mission_id, "2025-11-20T00:00:00Z")
+
+        # Verify session narrative
+        narrative = store.get_session_narrative(mission_id)
+        assert len(narrative) == 2
+        assert narrative[0]["summary"] == "Session 1"
+
+        # Verify domain concepts
+        concepts = store.get_domain_concepts(mission_id)
+        assert len(concepts) == 3
+        assert "payment" in concepts
+
+        # Verify domain concerns
+        concerns = store.get_domain_concerns(mission_id)
+        assert len(concerns) == 2
+        assert "PCI compliance" in concerns
+
+        # Verify trajectory
+        trajectory = store.get_trajectory(mission_id)
+        assert trajectory["current_phase"] == "CODING"
+        assert trajectory["current_focus"] == "payment integration"
+        assert trajectory["blockers"] == ["5 failing tests"]
+
+
 class TestFullWorkflow:
     """Test complete mission lifecycle"""
 
@@ -567,3 +805,41 @@ class TestFullWorkflow:
         assert mission["status"] == "completed"
         assert len(store.get_tool_calls_for_mission(mission_id)) == 2
         assert len(store.get_decisions_for_mission(mission_id)) == 1
+
+    def test_full_v2_workflow(self):
+        """Test full v2 workflow with ProjectMemory and artifacts"""
+        store = SQLiteStore(":memory:")
+
+        # 1. Create mission with budget
+        mission_id = store.create_mission(
+            "test-v2-001",
+            "PLANNING",
+            "in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            max_cost_usd=100.0,
+            owner="agent@vibe.agency",
+            description="Test v2 mission",
+        )
+
+        # 2. Add session narrative
+        store.add_session_narrative(mission_id, 1, "Planning complete", "2025-11-20T00:00:00Z", "PLANNING")
+
+        # 3. Add artifacts
+        store.add_artifact(mission_id, "planning", "architecture", "2025-11-20T00:00:00Z")
+
+        # 4. Record quality gate
+        store.record_quality_gate(mission_id, "PLANNING_GATE", "passed", "2025-11-20T00:00:00Z")
+
+        # 5. Set trajectory
+        store.set_trajectory(
+            mission_id, "CODING", "2025-11-20T00:00:00Z", completed_phases=["PLANNING"]
+        )
+
+        # 6. Verify all data
+        mission = store.get_mission(mission_id)
+        assert mission["owner"] == "agent@vibe.agency"
+        assert len(store.get_session_narrative(mission_id)) == 1
+        assert len(store.get_artifacts(mission_id)) == 1
+        assert len(store.get_quality_gates(mission_id)) == 1
+        trajectory = store.get_trajectory(mission_id)
+        assert trajectory["current_phase"] == "CODING"
