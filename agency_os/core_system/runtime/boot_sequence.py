@@ -362,7 +362,7 @@ DO:
 
                 os.rename(json_file, backup_path)
 
-                print(f"✅ Legacy mission imported to SQLite", file=sys.stderr)
+                print("✅ Legacy mission imported to SQLite", file=sys.stderr)
                 print(f"   Mission UUID: {mission_uuid}", file=sys.stderr)
                 print(f"   SQLite ID: {imported_id}", file=sys.stderr)
                 print(f"   Backup: {backup_path.name}", file=sys.stderr)

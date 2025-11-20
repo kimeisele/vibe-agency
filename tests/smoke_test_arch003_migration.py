@@ -84,7 +84,7 @@ def test_migration():
 
     if mission:
         print("   ✅ Mission found in database!")
-        print(f"\n   SQL Proof:")
+        print("\n   SQL Proof:")
         print(f"   ├─ ID: {mission['id']}")
         print(f"   ├─ UUID: {mission['mission_uuid']}")
         print(f"   ├─ Phase: {mission['phase']}")
@@ -105,7 +105,7 @@ def test_migration():
         print(f"   ✅ JSON backed up: {backup_path.name}")
         print(f"   ✅ Original JSON removed: {mission_file.name}")
     else:
-        print(f"   ⚠️  JSON already moved")
+        print("   ⚠️  JSON already moved")
 
     # Step 6: Show full SQL query
     print("\n6️⃣ Full SQL Verification:")
@@ -120,7 +120,7 @@ def test_migration():
 
     if row:
         print("\n   ┌─ SQL Result ─────────────────────────────────────────┐")
-        for key in row.keys():
+        for key in row:
             value = row[key]
             if key == "metadata" and value:
                 # Parse JSON metadata
