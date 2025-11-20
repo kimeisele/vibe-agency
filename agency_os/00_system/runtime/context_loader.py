@@ -196,3 +196,87 @@ class ContextLoader:
                 "python_version": "unknown",
                 "status": f"error: {e!s}",
             }
+
+    # =========================================================================
+    # GAD-502: Context Projection - Vibe Injection
+    # =========================================================================
+
+    def inject_context(self, template_str: str) -> str:
+        """Inject live context into template with {{ placeholders }}
+
+        Args:
+            template_str: Template with {{ category.field }} placeholders
+
+        Returns:
+            Filled template with actual values
+
+        Example:
+            >>> loader = ContextLoader()
+            >>> template = "Branch: {{ git.branch }}"
+            >>> loader.inject_context(template)
+            "Branch: claude/feature-123"
+        """
+        import re
+
+        # Load all context sources
+        context = self.load()
+
+        # Find all placeholders: {{ key.subkey }}
+        pattern = r"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}"
+
+        def replace_placeholder(match: re.Match) -> str:
+            """Resolve a single placeholder to its value"""
+            placeholder = match.group(1)  # e.g., "git.branch"
+            parts = placeholder.split(".")
+
+            # Navigate nested dict
+            value = context
+            for part in parts:
+                if isinstance(value, dict):
+                    value = value.get(part)
+                    if value is None:
+                        # Fallback: keep original placeholder
+                        return match.group(0)
+                else:
+                    # Can't navigate further
+                    return match.group(0)
+
+            # Special formatting for complex types
+            if isinstance(value, list):
+                if not value:
+                    return "none"
+                return ", ".join(str(v) for v in value[:3])
+            elif isinstance(value, bool):
+                return "✅" if value else "❌"
+            elif value is None:
+                return "unknown"
+            else:
+                return str(value)
+
+        # Replace all placeholders
+        return re.sub(pattern, replace_placeholder, template_str)
+
+    @property
+    def context(self) -> dict[str, Any]:
+        """Cached context data (loaded once per instance)"""
+        if not hasattr(self, "_cached_context"):
+            self._cached_context = self.load()
+        return self._cached_context
+
+    def format_test_summary(self, tests: dict[str, Any]) -> str:
+        """Format test status for human readability
+
+        Args:
+            tests: Test context from load()
+
+        Returns:
+            Human-readable summary
+        """
+        if tests.get("status") != "available":
+            return f"Unavailable ({tests.get('status', 'unknown')})"
+
+        failing = tests.get("failing_count", 0)
+        if failing == 0:
+            return "✅ All passing"
+        else:
+            return f"❌ {failing} test(s) failing"

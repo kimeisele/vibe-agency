@@ -6,6 +6,16 @@
 
 ---
 
+## CURRENT SYSTEM STATE (Live Context - GAD-502)
+
+**Project Phase:** {{ session.phase }}
+**Git Branch:** {{ git.branch }}
+**Git Status:** {{ git.uncommitted }} uncommitted change(s)
+**Test Status:** {{ tests.status }} ({{ tests.failing_count }} failing)
+**Last Task:** {{ session.last_task }}
+
+---
+
 ## GOAL
 
 Invoke CODE_GENERATOR to produce source code and test artifacts.
