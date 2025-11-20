@@ -203,46 +203,33 @@ handle_health() {
     echo "╚════════════════════════════════════════════════════════════════════════════╝" >&2
     echo "" >&2
 
-    # Check 1: Config exists
+    # ========================================================================
+    # INFRASTRUCTURE CAPABILITY CHECKS (✅/❌ - Pass/Fail)
+    # ========================================================================
+
+    # Check 1: Config source of truth exists
     checks_total=$((checks_total + 1))
-    if [ -f "$VIBE_ROOT/.vibe/config/roadmap.yaml" ]; then
-        echo "✅ Config: .vibe/config/roadmap.yaml exists" >&2
+    if [ -f "$VIBE_ROOT/docs/cleanup_roadmap.json" ]; then
+        echo "✅ Config: docs/cleanup_roadmap.json exists" >&2
         checks_passed=$((checks_passed + 1))
     else
-        echo "❌ Config: .vibe/config/roadmap.yaml MISSING" >&2
+        echo "❌ Config: docs/cleanup_roadmap.json MISSING (critical git corruption)" >&2
         health_status=1
     fi
 
-    # Check 2: State exists
+    # Check 2: Storage writable (capability test)
     checks_total=$((checks_total + 1))
-    if [ -f "$VIBE_ROOT/.vibe/state/active_mission.json" ]; then
-        echo "✅ State: .vibe/state/active_mission.json exists" >&2
+    mkdir -p "$VIBE_ROOT/.vibe/state" 2>/dev/null
+    if touch "$VIBE_ROOT/.vibe/state/.write_test" 2>/dev/null; then
+        rm -f "$VIBE_ROOT/.vibe/state/.write_test"
+        echo "✅ Storage: Writable (.vibe/state/ accessible)" >&2
         checks_passed=$((checks_passed + 1))
     else
-        echo "❌ State: .vibe/state/active_mission.json MISSING" >&2
+        echo "❌ Storage: Read-Only / Permission Error (FAIL BOOT)" >&2
         health_status=1
     fi
 
-    # Check 3: Logs writable
-    checks_total=$((checks_total + 1))
-    if mkdir -p "$VIBE_LOGS_DIR" && [ -w "$VIBE_LOGS_DIR" ]; then
-        echo "✅ Logs: .vibe/logs/ is writable" >&2
-        checks_passed=$((checks_passed + 1))
-    else
-        echo "❌ Logs: .vibe/logs/ is NOT writable" >&2
-        health_status=1
-    fi
-
-    # Check 4: VirtualEnv active
-    checks_total=$((checks_total + 1))
-    if [ -n "${VIRTUAL_ENV:-}" ]; then
-        echo "✅ VirtualEnv: Active ($(basename $VIRTUAL_ENV))" >&2
-        checks_passed=$((checks_passed + 1))
-    else
-        echo "⚠️  VirtualEnv: Not active (optional, but recommended)" >&2
-    fi
-
-    # Check 5: Mission CLI reachable
+    # Check 3: Mission CLI reachable
     checks_total=$((checks_total + 1))
     if python3 "$VIBE_ROOT/bin/mission" status > /dev/null 2>&1; then
         echo "✅ Steward: Mission control reachable" >&2
@@ -253,8 +240,28 @@ handle_health() {
     fi
 
     echo "" >&2
+
+    # ========================================================================
+    # STATE OBSERVATIONS (👉/⚪ - Informational Only)
+    # ========================================================================
+
+    # Observation 1: Active mission state
+    if [ -f "$VIBE_ROOT/.vibe/state/active_mission.json" ]; then
+        echo "👉 Context: Active Mission Found (Resuming)" >&2
+    else
+        echo "⚪ Context: No Active Mission (Storage Empty)" >&2
+    fi
+
+    # Observation 2: VirtualEnv
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        echo "👉 VirtualEnv: Active ($(basename $VIRTUAL_ENV))" >&2
+    else
+        echo "⚪ VirtualEnv: Not active" >&2
+    fi
+
+    echo "" >&2
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-    echo "Health: $checks_passed/$checks_total checks passed" >&2
+    echo "Infrastructure: $checks_passed/$checks_total capability checks passed" >&2
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
 
     if [ $health_status -eq 0 ]; then
