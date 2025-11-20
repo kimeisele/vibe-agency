@@ -1,19 +1,25 @@
 """
-Test suite for SQLiteStore - SQLite persistence layer
+Test suite for SQLiteStore - SQLite persistence layer (Schema v2)
 
 ARCH-002 Acceptance Criteria:
 1. ✅ SQLiteStore class with CRUD methods
 2. ✅ Auto-creates .vibe/state/vibe_agency.db on first boot
-3. ✅ Handles schema migrations (PRAGMA user_version)
+3. ✅ Handles schema migrations (PRAGMA user_version = 2)
 4. ✅ Thread-safe (check_same_thread=False)
 5. ✅ 15+ tests with 80% coverage
+
+Schema v2 Updates:
+- Missions table: +10 columns (budget, metadata, status fields)
+- New tables: session_narrative, domain_concepts, domain_concerns, trajectory, artifacts, quality_gates
+- Total: 11 tables (5 original + 6 new)
 
 Test Strategy:
 - Use in-memory DB for fast tests (:memory:)
 - Test file-based DB for auto-creation behavior
-- Verify schema loaded correctly from ARCH-001_schema.sql
+- Verify schema v2 loaded correctly from ARCH-001_schema.sql
 - Test foreign key constraints (CASCADE DELETE)
-- Verify all CRUD operations
+- Verify all CRUD operations for missions (v2 fields)
+- TODO: Add tests for new tables (session_narrative, artifacts, etc.) in Part 2
 """
 
 import os
@@ -44,25 +50,38 @@ class TestSQLiteStoreInitialization:
             store.close()
 
     def test_init_loads_schema_from_arch001_sql(self):
-        """Test that schema is loaded from ARCH-001_schema.sql"""
+        """Test that schema v2 is loaded from ARCH-001_schema.sql"""
         store = SQLiteStore(":memory:")
-        # # Verify all 5 core tables exist
+        # Verify all 11 tables exist (5 original + 6 new)
         cursor = store.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         )
         tables = [row[0] for row in cursor.fetchall()]
+
+        # Original tables (v1)
         assert "missions" in tables
         assert "tool_calls" in tables
         assert "decisions" in tables
         assert "playbook_runs" in tables
         assert "agent_memory" in tables
 
+        # v2 new tables
+        assert "session_narrative" in tables
+        assert "domain_concepts" in tables
+        assert "domain_concerns" in tables
+        assert "trajectory" in tables
+        assert "artifacts" in tables
+        assert "quality_gates" in tables
+
+        # Verify total count (11 user tables + sqlite_sequence)
+        assert len(tables) == 12, f"Expected 12 tables (11 + sqlite_sequence), got {len(tables)}: {tables}"
+
     def test_init_sets_schema_version(self):
-        """Test that PRAGMA user_version is set to 1"""
+        """Test that PRAGMA user_version is set to 2"""
         store = SQLiteStore(":memory:")
         cursor = store.conn.execute("PRAGMA user_version")
         version = cursor.fetchone()[0]
-        assert version == 1, "Schema version should be 1 (from ARCH-001)"
+        assert version == 2, "Schema version should be 2 (v2 from ARCH-001)"
 
     def test_init_enables_foreign_keys(self):
         """Test that foreign key constraints are enabled"""
@@ -159,6 +178,146 @@ class TestMissionCRUD:
         store.create_mission("test-003", "TESTING", "pending")
         history = store.get_mission_history()
         assert len(history) == 3
+
+    # ========================================================================
+    # v2 TESTS: Budget tracking, metadata extraction
+    # ========================================================================
+
+    def test_create_mission_with_budget_fields(self):
+        """Test creating mission with budget tracking fields (v2)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission(
+            mission_uuid="test-budget-001",
+            phase="PLANNING",
+            status="in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            max_cost_usd=100.0,
+            current_cost_usd=25.0,
+            alert_threshold=0.80,
+            cost_breakdown={"PLANNING": 25.0},
+        )
+
+        mission = store.get_mission(mission_id)
+        assert mission["max_cost_usd"] == 100.0
+        assert mission["current_cost_usd"] == 25.0
+        assert mission["alert_threshold"] == 0.80
+        assert mission["cost_breakdown"] == {"PLANNING": 25.0}
+
+    def test_create_mission_with_metadata_fields(self):
+        """Test creating mission with metadata extraction fields (v2)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission(
+            mission_uuid="test-metadata-001",
+            phase="CODING",
+            status="in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            owner="agent@vibe.agency",
+            description="Test project for schema v2",
+            api_version="agency.os/v1alpha1",
+        )
+
+        mission = store.get_mission(mission_id)
+        assert mission["owner"] == "agent@vibe.agency"
+        assert mission["description"] == "Test project for schema v2"
+        assert mission["api_version"] == "agency.os/v1alpha1"
+
+    def test_create_mission_with_planning_sub_state(self):
+        """Test creating mission with planning_sub_state field (v2)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission(
+            mission_uuid="test-substate-001",
+            phase="PLANNING",
+            status="in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            planning_sub_state="RESEARCH",
+        )
+
+        mission = store.get_mission(mission_id)
+        assert mission["planning_sub_state"] == "RESEARCH"
+
+    def test_create_mission_with_updated_at(self):
+        """Test creating mission with updated_at field (v2)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission(
+            mission_uuid="test-updated-001",
+            phase="CODING",
+            status="in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            updated_at="2025-11-20T01:00:00Z",
+        )
+
+        mission = store.get_mission(mission_id)
+        assert mission["updated_at"] == "2025-11-20T01:00:00Z"
+
+    def test_update_mission_budget(self):
+        """Test updating mission budget (v2)"""
+        store = SQLiteStore(":memory:")
+        mission_id = store.create_mission(
+            mission_uuid="test-budget-update-001",
+            phase="PLANNING",
+            status="in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            max_cost_usd=100.0,
+            current_cost_usd=25.0,
+        )
+
+        # Update budget
+        store.update_mission_budget(mission_id, current_cost_usd=50.0)
+        mission = store.get_mission(mission_id)
+        assert mission["current_cost_usd"] == 50.0
+
+    def test_query_missions_over_budget(self):
+        """Test querying missions that exceed budget (v2)"""
+        store = SQLiteStore(":memory:")
+
+        # Mission 1: Under budget
+        store.create_mission(
+            "test-001",
+            "PLANNING",
+            "in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            max_cost_usd=100.0,
+            current_cost_usd=50.0,
+        )
+
+        # Mission 2: Over budget
+        store.create_mission(
+            "test-002",
+            "CODING",
+            "in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            max_cost_usd=100.0,
+            current_cost_usd=150.0,
+        )
+
+        # Query missions over budget
+        over_budget = store.get_missions_over_budget()
+        assert len(over_budget) == 1
+        assert over_budget[0]["mission_uuid"] == "test-002"
+
+    def test_query_missions_by_owner(self):
+        """Test querying missions by owner (v2)"""
+        store = SQLiteStore(":memory:")
+
+        store.create_mission(
+            "test-001",
+            "PLANNING",
+            "in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            owner="agent1@vibe.agency",
+        )
+        store.create_mission(
+            "test-002",
+            "CODING",
+            "in_progress",
+            created_at="2025-11-20T00:00:00Z",
+            owner="agent2@vibe.agency",
+        )
+
+        # Query missions by owner
+        agent1_missions = store.get_missions_by_owner("agent1@vibe.agency")
+        assert len(agent1_missions) == 1
+        assert agent1_missions[0]["mission_uuid"] == "test-001"
 
 
 class TestToolCallLogging:

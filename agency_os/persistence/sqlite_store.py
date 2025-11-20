@@ -1,14 +1,15 @@
 """
-SQLite persistence layer for vibe-agency
+SQLite persistence layer for vibe-agency (Schema v2)
 
 Implements ARCH-002: SQLiteStore class with CRUD operations for:
-- Missions (lifecycle tracking)
+- Missions (lifecycle tracking + budget + metadata)
 - Tool calls (audit trail)
 - Decisions (provenance)
 - Playbook runs (metrics)
 - Agent memory (context persistence)
+- TODO: Session narrative, artifacts, quality gates (Part 2)
 
-Schema: docs/tasks/ARCH-001_schema.sql
+Schema: docs/tasks/ARCH-001_schema.sql (v2)
 """
 
 import json
@@ -127,22 +128,122 @@ class SQLiteStore:
     # MISSION CRUD
     # ========================================================================
 
+    def _map_manifest_to_missions_row(self, manifest: dict[str, Any]) -> dict[str, Any]:
+        """
+        Adapter: Convert project_manifest.json to missions table row (v2)
+
+        This is the core adapter logic from SCHEMA_REALITY_CHECK.md Section 6.1.
+        Extracts budget, metadata, and nested fields from project_manifest.json
+        and flattens them into missions table columns.
+
+        Args:
+            manifest: project_manifest.json dict
+
+        Returns:
+            Dict with missions table columns (ready for create_mission(**kwargs))
+
+        Example:
+            manifest = json.load(open('workspaces/proj/project_manifest.json'))
+            missions_row = store._map_manifest_to_missions_row(manifest)
+            mission_id = store.create_mission(**missions_row)
+        """
+        metadata_section = manifest.get("metadata", {})
+        status_section = manifest.get("status", {})
+        budget_section = manifest.get("budget", {})
+
+        # Extract metadata fields for queryability
+        mission_uuid = metadata_section.get("projectId", "unknown")
+        owner = metadata_section.get("owner")
+        description = metadata_section.get("description")
+        api_version = manifest.get("apiVersion", "agency.os/v1alpha1")
+
+        # Extract status fields
+        phase = status_section.get("projectPhase", "PLANNING")
+        planning_sub_state = status_section.get("planningSubState")
+
+        # Infer status from phase (Reality Check requirement)
+        # If completed_at exists → completed, else in_progress
+        completed_at = status_section.get("completedAt")
+        if completed_at:
+            status = "completed"
+        elif phase == "PRODUCTION":
+            status = "completed"
+        else:
+            status = "in_progress"
+
+        # Timestamps
+        created_at = metadata_section.get("createdAt")
+        updated_at = metadata_section.get("lastUpdatedAt")
+
+        # Budget tracking
+        max_cost_usd = budget_section.get("max_cost_usd")
+        current_cost_usd = budget_section.get("current_cost_usd", 0.0)
+        alert_threshold = budget_section.get("alert_threshold", 0.80)
+        cost_breakdown = budget_section.get("cost_breakdown")
+
+        # Store remaining data in metadata JSON
+        # (spec, artifacts will be handled by dedicated tables in Part 2)
+        metadata_json = {
+            "spec": manifest.get("spec"),
+            "kind": manifest.get("kind"),
+            # Store artifacts reference (Part 2 will extract to artifacts table)
+            "artifacts": manifest.get("artifacts"),
+        }
+
+        return {
+            "mission_uuid": mission_uuid,
+            "phase": phase,
+            "status": status,
+            "created_at": created_at,
+            "completed_at": completed_at,
+            "updated_at": updated_at,
+            "planning_sub_state": planning_sub_state,
+            "max_cost_usd": max_cost_usd,
+            "current_cost_usd": current_cost_usd,
+            "alert_threshold": alert_threshold,
+            "cost_breakdown": cost_breakdown,
+            "owner": owner,
+            "description": description,
+            "api_version": api_version,
+            "metadata": metadata_json,
+        }
+
     def create_mission(
         self,
         mission_uuid: str,
         phase: str,
         status: str,
         created_at: str = None,
+        completed_at: str | None = None,
+        updated_at: str | None = None,
+        planning_sub_state: str | None = None,
+        max_cost_usd: float | None = None,
+        current_cost_usd: float = 0.0,
+        alert_threshold: float = 0.80,
+        cost_breakdown: dict[str, Any] | None = None,
+        owner: str | None = None,
+        description: str | None = None,
+        api_version: str = "agency.os/v1alpha1",
         metadata: dict[str, Any] | None = None,
     ) -> int:
         """
-        Create a new mission
+        Create a new mission (Schema v2)
 
         Args:
             mission_uuid: External UUID identifier
             phase: SDLC phase (PLANNING, CODING, TESTING, DEPLOYMENT, MAINTENANCE)
             status: Mission status (pending, in_progress, completed, failed)
-            created_at: ISO 8601 timestamp (optional)
+            created_at: ISO 8601 timestamp (optional, defaults to now)
+            completed_at: ISO 8601 completion timestamp (optional)
+            updated_at: ISO 8601 last update timestamp (optional)
+            planning_sub_state: Planning sub-state (RESEARCH, BUSINESS_VALIDATION, FEATURE_SPECIFICATION)
+            max_cost_usd: Maximum budget for mission (optional)
+            current_cost_usd: Current spend (default: 0.0)
+            alert_threshold: Budget alert threshold 0.0-1.0 (default: 0.80)
+            cost_breakdown: Cost breakdown by phase/agent as dict (optional)
+            owner: Mission owner (e.g., 'agent@vibe.agency')
+            description: Human-readable description
+            api_version: Manifest API version (default: 'agency.os/v1alpha1')
             metadata: Additional mission data as dict (optional)
 
         Returns:
@@ -156,19 +257,53 @@ class SQLiteStore:
         with self._lock:
             cursor = self.conn.execute(
                 """
-                INSERT INTO missions (mission_uuid, phase, status, created_at, metadata)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO missions (
+                    mission_uuid, phase, status, created_at, completed_at, updated_at,
+                    planning_sub_state,
+                    max_cost_usd, current_cost_usd, alert_threshold, cost_breakdown,
+                    owner, description, api_version,
+                    metadata
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     mission_uuid,
                     phase,
                     status,
                     created_at,
+                    completed_at,
+                    updated_at,
+                    planning_sub_state,
+                    max_cost_usd,
+                    current_cost_usd,
+                    alert_threshold,
+                    json.dumps(cost_breakdown) if cost_breakdown else None,
+                    owner,
+                    description,
+                    api_version,
                     json.dumps(metadata) if metadata else None,
                 ),
             )
             self._commit()
             return cursor.lastrowid
+
+    def _parse_mission_row(self, row: sqlite3.Row) -> dict[str, Any]:
+        """
+        Parse mission row and deserialize JSON fields
+
+        Args:
+            row: SQLite row
+
+        Returns:
+            Mission dict with parsed JSON fields
+        """
+        mission = dict(row)
+        # Parse JSON fields (v2)
+        if mission.get("metadata"):
+            mission["metadata"] = json.loads(mission["metadata"])
+        if mission.get("cost_breakdown"):
+            mission["cost_breakdown"] = json.loads(mission["cost_breakdown"])
+        return mission
 
     def get_mission(self, mission_id: int) -> dict[str, Any] | None:
         """
@@ -185,11 +320,7 @@ class SQLiteStore:
         if row is None:
             return None
 
-        mission = dict(row)
-        # Parse JSON fields
-        if mission.get("metadata"):
-            mission["metadata"] = json.loads(mission["metadata"])
-        return mission
+        return self._parse_mission_row(row)
 
     def get_mission_by_uuid(self, mission_uuid: str) -> dict[str, Any] | None:
         """
@@ -206,10 +337,7 @@ class SQLiteStore:
         if row is None:
             return None
 
-        mission = dict(row)
-        if mission.get("metadata"):
-            mission["metadata"] = json.loads(mission["metadata"])
-        return mission
+        return self._parse_mission_row(row)
 
     def update_mission_status(self, mission_id: int, status: str, completed_at: str | None = None):
         """
@@ -234,13 +362,7 @@ class SQLiteStore:
             List of mission dicts, ordered by created_at DESC
         """
         cursor = self.conn.execute("SELECT * FROM missions ORDER BY created_at DESC")
-        missions = []
-        for row in cursor.fetchall():
-            mission = dict(row)
-            if mission.get("metadata"):
-                mission["metadata"] = json.loads(mission["metadata"])
-            missions.append(mission)
-        return missions
+        return [self._parse_mission_row(row) for row in cursor.fetchall()]
 
     def get_all_missions(self) -> list[dict[str, Any]]:
         """Alias for get_mission_history()"""
@@ -255,6 +377,88 @@ class SQLiteStore:
         """
         self.conn.execute("DELETE FROM missions WHERE id = ?", (mission_id,))
         self._commit()
+
+    # ========================================================================
+    # v2: MISSION BUDGET OPERATIONS
+    # ========================================================================
+
+    def update_mission_budget(
+        self,
+        mission_id: int,
+        current_cost_usd: float | None = None,
+        max_cost_usd: float | None = None,
+        alert_threshold: float | None = None,
+        cost_breakdown: dict[str, Any] | None = None,
+    ):
+        """
+        Update mission budget fields (v2)
+
+        Args:
+            mission_id: Mission ID
+            current_cost_usd: New current cost (optional)
+            max_cost_usd: New max budget (optional)
+            alert_threshold: New alert threshold (optional)
+            cost_breakdown: New cost breakdown dict (optional)
+        """
+        updates = []
+        params = []
+
+        if current_cost_usd is not None:
+            updates.append("current_cost_usd = ?")
+            params.append(current_cost_usd)
+
+        if max_cost_usd is not None:
+            updates.append("max_cost_usd = ?")
+            params.append(max_cost_usd)
+
+        if alert_threshold is not None:
+            updates.append("alert_threshold = ?")
+            params.append(alert_threshold)
+
+        if cost_breakdown is not None:
+            updates.append("cost_breakdown = ?")
+            params.append(json.dumps(cost_breakdown))
+
+        if not updates:
+            return  # Nothing to update
+
+        params.append(mission_id)
+        sql = f"UPDATE missions SET {', '.join(updates)} WHERE id = ?"
+        self.conn.execute(sql, params)
+        self._commit()
+
+    def get_missions_over_budget(self) -> list[dict[str, Any]]:
+        """
+        Get missions that exceed their budget (v2)
+
+        Returns:
+            List of mission dicts where current_cost_usd > max_cost_usd
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT * FROM missions
+            WHERE max_cost_usd IS NOT NULL
+              AND current_cost_usd > max_cost_usd
+            ORDER BY created_at DESC
+        """
+        )
+        return [self._parse_mission_row(row) for row in cursor.fetchall()]
+
+    def get_missions_by_owner(self, owner: str) -> list[dict[str, Any]]:
+        """
+        Get missions by owner (v2)
+
+        Args:
+            owner: Owner identifier (e.g., 'agent@vibe.agency')
+
+        Returns:
+            List of mission dicts owned by specified owner
+        """
+        cursor = self.conn.execute(
+            "SELECT * FROM missions WHERE owner = ? ORDER BY created_at DESC",
+            (owner,),
+        )
+        return [self._parse_mission_row(row) for row in cursor.fetchall()]
 
     # ========================================================================
     # TOOL CALL LOGGING
