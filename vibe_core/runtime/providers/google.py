@@ -80,9 +80,10 @@ class GoogleProvider(LLMProvider):
         try:
             import google.generativeai as genai
 
-            genai.configure(api_key=self.api_key)
+            # Force REST transport to avoid gRPC SSL issues in restricted environments
+            genai.configure(api_key=self.api_key, transport='rest')
             self.genai = genai
-            logger.info("Google Gemini provider initialized successfully")
+            logger.info("Google Gemini provider initialized successfully (transport=REST)")
         except ImportError as e:
             raise ProviderNotAvailableError(
                 "google-generativeai package not installed. Install with: pip install google-generativeai>=0.8.0"
