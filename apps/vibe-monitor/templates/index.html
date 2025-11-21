@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Agency - System Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Vibe Agency - System Monitor</h1>
+            <p class="subtitle">Real-time system health dashboard • ARCH-019</p>
+        </header>
+
+        <div id="loading" class="loading">
+            <p>Loading system status...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <h3>❌ Error Loading Status</h3>
+            <p id="error-message"></p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Overall Status Badge -->
+            <section class="status-section">
+                <h2>System Status</h2>
+                <div id="overall-status" class="status-badge">
+                    <!-- Filled by JavaScript -->
+                </div>
+                <p class="timestamp">Last updated: <span id="timestamp"></span></p>
+            </section>
+
+            <!-- Health Checks -->
+            <section class="health-section">
+                <h2>Health Checks</h2>
+                <table id="health-table" class="health-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Component</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="health-tbody">
+                        <!-- Filled by JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Cartridges -->
+            <section class="cartridges-section">
+                <h2>Loaded Cartridges</h2>
+                <table id="cartridges-table" class="cartridges-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartridges-tbody">
+                        <!-- Filled by JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Next Actions -->
+            <section class="actions-section">
+                <h2>Next Actions</h2>
+                <div id="next-actions">
+                    <!-- Filled by JavaScript -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with ❤️ by Vibe Agency • ARCH-019: First Native Artifact</p>
+        <p class="footnote">Auto-refreshes every 5 seconds</p>
+    </footer>
+
+    <script>
+        // API endpoint
+        const API_URL = '/api/status';
+
+        // Auto-refresh interval (5 seconds)
+        const REFRESH_INTERVAL = 5000;
+        let refreshTimer = null;
+
+        /**
+         * Fetch system status from API
+         */
+        async function fetchStatus() {
+            try {
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderStatus(data);
+
+                // Hide loading/error, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                showError(error.message);
+            }
+        }
+
+        /**
+         * Render status data to the UI
+         */
+        function renderStatus(data) {
+            // Overall status badge
+            const statusBadge = document.getElementById('overall-status');
+            const isHealthy = data.status === 'healthy';
+            statusBadge.className = `status-badge ${isHealthy ? 'healthy' : 'degraded'}`;
+            statusBadge.textContent = isHealthy ? '✅ Healthy' : '⚠️ Degraded';
+
+            // Timestamp
+            const timestamp = new Date(data.timestamp).toLocaleString();
+            document.getElementById('timestamp').textContent = timestamp;
+
+            // Health checks table
+            renderHealthChecks(data.health);
+
+            // Cartridges table
+            renderCartridges(data.cartridges);
+
+            // Next actions
+            renderNextActions(data.next_actions);
+        }
+
+        /**
+         * Render health checks table
+         */
+        function renderHealthChecks(health) {
+            const tbody = document.getElementById('health-tbody');
+            tbody.innerHTML = '';
+
+            for (const [name, check] of Object.entries(health)) {
+                const row = tbody.insertRow();
+
+                // Status icon
+                const statusCell = row.insertCell();
+                statusCell.className = 'status-icon';
+                statusCell.textContent = check.status ? '✅' : '❌';
+
+                // Component name
+                const nameCell = row.insertCell();
+                nameCell.textContent = name;
+                nameCell.className = check.status ? 'check-pass' : 'check-fail';
+
+                // Message
+                const messageCell = row.insertCell();
+                messageCell.textContent = check.message;
+                messageCell.className = 'message';
+            }
+        }
+
+        /**
+         * Render cartridges table
+         */
+        function renderCartridges(cartridges) {
+            const tbody = document.getElementById('cartridges-tbody');
+            tbody.innerHTML = '';
+
+            if (!cartridges || cartridges.length === 0) {
+                const row = tbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 2;
+                cell.textContent = 'No cartridges available';
+                cell.className = 'no-data';
+                return;
+            }
+
+            cartridges.forEach(cartridge => {
+                const row = tbody.insertRow();
+
+                // Name
+                const nameCell = row.insertCell();
+                nameCell.textContent = cartridge.name;
+                nameCell.className = 'cartridge-name';
+
+                // Description
+                const descCell = row.insertCell();
+                descCell.textContent = cartridge.description;
+                descCell.className = 'cartridge-desc';
+            });
+        }
+
+        /**
+         * Render next actions
+         */
+        function renderNextActions(actions) {
+            const container = document.getElementById('next-actions');
+            container.innerHTML = '';
+
+            if (!actions || actions.length === 0) {
+                container.textContent = 'No suggested actions';
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'actions-list';
+
+            actions.forEach(action => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <code>${action.command}</code>
+                    <span class="action-purpose">${action.purpose}</span>
+                `;
+                list.appendChild(item);
+            });
+
+            container.appendChild(list);
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        /**
+         * Start auto-refresh
+         */
+        function startAutoRefresh() {
+            refreshTimer = setInterval(fetchStatus, REFRESH_INTERVAL);
+        }
+
+        /**
+         * Initialize dashboard
+         */
+        function init() {
+            console.log('Vibe Monitor Dashboard initialized');
+
+            // Initial fetch
+            fetchStatus();
+
+            // Start auto-refresh
+            startAutoRefresh();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', init);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+        });
+    </script>
+</body>
+</html>

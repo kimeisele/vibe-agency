@@ -1,0 +1,251 @@
+# ARCH-019: Vibe Monitor - First Native Artifact
+# ================================================
+# This playbook builds a web dashboard that visualizes system status
+# by consuming ./bin/vibe status --json output.
+#
+# Mission: Validate GAD-000 (JSON Output) and the Repair Loop
+#
+# Use case: vibe run ARCH-019-monitor
+#
+
+id: ARCH-019-monitor
+name: Vibe Monitor Build
+description: Build a web dashboard to visualize system status using the new JSON interface
+version: "1.0"
+
+# =============================================================================
+# AGENTS
+# =============================================================================
+agents:
+  coder:
+    role: "Full-Stack Developer"
+    description: "Implements web applications, writes clean code, follows standards"
+    skills:
+      - coding
+      - web_development
+      - api_design
+      - frontend
+      - backend
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.3
+
+  tester:
+    role: "Integration Testing Specialist"
+    description: "Tests web applications, verifies API endpoints, ensures quality"
+    skills:
+      - testing
+      - integration_testing
+      - api_testing
+      - debugging
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.2
+
+# =============================================================================
+# TOOLS
+# =============================================================================
+tools:
+  code_editor:
+    enabled: true
+    config:
+      allowed_extensions:
+        - .py
+        - .html
+        - .css
+        - .js
+        - .json
+        - .txt
+
+  file_system:
+    enabled: true
+    config:
+      allowed_paths:
+        - apps/vibe-monitor
+
+  test_runner:
+    enabled: true
+    config:
+      test_framework: "pytest"
+      command_timeout: 30
+
+  shell_executor:
+    enabled: true
+    config:
+      allowed_commands:
+        - python3
+        - curl
+        - kill
+        - ps
+
+# =============================================================================
+# PHASES
+# =============================================================================
+phases:
+  # Phase 1: Scaffold Application
+  - name: "CODING"
+    description: "Phase 1 - Scaffold the web application structure"
+    agents:
+      - coder
+    tools:
+      - code_editor
+      - file_system
+    instructions: |
+      Create the directory structure for the Vibe Monitor web application:
+
+      1. Create directory: apps/vibe-monitor/
+      2. Initialize a simple Python web app using Flask (lightweight for MVP)
+      3. Create the following files:
+         - apps/vibe-monitor/app.py (main Flask application)
+         - apps/vibe-monitor/requirements.txt (Flask and dependencies)
+         - apps/vibe-monitor/templates/index.html (frontend UI)
+         - apps/vibe-monitor/static/style.css (basic styling)
+         - apps/vibe-monitor/README.md (usage instructions)
+
+      IMPORTANT: Do not start the implementation yet, just create the file structure.
+    output_artifact: "scaffold_complete.txt"
+
+  # Phase 2: Implement Backend
+  - name: "CODING"
+    description: "Phase 2 - Implement backend API endpoint"
+    agents:
+      - coder
+    tools:
+      - code_editor
+      - file_system
+    instructions: |
+      Implement the backend logic in apps/vibe-monitor/app.py:
+
+      1. Create a Flask app with two routes:
+         - GET / : Serve the index.html template
+         - GET /api/status : Execute './bin/vibe status --json' and return parsed JSON
+
+      2. The /api/status endpoint must:
+         - Execute the command: python3 bin/vibe status --json
+         - Use subprocess to capture stdout
+         - Parse the output as JSON
+         - Handle errors gracefully (if command fails, return 500 with error details)
+         - Return the JSON response with proper CORS headers
+
+      3. Error handling is CRITICAL:
+         - Catch subprocess errors
+         - Catch JSON parsing errors
+         - Return structured error responses
+
+      4. Add basic logging for debugging
+
+      Requirements:
+      - Flask>=3.0.0
+      - No additional dependencies unless absolutely necessary
+    input_artifact: "scaffold_complete.txt"
+    output_artifact: "backend_complete.txt"
+
+  # Phase 3: Implement Frontend
+  - name: "CODING"
+    description: "Phase 3 - Implement frontend UI"
+    agents:
+      - coder
+    tools:
+      - code_editor
+      - file_system
+    instructions: |
+      Implement the frontend in apps/vibe-monitor/templates/index.html:
+
+      1. Create a clean, responsive HTML page with:
+         - Title: "Vibe Agency - System Monitor"
+         - Auto-refresh every 5 seconds
+         - Display sections for:
+           a. System Health Status (Overall: Healthy/Degraded badge)
+           b. Health Checks (table with check name, status icon, message)
+           c. Loaded Cartridges (table with name and description)
+           d. Timestamp (last update time)
+
+      2. Use vanilla JavaScript to:
+         - Fetch data from /api/status endpoint
+         - Update the UI dynamically
+         - Show loading state while fetching
+         - Display errors if fetch fails
+
+      3. Styling (apps/vibe-monitor/static/style.css):
+         - Clean, modern look
+         - Green badges for healthy status
+         - Red badges for degraded/error status
+         - Responsive layout
+         - Dark background with light text (terminal aesthetic)
+
+      4. No external dependencies (no jQuery, no Bootstrap) - keep it simple
+    input_artifact: "backend_complete.txt"
+    output_artifact: "frontend_complete.txt"
+
+  # Phase 4: Integration Testing
+  - name: "TESTING"
+    description: "Phase 4 - Test the web application end-to-end"
+    agents:
+      - tester
+    tools:
+      - test_runner
+      - shell_executor
+      - file_system
+    instructions: |
+      Verify the Vibe Monitor application works correctly:
+
+      1. Start the Flask server in the background:
+         - cd apps/vibe-monitor
+         - python3 app.py & (save the PID)
+         - Wait 2 seconds for server to start
+
+      2. Test the /api/status endpoint:
+         - curl http://localhost:5000/api/status
+         - Verify response is valid JSON
+         - Verify required keys exist: 'status', 'health', 'cartridges', 'timestamp'
+         - Verify health checks are present
+         - Verify cartridges list is not empty
+
+      3. Test the / endpoint (index page):
+         - curl http://localhost:5000/
+         - Verify HTML is returned
+         - Verify it contains expected text: "Vibe Agency", "System Monitor"
+
+      4. Stop the server:
+         - kill $PID
+         - Verify server stopped cleanly
+
+      5. Document test results in a report
+
+      PASS CRITERIA:
+      - /api/status returns valid JSON with all required keys
+      - JSON structure matches GAD-000 format from ./bin/vibe status --json
+      - Frontend HTML renders without errors
+      - Server starts and stops cleanly
+
+      If any test fails, document the failure and report back to the Orchestrator
+      for repair loop iteration.
+    input_artifact: "frontend_complete.txt"
+    output_artifact: "test_results.json"
+
+# =============================================================================
+# METADATA
+# =============================================================================
+metadata:
+  version: "1.0"
+  category: "application-development"
+  author: "System Architect"
+  complexity: "medium"
+  estimated_duration_minutes: 20
+  tags:
+    - arch-019
+    - vibe-monitor
+    - web-dashboard
+    - gad-000-validation
+    - native-artifact
+
+  success_criteria:
+    - "Web application serves on http://localhost:5000"
+    - "/api/status endpoint returns valid GAD-000 JSON"
+    - "Frontend displays system health visually"
+    - "All integration tests pass"
+
+  validation:
+    - "GAD-000 JSON format is correctly consumed"
+    - "Repair loop activates if tests fail"
+    - "Application provides real monitoring value"
