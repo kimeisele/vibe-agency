@@ -1,8 +1,8 @@
 # Specialist Agent Contract (ARCH-005)
 
 **Status:** ✅ COMPLETE (Phase 2.5 - ARCH-005)
-**Version:** 1.0
-**Last Updated:** 2025-11-20
+**Version:** 1.1
+**Last Updated:** 2025-11-21 (imports fixed for post-split architecture)
 
 ---
 
@@ -202,7 +202,7 @@ Load specialist state from SQLite (crash recovery). Default implementation loads
 ### Step 1: Create Specialist Class
 
 ```python
-from agency_os.agents import BaseSpecialist, MissionContext, SpecialistResult
+from vibe_core.specialists import BaseSpecialist, MissionContext, SpecialistResult
 
 class PlanningSpecialist(BaseSpecialist):
     """
@@ -332,9 +332,9 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from agency_os.agents import BaseSpecialist, MissionContext, SpecialistResult
-from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.specialists import BaseSpecialist, MissionContext, SpecialistResult
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.store.sqlite_store import SQLiteStore
 
 logger = logging.getLogger(__name__)
 
@@ -451,9 +451,9 @@ class PlanningSpecialist(BaseSpecialist):
 ```python
 import pytest
 from pathlib import Path
-from agency_os.agents import MissionContext
-from agency_os.core_system.runtime.tool_safety_guard import ToolSafetyGuard
-from agency_os.persistence.sqlite_store import SQLiteStore
+from vibe_core.specialists import MissionContext
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.store.sqlite_store import SQLiteStore
 from agency_os.agents.planning_specialist import PlanningSpecialist
 
 
