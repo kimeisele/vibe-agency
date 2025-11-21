@@ -35,7 +35,7 @@ class GoogleProvider(LLMProvider):
     the simple chat-based interface.
 
     Example:
-        >>> provider = GoogleProvider(api_key="...", model="gemini-2.5-flash-exp")
+        >>> provider = GoogleProvider(api_key="...", model="gemini-2.5-flash")
         >>> messages = [
         ...     {"role": "system", "content": "You are helpful."},
         ...     {"role": "user", "content": "Hello!"}
@@ -47,7 +47,7 @@ class GoogleProvider(LLMProvider):
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "gemini-2.5-flash-exp",
+        model: str = "gemini-2.5-flash",
         **kwargs: Any,
     ):
         """
