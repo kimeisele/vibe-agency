@@ -1,0 +1,58 @@
+# config/soul.yaml
+# The "Soul" of the Vibe Agency - Invariant Rules for Governance
+#
+# This file defines hard constraints that MUST be enforced before any tool execution.
+# Think of this as the "Über-Ich" (Superego) - what may be done, not what can be done.
+#
+# Version: 1.0
+# Created: 2025-11-21 (ARCH-029)
+
+name: "Vibe Guardian"
+version: "1.0"
+
+safety_rules:
+  # Filesystem Protection - Critical System Files
+  - id: "protect_git"
+    condition: "path_contains"
+    pattern: ".git"
+    action: "block"
+    message: "Touching .git is forbidden by Soul Law. Version control integrity is sacrosanct."
+
+  - id: "protect_kernel_core"
+    condition: "path_matches"
+    pattern: "vibe_core/kernel.py"
+    action: "block"
+    message: "Kernel core modification requires Root override. This is the heart of the system."
+
+  - id: "protect_governance"
+    condition: "path_contains"
+    pattern: "vibe_core/governance"
+    action: "block"
+    message: "Governance layer self-modification is forbidden. No agent may alter its own constraints."
+
+  # Sandbox Confinement - Prevent Directory Traversal
+  - id: "sandbox_confinement"
+    condition: "path_outside_root"
+    action: "block"
+    message: "Cannot access files outside project root. Sandbox confinement is absolute."
+
+  # Protect Configuration
+  - id: "protect_soul_config"
+    condition: "path_matches"
+    pattern: "config/soul.yaml"
+    action: "block"
+    message: "Soul configuration cannot be modified by agents. Only humans may change the soul."
+
+  # Protect Critical Infrastructure
+  - id: "protect_database"
+    condition: "path_contains"
+    pattern: ".db"
+    action: "block"
+    message: "Direct database file manipulation is forbidden. Use proper APIs."
+
+# Future extensions:
+# - Rate limiting rules
+# - Resource quota enforcement
+# - Time-based constraints (e.g., no deployments on Friday night)
+# - Network access restrictions
+# - API call budgets

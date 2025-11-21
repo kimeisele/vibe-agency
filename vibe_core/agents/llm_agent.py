@@ -9,8 +9,7 @@ Updated in ARCH-027 to support tool-use capability.
 
 import json
 import logging
-import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from vibe_core.agent_protocol import VibeAgent
 from vibe_core.llm import LLMError, LLMProvider
@@ -59,8 +58,8 @@ class SimpleLLMAgent(VibeAgent):
         self,
         agent_id: str,
         provider: LLMProvider,
-        system_prompt: Optional[str] = None,
-        model: Optional[str] = None,
+        system_prompt: str | None = None,
+        model: str | None = None,
         tool_registry: Optional["ToolRegistry"] = None,  # noqa: F821
     ):
         """
@@ -103,7 +102,7 @@ class SimpleLLMAgent(VibeAgent):
         """Return the agent's unique identifier."""
         return self._agent_id
 
-    def process(self, task: Task) -> Dict[str, Any]:
+    def process(self, task: Task) -> dict[str, Any]:
         """
         Process a task by sending it to the LLM provider.
 
@@ -142,9 +141,7 @@ class SimpleLLMAgent(VibeAgent):
         # Extract user message from payload
         payload = task.payload
         if not isinstance(payload, dict):
-            raise ValueError(
-                f"Task payload must be a dict, got {type(payload).__name__}"
-            )
+            raise ValueError(f"Task payload must be a dict, got {type(payload).__name__}")
 
         user_message = payload.get("user_message")
         if not user_message:
@@ -171,8 +168,7 @@ class SimpleLLMAgent(VibeAgent):
             response = self.provider.chat(messages, model=model_to_use)
 
             logger.info(
-                f"AGENT: {self.agent_id} received LLM response "
-                f"(length={len(response)})"
+                f"AGENT: {self.agent_id} received LLM response " f"(length={len(response)})"
             )
             logger.debug(f"AGENT: LLM response: {response}")
 
@@ -194,31 +190,18 @@ class SimpleLLMAgent(VibeAgent):
             }
 
         except Exception as e:
-            logger.error(
-                f"AGENT: {self.agent_id} LLM call failed for task {task.id}: {e}"
-            )
-
-            # Return error result (let kernel handle the exception)
-            error_result = {
-                "response": None,
-                "model_used": model_to_use or "default",
-                "provider": self.provider.__class__.__name__,
-                "success": False,
-                "error": str(e)
-            }
+            logger.error(f"AGENT: {self.agent_id} LLM call failed for task {task.id}: {e}")
 
             # Re-raise as LLMError for proper error handling
             raise LLMError(
-                message=f"LLM call failed: {str(e)}",
+                message=f"LLM call failed: {e!s}",
                 provider=self.provider.__class__.__name__,
-                original_error=e
+                original_error=e,
             )
 
     def _build_messages(
-        self,
-        user_message: str,
-        context: Optional[Dict] = None
-    ) -> List[Dict[str, str]]:
+        self, user_message: str, context: dict | None = None
+    ) -> list[dict[str, str]]:
         """
         Build the message list for the LLM provider.
 
@@ -249,20 +232,14 @@ class SimpleLLMAgent(VibeAgent):
             context_str = "\n".join(f"{k}: {v}" for k, v in context.items())
             system_content = f"{system_content}\n\nContext:\n{context_str}"
 
-        messages.append({
-            "role": "system",
-            "content": system_content
-        })
+        messages.append({"role": "system", "content": system_content})
 
         # Add user message
-        messages.append({
-            "role": "user",
-            "content": user_message
-        })
+        messages.append({"role": "user", "content": user_message})
 
         return messages
 
-    def _extract_tool_call(self, response: str) -> Optional[Dict[str, Any]]:
+    def _extract_tool_call(self, response: str) -> dict[str, Any] | None:
         """
         Extract tool call from LLM response.
 
@@ -311,7 +288,7 @@ class SimpleLLMAgent(VibeAgent):
 
         return None
 
-    def _execute_tool_call(self, tool_call_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_tool_call(self, tool_call_data: dict[str, Any]) -> dict[str, Any]:
         """
         Execute a tool call via the tool registry.
 

@@ -6,14 +6,10 @@ Verifies that LLM agents can detect and execute tool calls.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
-
-import pytest
 
 from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.scheduling import Task
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
-
 
 # ============================================================================
 # MOCK LLM PROVIDER
@@ -143,11 +139,13 @@ def test_write_file_tool_creates_dirs():
         temp_path = Path(temp_dir) / "subdir" / "test.txt"
 
         tool = WriteFileTool()
-        result = tool.execute({
-            "path": str(temp_path),
-            "content": "Hello!",
-            "create_dirs": True,
-        })
+        result = tool.execute(
+            {
+                "path": str(temp_path),
+                "content": "Hello!",
+                "create_dirs": True,
+            }
+        )
 
         assert result.success is True
         assert temp_path.exists()
@@ -254,7 +252,7 @@ def test_llm_agent_write_file_via_tool_call():
         temp_path = Path(temp_dir) / "output.txt"
 
         provider = MockLLMProviderWithTools(
-            response=f'{{"tool": "write_file", "parameters": {{"path": "{temp_path}", "content": "Generated content"}}}}'  # noqa: E501
+            response=f'{{"tool": "write_file", "parameters": {{"path": "{temp_path}", "content": "Generated content"}}}}'
         )
         registry = ToolRegistry()
         registry.register(WriteFileTool())

@@ -5,7 +5,6 @@ Tests the task execution history ledger and SQLite persistence.
 """
 
 import json
-import sqlite3
 from typing import Any
 
 import pytest
@@ -55,9 +54,7 @@ class TestLedgerBasics:
 
         # Verify schema was created
         cursor = ledger.conn.cursor()
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='task_history'"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task_history'")
         assert cursor.fetchone() is not None
 
         ledger.close()

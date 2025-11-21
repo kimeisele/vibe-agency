@@ -14,7 +14,7 @@ Design Principles:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -36,8 +36,8 @@ class ToolCall:
     """
 
     tool_name: str
-    parameters: Dict[str, Any]
-    call_id: Optional[str] = None  # For tracking in logs
+    parameters: dict[str, Any]
+    call_id: str | None = None  # For tracking in logs
 
     def __repr__(self) -> str:
         """String representation for debugging"""
@@ -61,8 +61,8 @@ class ToolResult:
 
     success: bool
     output: Any = None
-    error: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    error: str | None = None
+    metadata: dict[str, Any] | None = None
 
     def __repr__(self) -> str:
         """String representation for debugging"""
@@ -140,7 +140,7 @@ class Tool(ABC):
 
     @property
     @abstractmethod
-    def parameters_schema(self) -> Dict[str, Any]:
+    def parameters_schema(self) -> dict[str, Any]:
         """
         Return the JSON schema for tool parameters.
 
@@ -159,7 +159,7 @@ class Tool(ABC):
         pass
 
     @abstractmethod
-    def validate(self, parameters: Dict[str, Any]) -> None:
+    def validate(self, parameters: dict[str, Any]) -> None:
         """
         Validate that parameters meet requirements.
 
@@ -183,7 +183,7 @@ class Tool(ABC):
         pass
 
     @abstractmethod
-    def execute(self, parameters: Dict[str, Any]) -> ToolResult:
+    def execute(self, parameters: dict[str, Any]) -> ToolResult:
         """
         Execute the tool with given parameters.
 
@@ -214,7 +214,7 @@ class Tool(ABC):
         """
         pass
 
-    def to_llm_description(self) -> Dict[str, Any]:
+    def to_llm_description(self) -> dict[str, Any]:
         """
         Convert tool to LLM-friendly description.
 

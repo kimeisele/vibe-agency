@@ -5,8 +5,6 @@ Tests the LLM integration layer: LLMProvider, SimpleLLMAgent,
 and full stack integration (Kernel → Agent → LLM → Ledger).
 """
 
-import logging
-
 import pytest
 
 from tests.mocks.llm import MockLLMProvider
@@ -84,9 +82,7 @@ class TestSimpleLLMAgent:
         """Test that SimpleLLMAgent initializes correctly."""
         provider = MockLLMProvider()
         agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            system_prompt="Be helpful."
+            agent_id="test-agent", provider=provider, system_prompt="Be helpful."
         )
 
         assert agent.agent_id == "test-agent"
@@ -105,10 +101,7 @@ class TestSimpleLLMAgent:
         provider = MockLLMProvider(mock_response="Hello, user!")
         agent = SimpleLLMAgent(agent_id="test-agent", provider=provider)
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"user_message": "Hi there!"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "Hi there!"})
 
         result = agent.process(task)
 
@@ -120,16 +113,9 @@ class TestSimpleLLMAgent:
     def test_agent_process_with_model(self):
         """Test that agent passes model to provider."""
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
-        agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            model="gpt-4"
-        )
+        agent = SimpleLLMAgent(agent_id="test-agent", provider=provider, model="gpt-4")
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"user_message": "Test"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "Test"})
 
         result = agent.process(task)
 
@@ -139,18 +125,10 @@ class TestSimpleLLMAgent:
     def test_agent_process_task_override_model(self):
         """Test that task payload can override agent's default model."""
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
-        agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            model="gpt-4"
-        )
+        agent = SimpleLLMAgent(agent_id="test-agent", provider=provider, model="gpt-4")
 
         task = Task(
-            agent_id="test-agent",
-            payload={
-                "user_message": "Test",
-                "model": "claude-3-opus"
-            }
+            agent_id="test-agent", payload={"user_message": "Test", "model": "claude-3-opus"}
         )
 
         result = agent.process(task)
@@ -162,15 +140,10 @@ class TestSimpleLLMAgent:
         """Test that agent builds message list correctly."""
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
         agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            system_prompt="Be concise."
+            agent_id="test-agent", provider=provider, system_prompt="Be concise."
         )
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"user_message": "What is 2+2?"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "What is 2+2?"})
 
         agent.process(task)
 
@@ -185,17 +158,12 @@ class TestSimpleLLMAgent:
         """Test that agent includes context in system message."""
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
         agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            system_prompt="Base prompt."
+            agent_id="test-agent", provider=provider, system_prompt="Base prompt."
         )
 
         task = Task(
             agent_id="test-agent",
-            payload={
-                "user_message": "Hello",
-                "context": {"mode": "friendly", "lang": "en"}
-            }
+            payload={"user_message": "Hello", "context": {"mode": "friendly", "lang": "en"}},
         )
 
         agent.process(task)
@@ -212,10 +180,7 @@ class TestSimpleLLMAgent:
         provider = MockLLMProvider()
         agent = SimpleLLMAgent(agent_id="test-agent", provider=provider)
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"other_field": "value"}
-        )
+        task = Task(agent_id="test-agent", payload={"other_field": "value"})
 
         with pytest.raises(ValueError, match="must contain 'user_message'"):
             agent.process(task)
@@ -225,10 +190,7 @@ class TestSimpleLLMAgent:
         provider = MockLLMProvider()
         agent = SimpleLLMAgent(agent_id="test-agent", provider=provider)
 
-        task = Task(
-            agent_id="test-agent",
-            payload="not a dict"
-        )
+        task = Task(agent_id="test-agent", payload="not a dict")
 
         with pytest.raises(ValueError, match="must be a dict"):
             agent.process(task)
@@ -247,10 +209,7 @@ class TestSimpleLLMAgent:
         provider = FailingProvider()
         agent = SimpleLLMAgent(agent_id="test-agent", provider=provider)
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"user_message": "Hello"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "Hello"})
 
         with pytest.raises(LLMError, match="LLM call failed"):
             agent.process(task)
@@ -258,18 +217,11 @@ class TestSimpleLLMAgent:
     def test_agent_update_system_prompt(self):
         """Test that agent can update system prompt."""
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
-        agent = SimpleLLMAgent(
-            agent_id="test-agent",
-            provider=provider,
-            system_prompt="Original"
-        )
+        agent = SimpleLLMAgent(agent_id="test-agent", provider=provider, system_prompt="Original")
 
         agent.update_system_prompt("Updated")
 
-        task = Task(
-            agent_id="test-agent",
-            payload={"user_message": "Test"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "Test"})
         agent.process(task)
 
         messages = provider.call_history[0]["messages"]
@@ -287,9 +239,7 @@ class TestKernelLLMIntegration:
         # Create mock provider and agent
         provider = MockLLMProvider(mock_response="I am a mock response")
         agent = SimpleLLMAgent(
-            agent_id="llm-agent",
-            provider=provider,
-            system_prompt="You are helpful."
+            agent_id="llm-agent", provider=provider, system_prompt="You are helpful."
         )
 
         # Register agent and boot kernel
@@ -297,10 +247,7 @@ class TestKernelLLMIntegration:
         kernel.boot()
 
         # Submit task
-        task = Task(
-            agent_id="llm-agent",
-            payload={"user_message": "Hello, AI!"}
-        )
+        task = Task(agent_id="llm-agent", payload={"user_message": "Hello, AI!"})
         kernel.submit(task)
 
         # Process task
@@ -334,10 +281,7 @@ class TestKernelLLMIntegration:
         kernel.register_agent(agent)
         kernel.boot()
 
-        task = Task(
-            agent_id="llm-agent",
-            payload={"user_message": "Test"}
-        )
+        task = Task(agent_id="llm-agent", payload={"user_message": "Test"})
         kernel.submit(task)
 
         # Task should fail
@@ -357,10 +301,7 @@ class TestKernelLLMIntegration:
         kernel = VibeKernel(ledger_path=":memory:")
 
         # Create provider that tracks calls
-        provider = MockLLMProvider(
-            track_calls=True,
-            mock_response="Response"
-        )
+        provider = MockLLMProvider(track_calls=True, mock_response="Response")
         agent = SimpleLLMAgent(agent_id="llm-agent", provider=provider)
 
         kernel.register_agent(agent)
@@ -369,10 +310,7 @@ class TestKernelLLMIntegration:
         # Submit multiple tasks
         tasks = []
         for i in range(3):
-            task = Task(
-                agent_id="llm-agent",
-                payload={"user_message": f"Message {i}"}
-            )
+            task = Task(agent_id="llm-agent", payload={"user_message": f"Message {i}"})
             tasks.append(task)
             kernel.submit(task)
 
@@ -393,11 +331,7 @@ class TestKernelLLMIntegration:
         kernel = VibeKernel(ledger_path=":memory:")
 
         provider = MockLLMProvider(track_calls=True, mock_response="OK")
-        agent = SimpleLLMAgent(
-            agent_id="llm-agent",
-            provider=provider,
-            system_prompt="Be concise."
-        )
+        agent = SimpleLLMAgent(agent_id="llm-agent", provider=provider, system_prompt="Be concise.")
 
         kernel.register_agent(agent)
         kernel.boot()
@@ -410,10 +344,7 @@ class TestKernelLLMIntegration:
         ]
 
         for msg in messages:
-            task = Task(
-                agent_id="llm-agent",
-                payload={"user_message": msg}
-            )
+            task = Task(agent_id="llm-agent", payload={"user_message": msg})
             kernel.submit(task)
             kernel.tick()
 
@@ -442,14 +373,8 @@ class TestKernelLLMIntegration:
 
         # Submit tasks to both agents
         for i in range(3):
-            task1 = Task(
-                agent_id="agent-1",
-                payload={"user_message": f"To agent 1: {i}"}
-            )
-            task2 = Task(
-                agent_id="agent-2",
-                payload={"user_message": f"To agent 2: {i}"}
-            )
+            task1 = Task(agent_id="agent-1", payload={"user_message": f"To agent 1: {i}"})
+            task2 = Task(agent_id="agent-2", payload={"user_message": f"To agent 2: {i}"})
             kernel.submit(task1)
             kernel.submit(task2)
 

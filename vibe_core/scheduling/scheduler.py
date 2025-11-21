@@ -8,7 +8,7 @@ which serves as the heartbeat for task distribution across agents.
 import uuid
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -66,7 +66,7 @@ class VibeScheduler:
         self._queue.append(task)
         return task.id
 
-    def next_task(self) -> Optional[Task]:
+    def next_task(self) -> Task | None:
         """
         Retrieve and remove the next task from the queue (FIFO).
 

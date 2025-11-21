@@ -13,12 +13,11 @@ This tool performs a 'Daily Standup' analysis:
 4. Save report to daily_update.md
 """
 
-import subprocess
-import json
-import sys
-from pathlib import Path
-from datetime import datetime, timedelta
 import random
+import subprocess
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
 
 # Motivation quotes for standups
 MOTIVATION_QUOTES = [
@@ -102,7 +101,7 @@ def main():
     report = []
     report.append("# Daily Standup Report\n")
     report.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    report.append(f"**Reporting Period:** Last 24 hours\n\n")
+    report.append("**Reporting Period:** Last 24 hours\n\n")
 
     # Section: Git Activity
     report.append("## 📊 Git Activity (Last 24 Hours)\n")

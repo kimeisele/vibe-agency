@@ -7,4 +7,4 @@ to perform cognitive work via language models.
 
 from vibe_core.llm.provider import LLMError, LLMProvider
 
-__all__ = ["LLMProvider", "LLMError"]
+__all__ = ["LLMError", "LLMProvider"]

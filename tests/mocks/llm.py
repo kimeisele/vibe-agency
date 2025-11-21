@@ -6,8 +6,6 @@ responses without making actual API calls. Used for unit testing
 to avoid costs and latency.
 """
 
-from typing import Dict, List, Optional
-
 from vibe_core.llm import LLMProvider
 
 
@@ -31,7 +29,7 @@ class MockLLMProvider(LLMProvider):
         self,
         mock_response: str = "I am a mock response",
         system_prompt_text: str = "You are a helpful mock assistant.",
-        track_calls: bool = False
+        track_calls: bool = False,
     ):
         """
         Initialize the mock provider.
@@ -49,14 +47,9 @@ class MockLLMProvider(LLMProvider):
         self._mock_response = mock_response
         self._system_prompt_text = system_prompt_text
         self._track_calls = track_calls
-        self.call_history: List[Dict] = [] if track_calls else []
+        self.call_history: list[dict] = [] if track_calls else []
 
-    def chat(
-        self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        **kwargs
-    ) -> str:
+    def chat(self, messages: list[dict[str, str]], model: str | None = None, **kwargs) -> str:
         """
         Return the mock response (no actual API call).
 
@@ -74,11 +67,7 @@ class MockLLMProvider(LLMProvider):
             "42"
         """
         if self._track_calls:
-            self.call_history.append({
-                "messages": messages,
-                "model": model,
-                "kwargs": kwargs
-            })
+            self.call_history.append({"messages": messages, "model": model, "kwargs": kwargs})
 
         return self._mock_response
 

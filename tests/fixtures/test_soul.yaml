@@ -1,0 +1,33 @@
+# Test fixture for InvariantChecker tests
+# This is a simplified soul.yaml for testing purposes
+
+name: "Test Guardian"
+version: "1.0-test"
+
+safety_rules:
+  # Simple path_contains rule for testing
+  - id: "test_protect_git"
+    condition: "path_contains"
+    pattern: ".git"
+    action: "block"
+    message: "Test: Touching .git is forbidden by Soul Law."
+
+  # Exact path match rule for testing
+  - id: "test_protect_kernel"
+    condition: "path_matches"
+    pattern: "vibe_core/kernel.py"
+    action: "block"
+    message: "Test: Kernel core modification requires Root override."
+
+  # Path outside root rule for testing
+  - id: "test_sandbox_confinement"
+    condition: "path_outside_root"
+    action: "block"
+    message: "Test: Cannot access files outside project root."
+
+  # Pattern matching with different pattern
+  - id: "test_protect_secret_config"
+    condition: "path_contains"
+    pattern: "secret"
+    action: "block"
+    message: "Test: Secret files cannot be accessed."

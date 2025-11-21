@@ -16,16 +16,34 @@ tool_safety_guard = importlib.import_module("vibe_core.runtime.tool_safety_guard
 ToolSafetyGuard = tool_safety_guard.ToolSafetyGuard
 ToolSafetyGuardError = tool_safety_guard.ToolSafetyGuardError
 
+# Import Soul governance layer (ARCH-029)
+governance = importlib.import_module("vibe_core.governance")
+InvariantChecker = governance.InvariantChecker
+
 
 class ToolExecutor:
-    """Executes tool calls from Claude Code"""
+    """
+    Executes tool calls from Claude Code with dual-layer protection.
 
-    def __init__(self, enable_iron_dome: bool = True):
+    Protection layers (Defense in Depth):
+    1. Soul (InvariantChecker): Global invariant rules from config/soul.yaml
+    2. Iron Dome (ToolSafetyGuard): Session-based safety rules
+
+    Architecture:
+    - ARCH-029: Soul governance layer prevents system-level violations
+    - GAD-509: Iron Dome prevents process-level "AI slop"
+    """
+
+    def __init__(self, enable_iron_dome: bool = True, enable_soul: bool = True):
         # Lazy-load tools to avoid errors if keys aren't set
         self.tools = {}
         self._initialized = False
 
-        # Initialize Iron Dome protection layer
+        # Layer 1: Soul - Global invariant rules (ARCH-029)
+        self.soul = InvariantChecker() if enable_soul else None
+        self.enable_soul = enable_soul
+
+        # Layer 2: Iron Dome - Session-based safety rules (GAD-509)
         self.iron_dome = ToolSafetyGuard(enable_strict_mode=enable_iron_dome)
         self.enable_iron_dome = enable_iron_dome
 
@@ -47,7 +65,12 @@ class ToolExecutor:
 
     def execute_tool(self, tool_name: str, parameters: dict[str, Any]) -> dict:
         """
-        Execute a tool call with Iron Dome protection.
+        Execute a tool call with dual-layer protection (Defense in Depth).
+
+        Protection order:
+        1. Soul Check: Global invariant rules (e.g., "never touch .git")
+        2. Iron Dome: Session-based rules (e.g., "read before edit")
+        3. Tool Execution
 
         Args:
             tool_name: Name of tool (e.g., 'google_search')
@@ -56,7 +79,17 @@ class ToolExecutor:
         Returns:
             Tool result dict (serializable to JSON)
         """
-        # 🛡️ IRON DOME: Pre-execution safety check
+        # 🛡️ LAYER 1: SOUL - Global invariant rules (ARCH-029)
+        if self.enable_soul and self.soul:
+            soul_result = self.soul.check_tool_call(tool_name, parameters)
+            if not soul_result.allowed:
+                return {
+                    "error": soul_result.reason,
+                    "blocked_by": "soul",
+                    "message": "Blocked by Soul governance layer",
+                }
+
+        # 🛡️ LAYER 2: IRON DOME - Session-based safety check (GAD-509)
         if self.enable_iron_dome:
             allowed, violation = self.iron_dome.check_action(tool_name, parameters)
             if not allowed:

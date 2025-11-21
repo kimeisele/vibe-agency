@@ -58,7 +58,7 @@ def execute_vibe_command():
             capture_output=True,
             text=True,
             cwd=project_root,
-            timeout=10
+            timeout=10,
         )
 
         print(f"✅ Exit code: {result.returncode}")
@@ -147,14 +147,14 @@ def verify_handshake():
     # Step 2: Execute command
     output, error = execute_vibe_command()
     if error:
-        print(f"\n❌ FAILURE: Command execution failed")
+        print("\n❌ FAILURE: Command execution failed")
         print(f"   Error: {error}")
         return False
 
     # Step 3: Parse JSON
     data, error = parse_json_output(output)
     if error:
-        print(f"\n❌ FAILURE: JSON parsing failed")
+        print("\n❌ FAILURE: JSON parsing failed")
         print(f"   Error: {error}")
         print("\n🔍 DIAGNOSIS:")
         print("   → The command did not return valid JSON")
@@ -164,7 +164,7 @@ def verify_handshake():
 
     # Step 4: Use data
     if not use_parsed_data(data):
-        print(f"\n⚠️  WARNING: JSON parsed but contains no useful data")
+        print("\n⚠️  WARNING: JSON parsed but contains no useful data")
         return False
 
     # Success!
@@ -191,6 +191,7 @@ def main():
     except Exception as e:
         print(f"\n\n❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

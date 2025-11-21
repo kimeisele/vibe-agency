@@ -25,19 +25,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
-
 from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.agents.specialist_agent import SpecialistAgent
 from vibe_core.kernel import VibeKernel
 from vibe_core.scheduling import Task
-from vibe_core.specialists.base_specialist import (
-    BaseSpecialist,
-    MissionContext,
-    SpecialistResult,
-)
+from vibe_core.specialists.base_specialist import BaseSpecialist, MissionContext, SpecialistResult
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
-
 
 # ============================================================================
 # MOCK LLM PROVIDER (writes mission.yaml)
@@ -58,13 +51,13 @@ class MockLLMProviderForIntegration:
 
         # Response: Write mission.yaml with project structure
         mission_path = self.project_dir / "mission.yaml"
-        return f'''{{
+        return f"""{{
             "tool": "write_file",
             "parameters": {{
                 "path": "{mission_path}",
                 "content": "mission:\\n  name: Test Mission\\n  objective: Build hybrid system\\n"
             }}
-        }}'''
+        }}"""
 
 
 # ============================================================================
@@ -194,7 +187,7 @@ def test_hybrid_agent_integration_llm_then_specialist():
             payload={"user_message": "Create project structure with mission.yaml"},
         )
 
-        llm_task_id = kernel.submit(llm_task)
+        _llm_task_id = kernel.submit(llm_task)
         busy1 = kernel.tick()
 
         # Verify: LLM executed
@@ -222,7 +215,7 @@ def test_hybrid_agent_integration_llm_then_specialist():
             },
         )
 
-        specialist_task_id = kernel.submit(specialist_task)
+        _specialist_task_id = kernel.submit(specialist_task)
         busy2 = kernel.tick()
 
         # Verify: Specialist executed
@@ -267,9 +260,9 @@ def test_hybrid_agent_integration_llm_then_specialist():
         print(f"   → LLM Agent wrote: {mission_file}")
         print(f"   → Specialist read mission.yaml and wrote: {plan_file}")
         print(f"   → Ledger recorded {len(history)} executions in sequence")
-        print(f"   → Shared file system: WORKING")
-        print(f"   → Kernel scheduling: WORKING")
-        print(f"   → Audit trail: COMPLETE")
+        print("   → Shared file system: WORKING")
+        print("   → Kernel scheduling: WORKING")
+        print("   → Audit trail: COMPLETE")
 
 
 def test_hybrid_agent_integration_mixed_workload():
@@ -365,13 +358,13 @@ def test_hybrid_agent_file_conflict_handling():
                 self.system_prompt = "Test"
 
             def chat(self, messages, model=None):
-                return f'''{{
+                return f"""{{
                     "tool": "write_file",
                     "parameters": {{
                         "path": "{conflict_file}",
                         "content": "Written by LLM"
                     }}
-                }}'''
+                }}"""
 
         # Mock Specialist that writes to shared.txt
         class ConflictSpecialist(BaseSpecialist):

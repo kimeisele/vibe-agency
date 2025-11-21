@@ -12,8 +12,7 @@ import json
 import logging
 import sqlite3
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from vibe_core.scheduling import Task
 
@@ -70,7 +69,8 @@ class VibeLedger:
     def _initialize_schema(self) -> None:
         """Create task_history table if it doesn't exist."""
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS task_history (
                 task_id TEXT PRIMARY KEY,
                 agent_id TEXT NOT NULL,
@@ -80,7 +80,8 @@ class VibeLedger:
                 error_message TEXT,
                 timestamp TEXT NOT NULL
             )
-        """)
+        """
+        )
         self.conn.commit()
         logger.debug("LEDGER: Schema initialized")
 
@@ -204,8 +205,8 @@ class VibeLedger:
             logger.error(f"LEDGER: Failed to record failure for task {task.id}: {e}")
 
     def get_history(
-        self, limit: int = 10, status: Optional[str] = None, agent_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 10, status: str | None = None, agent_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Retrieve recent task execution history.
 
@@ -273,7 +274,7 @@ class VibeLedger:
             logger.error(f"LEDGER: Failed to retrieve history: {e}")
             return []
 
-    def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task(self, task_id: str) -> dict[str, Any] | None:
         """
         Retrieve a specific task record by ID.
 
@@ -316,7 +317,7 @@ class VibeLedger:
             logger.error(f"LEDGER: Failed to retrieve task {task_id}: {e}")
             return None
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Get aggregate statistics about task execution.
 
@@ -340,9 +341,7 @@ class VibeLedger:
             total_tasks = cursor.fetchone()["count"]
 
             # By status
-            cursor.execute(
-                "SELECT status, COUNT(*) as count FROM task_history GROUP BY status"
-            )
+            cursor.execute("SELECT status, COUNT(*) as count FROM task_history GROUP BY status")
             status_counts = {row["status"]: row["count"] for row in cursor.fetchall()}
 
             # Unique agents

@@ -284,9 +284,8 @@ class TestAgentNotFound:
         task = Task(agent_id="missing-agent", payload={})
         kernel.submit(task)
 
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(AgentNotFoundError):
-                kernel.tick()
+        with caplog.at_level(logging.ERROR), pytest.raises(AgentNotFoundError):
+            kernel.tick()
 
         assert "not found" in caplog.text
         assert "missing-agent" in caplog.text
@@ -304,9 +303,8 @@ class TestAgentNotFound:
         task = Task(agent_id="nonexistent", payload={})
         kernel.submit(task)
 
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(AgentNotFoundError):
-                kernel.tick()
+        with caplog.at_level(logging.ERROR), pytest.raises(AgentNotFoundError):
+            kernel.tick()
 
         # Error should mention available agents
         assert "echo-1" in caplog.text or "counter-1" in caplog.text

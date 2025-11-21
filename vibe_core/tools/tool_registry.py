@@ -1,13 +1,22 @@
 """
-Tool Registry for vibe-agency OS (ARCH-027)
+Tool Registry for vibe-agency OS (ARCH-027 + ARCH-029)
 
 Manages available tools and provides lookup/execution functionality.
+Integrates Soul Governance (ARCH-029) for security by design.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 from vibe_core.tools.tool_protocol import Tool, ToolCall, ToolResult
+
+# Import Soul Governance (ARCH-029)
+try:
+    from vibe_core.governance.invariants import InvariantChecker, SoulResult
+except ImportError:
+    # Graceful fallback if governance not available
+    InvariantChecker = None  # type: ignore
+    SoulResult = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +42,32 @@ class ToolRegistry:
         >>> print(result.output)  # File content
     """
 
-    def __init__(self):
-        """Initialize empty tool registry"""
-        self.tools: Dict[str, Tool] = {}
-        logger.debug("ToolRegistry: Initialized (empty)")
+    def __init__(self, invariant_checker: Optional["InvariantChecker"] = None):  # type: ignore
+        """
+        Initialize tool registry with optional Soul Governance.
+
+        Args:
+            invariant_checker: Optional InvariantChecker for Soul Governance (ARCH-029).
+                              If None, tools execute without governance checks.
+
+        Example:
+            >>> # With governance (recommended for production)
+            >>> from vibe_core.governance import InvariantChecker
+            >>> checker = InvariantChecker("config/soul.yaml")
+            >>> registry = ToolRegistry(invariant_checker=checker)
+            >>>
+            >>> # Without governance (testing only)
+            >>> registry = ToolRegistry()
+        """
+        self.tools: dict[str, Tool] = {}
+        self._invariant_checker = invariant_checker
+
+        if invariant_checker:
+            logger.info(
+                f"🛡️ ToolRegistry initialized with Soul Governance ({invariant_checker.rule_count} rules)"
+            )
+        else:
+            logger.debug("ToolRegistry: Initialized (no governance)")
 
     def register(self, tool: Tool) -> None:
         """
@@ -68,7 +99,7 @@ class ToolRegistry:
         self.tools[tool_name] = tool
         logger.info(f"ToolRegistry: Registered tool '{tool_name}'")
 
-    def get(self, tool_name: str) -> Optional[Tool]:
+    def get(self, tool_name: str) -> Tool | None:
         """
         Get a tool by name.
 
@@ -101,7 +132,7 @@ class ToolRegistry:
         """
         return tool_name in self.tools
 
-    def list_tools(self) -> List[str]:
+    def list_tools(self) -> list[str]:
         """
         Get list of all registered tool names.
 
@@ -152,22 +183,35 @@ class ToolRegistry:
 
         logger.info(f"ToolRegistry: Executing {tool_call}")
 
-        # Step 2: Validate parameters
+        # Step 2: 🛡️ Soul Governance Check (ARCH-029)
+        if self._invariant_checker:
+            soul_check: SoulResult = self._invariant_checker.check_tool_call(  # type: ignore
+                tool_name, tool_call.parameters
+            )
+            if not soul_check.allowed:
+                logger.warning(f"⛔ SOUL BLOCKED {tool_name}: {soul_check.reason}")
+                return ToolResult(
+                    success=False,
+                    error=f"Governance Violation: {soul_check.reason}",
+                    metadata={"blocked_by_soul": True, "rule_reason": soul_check.reason},
+                )
+
+        # Step 3: Validate parameters
         try:
             tool.validate(tool_call.parameters)
         except (ValueError, TypeError) as e:
-            error_msg = f"Parameter validation failed: {str(e)}"
+            error_msg = f"Parameter validation failed: {e!s}"
             logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})")
             return ToolResult(success=False, error=error_msg)
 
-        # Step 3: Execute tool
+        # Step 4: Execute tool
         try:
             result = tool.execute(tool_call.parameters)
             logger.info(f"ToolRegistry: Tool '{tool_name}' completed (success={result.success})")
             return result
         except Exception as e:
             # Fallback error handling (tools should catch their own exceptions)
-            error_msg = f"Tool execution failed: {type(e).__name__}: {str(e)}"
+            error_msg = f"Tool execution failed: {type(e).__name__}: {e!s}"
             logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})", exc_info=True)
             return ToolResult(success=False, error=error_msg)
 
@@ -205,7 +249,7 @@ class ToolRegistry:
 
         return "\n".join(lines)
 
-    def get_tool_descriptions(self) -> List[Dict]:
+    def get_tool_descriptions(self) -> list[dict]:
         """
         Get structured tool descriptions.
 

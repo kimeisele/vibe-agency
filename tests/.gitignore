@@ -1,0 +1,3 @@
+# Temporary test files created by integration tests
+.temp_*
+*.temp

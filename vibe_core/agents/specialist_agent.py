@@ -20,7 +20,7 @@ be orchestrated by the Kernel using the same dispatch mechanism as LLM agents.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from vibe_core.agent_protocol import VibeAgent
 from vibe_core.scheduling import Task
@@ -112,7 +112,7 @@ class SpecialistAgent(VibeAgent):
         """
         return f"specialist-{self.specialist.role.lower()}"
 
-    def process(self, task: Task) -> Dict[str, Any]:
+    def process(self, task: Task) -> dict[str, Any]:
         """
         Process a task by executing the wrapped specialist.
 
@@ -262,7 +262,7 @@ class SpecialistAgent(VibeAgent):
             metadata=metadata,
         )
 
-    def _result_to_dict(self, result: SpecialistResult) -> Dict[str, Any]:
+    def _result_to_dict(self, result: SpecialistResult) -> dict[str, Any]:
         """
         Convert SpecialistResult to dict for kernel recording.
 

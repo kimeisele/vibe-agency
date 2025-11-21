@@ -10,7 +10,7 @@ just a collection of scripts. Now, VibeKernel IS the application.
 
 import logging
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
 from vibe_core.ledger import VibeLedger
@@ -66,7 +66,7 @@ class VibeKernel:
             >>> test_kernel = VibeKernel(":memory:")  # In-memory for tests
         """
         self.scheduler = VibeScheduler()
-        self.agent_registry: Dict[str, VibeAgent] = {}
+        self.agent_registry: dict[str, VibeAgent] = {}
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
         logger.debug("KERNEL: Initialized (status=STOPPED)")
@@ -228,8 +228,7 @@ class VibeKernel:
         # Look up the agent in the registry
         if agent_id not in self.agent_registry:
             error_msg = (
-                f"Agent '{agent_id}' not found. "
-                f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not found. " f"Available: {list(self.agent_registry.keys())}"
             )
             logger.error(f"KERNEL: {error_msg} (task={task.id})")
             # Record the failure before raising
@@ -260,7 +259,7 @@ class VibeKernel:
 
         except Exception as e:
             # Record failure before re-raising
-            error_msg = f"{type(e).__name__}: {str(e)}"
+            error_msg = f"{type(e).__name__}: {e!s}"
             self.ledger.record_failure(task, error_msg)
 
             logger.error(f"KERNEL: Task {task.id} failed: {error_msg}")

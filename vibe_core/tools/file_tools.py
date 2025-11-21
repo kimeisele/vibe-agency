@@ -6,7 +6,7 @@ Provides safe, auditable file read/write operations for LLM agents.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from vibe_core.tools.tool_protocol import Tool, ToolResult
 
@@ -34,7 +34,7 @@ class ReadFileTool(Tool):
         return "Read content from a file on disk"
 
     @property
-    def parameters_schema(self) -> Dict[str, Any]:
+    def parameters_schema(self) -> dict[str, Any]:
         return {
             "path": {
                 "type": "string",
@@ -43,7 +43,7 @@ class ReadFileTool(Tool):
             }
         }
 
-    def validate(self, parameters: Dict[str, Any]) -> None:
+    def validate(self, parameters: dict[str, Any]) -> None:
         """
         Validate parameters.
 
@@ -64,7 +64,7 @@ class ReadFileTool(Tool):
         if not path.strip():
             raise ValueError("path cannot be empty")
 
-    def execute(self, parameters: Dict[str, Any]) -> ToolResult:
+    def execute(self, parameters: dict[str, Any]) -> ToolResult:
         """
         Execute file read operation.
 
@@ -115,7 +115,7 @@ class ReadFileTool(Tool):
             return ToolResult(success=False, error=error_msg)
 
         except Exception as e:
-            error_msg = f"Failed to read file: {type(e).__name__}: {str(e)}"
+            error_msg = f"Failed to read file: {type(e).__name__}: {e!s}"
             logger.error(f"ReadFileTool: {error_msg} (path={path})", exc_info=True)
             return ToolResult(success=False, error=error_msg)
 
@@ -144,7 +144,7 @@ class WriteFileTool(Tool):
         return "Write content to a file on disk (creates or overwrites)"
 
     @property
-    def parameters_schema(self) -> Dict[str, Any]:
+    def parameters_schema(self) -> dict[str, Any]:
         return {
             "path": {
                 "type": "string",
@@ -163,7 +163,7 @@ class WriteFileTool(Tool):
             },
         }
 
-    def validate(self, parameters: Dict[str, Any]) -> None:
+    def validate(self, parameters: dict[str, Any]) -> None:
         """
         Validate parameters.
 
@@ -197,7 +197,7 @@ class WriteFileTool(Tool):
             if not isinstance(create_dirs, bool):
                 raise TypeError(f"create_dirs must be a boolean, got {type(create_dirs).__name__}")
 
-    def execute(self, parameters: Dict[str, Any]) -> ToolResult:
+    def execute(self, parameters: dict[str, Any]) -> ToolResult:
         """
         Execute file write operation.
 
@@ -261,6 +261,6 @@ class WriteFileTool(Tool):
             return ToolResult(success=False, error=error_msg)
 
         except Exception as e:
-            error_msg = f"Failed to write file: {type(e).__name__}: {str(e)}"
+            error_msg = f"Failed to write file: {type(e).__name__}: {e!s}"
             logger.error(f"WriteFileTool: {error_msg} (path={path})", exc_info=True)
             return ToolResult(success=False, error=error_msg)

@@ -6,7 +6,6 @@ enabling the kernel to orchestrate cognitive work via language models.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
 
 
 class LLMProvider(ABC):
@@ -36,12 +35,7 @@ class LLMProvider(ABC):
     """
 
     @abstractmethod
-    def chat(
-        self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        **kwargs
-    ) -> str:
+    def chat(self, messages: list[dict[str, str]], model: str | None = None, **kwargs) -> str:
         """
         Send messages to the LLM and get a response.
 
@@ -97,7 +91,7 @@ class LLMProvider(ABC):
         """
         pass
 
-    def get_metadata(self) -> Dict[str, str]:
+    def get_metadata(self) -> dict[str, str]:
         """
         Get provider metadata (optional, can be overridden).
 
@@ -121,7 +115,9 @@ class LLMError(Exception):
     Raised when LLM API calls fail (network, auth, rate limits, etc.).
     """
 
-    def __init__(self, message: str, provider: str = "Unknown", original_error: Optional[Exception] = None):
+    def __init__(
+        self, message: str, provider: str = "Unknown", original_error: Exception | None = None
+    ):
         self.provider = provider
         self.original_error = original_error
         super().__init__(f"[{provider}] {message}")
