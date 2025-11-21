@@ -47,6 +47,8 @@ from tests.mocks.llm import MockLLMProvider  # For development (no API keys need
 from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.governance import InvariantChecker
 from vibe_core.kernel import VibeKernel
+from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
+from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.scheduling import Task
 from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
 
@@ -135,12 +137,31 @@ When you use a tool, respond with valid JSON:
 Otherwise, respond with natural language to the user.
 """
 
-    # For development: Use MockProvider (no API keys needed)
-    # TODO: In production, replace with real provider (Google, Anthropic, etc.)
-    provider = MockLLMProvider(
-        mock_response="I am the Vibe Operator. How can I help you?",
-        system_prompt_text=system_prompt,
-    )
+    # Step 4.5: Choose Provider (Real AI or Mock for testing)
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+    if api_key:
+        # REAL BRAIN: Google Gemini 2.5 Flash (free during preview)
+        try:
+            provider = GoogleProvider(
+                api_key=api_key,
+                model="gemini-2.5-flash-exp",
+            )
+            logger.info("🧠 CONNECTED TO GOOGLE GEMINI (gemini-2.5-flash-exp)")
+        except ProviderNotAvailableError as e:
+            logger.warning(f"⚠️  Google provider unavailable: {e}")
+            logger.warning("⚠️  Falling back to MockProvider")
+            provider = MockLLMProvider(
+                mock_response="I am a mock operator (no API key available).",
+                system_prompt_text=system_prompt,
+            )
+    else:
+        # MOCK BRAIN: For testing without API keys
+        logger.info("ℹ️  No GOOGLE_API_KEY found, using MockProvider")
+        provider = MockLLMProvider(
+            mock_response="I am the Vibe Operator. How can I help you?",
+            system_prompt_text=system_prompt,
+        )
 
     operator_agent = SimpleLLMAgent(
         agent_id="vibe-operator",
