@@ -1728,13 +1728,18 @@ class CoreOrchestrator:
     # PHASE EXECUTION
     # -------------------------------------------------------------------------
 
-    def execute_phase(self, manifest: ProjectManifest) -> None:
+    def execute_phase(self, manifest: ProjectManifest) -> bool:
         """
         Execute current phase using appropriate handler.
 
         Implements GAD-002 Decision 1: Hierarchical Architecture
         Implements GAD-002 Decision 4: Continuous Per-Phase Auditing
         Implements GAD-100 Phase 3: System health validation
+        Implements ARCH-010: The Repair Loop (failure → retry)
+
+        Returns:
+            True if phase succeeded (move to next phase)
+            False if phase failed (stay in current phase or repair)
         """
         # GAD-100 Phase 3: Check health before phase transition
         if self.system_self_aware:
@@ -1750,7 +1755,50 @@ class CoreOrchestrator:
 
         # Execute phase
         logger.info(f"▶️  Executing phase: {manifest.current_phase.value}")
-        handler.execute(manifest)
+        result = handler.execute(manifest)  # Now returns SpecialistResult!
+
+        # ARCH-010: Check specialist result for failure/success
+        if result is not None and not result.success:
+            logger.error(f"❌ {manifest.current_phase.value} FAILED: {result.error}")
+
+            # THE REPAIR LOOP (ARCH-010)
+            # If TESTING failed, transition back to CODING for bug fixes
+            if manifest.current_phase == ProjectPhase.TESTING:
+                logger.warning("🔄 REPAIR LOOP TRIGGERED: Returning to CODING phase for bug fixes")
+                logger.info(
+                    f"   CodingSpecialist will use qa_report.json to identify and fix failures"
+                )
+
+                # Transition back to CODING
+                manifest.current_phase = ProjectPhase.CODING
+                manifest.current_sub_state = None
+
+                # Save manifest to persist repair state
+                self.save_project_manifest(manifest)
+
+                # Return False to indicate phase failed (will retry next iteration)
+                return False
+
+            # For other phases, raise exception (non-recoverable failure)
+            raise OrchestratorError(
+                f"Phase {manifest.current_phase.value} failed: {result.error}\n"
+                f"This phase does not support automatic repair."
+            )
+
+        # Phase succeeded - handle next phase transition
+        if result is not None and result.next_phase:
+            logger.info(
+                f"✅ {manifest.current_phase.value} succeeded → {result.next_phase}"
+            )
+
+            # Apply result to manifest (transitions to next phase)
+            # Note: The adapter already handles this, but being explicit here
+            try:
+                manifest.current_phase = ProjectPhase(result.next_phase)
+                manifest.current_sub_state = None
+            except (KeyError, ValueError):
+                logger.error(f"Invalid next_phase: {result.next_phase}")
+                raise
 
         # Run horizontal audits after phase completion (GAD-002 Decision 4)
         try:
@@ -1765,12 +1813,18 @@ class CoreOrchestrator:
         self.save_project_manifest(manifest)
 
         logger.info(f"✅ Phase complete: {manifest.current_phase.value}")
+        return True
 
     def run_full_sdlc(self, project_id: str) -> None:
         """
         Run full SDLC workflow from current phase to PRODUCTION.
 
         This is the main entry point for orchestrator execution.
+
+        Implements ARCH-010: The Repair Loop with safety guards
+            - Detects test failures (TestingSpecialist.success=False)
+            - Transitions back to CODING for fixes
+            - Max 3 repair attempts to prevent infinite loops
         """
         manifest = self.load_project_manifest(project_id)
 
@@ -1778,8 +1832,32 @@ class CoreOrchestrator:
         logger.info(f"   Current phase: {manifest.current_phase.value}")
         logger.info(f"   Budget: ${manifest.budget.get('max_cost_usd', 'N/A')}")
 
+        # Repair loop tracking (ARCH-010: prevent infinite loops)
+        repair_attempts = 0
+        max_repair_attempts = 3
+        last_phase = None
+
         # Execute phases until PRODUCTION
         while manifest.current_phase != ProjectPhase.PRODUCTION:
+            # Detect repair loop (same phase executed consecutively)
+            if last_phase == manifest.current_phase and manifest.current_phase == ProjectPhase.CODING:
+                repair_attempts += 1
+                logger.warning(
+                    f"⚠️  Repair attempt {repair_attempts}/{max_repair_attempts} for {manifest.current_phase.value}"
+                )
+                if repair_attempts > max_repair_attempts:
+                    raise OrchestratorError(
+                        f"❌ REPAIR LOOP FAILED: CodingSpecialist failed to fix bugs after {max_repair_attempts} attempts.\n"
+                        f"Manual intervention required. Check logs for details."
+                    )
+            else:
+                # Reset counter when moving to new phase
+                repair_attempts = 0
+
+            # Store current phase for next iteration
+            last_phase = manifest.current_phase
+
+            # Execute phase (may return False if repair loop triggered)
             self.execute_phase(manifest)
 
             # Reload manifest (handler may have updated it)

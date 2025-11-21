@@ -53,18 +53,22 @@ class SpecialistHandlerAdapter:
         self.orchestrator = orchestrator
         self._specialist = None  # Lazy initialization
 
-    def execute(self, manifest) -> None:
+    def execute(self, manifest):
         """
         Execute specialist workflow (handler interface).
 
         Converts manifest to MissionContext, calls specialist.execute(),
         and applies result back to manifest.
 
+        Returns:
+            SpecialistResult from the specialist (success or failure)
+            This allows orchestrator to implement repair loops
+
         Args:
             manifest: ProjectManifest to execute
 
         Raises:
-            Exception: If specialist execution fails
+            Exception: If preconditions fail or other setup errors
         """
         # Import here to avoid circular imports
 
@@ -94,18 +98,22 @@ class SpecialistHandlerAdapter:
             # Execute specialist workflow
             result = self._specialist.execute(context)
 
-            # Check if execution was successful
-            if not result.success:
+            # CRITICAL (ARCH-010): Return result to orchestrator
+            # Do NOT raise exception on failure - let orchestrator decide what to do
+            # (e.g., implement repair loop for test failures)
+            if result.success:
+                # Apply result to manifest only if successful
+                self._apply_result_to_manifest(result, manifest)
+                self._specialist.on_complete(context, result)
+                logger.info(f"✅ {self._specialist.role} phase complete via specialist")
+            else:
+                # Specialist failed - log but don't raise yet
                 error_msg = result.error or "Unknown error"
-                raise RuntimeError(f"Specialist execution failed: {error_msg}")
+                logger.warning(f"⚠️  {self._specialist.role} phase FAILED: {error_msg}")
+                self._specialist.on_error(context, RuntimeError(error_msg))
 
-            # Apply result to manifest
-            self._apply_result_to_manifest(result, manifest)
-
-            # Call completion hook
-            self._specialist.on_complete(context, result)
-
-            logger.info(f"✅ {self._specialist.role} phase complete via specialist")
+            # Return result to orchestrator for decision-making (ARCH-010)
+            return result
 
         except Exception as e:
             # Call error hook
