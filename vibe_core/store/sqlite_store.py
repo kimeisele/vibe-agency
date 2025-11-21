@@ -941,6 +941,39 @@ class SQLiteStore:
             tasks.append(task)
         return tasks
 
+    def get_all_tasks(self) -> list[dict[str, Any]]:
+        """
+        Retrieves all tasks to reconstruct system state (ARCH-007).
+
+        Returns:
+            List of all task dicts, parsed with JSON fields deserialized
+        """
+        self._ensure_tasks_table()
+
+        cursor = self.conn.execute(
+            "SELECT id, description, status, parent_id, result, created_at, updated_at FROM tasks ORDER BY created_at"
+        )
+        rows = cursor.fetchall()
+        tasks = []
+        for row in rows:
+            task = {
+                "id": row[0],
+                "description": row[1],
+                "status": row[2],
+                "parent_id": row[3],
+                "result": row[4],
+                "created_at": row[5],
+                "updated_at": row[6],
+            }
+            # Try to parse result as JSON
+            if task.get("result"):
+                try:
+                    task["result"] = json.loads(task["result"])
+                except (json.JSONDecodeError, TypeError):
+                    pass  # Keep as string if not valid JSON
+            tasks.append(task)
+        return tasks
+
     # ========================================================================
     # LEGACY MIGRATION (ARCH-003)
     # ========================================================================
