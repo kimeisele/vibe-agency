@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""
+VIBE - User-Facing Command Interface
+=====================================
+
+The "Keyboard Labels" wrapper that simplifies vibe-agency from:
+  "Enter frequency 440Hz" → Simply press "A"
+
+This is ARCH-015: The Interface Layer.
+
+Usage:
+  ./bin/vibe status                    # Show system health + loaded cartridges
+  ./bin/vibe run [Thema]              # Start dialog with STEWARD to pick cartridge
+  ./bin/vibe make "[Dein Wunsch]"     # Magic button: feature-implement with your wish
+
+Example:
+  $ ./bin/vibe make "Erstelle eine Landingpage für unser neues Album"
+
+  Loading Cartridge: feature-implement...
+  Agent PLANNER: Analyzing request...
+  Agent CODER: Writing HTML/CSS...
+  Agent REVIEWER: Testing...
+  DONE. Open index.html to see your page.
+"""
+
+import sys
+import subprocess
+import json
+from pathlib import Path
+from typing import Optional, List
+import argparse
+from datetime import datetime
+import os
+
+
+class VibeWrapper:
+    """User-facing wrapper around vibe-agency cartridge system."""
+
+    def __init__(self):
+        self.repo_root = Path(__file__).parent.parent
+        self.vibe_cli = self.repo_root / "vibe-cli"
+        self.playbooks_dir = self.repo_root / "playbooks" / "presets"
+
+    def run(self, args: List[str]) -> int:
+        """Main entry point for vibe command."""
+        parser = self._create_parser()
+        parsed = parser.parse_args(args if args else ["--help"])
+
+        # Route to command handler
+        if parsed.command == "status":
+            return self.cmd_status()
+        elif parsed.command == "run":
+            return self.cmd_run(parsed.thema)
+        elif parsed.command == "make":
+            return self.cmd_make(parsed.wish)
+        else:
+            parser.print_help()
+            return 1
+
+    def _create_parser(self) -> argparse.ArgumentParser:
+        """Create argument parser for vibe command."""
+        parser = argparse.ArgumentParser(
+            prog="vibe",
+            description="VIBE - Unified Interface for Agency Cartridges",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog="""
+Examples:
+  vibe status                              # Check system health
+  vibe run planning                        # Interactive cartridge picker
+  vibe make "Add dark mode to dashboard"   # Execute feature-implement cartridge
+            """,
+        )
+
+        subparsers = parser.add_subparsers(
+            dest="command", help="vibe command to execute"
+        )
+
+        # status command
+        subparsers.add_parser(
+            "status",
+            help="Show system health and loaded cartridges (Green Light 🟢)",
+        )
+
+        # run command
+        run_parser = subparsers.add_parser(
+            "run",
+            help="Start interactive dialog with STEWARD to pick a cartridge",
+        )
+        run_parser.add_argument(
+            "thema",
+            nargs="?",
+            default=None,
+            help="Optional: topic/theme to guide cartridge selection",
+        )
+
+        # make command
+        make_parser = subparsers.add_parser(
+            "make", help="Magic button: Execute feature-implement cartridge"
+        )
+        make_parser.add_argument(
+            "wish",
+            nargs="+",
+            help="Your feature request (will be passed to feature-implement)",
+        )
+
+        return parser
+
+    def cmd_status(self) -> int:
+        """
+        Status command: Show system health and loaded cartridges.
+
+        Output:
+          ✅ System Health (Green Light indicators)
+          📦 Loaded Cartridges (Available playbooks)
+          ⚙️  Next Steps
+        """
+        print("\n" + "=" * 70)
+        print("🟢 VIBE AGENCY - SYSTEM STATUS")
+        print("=" * 70)
+
+        # Check system health
+        print("\n✅ SYSTEM HEALTH")
+        print("-" * 70)
+
+        health_status = self._check_system_health()
+        for check_name, (status, message) in health_status.items():
+            icon = "✅" if status else "❌"
+            print(f"  {icon} {check_name}: {message}")
+
+        # List available cartridges
+        print("\n📦 LOADED CARTRIDGES")
+        print("-" * 70)
+        cartridges = self._list_cartridges()
+        if cartridges:
+            for name, desc in cartridges:
+                print(f"  🎯 {name:<20} - {desc}")
+        else:
+            print("  ⚠️  No cartridges found")
+
+        # Next steps
+        print("\n⚙️  NEXT STEPS")
+        print("-" * 70)
+        print("  1. Run a cartridge:    vibe run [Thema]")
+        print('  2. Magic button:       vibe make "[Your Wish]"')
+        print("  3. Get help:           vibe --help")
+
+        print("\n" + "=" * 70 + "\n")
+        return 0
+
+    def cmd_run(self, thema: Optional[str]) -> int:
+        """
+        Run command: Start interactive dialog with STEWARD.
+
+        This delegates to vibe-cli boot mode with optional theme guidance.
+        """
+        print("\n" + "=" * 70)
+        print("🚀 VIBE AGENCY - CARTRIDGE LAUNCHER")
+        print("=" * 70)
+
+        if thema:
+            print(f"\n📍 Theme: {thema}")
+            print("   STEWARD will use this to guide cartridge selection...")
+        else:
+            print("\n📍 Interactive mode: Choose a cartridge below")
+
+        print("\n" + "-" * 70)
+        cartridges = self._list_cartridges()
+        if not cartridges:
+            print("❌ No cartridges available")
+            return 1
+
+        print("Available Cartridges:\n")
+        for idx, (name, desc) in enumerate(cartridges, 1):
+            print(f"  {idx}. {name:<20} - {desc}")
+
+        print("\n" + "-" * 70)
+        print("\nEnter cartridge number (or 'q' to quit): ", end="", flush=True)
+
+        try:
+            choice = input().strip()
+            if choice.lower() == "q":
+                print("Cancelled.")
+                return 0
+
+            idx = int(choice) - 1
+            if 0 <= idx < len(cartridges):
+                selected_cartridge = cartridges[idx][0]
+                print(f"\n✅ Selected: {selected_cartridge}")
+                return self._execute_cartridge(selected_cartridge)
+            else:
+                print("❌ Invalid selection")
+                return 1
+        except (ValueError, KeyboardInterrupt):
+            print("\n❌ Invalid input or cancelled")
+            return 1
+
+    def cmd_make(self, wish: List[str]) -> int:
+        """
+        Make command: Magic button for feature-implement cartridge.
+
+        This is the simplest path: user has an idea, we make it happen.
+        """
+        wish_text = " ".join(wish)
+
+        print("\n" + "=" * 70)
+        print("🪄 VIBE AGENCY - MAGIC BUTTON")
+        print("=" * 70)
+        print(f"\n📝 Your Wish: {wish_text}\n")
+
+        print("Loading Cartridge: feature-implement...")
+        print("-" * 70)
+
+        # Execute feature-implement cartridge with the wish as context
+        return self._execute_cartridge_with_context("feature-implement", wish_text)
+
+    def _check_system_health(self) -> dict:
+        """Check various system health indicators."""
+        health = {}
+
+        # Check git status
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            is_clean = result.returncode == 0 and result.stdout.strip() == ""
+            health["Git Status"] = (
+                is_clean,
+                "Clean" if is_clean else "Changes pending",
+            )
+        except Exception as e:
+            health["Git Status"] = (False, f"Error: {e}")
+
+        # Check vibe-cli exists
+        health["vibe-cli available"] = (
+            self.vibe_cli.exists(),
+            "Found" if self.vibe_cli.exists() else "Missing",
+        )
+
+        # Check playbooks directory
+        health["Cartridges available"] = (
+            self.playbooks_dir.exists(),
+            "Found" if self.playbooks_dir.exists() else "Missing",
+        )
+
+        # Check UV environment
+        venv_path = self.repo_root / ".venv"
+        health["UV Environment"] = (
+            venv_path.exists(),
+            "Ready" if venv_path.exists() else "Not installed",
+        )
+
+        return health
+
+    def _list_cartridges(self) -> List[tuple]:
+        """List available cartridges with descriptions."""
+        cartridges = []
+
+        if not self.playbooks_dir.exists():
+            return cartridges
+
+        # Map of cartridge names to descriptions
+        cartridge_descriptions = {
+            "feature-implement": "Full-stack feature: Plan → Code → Test → Commit",
+            "coder-mode": "Code-focused: Skip planning, go straight to coding",
+            "hello-world": "Demo playbook: Simple research & content generation",
+        }
+
+        for yaml_file in sorted(self.playbooks_dir.glob("*.yaml")):
+            name = yaml_file.stem
+            desc = cartridge_descriptions.get(name, "Custom cartridge")
+            cartridges.append((name, desc))
+
+        return cartridges
+
+    def _execute_cartridge(self, cartridge_name: str) -> int:
+        """Execute a cartridge by name."""
+        return self._execute_cartridge_with_context(cartridge_name, None)
+
+    def _execute_cartridge_with_context(
+        self, cartridge_name: str, context: Optional[str] = None
+    ) -> int:
+        """
+        Execute a cartridge with optional context.
+
+        This delegates to vibe-cli which manages the delegation flow
+        to Claude Code via file-based handoff.
+        """
+        try:
+            # Build command to invoke vibe-cli with the cartridge
+            cmd = [str(self.vibe_cli), "boot"]
+
+            # If context provided, pass it as stdin for STEWARD analysis
+            env = os.environ.copy()
+            stdin_data = None
+
+            if context:
+                # Encode context for vibe-cli
+                stdin_data = json.dumps(
+                    {
+                        "mode": "make",
+                        "cartridge": cartridge_name,
+                        "context": context,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ).encode()
+
+            print(f"Starting cartridge: {cartridge_name}")
+            print("=" * 70)
+
+            # Execute vibe-cli in subprocess
+            result = subprocess.run(
+                cmd,
+                stdin=subprocess.PIPE,
+                cwd=self.repo_root,
+                env=env,
+            )
+
+            if result.returncode == 0:
+                print("\n" + "=" * 70)
+                print("✅ Cartridge execution complete!")
+                print("=" * 70 + "\n")
+            else:
+                print("\n" + "=" * 70)
+                print("❌ Cartridge execution failed")
+                print("=" * 70 + "\n")
+
+            return result.returncode
+
+        except FileNotFoundError:
+            print(f"❌ Error: vibe-cli not found at {self.vibe_cli}")
+            return 1
+        except Exception as e:
+            print(f"❌ Error executing cartridge: {e}")
+            return 1
+
+
+def main():
+    """Main entry point."""
+    wrapper = VibeWrapper()
+    try:
+        return wrapper.run(sys.argv[1:])
+    except KeyboardInterrupt:
+        print("\n\n❌ Interrupted by user")
+        return 130
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
