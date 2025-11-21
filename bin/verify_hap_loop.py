@@ -24,18 +24,11 @@ from pathlib import Path
 # Setup path to find project modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from apps.agency.orchestrator.core_orchestrator import (  # noqa: E402
-    CoreOrchestrator,
-    OrchestratorError,
-)
-from apps.agency.orchestrator.types import ProjectPhase  # noqa: E402
-from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard  # noqa: E402
-from vibe_core.specialists.base_specialist import (  # noqa: E402
-    BaseSpecialist,
-    MissionContext,
-    SpecialistResult,
-)
-from vibe_core.store.sqlite_store import SQLiteStore  # noqa: E402
+from apps.agency.orchestrator.core_orchestrator import CoreOrchestrator, OrchestratorError
+from apps.agency.orchestrator.types import ProjectPhase
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.specialists.base_specialist import BaseSpecialist, MissionContext, SpecialistResult
+from vibe_core.store.sqlite_store import SQLiteStore
 
 # Setup Logging
 logging.basicConfig(
@@ -355,10 +348,10 @@ def test_circuit_breaker():
 
         # Calculate repair cycles (CODING→TESTING→CODING patterns)
         for i in range(len(execution_phases) - 2):
-            if (  # noqa: W503
+            if (
                 execution_phases[i] == "CODING"
-                and execution_phases[i + 1] == "TESTING"  # noqa: W503
-                and execution_phases[i + 2] == "CODING"  # noqa: W503
+                and execution_phases[i + 1] == "TESTING"
+                and execution_phases[i + 2] == "CODING"
             ):
                 analysis_results["repair_cycles"] += 1
 

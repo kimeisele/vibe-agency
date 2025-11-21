@@ -38,8 +38,8 @@ class TestGovernanceInjection:
     def test_governance_injection_enabled(self):
         """Guardian Directives should appear when inject_governance=True"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=True,
         )
@@ -61,8 +61,8 @@ class TestGovernanceInjection:
     def test_governance_injection_disabled(self):
         """Guardian Directives should NOT appear when inject_governance=False"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
         )
@@ -77,8 +77,8 @@ class TestContextEnrichment:
     def test_context_enrichment_root_workspace(self):
         """Context section should include workspace info"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,  # Disable to isolate context section
         )
@@ -95,8 +95,8 @@ class TestContextEnrichment:
         additional_context = {"test_key": "test_value", "project_id": "test-123"}
 
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             context=additional_context,
@@ -112,8 +112,8 @@ class TestToolInjection:
     def test_tool_injection_requested(self):
         """Tools should appear when inject_tools is provided"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             inject_tools=["google_search"],
@@ -126,8 +126,8 @@ class TestToolInjection:
     def test_tool_injection_not_requested(self):
         """Tools should NOT appear when inject_tools is None"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             inject_tools=None,
@@ -146,8 +146,8 @@ class TestSOPInjection:
     def test_sop_injection_requested(self):
         """SOPs should appear when inject_sops is provided"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             inject_sops=["SOP_001"],
@@ -160,8 +160,8 @@ class TestSOPInjection:
     def test_sop_injection_not_requested(self):
         """SOPs should NOT appear when inject_sops is None"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             inject_sops=None,
@@ -177,8 +177,8 @@ class TestCompositionOrder:
     def test_composition_order_all_layers(self):
         """All layers should appear in correct order"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=True,
             inject_tools=["google_search"],
@@ -215,7 +215,7 @@ class TestBackwardCompatibility:
 
         # This should work without any Registry involvement
         prompt = runtime.execute_task(
-            agent_id="VIBE_ALIGNER", task_id="02_feature_extraction", context={"test": "value"}
+            agent_id="AUDITOR", task_id="02_feature_extraction", context={"test": "value"}
         )
 
         # Should have core prompt components
@@ -233,8 +233,8 @@ class TestMissingWorkspace:
         """Should not crash when workspace doesn't exist"""
         # This should not raise an exception - should fall back gracefully
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="NONEXISTENT_WORKSPACE_12345",
             inject_governance=False,
         )
@@ -263,7 +263,7 @@ class TestOptionalParams:
     def test_minimal_call(self):
         """Should work with only required params"""
         # Only agent and task required
-        prompt = PromptRegistry.compose(agent="VIBE_ALIGNER", task="02_feature_extraction")
+        prompt = PromptRegistry.compose(agent="AUDITOR", task="semantic_audit")
 
         # Should produce valid prompt
         assert len(prompt) > 0
@@ -272,8 +272,8 @@ class TestOptionalParams:
     def test_all_injections_optional(self):
         """Should work with all inject_* params set to None/False"""
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",
-            task="02_feature_extraction",
+            agent="AUDITOR",
+            task="semantic_audit",
             workspace="ROOT",
             inject_governance=False,
             inject_tools=None,
@@ -289,7 +289,7 @@ class TestOptionalParams:
         """Meta-agents (like SSF_ROUTER) should work without task"""
         # Note: SSF_ROUTER has no tasks/ directory
         prompt = PromptRegistry.compose(
-            agent="VIBE_ALIGNER",  # Use VIBE_ALIGNER but without task
+            agent="AUDITOR",  # Use AUDITOR but without task
             task=None,
             workspace="ROOT",
             inject_governance=False,
@@ -298,7 +298,7 @@ class TestOptionalParams:
         # Should create a minimal meta-agent prompt
         assert len(prompt) > 0
         # Since task is None, should use meta-agent prompt template
-        assert "VIBE_ALIGNER" in prompt or "meta-agent" in prompt.lower()
+        assert "AUDITOR" in prompt or "meta-agent" in prompt.lower()
 
 
 # =================================================================
@@ -309,8 +309,8 @@ class TestOptionalParams:
 def test_full_composition_smoke_test():
     """Smoke test: Full composition with all features enabled"""
     prompt = PromptRegistry.compose(
-        agent="VIBE_ALIGNER",
-        task="02_feature_extraction",
+        agent="AUDITOR",
+        task="semantic_audit",
         workspace="ROOT",
         inject_governance=True,
         inject_tools=["google_search"],

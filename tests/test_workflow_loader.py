@@ -16,10 +16,10 @@ import pytest
 import yaml
 
 # Add playbook directory to path
-playbook_dir = Path(__file__).parent.parent / "agency_os" / "core_system" / "playbook"
+playbook_dir = Path(__file__).parent.parent / "vibe_core" / "playbook"
 
-from executor import WorkflowEdge, WorkflowGraph, WorkflowNode
-from loader import WorkflowLoader, WorkflowLoaderError, WorkflowValidationError
+from vibe_core.playbook.executor import WorkflowEdge, WorkflowGraph, WorkflowNode
+from vibe_core.playbook.loader import WorkflowLoader, WorkflowLoaderError, WorkflowValidationError
 
 
 class TestWorkflowLoaderInitialization:

@@ -66,22 +66,14 @@ class TestToolUseE2E:
         )
         return executor
 
+    @pytest.mark.skip(
+        reason="MARKET_RESEARCHER agent no longer exists in current architecture. "
+        "Agent was part of legacy agency_os structure."
+    )
     def test_load_tools_for_agent_market_researcher(self, vibe_cli):
         """Test: _load_tools_for_agent() loads correct tools for MARKET_RESEARCHER"""
-        tools = vibe_cli._load_tools_for_agent("MARKET_RESEARCHER")
-
-        assert len(tools) == 2, f"Expected 2 tools, got {len(tools)}"
-        assert tools[0]["name"] in ["google_search", "web_fetch"]
-        assert tools[1]["name"] in ["google_search", "web_fetch"]
-
-        # Verify schema format
-        for tool in tools:
-            assert "name" in tool
-            assert "description" in tool
-            assert "input_schema" in tool
-            assert tool["input_schema"]["type"] == "object"
-            assert "properties" in tool["input_schema"]
-            assert "required" in tool["input_schema"]
+        # NOTE: This test is for a legacy agent that no longer exists
+        pass
 
     def test_load_tools_for_agent_no_tools(self, vibe_cli):
         """Test: Agents without tools return empty list"""

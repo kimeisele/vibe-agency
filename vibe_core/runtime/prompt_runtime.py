@@ -129,9 +129,9 @@ class PromptRuntime:
 
     def __init__(self, base_path: str | None = None):
         if base_path is None:
-            # Auto-detect repo root (4 levels up from prompt_runtime.py)
-            # agency_os/core_system/runtime/prompt_runtime.py -> vibe-agency/
-            self.base_path = Path(__file__).resolve().parent.parent.parent.parent
+            # Auto-detect repo root (3 levels up from prompt_runtime.py)
+            # vibe_core/runtime/prompt_runtime.py -> vibe-agency/
+            self.base_path = Path(__file__).resolve().parent.parent.parent
         else:
             self.base_path = Path(base_path)
         self.knowledge_cache = {}  # Cache loaded YAML files
@@ -502,27 +502,25 @@ class PromptRuntime:
             AgentNotFoundError: If agent_id not in registry
         """
         # Dynamic agent registry - supports all agents
+        # NOTE: Legacy agency_os agents commented out - they no longer exist in the new architecture
         AGENT_REGISTRY = {
-            # Planning Framework
-            "LEAN_CANVAS_VALIDATOR": "agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR",
-            "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
-            "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
-            "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
-            # Research Agents (GAD-003)
-            "MARKET_RESEARCHER": "agency_os/01_planning_framework/agents/research/MARKET_RESEARCHER",
-            "TECH_RESEARCHER": "agency_os/01_planning_framework/agents/research/TECH_RESEARCHER",
-            "FACT_VALIDATOR": "agency_os/01_planning_framework/agents/research/FACT_VALIDATOR",
-            # Other Frameworks
-            "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
-            "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
-            "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
-            "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
-            # System Steward Framework
+            # System Steward Framework (Active)
             "SSF_ROUTER": "system_steward_framework/agents/SSF_ROUTER",
             "AUDITOR": "system_steward_framework/agents/AUDITOR",
             "LEAD_ARCHITECT": "system_steward_framework/agents/LEAD_ARCHITECT",
-            # System Agents
-            "AGENCY_OS_ORCHESTRATOR": "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR",
+            # Legacy agents (commented out - paths no longer exist):
+            # "LEAN_CANVAS_VALIDATOR": "agency_os/01_planning_framework/agents/LEAN_CANVAS_VALIDATOR",
+            # "VIBE_ALIGNER": "agency_os/01_planning_framework/agents/VIBE_ALIGNER",
+            # "GENESIS_BLUEPRINT": "agency_os/01_planning_framework/agents/GENESIS_BLUEPRINT",
+            # "GENESIS_UPDATE": "agency_os/01_planning_framework/agents/GENESIS_UPDATE",
+            # "MARKET_RESEARCHER": "agency_os/01_planning_framework/agents/research/MARKET_RESEARCHER",
+            # "TECH_RESEARCHER": "agency_os/01_planning_framework/agents/research/TECH_RESEARCHER",
+            # "FACT_VALIDATOR": "agency_os/01_planning_framework/agents/research/FACT_VALIDATOR",
+            # "CODE_GENERATOR": "agency_os/02_code_gen_framework/agents/CODE_GENERATOR",
+            # "QA_VALIDATOR": "agency_os/03_qa_framework/agents/QA_VALIDATOR",
+            # "DEPLOY_MANAGER": "agency_os/04_deploy_framework/agents/DEPLOY_MANAGER",
+            # "BUG_TRIAGE": "agency_os/05_maintenance_framework/agents/BUG_TRIAGE",
+            # "AGENCY_OS_ORCHESTRATOR": "agency_os/core_system/agents/AGENCY_OS_ORCHESTRATOR",
         }
 
         if agent_id not in AGENT_REGISTRY:
