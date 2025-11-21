@@ -1,0 +1,70 @@
+# ARCH-013: Coder Mode Playbook
+# ================================
+# This playbook activates ONLY the Coding Specialist
+# Useful when you already know what to build and just want the code
+#
+# Use case: vibe run playbook:coder-mode
+#
+
+id: coder-mode
+name: Coder Mode Playbook
+description: Focused coding mode - skip planning, testing, deployment. Just code.
+version: "1.0"
+
+# =============================================================================
+# AGENTS
+# =============================================================================
+agents:
+  coder:
+    role: "Coding Specialist"
+    description: "Expert developer focused on implementation"
+    skills:
+      - coding
+      - refactoring
+      - architecture
+      - code_analysis
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.3  # Lower temp for focused coding
+
+# =============================================================================
+# TOOLS
+# =============================================================================
+tools:
+  code_editor:
+    enabled: true
+
+  file_system:
+    enabled: true
+
+  console_output:
+    enabled: true
+
+# =============================================================================
+# PHASES: Single coding phase
+# =============================================================================
+phases:
+  - name: "CODING"
+    description: "Focused implementation without planning or testing overhead"
+    agents:
+      - coder
+    tools:
+      - code_editor
+      - file_system
+      - console_output
+    output_artifact: "implementation.py"
+
+# =============================================================================
+# METADATA
+# =============================================================================
+metadata:
+  version: "1.0"
+  category: "development-mode"
+  author: "vibe-agency"
+  complexity: "simple"
+  estimated_duration_minutes: 15
+  tags:
+    - coding
+    - focused
+    - rapid-development
+    - no-planning

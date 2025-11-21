@@ -1,0 +1,131 @@
+# ARCH-013: Feature Implementation Playbook
+# ============================================
+# This playbook configures the orchestrator to implement features
+# end-to-end: Planning → Coding → Testing → Git Commit
+#
+# Use case: vibe run playbook:feature-implement
+#
+
+id: feature-implement
+name: Feature Implementation Playbook
+description: Full-stack feature implementation workflow (Plan → Code → Test → Commit)
+version: "1.0"
+
+# =============================================================================
+# AGENTS
+# =============================================================================
+agents:
+  planner:
+    role: "Planning Specialist"
+    description: "Plans features, breaks down requirements, creates specifications"
+    skills:
+      - planning
+      - analysis
+      - architecture
+    config:
+      model: "claude-sonnet-4-5"
+
+  coder:
+    role: "Coding Specialist"
+    description: "Implements features, writes clean code, follows standards"
+    skills:
+      - coding
+      - refactoring
+      - architecture
+    config:
+      model: "claude-sonnet-4-5"
+
+  tester:
+    role: "Testing Specialist"
+    description: "Tests code, verifies functionality, ensures quality"
+    skills:
+      - testing
+      - code_analysis
+      - debugging
+    config:
+      model: "claude-sonnet-4-5"
+
+  git_committer:
+    role: "Git Specialist"
+    description: "Commits code changes with proper messages"
+    skills:
+      - git
+      - documentation
+    config:
+      model: "claude-sonnet-4-5"
+
+# =============================================================================
+# TOOLS
+# =============================================================================
+tools:
+  code_editor:
+    enabled: true
+
+  test_runner:
+    enabled: true
+
+  git_client:
+    enabled: true
+
+  file_system:
+    enabled: true
+
+# =============================================================================
+# PHASES
+# =============================================================================
+phases:
+  # Phase 1: Planning
+  - name: "PLANNING"
+    description: "Plan the feature: requirements, design, API specification"
+    agents:
+      - planner
+    tools:
+      - file_system
+    output_artifact: "feature_spec.md"
+
+  # Phase 2: Coding
+  - name: "CODING"
+    description: "Implement the feature code"
+    agents:
+      - coder
+    tools:
+      - code_editor
+      - file_system
+    input_artifact: "feature_spec.md"
+    output_artifact: "feature_code.py"
+
+  # Phase 3: Testing
+  - name: "TESTING"
+    description: "Test the implementation and fix bugs"
+    agents:
+      - tester
+    tools:
+      - test_runner
+      - code_editor
+    input_artifact: "feature_code.py"
+    output_artifact: "test_results.json"
+
+  # Phase 4: Git Commit
+  - name: "DEPLOYMENT"
+    description: "Commit changes to git repository"
+    agents:
+      - git_committer
+    tools:
+      - git_client
+    input_artifact: "feature_code.py"
+    output_artifact: "git_commit_hash.txt"
+
+# =============================================================================
+# METADATA
+# =============================================================================
+metadata:
+  version: "1.0"
+  category: "feature-development"
+  author: "vibe-agency"
+  complexity: "medium"
+  estimated_duration_minutes: 30
+  tags:
+    - feature
+    - implementation
+    - full-stack
+    - production

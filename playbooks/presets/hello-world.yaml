@@ -1,0 +1,88 @@
+# ARCH-013: Demo Playbook - Hello World
+# ========================================
+# This is the simplest possible playbook that uses 2 agents
+# to generate output, proving the cartridge slot mechanism works.
+#
+# Use case: vibe run playbook:hello-world
+#
+
+id: hello-world
+name: Hello World Playbook
+description: A simple demo playbook that uses agents to generate text output
+version: "1.0"
+
+# =============================================================================
+# AGENTS: Define which agents are available and their roles
+# =============================================================================
+agents:
+  researcher:
+    role: "Research Specialist"
+    description: "Gathers information and researches topics"
+    skills:
+      - research
+      - analysis
+      - documentation
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.7
+
+  writer:
+    role: "Content Writer"
+    description: "Writes and documents content"
+    skills:
+      - writing
+      - documentation
+      - creativity
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.8
+
+# =============================================================================
+# TOOLS: Define which tools are available in this playbook
+# =============================================================================
+tools:
+  file_writer:
+    enabled: true
+    config:
+      output_directory: "/tmp/vibe_demo"
+
+  console_output:
+    enabled: true
+
+# =============================================================================
+# PHASES: Define the SDLC phases that this playbook executes
+# =============================================================================
+phases:
+  # Phase 1: Research
+  - name: "RESEARCH"
+    description: "Research phase - Researcher agent gathers information"
+    agents:
+      - researcher
+    tools:
+      - console_output
+    output_artifact: "research_output.md"
+
+  # Phase 2: Writing
+  - name: "CODING"  # Using CODING phase as a content generation phase for demo
+    description: "Content generation phase - Writer creates the output"
+    agents:
+      - writer
+    tools:
+      - file_writer
+      - console_output
+    input_artifact: "research_output.md"
+    output_artifact: "demo_output.txt"
+
+# =============================================================================
+# METADATA: Execution parameters
+# =============================================================================
+metadata:
+  version: "1.0"
+  category: "demo"
+  author: "vibe-agency"
+  complexity: "simple"
+  estimated_duration_minutes: 2
+  tags:
+    - demo
+    - hello-world
+    - proof-of-concept
