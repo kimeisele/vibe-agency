@@ -306,11 +306,18 @@ class CoreOrchestrator:
         # Paths
         self.workspaces_dir = self.repo_root / "workspaces"
 
-        # Initialize SQLite persistence (ARCH-003: Dual Write Mode)
-        db_path = self.repo_root / ".vibe" / "state" / "vibe_agency.db"
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.sqlite_store = SQLiteStore(str(db_path))
-        logger.info(f"✅ SQLite persistence initialized: {db_path}")
+        # Initialize SQLite persistence (ARCH-003: Shadow Mode Phase 1)
+        # Initialize the store strictly in a try-catch block.
+        # If it fails, the orchestrator behaves as if the DB doesn't exist (Safe Fallback).
+        self.db_store = None
+        try:
+            db_path = self.repo_root / ".vibe" / "state" / "vibe_agency.db"
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.db_store = SQLiteStore(str(db_path))
+            logger.info(f"✅ [ARCH-003] Shadow Store initialized: {db_path}")
+        except Exception as e:
+            logger.warning(f"⚠️ [ARCH-003] Shadow Store init failed: {e}")
+            self.db_store = None
 
         # Initialize Tool Safety Guard (ARCH-006: Required for specialists)
         from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
@@ -488,13 +495,15 @@ class CoreOrchestrator:
         with open(manifest_path, "w") as f:
             json.dump(manifest.metadata, f, indent=2)
 
-        # ARCH-003: Dual Write Mode - also write to SQLite (Shadow Mode Phase 1)
-        try:
-            mission_id = self.sqlite_store.import_project_manifest(manifest.metadata)
-            logger.debug(f"✅ Dual-write to SQLite: mission_id={mission_id}")
-        except Exception as e:
-            # Non-fatal - JSON is source of truth in Shadow Mode Phase 1
-            logger.warning(f"⚠️ SQLite dual-write failed (non-fatal): {e}")
+        # [ARCH-003] DUAL WRITE - also write to SQLite (Shadow Mode)
+        if self.db_store:
+            try:
+                mission_id = self.db_store.import_project_manifest(manifest.metadata)
+                logger.debug(
+                    f"💾 Shadow-write for manifest {manifest.project_id} successful (mission_id={mission_id})"
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Shadow-write failed for manifest {manifest.project_id}: {e}")
 
         logger.info(
             f"Saved manifest: {manifest.project_id} (phase: {manifest.current_phase.value})"
@@ -701,6 +710,41 @@ class CoreOrchestrator:
         # Write artifact
         with open(artifact_path, "w") as f:
             json.dump(data, f, indent=2)
+
+        # [ARCH-003] DUAL WRITE - also record to SQLite (Shadow Mode)
+        if self.db_store:
+            try:
+                manifest = self.load_project_manifest(project_id)
+                mission = self.db_store.get_mission_by_uuid(manifest.project_id)
+                if mission:
+                    mission_id = mission["id"]
+                    # Map artifact name to artifact type
+                    artifact_type_map = {
+                        "research_brief.json": "planning",
+                        "lean_canvas_summary.json": "planning",
+                        "feature_spec.json": "planning",
+                        "architecture.json": "planning",
+                        "code_gen_spec.json": "coding",
+                        "test_plan.json": "testing",
+                        "qa_report.json": "testing",
+                        "deploy_receipt.json": "deployment",
+                        "bug_report.json": "deployment",
+                        "rollback_info.json": "deployment",
+                    }
+                    artifact_type = artifact_type_map.get(artifact_name, "unknown")
+                    from datetime import datetime
+
+                    self.db_store.add_artifact(
+                        mission_id=mission_id,
+                        artifact_type=artifact_type,
+                        artifact_name=artifact_name.replace(".json", ""),
+                        created_at=datetime.utcnow().isoformat() + "Z",
+                        path=str(artifact_path),
+                        metadata=data,
+                    )
+                    logger.debug(f"💾 Shadow-write for artifact {artifact_name} successful")
+            except Exception as e:
+                logger.warning(f"⚠️ Shadow-write failed for artifact {artifact_name}: {e}")
 
         logger.info(f"✓ Saved artifact: {artifact_name}")
 
