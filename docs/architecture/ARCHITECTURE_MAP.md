@@ -1,10 +1,10 @@
 # VIBE AGENCY: Complete Architecture Map
 
-**STATUS: IMPLEMENTATION PHASE**
-**LAST UPDATED: 2025-11-21**
+**STATUS: IMPLEMENTATION PHASE (Kernel Complete, Post-Split)**
+**LAST UPDATED: 2025-11-21 (Updated for ARCH-021 to ARCH-025 + Split)**
 **PURPOSE: Bird's Eye View of Entire System + Implementation Status**
 **AUDIENCE: Architects, Developers, Stakeholders**
-**DRIFT ASSESSMENT: ✅ ZERO DRIFT - Vision aligned with reality**
+**DRIFT ASSESSMENT: ✅ CURRENT - Reflects post-split, post-kernel reality**
 
 ---
 
@@ -428,52 +428,96 @@ mechanical_components:
 
 ---
 
-## 5. Complete Directory Structure
+## 5. Complete Directory Structure (Post-Split: Nov 2025)
+
+**✅ CURRENT STATE** (after ARCH-021 to ARCH-025 + Kernel/Agency Split)
 
 ```
 vibe-agency/
 │
 ├── .vibe/                              # GAD-5 Runtime artifacts
 │   ├── system_integrity_manifest.json  # Layer 0
-│   ├── state.json                      # Symbiotic state
+│   ├── state/
+│   │   └── vibe_agency.db              # SQLite state (ARCH-002)
 │   ├── receipts/                       # Layer 2+3
 │   └── audit/                          # Layer 3 only
 │
-├── agency_os/                          # Core Agency
-│   ├── 00_system/
-│   │   ├── runtime/
-│   │   │   ├── circuit_breaker.py       # GAD-509 (Iron Dome)
-│   │   │   ├── quota_manager.py         # GAD-510 (Cost Control)
-│   │   │   ├── providers/               # GAD-511 (Neural Adapter)
-│   │   │   │   ├── base.py              #   - Abstract interface
-│   │   │   │   ├── anthropic.py         #   - Claude provider
-│   │   │   │   ├── google.py            #   - Gemini provider
-│   │   │   │   └── factory.py           #   - Auto-detection
-│   │   │   └── llm_client.py
-│   │   ├── knowledge/                   # GAD-6 Knowledge Base
-│   │   │   ├── lenses/                  # GAD-906 (Semantic Lenses)
-│   │   │   │   └── first_principles.yaml # Mental models
-│   │   │   ├── AOS_Ontology.yaml
-│   │   │   └── ORCHESTRATION_technology_comparison.yaml
-│   │   ├── playbook/
-│   │   │   ├── executor.py              # GAD-902 (Graph Executor)
-│   │   │   ├── loader.py                # GAD-903 (Workflow Loader)
-│   │   │   └── workflows/               # YAML workflow definitions
-│   │   ├── orchestrator/                # Core orchestration
-│   │   ├── task_management/             # Mission control
-│   │   └── gates/                       # Validation gates
+├── vibe_core/                          # ✅ KERNEL (domain-agnostic OS)
+│   ├── kernel.py                       # ARCH-022: Kernel Loop
+│   ├── ledger.py                       # ARCH-024: Task Execution Ledger
+│   ├── agent_protocol.py               # Agent interface contract
 │   │
-│   ├── 01_planning_framework/
-│   │   ├── agents/
-│   │   │   ├── VIBE_ALIGNER/
-│   │   │   ├── GENESIS_BLUEPRINT/
-│   │   │   └── LEAN_CANVAS_VALIDATOR/
-│   │   └── knowledge/                  # Being migrated to Knowledge Dept
+│   ├── scheduling/                     # ARCH-021: FIFO Scheduler
+│   │   ├── scheduler.py
+│   │   └── task.py
 │   │
-│   ├── 02_code_gen_framework/
-│   ├── 03_qa_framework/
-│   ├── 04_deploy_framework/
-│   └── 05_maintenance_framework/
+│   ├── agents/                         # Internal agent layer
+│   │   └── llm_agent.py                # SimpleLLMAgent
+│   │
+│   ├── llm/                            # ARCH-025: The Cortex (LLM Integration)
+│   │   └── provider.py                 # LLMProvider (Anthropic/OpenAI/Google)
+│   │
+│   ├── specialists/                    # ARCH-005: HAP Pattern Base
+│   │   ├── base_specialist.py          # BaseSpecialist abstract class
+│   │   └── registry.py                 # AgentRegistry
+│   │
+│   ├── runtime/                        # Runtime infrastructure
+│   │   ├── llm_client.py
+│   │   ├── tool_safety_guard.py        # ARCH-011: Iron Dome
+│   │   ├── boot_sequence.py
+│   │   ├── context_loader.py
+│   │   └── prompt_composer.py
+│   │
+│   ├── playbook/                       # ARCH-013: Playbook Engine
+│   │   ├── playbook_engine.py
+│   │   ├── router_bridge.py            # ✅ Playbook → Specialist bridge
+│   │   └── schema_validator.py
+│   │
+│   ├── store/                          # ARCH-002: Persistence Layer
+│   │   └── sqlite_store.py             # SQLite CRUD operations
+│   │
+│   ├── config/                         # Configuration management
+│   │   └── phoenix.py
+│   │
+│   └── task_management/                # Roadmap & task system
+│       ├── roadmap_manager.py
+│       └── task_execution.py
+│
+├── apps/agency/                        # ✅ APPLICATION (software development domain)
+│   ├── orchestrator/                   # Core orchestration logic
+│   │   ├── core_orchestrator.py
+│   │   └── handlers/                   # Phase handlers
+│   │
+│   ├── specialists/                    # SDLC-specific specialists (ARCH-006 to ARCH-008)
+│   │   ├── planning.py                 # PlanningSpecialist
+│   │   ├── coding.py                   # CodingSpecialist
+│   │   ├── testing.py                  # TestingSpecialist
+│   │   ├── deployment.py               # DeploymentSpecialist
+│   │   └── maintenance.py              # MaintenanceSpecialist
+│   │
+│   └── personas/                       # ⚠️ Legacy (scheduled for removal)
+│
+├── bin/                                # Executable scripts
+│   ├── vibe                            # ARCH-015: Main CLI entry point
+│   ├── system-boot.sh                  # System bootstrap
+│   └── ...
+│
+├── docs/                               # Documentation
+│   ├── architecture/                   # Architectural decisions
+│   │   ├── ADR/                        # Architectural Decision Records
+│   │   ├── ARCH/                       # ARCH-001 to ARCH-025 tracking
+│   │   ├── GAD-0XX/                    # GAD 000-099 range
+│   │   ├── GAD-4XX/ to GAD-9XX/        # GAD ranges
+│   │   ├── LAD/                        # Layer Architecture Dimension
+│   │   ├── VAD/                        # Verification Architecture Dimension
+│   │   └── archive/                    # Historical documents
+│   ├── playbook/                       # Operational playbooks
+│   └── roadmap/                        # Phase roadmaps
+│
+├── tests/                              # Test suite (631 tests, 96.3% passing)
+│   ├── core/                           # vibe_core tests
+│   ├── architecture/                   # VAD tests (architecture verification)
+│   └── test_*_workflow.py              # Smoke tests
 │
 ├── knowledge_department/               # GAD-6 (Knowledge Department)
 │   ├── domain_knowledge/
@@ -999,3 +1043,70 @@ Vibe Agency is a **three-layer, gracefully degrading, hybrid-governance software
 - GAD-903: Workflow Loader (COMPLETE - Data → Logic)
 - GAD-906: Semantic Lenses (PROTOTYPE - Intelligence Injection)
 - ARCHITECTURE_MAP: This document
+
+---
+
+## 6. Recent Kernel Implementation (ARCH-021 to ARCH-025)
+
+**Date:** November 20-21, 2025
+**Status:** ✅ COMPLETE
+
+### ARCH-021: FIFO Scheduler (Engine Block Phase 1)
+**File:** `vibe_core/scheduling/scheduler.py`
+**Purpose:** Task queue management with FIFO ordering
+**Status:** ✅ Operational
+
+### ARCH-022: Kernel Loop (Engine Block Phase 2)
+**File:** `vibe_core/kernel.py`
+**Purpose:** Central kernel with agent registry, task scheduling, tick-based execution
+**Features:**
+- Agent registration and dispatch
+- Task scheduling integration
+- Tick-based execution loop
+- Ledger integration for all operations
+**Status:** ✅ Operational
+
+### ARCH-023: Agent Dispatch (The Synapse)
+**File:** `vibe_core/kernel.py` (dispatch logic)
+**Purpose:** Route tasks to appropriate agents based on agent_id
+**Status:** ✅ Operational
+
+### ARCH-024: Task Execution Ledger (The Black Box)
+**File:** `vibe_core/ledger.py`
+**Purpose:** SQLite-based task execution tracking
+**Features:**
+- Automatic success/failure recording
+- Queryable execution history
+- Performance metrics
+**Status:** ✅ Operational
+
+### ARCH-025: The Cortex (LLM Integration)
+**File:** `vibe_core/llm/provider.py`
+**Purpose:** Abstract LLM provider interface for multi-provider support
+**Providers:** Anthropic (Claude), OpenAI (GPT), Google (Gemini)
+**Status:** ✅ Operational
+
+### Integration Flow
+
+```
+STEWARD (Claude Code)
+    ↓
+Playbook Engine (ARCH-013)
+    ↓
+RouterBridge (connects playbook → specialists)
+    ↓
+Specialist (e.g., PlanningSpecialist)
+    ↓
+Kernel.submit(task) (ARCH-022)
+    ↓
+Scheduler.add(task) (ARCH-021)
+    ↓
+Kernel.tick() → dispatch task (ARCH-023)
+    ↓
+Agent executes (uses LLMProvider from ARCH-025)
+    ↓
+Ledger.record_success/failure (ARCH-024)
+```
+
+**→ Full implementation details: See `docs/architecture/ARCH/README.md`**
+
