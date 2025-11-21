@@ -41,7 +41,9 @@ import yaml
 from vibe_core.runtime.prompt_runtime import PromptRuntime
 
 # Import workspace utilities without sys.path manipulation
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_REPO_ROOT = (
+    Path(__file__).resolve().parent.parent.parent
+)  # vibe_core/runtime/ -> vibe_core/ -> repo root
 _WORKSPACE_UTILS_PATH = _REPO_ROOT / "scripts" / "workspace_utils.py"
 
 try:

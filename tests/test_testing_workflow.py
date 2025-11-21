@@ -165,13 +165,15 @@ class TestTestingWorkflow:
 
             # Execute TESTING phase with mocked pytest and path checks
             print("\n2. Executing TESTING phase...")
-            with patch("subprocess.run", side_effect=mock_subprocess_run):
-                with patch.object(Path, "exists", mock_path_exists):
-                    try:
-                        orchestrator.execute_phase(manifest)
-                        print("   ✓ TESTING phase completed without errors")
-                    except Exception as e:
-                        pytest.fail(f"TESTING phase execution failed: {e}")
+            with (
+                patch("subprocess.run", side_effect=mock_subprocess_run),
+                patch.object(Path, "exists", mock_path_exists),
+            ):
+                try:
+                    orchestrator.execute_phase(manifest)
+                    print("   ✓ TESTING phase completed without errors")
+                except Exception as e:
+                    pytest.fail(f"TESTING phase execution failed: {e}")
 
             # Verify artifact was created
             print("\n3. Verifying artifacts...")

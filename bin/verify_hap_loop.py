@@ -229,7 +229,8 @@ def test_circuit_breaker():
         print("\n📋 STEP 2: Initializing CoreOrchestrator...")
         try:
             orchestrator = CoreOrchestrator(
-                repo_root=temp_path, execution_mode="delegated"  # Use delegated mode (file-based)
+                repo_root=temp_path,
+                execution_mode="delegated",  # Use delegated mode (file-based)
             )
             print("   ✅ CoreOrchestrator initialized")
         except Exception as e:

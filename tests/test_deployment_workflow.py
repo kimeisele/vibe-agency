@@ -276,9 +276,9 @@ class TestDeploymentWorkflow:
 
                     # Validate deployment success
                     assert deploy_receipt["status"] == "SUCCESS", "Deployment should succeed"
-                    assert (
-                        deploy_receipt["artifact_version_deployed"] == "v1.2.3"
-                    ), "Should have correct version"
+                    assert deploy_receipt["artifact_version_deployed"] == "v1.2.3", (
+                        "Should have correct version"
+                    )
                     print(
                         f"   ✓ Deployment validated (status={deploy_receipt['status']}, version={deploy_receipt['artifact_version_deployed']})"
                     )

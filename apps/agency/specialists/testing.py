@@ -177,15 +177,15 @@ class TestingSpecialist(BaseSpecialist):
             },
         )
 
-        # Load code_gen_spec from CODING
+        # Load code_gen_spec from CODING (for future use)
         try:
-            code_gen_spec = self.orchestrator.load_artifact(
+            _code_gen_spec = self.orchestrator.load_artifact(
                 context.mission_uuid, "code_gen_spec.json"
             )
             logger.info("✅ Loaded code_gen_spec.json from CODING phase")
         except Exception as e:
             logger.error(f"Failed to load code_gen_spec.json: {e}")
-            code_gen_spec = {}
+            _code_gen_spec = {}  # Reserved for future test filtering logic
 
         # Determine test target (from context or default to tests/)
         test_target = context.metadata.get("test_target", "tests/")
@@ -336,7 +336,7 @@ class TestingSpecialist(BaseSpecialist):
 
         try:
             # Run pytest with capturing output
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 ["python", "-m", "pytest", str(test_path), "-v", "--tb=short"],
                 capture_output=True,
                 text=True,

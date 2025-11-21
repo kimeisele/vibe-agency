@@ -156,7 +156,7 @@ def test_repair_mode(test_dir: Path, store: SQLiteStore, guard: ToolSafetyGuard)
 
     try:
         # Create QA failure report on disk
-        qa_report = create_qa_failure_report(test_dir, failures=5, passed=10)
+        _qa_report = create_qa_failure_report(test_dir, failures=5, passed=10)
 
         # Create a dummy source file to be patched
         create_dummy_source_file(test_dir)

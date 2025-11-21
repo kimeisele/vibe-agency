@@ -22,14 +22,14 @@ def test_orchestrator_with_vibe_config(tmp_path):
     with open(vibe_dir / "system_integrity_manifest.json", "w") as f:
         json.dump(manifest, f)
 
-    # Setup minimal workflow YAML
-    workflows_dir = tmp_path / "agency_os" / "core_system" / "state_machine"
+    # Setup minimal workflow YAML (new post-split location)
+    workflows_dir = tmp_path / "apps" / "agency" / "orchestrator" / "state_machine"
     workflows_dir.mkdir(parents=True)
     workflow_yaml = workflows_dir / "ORCHESTRATION_workflow_design.yaml"
     workflow_yaml.write_text("phases: {}\ntransitions: {}\n")
 
-    # Setup minimal contracts YAML
-    contracts_dir = tmp_path / "agency_os" / "core_system" / "contracts"
+    # Setup minimal contracts YAML (new post-split location)
+    contracts_dir = tmp_path / "apps" / "agency" / "orchestrator" / "contracts"
     contracts_dir.mkdir(parents=True)
     contracts_yaml = contracts_dir / "ORCHESTRATION_data_contracts.yaml"
     contracts_yaml.write_text("manifest_schema: {}\nartifact_schemas: {}\n")
@@ -54,14 +54,14 @@ def test_orchestrator_without_vibe_config(tmp_path):
     """Orchestrator should degrade gracefully if VibeConfig unavailable."""
     # No .vibe/ directory
 
-    # Setup minimal workflow YAML
-    workflows_dir = tmp_path / "agency_os" / "core_system" / "state_machine"
+    # Setup minimal workflow YAML (new post-split location)
+    workflows_dir = tmp_path / "apps" / "agency" / "orchestrator" / "state_machine"
     workflows_dir.mkdir(parents=True)
     workflow_yaml = workflows_dir / "ORCHESTRATION_workflow_design.yaml"
     workflow_yaml.write_text("phases: {}\ntransitions: {}\n")
 
-    # Setup minimal contracts YAML
-    contracts_dir = tmp_path / "agency_os" / "core_system" / "contracts"
+    # Setup minimal contracts YAML (new post-split location)
+    contracts_dir = tmp_path / "apps" / "agency" / "orchestrator" / "contracts"
     contracts_dir.mkdir(parents=True)
     contracts_yaml = contracts_dir / "ORCHESTRATION_data_contracts.yaml"
     contracts_yaml.write_text("manifest_schema: {}\nartifact_schemas: {}\n")

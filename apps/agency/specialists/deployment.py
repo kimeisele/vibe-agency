@@ -155,7 +155,7 @@ class DeploymentSpecialist(BaseSpecialist):
             qa_status = qa_report.get("status", "UNKNOWN")
             if qa_status not in ("PASSED", "APPROVED"):
                 logger.error(
-                    f"❌ BLOCKING: QA status is '{qa_status}', " f"expected 'PASSED' or 'APPROVED'"
+                    f"❌ BLOCKING: QA status is '{qa_status}', expected 'PASSED' or 'APPROVED'"
                 )
                 return False
             logger.info(f"✅ qa_report.json loaded successfully (status: {qa_status})")
@@ -260,8 +260,7 @@ class DeploymentSpecialist(BaseSpecialist):
             qa_status = qa_report.get("status", "UNKNOWN")
             if qa_status not in ("PASSED", "APPROVED"):
                 logger.error(
-                    f"❌ VALIDATION FAILED: QA status is '{qa_status}', "
-                    f"expected PASSED or APPROVED"
+                    f"❌ VALIDATION FAILED: QA status is '{qa_status}', expected PASSED or APPROVED"
                 )
                 self._log_decision(
                     decision_type="VALIDATION_FAILED",

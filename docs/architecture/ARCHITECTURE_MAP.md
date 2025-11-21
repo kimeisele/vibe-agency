@@ -1,10 +1,35 @@
 # VIBE AGENCY: Complete Architecture Map
 
 **STATUS: IMPLEMENTATION PHASE**
-**LAST UPDATED: 2025-11-19**
+**LAST UPDATED: 2025-11-21**
 **PURPOSE: Bird's Eye View of Entire System + Implementation Status**
 **AUDIENCE: Architects, Developers, Stakeholders**
 **DRIFT ASSESSMENT: ✅ ZERO DRIFT - Vision aligned with reality**
+
+---
+
+## THE CORE PHILOSOPHY: The 6D Hexagon
+
+**Vibe Agency = Vibe-Studio running on Vibe-OS**
+
+Just as Photoshop runs on an operating system, **Vibe-Studio (the interface: agents, specialists, workflows) runs on Vibe-OS (the system: runtime, knowledge, governance, orchestration)**.
+
+The architecture follows a **6D Hexagon model** that provides a complete dimensional framework:
+
+| Dimension | Name | Function | Status |
+|-----------|------|----------|--------|
+| **1-3D: GAD/LAD/VAD** | **The Body** | Structure, Rules, Verification | ✅ Exists |
+| **4D: PAD** | **The Action** | Workflows & Time | ✅ Operational |
+| **5D: MAD** | **The Soul** | Context & Intention | ⚠️ Emerging |
+| **6D: EAD** | **The Mind** | Evolution & Memory | 🔮 Planned |
+
+**→ See [VISION_6D_HEXAGON.md](VISION_6D_HEXAGON.md) for the complete philosophical foundation.**
+
+This model ensures completeness:
+- **Static** (Body): Code and structure
+- **Kinetic** (Action): Workflows through time
+- **Dynamic** (Soul): Context and purpose
+- **Cybernetic** (Mind): Learning and evolution
 
 ---
 
