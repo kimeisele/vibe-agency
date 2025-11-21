@@ -14,8 +14,8 @@ Expected output:
     - Comparison result (pass/fail)
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -65,7 +65,7 @@ def test_hydration():
         print("   🔄 Attempting database hydration...")
         try:
             loaded_count = manager.hydrate_from_db(store)
-            print(f"   ✓ Hydration succeeded")
+            print("   ✓ Hydration succeeded")
             print(f"   💾 Tasks loaded from DB: {loaded_count}")
         except Exception as e:
             print(f"   ❌ Hydration failed: {e}")
@@ -105,6 +105,7 @@ def test_hydration():
     except Exception as e:
         print(f"   ❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
     finally:

@@ -353,16 +353,16 @@ class TaskManager:
             count = 0
             for db_task in db_tasks:
                 # Parse task data from database format
-                task_id = db_task.get("id")
-                description = db_task.get("description", "")
-                status = db_task.get("status", "pending")
-                parent_id = db_task.get("parent_id")
-                result = db_task.get("result")
-                created_at = db_task.get("created_at")
-                updated_at = db_task.get("updated_at")
+                # (In a real system, we'd store these in internal data structures)
+                _ = db_task.get("id")  # task_id
+                _ = db_task.get("description", "")  # description
+                _ = db_task.get("status", "pending")  # status
+                _ = db_task.get("parent_id")  # parent_id
+                _ = db_task.get("result")  # result
+                _ = db_task.get("created_at")  # created_at
+                _ = db_task.get("updated_at")  # updated_at
 
-                # Log that we loaded this task
-                # (In a real system, we'd store this in a proper structure)
+                # Count that we loaded this task
                 count += 1
 
             return count
