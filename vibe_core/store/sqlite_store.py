@@ -781,6 +781,167 @@ class SQLiteStore:
         return run
 
     # ========================================================================
+    # [ARCH-006] TASK MANAGEMENT (Hierarchical Sub-Task Tracking)
+    # ========================================================================
+
+    def _ensure_tasks_table(self):
+        """
+        Ensure tasks table exists (created on-demand for ARCH-006).
+
+        This provides hierarchical task tracking for agents to break down work.
+        """
+        with self._lock:
+            self.conn.execute("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY,
+                    description TEXT NOT NULL,
+                    parent_id TEXT,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    result TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT,
+                    CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')),
+                    FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE
+                )
+            """)
+            self.conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_parent
+                ON tasks(parent_id)
+            """)
+            self.conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_status
+                ON tasks(status)
+            """)
+            self._commit()
+
+    def add_task(
+        self,
+        task_id: str,
+        description: str,
+        parent_id: str | None = None,
+        status: str = "pending",
+    ) -> str:
+        """
+        Add a task for hierarchical tracking (ARCH-006).
+
+        Args:
+            task_id: Unique task identifier (typically UUID)
+            description: Human-readable task description
+            parent_id: Parent task ID for hierarchy (None for root tasks)
+            status: Initial status (default: 'pending')
+
+        Returns:
+            task_id: The provided task_id
+        """
+        self._ensure_tasks_table()
+
+        timestamp = datetime.utcnow().isoformat() + "Z"
+
+        with self._lock:
+            self.conn.execute(
+                """
+                INSERT INTO tasks (id, description, parent_id, status, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (task_id, description, parent_id, status, timestamp),
+            )
+            self._commit()
+
+        return task_id
+
+    def update_task_status(
+        self,
+        task_id: str,
+        status: str,
+        result: Any = None,
+    ):
+        """
+        Update task status and optional result (ARCH-006).
+
+        Args:
+            task_id: Task ID to update
+            status: New status ('pending', 'in_progress', 'completed', 'failed')
+            result: Optional result data (will be JSON-serialized if dict/list)
+        """
+        self._ensure_tasks_table()
+
+        timestamp = datetime.utcnow().isoformat() + "Z"
+
+        # Serialize result if it's a dict or list
+        if result is not None and isinstance(result, (dict, list)):
+            result = json.dumps(result)
+        elif result is not None:
+            result = str(result)
+
+        with self._lock:
+            self.conn.execute(
+                """
+                UPDATE tasks
+                SET status = ?, result = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (status, result, timestamp, task_id),
+            )
+            self._commit()
+
+    def get_task(self, task_id: str) -> dict[str, Any] | None:
+        """
+        Get task by ID (ARCH-006).
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            Task dict or None if not found
+        """
+        self._ensure_tasks_table()
+
+        cursor = self.conn.execute(
+            "SELECT * FROM tasks WHERE id = ?",
+            (task_id,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+
+        task = dict(row)
+        # Try to parse result as JSON
+        if task.get("result"):
+            try:
+                task["result"] = json.loads(task["result"])
+            except (json.JSONDecodeError, TypeError):
+                pass  # Keep as string if not valid JSON
+        return task
+
+    def get_subtasks(self, parent_id: str) -> list[dict[str, Any]]:
+        """
+        Get all subtasks for a parent task (ARCH-006).
+
+        Args:
+            parent_id: Parent task ID
+
+        Returns:
+            List of task dicts
+        """
+        self._ensure_tasks_table()
+
+        cursor = self.conn.execute(
+            "SELECT * FROM tasks WHERE parent_id = ? ORDER BY created_at",
+            (parent_id,),
+        )
+        tasks = []
+        for row in cursor.fetchall():
+            task = dict(row)
+            # Try to parse result as JSON
+            if task.get("result"):
+                try:
+                    task["result"] = json.loads(task["result"])
+                except (json.JSONDecodeError, TypeError):
+                    pass  # Keep as string if not valid JSON
+            tasks.append(task)
+        return tasks
+
+    # ========================================================================
     # LEGACY MIGRATION (ARCH-003)
     # ========================================================================
 

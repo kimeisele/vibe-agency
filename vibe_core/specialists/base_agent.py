@@ -19,7 +19,7 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # [ARCH-005] Import Store
 from vibe_core.store.sqlite_store import SQLiteStore
@@ -86,7 +86,7 @@ class BaseAgent:
         self.context = self._load_context()
 
         # [ARCH-005] Initialize DB Connection (Shadow Mode)
-        self.db: Optional[SQLiteStore] = None
+        self.db: SQLiteStore | None = None
         self._init_db_connection()
 
         # Verify infrastructure is available
@@ -145,7 +145,7 @@ class BaseAgent:
             logger.debug(f"✅ Agent '{self.name}' connected to SQLiteStore")
         except Exception as e:
             logger.warning(
-                f"⚠️ Agent '{self.name}' running without DB: {e}. " "Database features disabled."
+                f"⚠️ Agent '{self.name}' running without DB: {e}. Database features disabled."
             )
             self.db = None
 
@@ -377,7 +377,7 @@ class BaseAgent:
     # [ARCH-005] DATABASE AWARENESS
     # ========================================================================
 
-    def log_event(self, event_type: str, payload: Dict[str, Any]) -> bool:
+    def log_event(self, event_type: str, payload: dict[str, Any]) -> bool:
         """
         Record an operational event to the database.
 
@@ -398,9 +398,7 @@ class BaseAgent:
             })
         """
         if not self.db:
-            logger.debug(
-                f"Agent '{self.name}': Event '{event_type}' not logged " "(DB unavailable)"
-            )
+            logger.debug(f"Agent '{self.name}': Event '{event_type}' not logged (DB unavailable)")
             return False
 
         try:
@@ -408,12 +406,75 @@ class BaseAgent:
             # Future: Add dedicated 'events' or 'agent_activities' table
             # and write the payload directly.
             # Using the context manager ensures proper connection cleanup.
-            with self.db:  # noqa: F841
+            with self.db:
                 logger.debug(f"💾 Agent '{self.name}' logged event: {event_type} → {payload}")
             return True
         except Exception as e:
             logger.warning(f"⚠️ Failed to log event '{event_type}': {e}")
             return False
+
+    # [ARCH-006] Sub-Task Management
+    def create_subtask(self, description: str, parent_id: str) -> str:
+        """
+        Creates a child task in the database to track granular progress.
+        Returns the generated task_id.
+
+        This enables agents to persist their Chain-of-Thought decomposition,
+        allowing recovery and resumption if the agent crashes mid-execution.
+
+        Args:
+            description: Human-readable task description
+            parent_id: Parent task ID for hierarchy
+
+        Returns:
+            task_id: Generated UUID for the subtask
+
+        Example:
+            subtask_id = agent.create_subtask("Analyze requirements", root_mission_id)
+            agent.update_subtask(subtask_id, "completed", result="Analysis Done")
+        """
+        import uuid
+
+        task_id = str(uuid.uuid4())
+
+        # Log visually
+        logger.info(f"📋 Agent {self.name} created subtask: {description[:50]}...")
+
+        if self.db:
+            try:
+                with self.db as conn:
+                    # We utilize the store's add_task method
+                    # This assumes SQLiteStore has add_task(task_id, description, parent_id, status)
+                    conn.add_task(
+                        task_id=task_id,
+                        description=description,
+                        parent_id=parent_id,
+                        status="pending",
+                    )
+                self.log_event("subtask_created", {"task_id": task_id, "parent_id": parent_id})
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to persist subtask {task_id}: {e}")
+
+        return task_id
+
+    def update_subtask(self, task_id: str, status: str, result: Any = None) -> None:
+        """
+        Updates the status of a subtask (e.g., 'in_progress', 'completed', 'failed').
+
+        Args:
+            task_id: Task ID to update
+            status: New status ('pending', 'in_progress', 'completed', 'failed')
+            result: Optional result data
+        """
+        if self.db:
+            try:
+                with self.db as conn:
+                    conn.update_task_status(task_id, status, result)
+                # Log completion events specifically
+                if status in ["completed", "failed"]:
+                    self.log_event(f"subtask_{status}", {"task_id": task_id})
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to update subtask {task_id}: {e}")
 
     # ========================================================================
     # CONNECTION TO FEET (GAD-4: Quality Assurance)

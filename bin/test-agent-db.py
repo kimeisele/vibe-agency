@@ -18,7 +18,7 @@ from pathlib import Path
 # Adjust path to find vibe_core
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from vibe_core.specialists.base_agent import BaseAgent  # noqa: E402
+from vibe_core.specialists.base_agent import BaseAgent
 
 
 def ensure_minimal_infrastructure(vibe_root: Path) -> None:
