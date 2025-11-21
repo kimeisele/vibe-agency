@@ -84,7 +84,7 @@ class TestAgentRegistration:
 
     def test_register_single_agent(self):
         """Test registering a single agent with the kernel."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         kernel.register_agent(agent)
@@ -95,7 +95,7 @@ class TestAgentRegistration:
 
     def test_register_multiple_agents(self):
         """Test registering multiple agents with different IDs."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent1 = EchoAgent(agent_id="echo-1")
         agent2 = EchoAgent(agent_id="echo-2")
         agent3 = CounterAgent(agent_id="counter-1")
@@ -112,7 +112,7 @@ class TestAgentRegistration:
 
     def test_register_duplicate_agent_raises_error(self):
         """Test that registering duplicate agent ID raises ValueError."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent1 = EchoAgent(agent_id="echo-1")
         agent2 = EchoAgent(agent_id="echo-1")  # Same ID
 
@@ -123,7 +123,7 @@ class TestAgentRegistration:
 
     def test_register_agent_logs_message(self, caplog):
         """Test that agent registration logs a message."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         with caplog.at_level(logging.INFO):
@@ -133,7 +133,7 @@ class TestAgentRegistration:
 
     def test_register_agent_before_boot(self):
         """Test that agents can be registered before kernel boot."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         # Register before boot
@@ -151,7 +151,7 @@ class TestAgentDispatch:
 
     def test_dispatch_to_echo_agent(self):
         """Test that kernel dispatches task to EchoAgent and returns result."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         kernel.register_agent(agent)
@@ -171,7 +171,7 @@ class TestAgentDispatch:
 
     def test_dispatch_returns_agent_result(self):
         """Test that _execute_task returns the agent's result."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         kernel.register_agent(agent)
@@ -187,7 +187,7 @@ class TestAgentDispatch:
 
     def test_dispatch_multiple_tasks_to_same_agent(self):
         """Test dispatching multiple tasks to the same agent."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = CounterAgent(agent_id="counter-1")
 
         kernel.register_agent(agent)
@@ -212,7 +212,7 @@ class TestAgentDispatch:
 
     def test_dispatch_to_multiple_agents(self):
         """Test dispatching tasks to different agents."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         echo_agent = EchoAgent(agent_id="echo-1")
         counter_agent = CounterAgent(agent_id="counter-1")
 
@@ -240,7 +240,7 @@ class TestAgentDispatch:
 
     def test_dispatch_logs_execution(self, caplog):
         """Test that task dispatch logs execution details."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         kernel.register_agent(agent)
@@ -262,7 +262,7 @@ class TestAgentNotFound:
 
     def test_dispatch_to_unregistered_agent_raises_error(self):
         """Test that dispatching to unregistered agent raises AgentNotFoundError."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
 
         task = Task(agent_id="nonexistent-agent", payload={})
@@ -278,7 +278,7 @@ class TestAgentNotFound:
 
     def test_agent_not_found_logs_error(self, caplog):
         """Test that missing agent logs an error message."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
 
         task = Task(agent_id="missing-agent", payload={})
@@ -288,12 +288,12 @@ class TestAgentNotFound:
             with pytest.raises(AgentNotFoundError):
                 kernel.tick()
 
-        assert "not found for task" in caplog.text
+        assert "not found" in caplog.text
         assert "missing-agent" in caplog.text
 
     def test_agent_not_found_shows_available_agents(self, caplog):
         """Test that error message includes available agents."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent1 = EchoAgent(agent_id="echo-1")
         agent2 = CounterAgent(agent_id="counter-1")
 
@@ -317,7 +317,7 @@ class TestAgentExceptions:
 
     def test_agent_exception_propagates(self):
         """Test that exceptions from agent.process() propagate to caller."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = FailingAgent(agent_id="fail-1")
 
         kernel.register_agent(agent)
@@ -336,7 +336,7 @@ class TestDispatchIntegration:
 
     def test_full_dispatch_lifecycle(self, caplog):
         """Test a complete dispatch lifecycle from registration to execution."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
 
         # 1. Register agents
         echo_agent = EchoAgent(agent_id="echo-1")
@@ -377,7 +377,7 @@ class TestDispatchIntegration:
 
     def test_dispatch_preserves_fifo_order(self):
         """Test that dispatch preserves FIFO order across multiple agents."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = EchoAgent(agent_id="echo-1")
 
         kernel.register_agent(agent)

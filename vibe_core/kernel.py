@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
+from vibe_core.ledger import VibeLedger
 from vibe_core.scheduling import Task, VibeScheduler
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class VibeKernel:
     Architecture:
     - Owns a VibeScheduler instance
     - Maintains an agent registry for task dispatch (ARCH-023)
+    - Records all executions to ledger (ARCH-024)
     - Manages kernel lifecycle (boot/shutdown)
     - Provides tick() for incremental task processing
     - Serves as the single point of coordination
@@ -48,12 +50,24 @@ class VibeKernel:
     - Clear state machine (STOPPED -> RUNNING -> STOPPED)
     - Defensive programming (graceful idle handling)
     - Pluggable agents via VibeAgent protocol
+    - Persistent observability via ledger
     """
 
-    def __init__(self):
-        """Initialize the kernel with a scheduler and empty agent registry."""
+    def __init__(self, ledger_path: str = "vibe_ledger.db"):
+        """
+        Initialize the kernel with scheduler, agent registry, and ledger.
+
+        Args:
+            ledger_path: Path to SQLite ledger database. Use ":memory:"
+                         for in-memory database (useful for testing).
+
+        Example:
+            >>> kernel = VibeKernel()  # Uses "vibe_ledger.db"
+            >>> test_kernel = VibeKernel(":memory:")  # In-memory for tests
+        """
         self.scheduler = VibeScheduler()
         self.agent_registry: Dict[str, VibeAgent] = {}
+        self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
         logger.debug("KERNEL: Initialized (status=STOPPED)")
 
@@ -190,9 +204,9 @@ class VibeKernel:
         """
         Execute a single task by dispatching to the registered agent.
 
-        This method implements the core dispatch mechanism (ARCH-023).
-        It looks up the agent by task.agent_id and delegates execution
-        to the agent's process() method.
+        This method implements the core dispatch mechanism (ARCH-023)
+        and ledger recording (ARCH-024). It wraps agent execution in
+        try/except to ensure all outcomes are recorded.
 
         Args:
             task: The Task to execute
@@ -202,24 +216,30 @@ class VibeKernel:
 
         Raises:
             AgentNotFoundError: If no agent is registered for task.agent_id
+            Exception: Any exception raised by agent.process()
 
         Notes:
             - This is an internal method, not part of the public API
-            - Agents are responsible for their own error handling
-            - Future phases will add: timeout handling, lifecycle management,
-              result storage, exception wrapping
+            - All executions (success/failure) are recorded to the ledger
+            - Ledger recording failures are logged but don't stop execution
         """
         agent_id = task.agent_id
 
         # Look up the agent in the registry
         if agent_id not in self.agent_registry:
-            logger.error(
-                f"KERNEL: Agent '{agent_id}' not found for task '{task.id}'. "
-                f"Available agents: {list(self.agent_registry.keys())}"
+            error_msg = (
+                f"Agent '{agent_id}' not found. "
+                f"Available: {list(self.agent_registry.keys())}"
             )
+            logger.error(f"KERNEL: {error_msg} (task={task.id})")
+            # Record the failure before raising
+            self.ledger.record_failure(task, error_msg)
             raise AgentNotFoundError(agent_id=agent_id, task_id=task.id)
 
         agent = self.agent_registry[agent_id]
+
+        # Record task start
+        self.ledger.record_start(task)
 
         # Dispatch to the agent
         logger.info(
@@ -227,11 +247,26 @@ class VibeKernel:
             f"(payload={task.payload})"
         )
 
-        result = agent.process(task)
+        try:
+            # Execute the task
+            result = agent.process(task)
 
-        logger.debug(f"KERNEL: Task {task.id} completed (result={result})")
+            # Record successful completion
+            self.ledger.record_completion(task, result)
 
-        return result
+            logger.debug(f"KERNEL: Task {task.id} completed (result={result})")
+
+            return result
+
+        except Exception as e:
+            # Record failure before re-raising
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            self.ledger.record_failure(task, error_msg)
+
+            logger.error(f"KERNEL: Task {task.id} failed: {error_msg}")
+
+            # Re-raise the exception so caller can handle it
+            raise
 
     def get_status(self) -> dict:
         """

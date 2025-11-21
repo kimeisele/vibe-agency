@@ -37,13 +37,13 @@ class TestKernelBootCycle:
 
     def test_kernel_initialization(self):
         """Test that kernel initializes with STOPPED status."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         assert kernel.status == KernelStatus.STOPPED
         assert kernel.scheduler is not None
 
     def test_kernel_boot(self):
         """Test that boot() transitions kernel to RUNNING status."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         assert kernel.status == KernelStatus.STOPPED
 
         kernel.boot()
@@ -51,7 +51,7 @@ class TestKernelBootCycle:
 
     def test_kernel_shutdown(self):
         """Test that shutdown() transitions kernel to STOPPED status."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
         assert kernel.status == KernelStatus.RUNNING
 
@@ -60,7 +60,7 @@ class TestKernelBootCycle:
 
     def test_kernel_boot_shutdown_cycle(self):
         """Test multiple boot/shutdown cycles."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
 
         # First cycle
         kernel.boot()
@@ -76,14 +76,14 @@ class TestKernelBootCycle:
 
     def test_kernel_boot_logs_online(self, caplog):
         """Test that boot() logs 'KERNEL: ONLINE' message."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         with caplog.at_level(logging.INFO):
             kernel.boot()
         assert "KERNEL: ONLINE" in caplog.text
 
     def test_kernel_shutdown_logs_shutdown(self, caplog):
         """Test that shutdown() logs 'KERNEL: SHUTDOWN' message."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
         with caplog.at_level(logging.INFO):
             kernel.shutdown()
@@ -95,7 +95,7 @@ class TestKernelExecutionCycle:
 
     def test_submit_task_returns_task_id(self):
         """Test that submit() returns a task ID."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         task = Task(agent_id="agent-1", payload={"action": "compile"})
         task_id = kernel.submit(task)
 
@@ -105,7 +105,7 @@ class TestKernelExecutionCycle:
 
     def test_tick_processes_task_when_running(self, caplog):
         """Test that tick() processes a task and returns True (busy)."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = DummyAgent(agent_id="agent-1")
         kernel.register_agent(agent)
         kernel.boot()
@@ -125,7 +125,7 @@ class TestKernelExecutionCycle:
 
     def test_tick_processes_multiple_tasks_in_order(self, caplog):
         """Test that tick() processes tasks in FIFO order."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent1 = DummyAgent(agent_id="agent-1")
         agent2 = DummyAgent(agent_id="agent-2")
         agent3 = DummyAgent(agent_id="agent-3")
@@ -164,7 +164,7 @@ class TestKernelExecutionCycle:
 
     def test_execute_task_is_called_internally(self):
         """Test that tick() calls _execute_task() internally."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
 
         task = Task(agent_id="agent-1", payload={})
@@ -181,7 +181,7 @@ class TestKernelExecutionCycle:
 
     def test_kernel_can_submit_while_stopped(self):
         """Test that tasks can be submitted even when kernel is stopped."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         # Don't boot - kernel is STOPPED
 
         task = Task(agent_id="agent-1", payload={})
@@ -196,7 +196,7 @@ class TestKernelIdleCycle:
 
     def test_tick_returns_false_when_empty(self):
         """Test that tick() returns False when queue is empty."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
 
         # Call tick on empty kernel
@@ -205,7 +205,7 @@ class TestKernelIdleCycle:
 
     def test_tick_returns_false_after_draining_queue(self):
         """Test that tick() returns False after all tasks are processed."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         agent = DummyAgent(agent_id="agent-1")
         kernel.register_agent(agent)
         kernel.boot()
@@ -224,7 +224,7 @@ class TestKernelIdleCycle:
 
     def test_multiple_idle_ticks(self):
         """Test that multiple tick() calls on empty queue all return False."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         kernel.boot()
 
         # Multiple idle ticks
@@ -234,7 +234,7 @@ class TestKernelIdleCycle:
 
     def test_tick_does_not_process_when_stopped(self):
         """Test that tick() returns False when kernel is not RUNNING."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         # Don't boot - kernel is STOPPED
 
         task = Task(agent_id="agent-1", payload={})
@@ -246,7 +246,7 @@ class TestKernelIdleCycle:
 
     def test_tick_logs_warning_when_not_running(self, caplog):
         """Test that tick() logs a warning when called while not RUNNING."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         # Don't boot - kernel is STOPPED
 
         with caplog.at_level(logging.WARNING):
@@ -261,7 +261,7 @@ class TestKernelStatus:
 
     def test_get_status_returns_kernel_and_queue_info(self):
         """Test that get_status() returns comprehensive status info."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
         status = kernel.get_status()
 
         assert "kernel_status" in status
@@ -274,7 +274,7 @@ class TestKernelStatus:
 
     def test_get_status_reflects_current_state(self):
         """Test that get_status() reflects current kernel state."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
 
         # Initial state
         status = kernel.get_status()
@@ -318,7 +318,7 @@ class TestKernelIntegration:
 
     def test_full_kernel_lifecycle(self, caplog):
         """Test a complete kernel lifecycle from boot to shutdown."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
 
         # 0. Register agents
         planning_agent = DummyAgent(agent_id="agent-planning")
@@ -363,7 +363,7 @@ class TestKernelIntegration:
 
     def test_kernel_can_resume_after_shutdown(self):
         """Test that kernel can process tasks after shutdown and reboot."""
-        kernel = VibeKernel()
+        kernel = VibeKernel(ledger_path=":memory:")
 
         # Register agents
         agent1 = DummyAgent(agent_id="agent-1")
