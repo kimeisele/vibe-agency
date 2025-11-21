@@ -2,27 +2,26 @@
 """
 E2E Test: DEPLOYMENT Phase Workflow
 
-Tests the complete DEPLOYMENT phase execution:
-1. Load qa_report.json from TESTING phase (must be APPROVED)
-2. Execute DEPLOY_MANAGER 4-phase workflow
-3. Verify deploy_receipt.json artifact created
-4. Validate artifact structure
-5. Verify phase transition to PRODUCTION
+Tests the complete DEPLOYMENT phase execution with STRICT validation:
+1. Load qa_report.json from TESTING phase (must be PASSED or APPROVED)
+2. Load project_manifest.json (must be valid)
+3. Execute DEPLOYMENT (STRICT 3-phase workflow)
+4. Verify deployment_manifest.json artifact created
+5. Verify dist/ folder created with artifacts
+6. Verify phase transition to PRODUCTION
+7. Verify deployment FAILS if qa_report is missing or invalid
 """
 
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
-
-pytestmark = pytest.mark.skip(
-    reason="Tests require full agency_os workflow setup (post-migration refactoring needed)"
-)
 
 from apps.agency.orchestrator import CoreOrchestrator, ProjectPhase
 
@@ -41,36 +40,22 @@ class TestDeploymentWorkflow:
         artifacts_dir = project_dir / "artifacts" / "testing"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create qa_report.json (output from TESTING phase) - APPROVED
+        # Create qa_report.json (output from TESTING phase) - PASSED
         qa_report = {
             "version": "1.0",
             "schema_version": "1.0",
-            "status": "APPROVED",  # CRITICAL: Must be APPROVED
-            "project_id": "test_deployment_001",
-            "test_summary": {
-                "total_tests": 150,
-                "passed": 150,
+            "status": "PASSED",  # CRITICAL: Must be PASSED or APPROVED (strict validation)
+            "test_execution": {
+                "total_tests": 2,
+                "passed": 2,
                 "failed": 0,
-                "skipped": 0,
-                "coverage_percent": 95,
+                "errors": 0,
             },
-            "test_results": {
-                "unit_tests": {"total": 80, "passed": 80, "failed": 0},
-                "integration_tests": {"total": 50, "passed": 50, "failed": 0},
-                "e2e_tests": {"total": 20, "passed": 20, "failed": 0},
-            },
-            "quality_gates": {
-                "coverage_gate": {"required": 80, "actual": 95, "passed": True},
-                "test_pass_rate": {"required": 100, "actual": 100, "passed": True},
-            },
-            "approval": {
-                "approved_by": "test-user",
-                "approved_at": datetime.utcnow().isoformat() + "Z",
-                "approval_notes": "All tests passed, ready for deployment",
-            },
+            "critical_path_pass_rate": 100.0,
+            "blocker_bugs_open": 0,
             "metadata": {
                 "created_at": datetime.utcnow().isoformat() + "Z",
-                "generated_by": "QA_ORCHESTRATOR",
+                "generated_by": "TestingSpecialist",
                 "phase": "TESTING",
             },
         }
@@ -79,7 +64,28 @@ class TestDeploymentWorkflow:
         with open(qa_report_path, "w") as f:
             json.dump(qa_report, f, indent=2)
 
-        # Create project manifest
+        # Create code_gen_spec.json (output from CODING phase)
+        code_gen_spec = {
+            "version": "1.0",
+            "schema_version": "1.0",
+            "status": "PASSED",
+            "files": 3,
+            "metadata": {
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "generated_by": "CodingSpecialist",
+                "phase": "CODING",
+            },
+        }
+        code_gen_path = project_dir / "code_gen_spec.json"
+        with open(code_gen_path, "w") as f:
+            json.dump(code_gen_spec, f, indent=2)
+
+        # Create qa_report.json in project root (needed for deployment)
+        qa_report_root = project_dir / "qa_report.json"
+        with open(qa_report_root, "w") as f:
+            json.dump(qa_report, f, indent=2)
+
+        # Create project manifest (CRITICAL for STRICT validation)
         manifest = {
             "apiVersion": "agency.os/v1alpha1",
             "kind": "Project",
@@ -96,9 +102,13 @@ class TestDeploymentWorkflow:
                 "currentSubState": None,
                 "lastUpdated": datetime.utcnow().isoformat() + "Z",
             },
-            "artifacts": {"qa_report": str(qa_report_path)},
+            "artifacts": {
+                "qa_report": str(qa_report_path),
+                "code_gen_spec": str(code_gen_path),
+            },
         }
 
+        # Save manifest to project root (CRITICAL for STRICT validation)
         manifest_path = project_dir / "project_manifest.json"
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
@@ -107,7 +117,7 @@ class TestDeploymentWorkflow:
             "workspace_root": tmp_path / "workspaces",
             "project_dir": project_dir,
             "manifest_path": manifest_path,
-            "qa_report_path": qa_report_path,
+            "qa_report_path": qa_report_root,
         }
 
     def test_deployment_phase_execution(self, temp_workspace):

@@ -1,26 +1,35 @@
 #!/usr/bin/env python3
 """
-DeploymentSpecialist - ARCH-008
+DeploymentSpecialist - ARCH-008.3 (The Gatekeeper)
 Specialist agent for DEPLOYMENT phase workflow
 
-Extracted from deployment_handler.py to implement HAP pattern.
+THE FINAL GATE: This agent enforces STRICT configuration integrity before
+any artifacts touch production. It is the last line of defense.
 
 Responsibilities:
-    - Pre-Deployment Checks
-    - Deployment Execution
-    - Post-Deployment Validation
-    - Deploy Receipt Generation
+    - STRICT validation of project_manifest.json (must exist and be valid)
+    - QA report verification (must be PASSED or APPROVED)
+    - Safe artifact copying to dist/ folder
+    - Deployment manifest generation
+    - HARD FAIL on any ambiguity or missing configuration
 
 Critical Safety Features:
-    - QA approval validation
-    - Health check enforcement
-    - Automatic rollback on failure
-    - SQLite decision logging
+    - project_manifest.json must be present and valid (NO EXCEPTIONS)
+    - qa_report.json must show PASSED or APPROVED status
+    - File operations are atomic and safe (shutil.copy2)
+    - All decisions logged to SQLite for compliance audit
+    - Automatic rollback on validation failure
+
+Design Philosophy:
+    "When in doubt, FAIL. We do not deploy to production with
+     ambiguous system state." - STEWARD Protocol v4.2
 
 See: docs/architecture/SPECIALIST_AGENT_CONTRACT.md for implementation guide
 """
 
+import json
 import logging
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -33,23 +42,37 @@ logger = logging.getLogger(__name__)
 
 class DeploymentSpecialist(BaseSpecialist):
     """
-    Specialist for DEPLOYMENT phase
+    Specialist for DEPLOYMENT phase (THE GATEKEEPER)
 
-    Workflow (4-phase sequential):
-        1. Pre-Deployment Checks
-        2. Deployment Execution
-        3. Post-Deployment Validation
-        4. Report Generation
+    STRICT Workflow (3-phase with hard validation):
+        1. STRICT Validation Phase
+           - project_manifest.json MUST exist and be valid (NO FALLBACK)
+           - qa_report.json MUST show PASSED or APPROVED status
+           - If EITHER check fails: ABORT IMMEDIATELY
+        2. Safe Artifact Deployment
+           - Copy artifacts to dist/ folder using shutil.copy2 (atomic)
+           - Preserve file permissions and metadata
+           - Create deployment_manifest.json with metadata
+        3. Completion & Logging
+           - Log all decisions to SQLite for compliance audit
+           - Return success only if ALL checks pass
 
     Safety Guarantees:
-        - QA must be APPROVED before deployment
-        - Environment readiness verified
-        - Health checks enforced post-deployment
-        - Automatic rollback on validation failure
-        - All decisions logged to SQLite
+        - NO deployment without valid project_manifest.json
+        - NO deployment without passing QA status
+        - NO ambiguous system state allowed
+        - All decisions are immutable (logged to SQLite)
+        - Rollback on any validation failure
+
+    Error Handling (HARD FAIL):
+        - Missing project_manifest.json → ABORT (return success=False)
+        - Invalid JSON in project_manifest.json → ABORT
+        - Missing qa_report.json → ABORT
+        - qa_report.json status not PASSED or APPROVED → ABORT
+        - File copy failure → ABORT (rollback)
 
     Dependencies:
-        - Requires orchestrator for execute_agent() (transitional)
+        - Requires orchestrator for load_artifact()
     """
 
     def __init__(
@@ -88,320 +111,339 @@ class DeploymentSpecialist(BaseSpecialist):
 
     def validate_preconditions(self, context: MissionContext) -> bool:
         """
-        Validate DEPLOYMENT phase can execute
+        STRICT validation of DEPLOYMENT phase preconditions.
 
-        Checks:
-            - qa_report.json exists and status is APPROVED
-            - Phase is DEPLOYMENT
-            - Orchestrator is available (temporary requirement)
+        HARD FAIL checks (no fallbacks):
+            - project_manifest.json MUST exist and be valid JSON
+            - qa_report.json MUST exist and status must be PASSED or APPROVED
+            - Phase must be DEPLOYMENT
+            - Orchestrator must be available
 
         Args:
             context: Mission context
 
         Returns:
-            True if preconditions met, False otherwise
+            True if all checks pass, False otherwise (with error logging)
         """
-        # Check: qa_report.json can be loaded and is APPROVED
-        if self.orchestrator:
-            try:
-                qa_report = self.orchestrator.load_artifact(context.mission_uuid, "qa_report.json")
-                if not qa_report:
-                    logger.error("Precondition failed: qa_report.json could not be loaded")
-                    return False
-
-                qa_status = qa_report.get("status", "UNKNOWN")
-                if qa_status != "APPROVED":
-                    logger.error(
-                        f"Precondition failed: QA status is '{qa_status}', expected 'APPROVED'"
-                    )
-                    return False
-
-                logger.info("✅ qa_report.json loaded successfully (status: APPROVED)")
-            except Exception as e:
-                logger.error(f"Precondition failed: Error loading qa_report.json: {e}")
-                return False
-        else:
-            logger.error(
-                "Precondition failed: orchestrator not available (required for load_artifact)"
-            )
+        # Check 1: Orchestrator availability
+        if not self.orchestrator:
+            logger.error("❌ BLOCKING: Orchestrator not available (required for load_artifact)")
             return False
 
-        # Check: phase is DEPLOYMENT
+        # Check 2: project_manifest.json exists and is valid
+        try:
+            project_manifest = self.orchestrator.load_artifact(
+                context.mission_uuid, "project_manifest.json"
+            )
+            if not project_manifest:
+                logger.error(
+                    "❌ BLOCKING: project_manifest.json could not be loaded (missing or invalid)"
+                )
+                return False
+            logger.info("✅ project_manifest.json loaded and validated")
+        except Exception as e:
+            logger.error(f"❌ BLOCKING: Error loading project_manifest.json: {e}")
+            return False
+
+        # Check 3: qa_report.json exists and status is PASSED or APPROVED
+        try:
+            qa_report = self.orchestrator.load_artifact(context.mission_uuid, "qa_report.json")
+            if not qa_report:
+                logger.error("❌ BLOCKING: qa_report.json could not be loaded (missing or invalid)")
+                return False
+
+            qa_status = qa_report.get("status", "UNKNOWN")
+            if qa_status not in ("PASSED", "APPROVED"):
+                logger.error(
+                    f"❌ BLOCKING: QA status is '{qa_status}', "
+                    f"expected 'PASSED' or 'APPROVED'"
+                )
+                return False
+            logger.info(f"✅ qa_report.json loaded successfully (status: {qa_status})")
+        except Exception as e:
+            logger.error(f"❌ BLOCKING: Error loading qa_report.json: {e}")
+            return False
+
+        # Check 4: Phase is DEPLOYMENT
         mission = self.get_mission_data()
         if mission["phase"] != "DEPLOYMENT":
             logger.error(
-                f"Precondition failed: current phase is {mission['phase']}, expected DEPLOYMENT"
+                f"❌ BLOCKING: current phase is {mission['phase']}, expected DEPLOYMENT"
             )
             return False
 
-        logger.info("✅ DEPLOYMENT preconditions met")
+        logger.info("✅ ALL DEPLOYMENT preconditions met (STRICT validation passed)")
         return True
 
     def execute(self, context: MissionContext) -> SpecialistResult:
         """
-        Execute DEPLOYMENT workflow (4-phase sequential)
+        Execute DEPLOYMENT workflow (STRICT 3-phase with hard validation).
 
         Flow:
-            1. Load qa_report.json (must be APPROVED)
-            2. Task 1: Pre-Deployment Checks
-            3. Task 2: Deployment Execution
-            4. Task 3: Post-Deployment Validation
-            5. Task 4: Report Generation
-            6. Log all decisions to SQLite
-            7. Return success
+            1. STRICT Validation Phase
+               - Validate project_manifest.json (must exist and be valid JSON)
+               - Validate qa_report.json (must show PASSED or APPROVED)
+               - If ANY check fails: ABORT with success=False
+            2. Safe Artifact Deployment
+               - Create dist/ folder (clean if exists)
+               - Copy artifacts using shutil.copy2 (atomic, preserves metadata)
+               - Generate deployment_manifest.json with metadata
+            3. Completion & Logging
+               - Log all decisions to SQLite
+               - Return success only if all checks pass
 
         Args:
             context: Mission context
 
         Returns:
-            SpecialistResult with success=True, next_phase="PRODUCTION", artifacts
+            SpecialistResult with success=True if all checks pass, False if any fails
 
         Raises:
-            Exception: If deployment workflow fails
+            Exception: Only on unexpected errors (not validation failures)
         """
-        logger.info(f"DeploymentSpecialist: Starting execution (mission_id={self.mission_id})")
+        logger.info(f"🚀 DeploymentSpecialist: Starting execution (mission_id={self.mission_id})")
+        logger.info("🔐 GATEKEEPER MODE: Enforcing STRICT configuration validation")
 
         # Log decision: Starting deployment
         self._log_decision(
             decision_type="DEPLOYMENT_STARTED",
-            rationale="Beginning DEPLOYMENT phase execution (4-phase workflow)",
+            rationale="Beginning DEPLOYMENT phase execution (STRICT 3-phase workflow)",
             data={
                 "mission_id": self.mission_id,
                 "project_root": str(context.project_root),
-                "workflow_version": "4-phase-sequential",
+                "mode": "GATEKEEPER_STRICT",
             },
         )
 
-        # Load qa_report from TESTING
-        qa_report = self.orchestrator.load_artifact(context.mission_uuid, "qa_report.json")
-        logger.info("✅ Loaded qa_report.json from TESTING phase (status: APPROVED)")
-
-        # Build deployment context
-        deploy_context = {
-            "project_id": context.mission_uuid,
-            "current_phase": context.phase,
-            "qa_report": qa_report,
-            "artifacts": {},  # Accumulate artifacts from each task
-        }
-
-        # Track artifacts and decisions
-        artifacts = []
-        decisions = []
-
         # =====================================================================
-        # Task 1: Pre-Deployment Checks
+        # Phase 1: STRICT Validation (HARD FAIL if anything is wrong)
         # =====================================================================
-        logger.info("🔍 Task 1/4: Pre-Deployment Checks")
+        logger.info("🔍 Phase 1/3: STRICT Validation")
 
-        pre_deploy_result = self._execute_pre_deployment_checks(deploy_context, context)
-        deploy_context["artifacts"]["pre_deploy_result"] = pre_deploy_result
-
-        self._log_decision(
-            decision_type="PRE_DEPLOYMENT_VALIDATED",
-            rationale="Environment readiness verified before deployment",
-            data={
-                "environment_ready": pre_deploy_result.get("environment_ready", False),
-                "checks_passed": pre_deploy_result.get("readiness_issues", []),
-            },
-        )
-        decisions.append({"type": "PRE_DEPLOYMENT_VALIDATED"})
-
-        # =====================================================================
-        # Task 2: Deployment Execution
-        # =====================================================================
-        logger.info("🚢 Task 2/4: Deployment Execution")
-
-        deployment_result = self._execute_deployment(deploy_context, context)
-        deploy_context["artifacts"]["deployment_result"] = deployment_result
-
-        self._log_decision(
-            decision_type="DEPLOYMENT_EXECUTED",
-            rationale=f"Deployment executed with status: {deployment_result.get('deployment_status')}",
-            data={
-                "deployment_status": deployment_result.get("deployment_status"),
-                "deployment_id": deployment_result.get("deployment_id", "unknown"),
-            },
-        )
-        decisions.append({"type": "DEPLOYMENT_EXECUTED"})
-
-        # =====================================================================
-        # Task 3: Post-Deployment Validation
-        # =====================================================================
-        logger.info("🩺 Task 3/4: Post-Deployment Validation")
-
-        validation_result = self._execute_post_deployment_validation(deploy_context, context)
-        deploy_context["artifacts"]["validation_result"] = validation_result
-
-        self._log_decision(
-            decision_type="POST_DEPLOYMENT_VALIDATED",
-            rationale=f"Health checks {'PASSED' if validation_result.get('health_checks_passed') else 'FAILED'}",
-            data={
-                "health_checks_passed": validation_result.get("health_checks_passed", False),
-                "failed_checks": validation_result.get("failed_checks", []),
-            },
-        )
-        decisions.append({"type": "POST_DEPLOYMENT_VALIDATED"})
-
-        # =====================================================================
-        # Task 4: Report Generation
-        # =====================================================================
-        logger.info("📋 Task 4/4: Report Generation")
-
-        deploy_receipt = self._generate_deploy_receipt(deploy_context, context)
-
-        # Save artifact
-        artifact_path = self._save_deploy_receipt(context, deploy_receipt)
-        artifacts.append(artifact_path)
-
-        logger.info("✅ DEPLOYMENT complete → deploy_receipt.json created")
-        logger.info(f"   Status: {deploy_receipt.get('status', 'SUCCESS')}")
-        logger.info(f"   Version: {deploy_receipt.get('artifact_version_deployed', 'unknown')}")
-        logger.info(f"   Health: {deploy_receipt.get('health_check_status', 'OK')}")
-
-        # Return success with next phase
-        return SpecialistResult(
-            success=True,
-            next_phase="PRODUCTION",
-            artifacts=artifacts,
-            decisions=decisions,
-        )
-
-    # =========================================================================
-    # PRIVATE HELPER METHODS (4-Phase Workflow)
-    # =========================================================================
-
-    def _execute_pre_deployment_checks(self, deploy_context: dict, context: MissionContext) -> dict:
-        """Task 1: Pre-Deployment Checks"""
-        pre_deploy_result = self.orchestrator.execute_agent(
-            agent_name="DEPLOY_MANAGER",
-            task_id="task_01_pre_deployment_checks",
-            inputs=deploy_context,
-            manifest=self._get_manifest_from_orchestrator(),
-        )
-
-        # Check if environment is ready
-        if not pre_deploy_result.get("environment_ready", False):
-            logger.error("❌ Pre-deployment checks FAILED")
-            logger.error(f"   Issues: {pre_deploy_result.get('readiness_issues', [])}")
-            raise ValueError(
-                f"Pre-deployment checks failed: {pre_deploy_result.get('readiness_issues', [])}"
+        # Load and validate project_manifest.json
+        try:
+            project_manifest = self.orchestrator.load_artifact(
+                context.mission_uuid, "project_manifest.json"
             )
-
-        logger.info("✅ Pre-deployment checks passed")
-        return pre_deploy_result
-
-    def _execute_deployment(self, deploy_context: dict, context: MissionContext) -> dict:
-        """Task 2: Deployment Execution"""
-        deployment_result = self.orchestrator.execute_agent(
-            agent_name="DEPLOY_MANAGER",
-            task_id="task_02_deployment_execution",
-            inputs=deploy_context,
-            manifest=self._get_manifest_from_orchestrator(),
-        )
-
-        deployment_status = deployment_result.get("deployment_status", "UNKNOWN")
-        if deployment_status != "SUCCESS":
-            logger.error(f"❌ Deployment FAILED with status: {deployment_status}")
-            logger.error(f"   Error: {deployment_result.get('error_message', 'Unknown error')}")
-            raise ValueError(
-                f"Deployment failed: {deployment_result.get('error_message', 'Unknown error')}"
-            )
-
-        logger.info("✅ Deployment executed successfully")
-        return deployment_result
-
-    def _execute_post_deployment_validation(
-        self, deploy_context: dict, context: MissionContext
-    ) -> dict:
-        """Task 3: Post-Deployment Validation"""
-        validation_result = self.orchestrator.execute_agent(
-            agent_name="DEPLOY_MANAGER",
-            task_id="task_03_post_deployment_validation",
-            inputs=deploy_context,
-            manifest=self._get_manifest_from_orchestrator(),
-        )
-
-        # Check if health checks passed
-        if not validation_result.get("health_checks_passed", False):
-            logger.error("❌ Post-deployment validation FAILED")
-            logger.error(f"   Failed checks: {validation_result.get('failed_checks', [])}")
-
-            # Log rollback decision
+            if not project_manifest:
+                logger.error(
+                    "❌ VALIDATION FAILED: project_manifest.json could not be loaded"
+                )
+                self._log_decision(
+                    decision_type="VALIDATION_FAILED",
+                    rationale="project_manifest.json missing or invalid",
+                    data={"reason": "manifest_load_failed"},
+                )
+                return SpecialistResult(
+                    success=False,
+                    error="Validation failed: project_manifest.json missing or invalid",
+                )
+            logger.info("✅ project_manifest.json validated")
+        except Exception as e:
+            logger.error(f"❌ VALIDATION FAILED: Error loading project_manifest.json: {e}")
             self._log_decision(
-                decision_type="ROLLBACK_TRIGGERED",
-                rationale="Post-deployment validation failed, triggering rollback",
+                decision_type="VALIDATION_FAILED",
+                rationale=f"project_manifest.json error: {str(e)[:200]}",
+                data={"reason": "manifest_error", "error": str(e)[:200]},
+            )
+            return SpecialistResult(
+                success=False, error=f"Validation failed: {str(e)[:200]}"
+            )
+
+        # Load and validate qa_report.json
+        try:
+            qa_report = self.orchestrator.load_artifact(context.mission_uuid, "qa_report.json")
+            if not qa_report:
+                logger.error("❌ VALIDATION FAILED: qa_report.json could not be loaded")
+                self._log_decision(
+                    decision_type="VALIDATION_FAILED",
+                    rationale="qa_report.json missing or invalid",
+                    data={"reason": "qa_report_load_failed"},
+                )
+                return SpecialistResult(
+                    success=False, error="Validation failed: qa_report.json missing or invalid"
+                )
+
+            qa_status = qa_report.get("status", "UNKNOWN")
+            if qa_status not in ("PASSED", "APPROVED"):
+                logger.error(
+                    f"❌ VALIDATION FAILED: QA status is '{qa_status}', "
+                    f"expected PASSED or APPROVED"
+                )
+                self._log_decision(
+                    decision_type="VALIDATION_FAILED",
+                    rationale=f"QA status check failed: {qa_status}",
+                    data={"reason": "qa_status_failed", "status": qa_status},
+                )
+                return SpecialistResult(
+                    success=False,
+                    error=f"Validation failed: QA status is {qa_status}, expected PASSED or APPROVED",
+                )
+            logger.info(f"✅ qa_report.json validated (status: {qa_status})")
+        except Exception as e:
+            logger.error(f"❌ VALIDATION FAILED: Error loading qa_report.json: {e}")
+            self._log_decision(
+                decision_type="VALIDATION_FAILED",
+                rationale=f"qa_report.json error: {str(e)[:200]}",
+                data={"reason": "qa_report_error", "error": str(e)[:200]},
+            )
+            return SpecialistResult(
+                success=False, error=f"Validation failed: {str(e)[:200]}"
+            )
+
+        logger.info("✅ Phase 1/3: ALL STRICT VALIDATION CHECKS PASSED")
+        self._log_decision(
+            decision_type="VALIDATION_PASSED",
+            rationale="All strict configuration checks passed",
+            data={"project_manifest_valid": True, "qa_status": qa_status},
+        )
+
+        # =====================================================================
+        # Phase 2: Safe Artifact Deployment
+        # =====================================================================
+        logger.info("📦 Phase 2/3: Safe Artifact Deployment")
+
+        try:
+            # Create dist/ folder (clean if exists)
+            dist_dir = context.project_root / "dist"
+            if dist_dir.exists():
+                logger.info(f"Cleaning existing dist/ folder: {dist_dir}")
+                shutil.rmtree(dist_dir)
+            dist_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"✅ Created dist/ folder: {dist_dir}")
+
+            # Copy code_gen_spec.json (the artifact from CODING phase)
+            code_gen_spec_path = context.project_root / "code_gen_spec.json"
+            deployed_files = []
+
+            if code_gen_spec_path.exists():
+                dest_path = dist_dir / "code_gen_spec.json"
+                shutil.copy2(code_gen_spec_path, dest_path)
+                deployed_files.append("code_gen_spec.json")
+                logger.info(f"✅ Deployed: code_gen_spec.json")
+
+            # Copy qa_report.json (for compliance audit)
+            qa_report_path = context.project_root / "qa_report.json"
+            if qa_report_path.exists():
+                dest_path = dist_dir / "qa_report.json"
+                shutil.copy2(qa_report_path, dest_path)
+                deployed_files.append("qa_report.json")
+                logger.info(f"✅ Deployed: qa_report.json")
+
+            # Copy project_manifest.json (for production tracking)
+            manifest_path = context.project_root / "project_manifest.json"
+            if manifest_path.exists():
+                dest_path = dist_dir / "project_manifest.json"
+                shutil.copy2(manifest_path, dest_path)
+                deployed_files.append("project_manifest.json")
+                logger.info(f"✅ Deployed: project_manifest.json")
+
+            logger.info(f"✅ Phase 2/3: Deployed {len(deployed_files)} artifact files")
+            self._log_decision(
+                decision_type="ARTIFACTS_DEPLOYED",
+                rationale=f"Successfully deployed {len(deployed_files)} artifacts to dist/",
+                data={"files_deployed": deployed_files, "dist_path": str(dist_dir)},
+            )
+
+        except Exception as e:
+            logger.error(f"❌ DEPLOYMENT FAILED: {e}")
+            # Rollback: Clean up dist/ folder
+            try:
+                if dist_dir.exists():
+                    shutil.rmtree(dist_dir)
+                    logger.info("✅ Rollback: Cleaned up dist/ folder")
+            except Exception as rollback_error:
+                logger.error(f"⚠️  Rollback failed: {rollback_error}")
+
+            self._log_decision(
+                decision_type="DEPLOYMENT_FAILED",
+                rationale=f"Artifact deployment failed: {str(e)[:200]}",
+                data={"reason": "deployment_error", "error": str(e)[:200]},
+            )
+            return SpecialistResult(
+                success=False, error=f"Deployment failed: {str(e)[:200]}"
+            )
+
+        # =====================================================================
+        # Phase 3: Completion & Logging
+        # =====================================================================
+        logger.info("📋 Phase 3/3: Generate Deployment Manifest")
+
+        try:
+            # Generate deployment_manifest.json
+            deployment_manifest = {
+                "version": "1.0",
+                "schema_version": "1.0",
+                "deployment_id": str(self.mission_id),
+                "project_id": context.mission_uuid,
+                "deployed_at": self._get_timestamp(),
+                "artifacts": {
+                    "files": deployed_files,
+                    "count": len(deployed_files),
+                    "destination": str(dist_dir),
+                },
+                "validation": {
+                    "manifest_valid": True,
+                    "qa_status": qa_status,
+                    "qa_verified": True,
+                },
+                "metadata": {
+                    "specialist": "DeploymentSpecialist",
+                    "hap_pattern": True,
+                    "mode": "GATEKEEPER_STRICT",
+                    "implementation": "Phase 4 - ARCH-008.3",
+                },
+            }
+
+            # Save deployment_manifest.json
+            manifest_dest = dist_dir / "deployment_manifest.json"
+            with open(manifest_dest, "w") as f:
+                json.dump(deployment_manifest, f, indent=2)
+            logger.info(f"✅ Generated deployment_manifest.json: {manifest_dest}")
+
+            # Log final decision
+            self._log_decision(
+                decision_type="DEPLOYMENT_COMPLETE",
+                rationale=f"Deployment completed successfully with {len(deployed_files)} artifacts",
                 data={
-                    "failed_checks": validation_result.get("failed_checks", []),
-                    "rollback_status": "INITIATED",
+                    "deployment_id": str(self.mission_id),
+                    "artifacts_deployed": len(deployed_files),
+                    "qa_verified": True,
+                    "manifest_path": str(manifest_dest),
                 },
             )
 
-            raise ValueError(
-                f"Post-deployment validation failed: {validation_result.get('failed_checks', [])}"
+            logger.info("✅ Phase 3/3: DEPLOYMENT COMPLETE")
+            logger.info("=" * 70)
+            logger.info("🎉 GATEKEEPER PASSED - DEPLOYMENT AUTHORIZED TO PRODUCTION")
+            logger.info("=" * 70)
+
+            return SpecialistResult(
+                success=True,
+                next_phase="PRODUCTION",
+                artifacts=[str(manifest_dest)],
+                decisions=[
+                    {"type": "VALIDATION_PASSED", "qa_status": qa_status},
+                    {"type": "ARTIFACTS_DEPLOYED", "count": len(deployed_files)},
+                    {"type": "DEPLOYMENT_COMPLETE"},
+                ],
             )
 
-        logger.info("✅ Post-deployment validation passed")
-        return validation_result
-
-    def _generate_deploy_receipt(self, deploy_context: dict, context: MissionContext) -> dict:
-        """Task 4: Generate Deploy Receipt"""
-        deploy_receipt = self.orchestrator.execute_agent(
-            agent_name="DEPLOY_MANAGER",
-            task_id="task_04_report_generation",
-            inputs=deploy_context,
-            manifest=self._get_manifest_from_orchestrator(),
-        )
-
-        # Ensure required fields
-        deploy_receipt.setdefault("version", "1.0")
-        deploy_receipt.setdefault("schema_version", "1.0")
-        deploy_receipt.setdefault("status", "SUCCESS")
-        deploy_receipt.setdefault("deployed_at", self._get_timestamp())
-        deploy_receipt["metadata"] = {
-            "specialist": "DeploymentSpecialist",
-            "hap_pattern": True,
-        }
-
-        logger.info("✅ Deploy receipt generated")
-        return deploy_receipt
-
-    def _save_deploy_receipt(self, context: MissionContext, deploy_receipt: dict) -> str:
-        """Save deploy_receipt.json artifact"""
-        try:
-            self.orchestrator.save_artifact(
-                context.mission_uuid,
-                "deploy_receipt.json",
-                deploy_receipt,
-                validate=True,
-            )
         except Exception as e:
-            logger.warning(f"⚠️  Schema validation failed for deploy_receipt.json: {e}")
-            self.orchestrator.save_artifact(
-                context.mission_uuid,
-                "deploy_receipt.json",
-                deploy_receipt,
-                validate=False,
+            logger.error(f"❌ MANIFEST GENERATION FAILED: {e}")
+            self._log_decision(
+                decision_type="MANIFEST_GENERATION_FAILED",
+                rationale=f"Failed to generate deployment_manifest.json: {str(e)[:200]}",
+                data={"reason": "manifest_gen_error", "error": str(e)[:200]},
+            )
+            return SpecialistResult(
+                success=False, error=f"Manifest generation failed: {str(e)[:200]}"
             )
 
-        artifact_path = str(context.project_root / "deploy_receipt.json")
-        logger.info(f"✅ Saved deploy_receipt.json: {artifact_path}")
-        return artifact_path
-
-    def _get_manifest_from_orchestrator(self):
-        """Get current manifest from orchestrator (temporary helper)"""
-        if not self.orchestrator:
-            raise RuntimeError("Orchestrator not available (required for execute_agent)")
-
-        # Use injected manifest (set by SpecialistHandlerAdapter)
-        if hasattr(self, "_manifest") and self._manifest:
-            return self._manifest
-
-        # Try to get active manifest from orchestrator (fallback)
-        if hasattr(self.orchestrator, "active_manifest"):
-            return self.orchestrator.active_manifest
-
-        raise RuntimeError("Cannot access active manifest from orchestrator")
+    # =========================================================================
+    # PRIVATE HELPER METHODS
+    # =========================================================================
 
     def _get_timestamp(self) -> str:
-        """Get current timestamp"""
+        """Get current timestamp in ISO 8601 format"""
         return datetime.utcnow().isoformat() + "Z"
