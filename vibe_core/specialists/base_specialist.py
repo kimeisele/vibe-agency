@@ -176,10 +176,8 @@ class BaseSpecialist(ABC):
             2. playbooks/ (workspace root)
 
         Returns:
-            Path to playbook directory
-
-        Raises:
-            FileNotFoundError: If playbook directory not found
+            Path to playbook directory or a default placeholder if not found.
+            (Playbooks are optional - some specialists may not need them)
         """
         # Try project structure first
         current = Path(__file__).resolve()
@@ -193,9 +191,11 @@ class BaseSpecialist(ABC):
         if workspace_playbooks.exists():
             return workspace_playbooks
 
-        raise FileNotFoundError(
-            "Playbook directory not found. Expected: agency_os/playbooks/ or playbooks/"
-        )
+        # Fallback: Return a path that may not exist (some specialists don't need playbooks)
+        # This allows specialists to initialize without failing, but _load_playbook will fail
+        # if actually called on a specialist that needs playbooks
+        logger.debug("Playbook directory not found. Using fallback (playbooks may not be required)")
+        return Path.cwd() / "playbooks"
 
     # ========================================================================
     # ABSTRACT METHODS - MUST BE IMPLEMENTED BY SUBCLASSES

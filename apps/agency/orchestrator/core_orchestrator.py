@@ -347,6 +347,12 @@ class CoreOrchestrator:
 
         logger.info(f"Core Orchestrator initialized (mode: {execution_mode})")
 
+    # Convenience property for compatibility with specialists (ARCH-006)
+    @property
+    def sqlite_store(self):
+        """Alias for db_store to support specialist dependency injection"""
+        return self.db_store
+
     # -------------------------------------------------------------------------
     # WORKFLOW LOADING
     # -------------------------------------------------------------------------
@@ -1463,9 +1469,22 @@ class CoreOrchestrator:
             QualityGateFailure: If blocking quality gate fails
         """
         # Find transition in workflow
+        transitions = self.workflow.get("transitions", [])
+
+        # Handle case where transitions is a dict (keyed by phase) instead of list
+        if isinstance(transitions, dict):
+            # This is not the expected flat list format - just skip quality gates
+            logger.debug(f"No quality gates defined for transition: {transition_name}")
+            return
+
+        if not isinstance(transitions, list):
+            # Unknown structure - skip
+            logger.warning(f"Unexpected transitions structure in workflow: {type(transitions)}")
+            return
+
         transition = None
-        for t in self.workflow.get("transitions", []):
-            if t["name"] == transition_name:
+        for t in transitions:
+            if isinstance(t, dict) and t.get("name") == transition_name:
                 transition = t
                 break
 

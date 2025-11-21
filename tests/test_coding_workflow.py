@@ -20,10 +20,6 @@ import pytest
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 
-pytestmark = pytest.mark.skip(
-    reason="Tests require full agency_os workflow setup (post-migration refactoring needed)"
-)
-
 from apps.agency.orchestrator import CoreOrchestrator, ProjectPhase
 
 
