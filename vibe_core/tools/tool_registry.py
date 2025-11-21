@@ -1,306 +1,276 @@
 """
-Tool Registry for Vibe Agency (ARCH-027 + ARCH-029).
+Tool Registry for vibe-agency OS (ARCH-027 + ARCH-029)
 
-The ToolRegistry is the central gatekeeper for all tool execution. It:
-1. Registers available tools
-2. Validates tool calls against Soul governance (ARCH-029)
-3. Executes tools and returns structured results
-4. Logs all tool calls for audit trail
-
-Security Architecture (Defense in Depth):
-    User/Agent Request
-         ↓
-    🛡️ Layer 1: Soul Governance (InvariantChecker)
-         → "Is this EVER allowed?" (Global rules from config/soul.yaml)
-         ↓
-    🛡️ Layer 2: Tool Execution
-         → Actual tool logic (read file, write file, etc.)
-         ↓
-    Result (success/error)
-
-This is "Security by Design" - governance is not bolted on afterward,
-it's baked into the execution path from day 1.
-
-Example:
-    >>> from vibe_core.governance import InvariantChecker
-    >>> from vibe_core.tools.file_tools import WriteFileTool
-    >>>
-    >>> checker = InvariantChecker("config/soul.yaml")
-    >>> registry = ToolRegistry(invariant_checker=checker)
-    >>> registry.register("write_file", WriteFileTool())
-    >>>
-    >>> # Safe operation - allowed
-    >>> result = registry.execute("write_file", path="docs/readme.md", content="...")
-    >>> print(result["success"])  # True
-    >>>
-    >>> # Dangerous operation - blocked by Soul
-    >>> result = registry.execute("write_file", path=".git/config", content="...")
-    >>> print(result["blocked"])  # True
-    >>> print(result["error"])    # "Governance Violation: ..."
+Manages available tools and provides lookup/execution functionality.
+Integrates Soul Governance (ARCH-029) for security by design.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Dict, List, Optional
 
-from vibe_core.governance.invariants import InvariantChecker, SoulResult
-from vibe_core.tools.tool_protocol import ToolCall
+from vibe_core.tools.tool_protocol import Tool, ToolCall, ToolResult
+
+# Import Soul Governance (ARCH-029)
+try:
+    from vibe_core.governance.invariants import InvariantChecker, SoulResult
+except ImportError:
+    # Graceful fallback if governance not available
+    InvariantChecker = None  # type: ignore
+    SoulResult = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
 class ToolRegistry:
     """
-    Central registry and gatekeeper for tool execution.
+    Central registry for managing available tools.
 
-    The ToolRegistry enforces governance rules before executing any tool.
-    This ensures that dangerous operations (e.g., modifying .git, escaping
-    sandbox) are blocked BEFORE they can cause damage.
+    Provides:
+    - Tool registration (add tools dynamically)
+    - Tool lookup by name
+    - Tool execution (validates + executes)
+    - LLM-friendly tool descriptions
 
-    Architecture:
-    - Tools register themselves by name
-    - execute() validates against InvariantChecker (Soul governance)
-    - Blocked operations return {"blocked": True, "error": "..."}
-    - Successful operations return {"success": True, "result": ...}
+    Example:
+        >>> registry = ToolRegistry()
+        >>> registry.register(ReadFileTool())
+        >>> registry.register(WriteFileTool())
+        >>>
+        >>> # Agent calls tool
+        >>> call = ToolCall(tool_name="read_file", parameters={"path": "/tmp/test.txt"})
+        >>> result = registry.execute(call)
+        >>> print(result.output)  # File content
     """
 
-    def __init__(self, invariant_checker: Optional[InvariantChecker] = None):
+    def __init__(self, invariant_checker: Optional["InvariantChecker"] = None):  # type: ignore
         """
-        Initialize the ToolRegistry.
+        Initialize tool registry with optional Soul Governance.
 
         Args:
-            invariant_checker: Optional InvariantChecker for Soul governance.
-                              If None, ALL tools execute without governance checks.
-                              (Use None only for testing - production MUST have checker)
+            invariant_checker: Optional InvariantChecker for Soul Governance (ARCH-029).
+                              If None, tools execute without governance checks.
 
         Example:
-            >>> # Production (with governance)
+            >>> # With governance (recommended for production)
+            >>> from vibe_core.governance import InvariantChecker
             >>> checker = InvariantChecker("config/soul.yaml")
             >>> registry = ToolRegistry(invariant_checker=checker)
             >>>
-            >>> # Testing (no governance - use carefully!)
-            >>> registry = ToolRegistry(invariant_checker=None)
+            >>> # Without governance (testing only)
+            >>> registry = ToolRegistry()
         """
-        self._tools: dict[str, ToolCall] = {}
+        self.tools: Dict[str, Tool] = {}
         self._invariant_checker = invariant_checker
 
         if invariant_checker:
             logger.info(
-                f"🛡️ ToolRegistry initialized with Soul governance "
-                f"({invariant_checker.rule_count} rules loaded)"
+                f"🛡️ ToolRegistry initialized with Soul Governance ({invariant_checker.rule_count} rules)"
             )
         else:
-            logger.warning(
-                "⚠️ ToolRegistry initialized WITHOUT governance checks. "
-                "This should only be used in testing!"
-            )
+            logger.debug("ToolRegistry: Initialized (no governance)")
 
-    def register(self, name: str, tool: ToolCall) -> None:
+    def register(self, tool: Tool) -> None:
         """
         Register a tool with the registry.
 
         Args:
-            name: Tool name (e.g., "write_file", "read_file")
-            tool: Tool instance implementing ToolCall protocol
+            tool: Tool instance to register
+
+        Raises:
+            ValueError: If tool with same name already registered
+            TypeError: If tool doesn't implement Tool protocol
 
         Example:
-            >>> from vibe_core.tools.file_tools import WriteFileTool
-            >>> registry.register("write_file", WriteFileTool())
+            >>> registry = ToolRegistry()
+            >>> registry.register(ReadFileTool())
+            >>> registry.register(WriteFileTool())
         """
-        self._tools[name] = tool
-        logger.debug(f"📝 Registered tool: {name}")
+        if not isinstance(tool, Tool):
+            raise TypeError(f"tool must be a Tool instance, got {type(tool).__name__}")
 
-    def execute(self, tool_name: str, **kwargs) -> dict[str, Any]:
+        tool_name = tool.name
+
+        if tool_name in self.tools:
+            raise ValueError(
+                f"Tool '{tool_name}' is already registered. "
+                f"Cannot register duplicate tool names."
+            )
+
+        self.tools[tool_name] = tool
+        logger.info(f"ToolRegistry: Registered tool '{tool_name}'")
+
+    def get(self, tool_name: str) -> Optional[Tool]:
         """
-        Execute a tool with governance validation.
-
-        Execution flow:
-        1. Check if tool exists
-        2. 🛡️ Validate against Soul governance (if checker configured)
-        3. Execute tool
-        4. Return structured result
+        Get a tool by name.
 
         Args:
-            tool_name: Name of tool to execute
-            **kwargs: Tool-specific parameters
+            tool_name: Name of the tool
 
         Returns:
-            dict: Structured result with keys:
-                - success (bool): Whether execution succeeded
-                - result (Any): Tool result (if success=True)
-                - error (str): Error message (if success=False)
-                - blocked (bool): Whether blocked by governance (if success=False)
+            Tool instance if found, None otherwise
 
         Example:
-            >>> # Successful execution
-            >>> result = registry.execute("write_file", path="test.txt", content="hi")
-            >>> print(result)
-            {"success": True, "result": "File written: test.txt"}
-            >>>
-            >>> # Blocked by governance
-            >>> result = registry.execute("write_file", path=".git/config", content="x")
-            >>> print(result)
-            {"success": False, "blocked": True, "error": "Governance Violation: ..."}
-            >>>
-            >>> # Tool not found
-            >>> result = registry.execute("unknown_tool", param="value")
-            >>> print(result)
-            {"success": False, "error": "Tool not found: unknown_tool"}
+            >>> tool = registry.get("read_file")
+            >>> if tool:
+            ...     result = tool.execute({"path": "/tmp/test.txt"})
         """
-        # 1. Existence check
-        if tool_name not in self._tools:
-            logger.error(f"❌ Tool not found: {tool_name}")
-            return {"success": False, "error": f"Tool not found: {tool_name}"}
+        return self.tools.get(tool_name)
 
-        # 2. 🛡️ SOUL GOVERNANCE CHECK (Layer 1 - ARCH-029)
-        if self._invariant_checker:
-            check: SoulResult = self._invariant_checker.check_tool_call(
-                tool_name, kwargs
-            )
-            if not check.allowed:
-                logger.warning(f"⛔ SOUL BLOCKED {tool_name}: {check.reason}")
-                return {
-                    "success": False,
-                    "error": f"Governance Violation: {check.reason}",
-                    "blocked": True,
-                }
-
-        # 3. Tool execution
-        try:
-            logger.debug(f"🔧 Executing tool: {tool_name} with params: {kwargs}")
-            tool = self._tools[tool_name]
-            result = tool.execute(**kwargs)
-
-            logger.info(f"✅ Tool {tool_name} executed successfully")
-            return {"success": True, "result": result}
-
-        except Exception as e:
-            logger.error(f"❌ Tool {tool_name} execution failed: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
-
-    def list_tools(self) -> list[str]:
+    def has(self, tool_name: str) -> bool:
         """
-        Get list of registered tool names.
+        Check if a tool is registered.
+
+        Args:
+            tool_name: Name of the tool
+
+        Returns:
+            True if tool registered, False otherwise
+
+        Example:
+            >>> if registry.has("read_file"):
+            ...     print("Tool available")
+        """
+        return tool_name in self.tools
+
+    def list_tools(self) -> List[str]:
+        """
+        Get list of all registered tool names.
 
         Returns:
             List of tool names
 
         Example:
-            >>> registry.list_tools()
-            ['write_file', 'read_file']
+            >>> print(registry.list_tools())
+            ['read_file', 'write_file', 'make_api_call']
         """
-        return list(self._tools.keys())
+        return list(self.tools.keys())
 
-    def has_tool(self, name: str) -> bool:
+    def execute(self, tool_call: ToolCall) -> ToolResult:
         """
-        Check if a tool is registered.
+        Execute a tool call.
+
+        Workflow:
+            1. Look up tool by name
+            2. Validate parameters
+            3. Execute tool
+            4. Return result
 
         Args:
-            name: Tool name
+            tool_call: ToolCall with tool name and parameters
 
         Returns:
-            True if tool is registered
+            ToolResult: Execution result
 
         Example:
-            >>> registry.has_tool("write_file")
-            True
-            >>> registry.has_tool("unknown")
-            False
+            >>> call = ToolCall(tool_name="write_file", parameters={
+            ...     "path": "/tmp/hello.txt",
+            ...     "content": "Hello, world!"
+            ... })
+            >>> result = registry.execute(call)
+            >>> print(result.success)  # True
         """
-        return name in self._tools
+        tool_name = tool_call.tool_name
 
-    @property
-    def tool_count(self) -> int:
-        """Return number of registered tools."""
-        return len(self._tools)
+        # Step 1: Look up tool
+        tool = self.get(tool_name)
+        if tool is None:
+            error_msg = (
+                f"Tool '{tool_name}' not found in registry. "
+                f"Available tools: {self.list_tools()}"
+            )
+            logger.error(f"ToolRegistry: {error_msg}")
+            return ToolResult(success=False, error=error_msg)
 
-    @property
-    def has_governance(self) -> bool:
-        """Return True if governance checker is configured."""
-        return self._invariant_checker is not None
+        logger.info(f"ToolRegistry: Executing {tool_call}")
 
-    def get_tool_descriptions(self) -> list[dict[str, Any]]:
+        # Step 2: 🛡️ Soul Governance Check (ARCH-029)
+        if self._invariant_checker:
+            soul_check: "SoulResult" = self._invariant_checker.check_tool_call(  # type: ignore
+                tool_name, tool_call.parameters
+            )
+            if not soul_check.allowed:
+                logger.warning(f"⛔ SOUL BLOCKED {tool_name}: {soul_check.reason}")
+                return ToolResult(
+                    success=False,
+                    error=f"Governance Violation: {soul_check.reason}",
+                    metadata={"blocked_by_soul": True, "rule_reason": soul_check.reason},
+                )
+
+        # Step 3: Validate parameters
+        try:
+            tool.validate(tool_call.parameters)
+        except (ValueError, TypeError) as e:
+            error_msg = f"Parameter validation failed: {str(e)}"
+            logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})")
+            return ToolResult(success=False, error=error_msg)
+
+        # Step 4: Execute tool
+        try:
+            result = tool.execute(tool_call.parameters)
+            logger.info(f"ToolRegistry: Tool '{tool_name}' completed (success={result.success})")
+            return result
+        except Exception as e:
+            # Fallback error handling (tools should catch their own exceptions)
+            error_msg = f"Tool execution failed: {type(e).__name__}: {str(e)}"
+            logger.error(f"ToolRegistry: {error_msg} (tool={tool_name})", exc_info=True)
+            return ToolResult(success=False, error=error_msg)
+
+    def to_llm_prompt(self) -> str:
         """
-        Get descriptions of all registered tools for LLM context.
+        Generate LLM system prompt section describing available tools.
 
-        This method collects descriptions from all registered tools that
-        implement get_description(). Tools without this method are skipped.
+        This is included in the agent's system prompt so the LLM knows
+        what tools it can use and how to call them.
+
+        Returns:
+            str: Formatted tool descriptions for LLM
+
+        Example:
+            >>> prompt = registry.to_llm_prompt()
+            >>> print(prompt)
+            Available tools:
+            - read_file: Read content from a file
+              Parameters: {"path": {"type": "string", "required": true}}
+            - write_file: Write content to a file
+              Parameters: {"path": {"type": "string", "required": true}, ...}
+        """
+        if not self.tools:
+            return "No tools available."
+
+        lines = ["Available tools:"]
+        for tool in self.tools.values():
+            desc = tool.to_llm_description()
+            lines.append(f"- {desc['name']}: {desc['description']}")
+            lines.append(f"  Parameters: {desc['parameters']}")
+
+        lines.append("")
+        lines.append("To use a tool, respond with JSON:")
+        lines.append('{"tool": "tool_name", "parameters": {...}}')
+
+        return "\n".join(lines)
+
+    def get_tool_descriptions(self) -> List[Dict]:
+        """
+        Get structured tool descriptions.
+
+        Returns list of tool descriptions in JSON format.
+        Useful for APIs, documentation, etc.
 
         Returns:
             List of tool description dicts
 
         Example:
-            >>> registry.register("write_file", WriteFileTool())
             >>> descriptions = registry.get_tool_descriptions()
-            >>> print(descriptions[0]["name"])
-            'write_file'
-            >>> print(descriptions[0]["description"])
-            'Write content to a file...'
+            >>> for desc in descriptions:
+            ...     print(desc["name"], desc["description"])
         """
-        descriptions = []
+        return [tool.to_llm_description() for tool in self.tools.values()]
 
-        for name, tool in self._tools.items():
-            # Check if tool has get_description method
-            if hasattr(tool, "get_description") and callable(tool.get_description):
-                desc = tool.get_description()
-                descriptions.append(desc)
-            else:
-                # Fallback: Basic description without parameters
-                descriptions.append(
-                    {
-                        "name": name,
-                        "description": f"Tool: {name} (no description available)",
-                        "parameters": {},
-                    }
-                )
+    def __len__(self) -> int:
+        """Return number of registered tools"""
+        return len(self.tools)
 
-        return descriptions
-
-    def format_tools_for_llm(self) -> str:
-        """
-        Format tool descriptions as text for LLM system prompt.
-
-        Returns:
-            Formatted string describing available tools
-
-        Example:
-            >>> registry.register("write_file", WriteFileTool())
-            >>> prompt = registry.format_tools_for_llm()
-            >>> print(prompt)
-            Available Tools:
-            1. write_file: Write content to a file...
-               Parameters: path (string, required), content (string, required)
-        """
-        descriptions = self.get_tool_descriptions()
-
-        if not descriptions:
-            return "No tools available."
-
-        lines = ["Available Tools:"]
-
-        for idx, tool_desc in enumerate(descriptions, 1):
-            name = tool_desc.get("name", "unknown")
-            desc = tool_desc.get("description", "No description")
-            params = tool_desc.get("parameters", {})
-
-            lines.append(f"\n{idx}. {name}: {desc}")
-
-            if params:
-                param_strs = []
-                for param_name, param_info in params.items():
-                    param_type = param_info.get("type", "any")
-                    required = param_info.get("required", False)
-                    req_str = "required" if required else "optional"
-                    param_desc = param_info.get("description", "")
-
-                    param_strs.append(
-                        f"{param_name} ({param_type}, {req_str}): {param_desc}"
-                    )
-
-                lines.append("   Parameters: " + ", ".join(param_strs))
-
-        lines.append(
-            "\nTo use a tool, respond with JSON: "
-            '{"tool": "tool_name", "parameters": {"param": "value"}}'
-        )
-
-        return "\n".join(lines)
+    def __repr__(self) -> str:
+        """String representation for debugging"""
+        tool_names = ", ".join(self.tools.keys())
+        return f"ToolRegistry({len(self.tools)} tools: [{tool_names}])"

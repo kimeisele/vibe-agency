@@ -6,5 +6,6 @@ with the kernel via the VibeAgent protocol.
 """
 
 from vibe_core.agents.llm_agent import SimpleLLMAgent
+from vibe_core.agents.specialist_agent import SpecialistAgent
 
-__all__ = ["SimpleLLMAgent"]
+__all__ = ["SimpleLLMAgent", "SpecialistAgent"]

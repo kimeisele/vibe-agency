@@ -1,229 +1,266 @@
 """
-File Tools for Vibe Agency (ARCH-027).
+File operation tools for vibe-agency OS (ARCH-027)
 
-This module provides basic file system operations for agents:
-- ReadFileTool: Read file contents
-- WriteFileTool: Write content to files
-
-Security:
-- All operations go through ToolRegistry (governance gatekeeper)
-- InvariantChecker validates paths before execution
-- Soul rules prevent access to sensitive files (.git, kernel.py, etc.)
-
-Design Principles:
-- Simple, focused tools (one responsibility each)
-- Structured error handling
-- Clear success/failure reporting
-- Path validation
+Provides safe, auditable file read/write operations for LLM agents.
 """
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
+
+from vibe_core.tools.tool_protocol import Tool, ToolResult
 
 logger = logging.getLogger(__name__)
 
 
-class ReadFileTool:
+class ReadFileTool(Tool):
     """
-    Tool for reading file contents.
+    Tool for reading file content.
 
-    Security:
-    - Paths are validated by InvariantChecker before execution
-    - Soul rules prevent reading sensitive files
-    - Errors are logged and returned (no crashes)
+    Allows LLM agents to read files from disk.
 
     Example:
         >>> tool = ReadFileTool()
-        >>> result = tool.execute(path="README.md")
-        >>> print(result)
-        {"content": "...", "path": "README.md", "size": 1234}
+        >>> result = tool.execute({"path": "/tmp/test.txt"})
+        >>> print(result.output)  # File content
     """
 
-    @staticmethod
-    def get_description() -> dict[str, Any]:
-        """
-        Get tool description for LLM context.
+    @property
+    def name(self) -> str:
+        return "read_file"
 
-        Returns:
-            dict with tool name, description, and parameter schema
-        """
+    @property
+    def description(self) -> str:
+        return "Read content from a file on disk"
+
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
         return {
-            "name": "read_file",
-            "description": "Read the contents of a file from the filesystem",
-            "parameters": {
-                "path": {
-                    "type": "string",
-                    "description": "Path to the file to read",
-                    "required": True,
-                }
-            },
+            "path": {
+                "type": "string",
+                "required": True,
+                "description": "Absolute or relative path to the file to read",
+            }
         }
 
-    def execute(self, path: str, **kwargs) -> dict[str, Any]:
+    def validate(self, parameters: Dict[str, Any]) -> None:
         """
-        Read contents of a file.
+        Validate parameters.
 
         Args:
-            path: File path to read
-            **kwargs: Additional parameters (ignored, for extensibility)
-
-        Returns:
-            dict with keys:
-                - content (str): File contents
-                - path (str): Absolute path read
-                - size (int): File size in bytes
+            parameters: Must contain 'path' (string)
 
         Raises:
-            FileNotFoundError: If file doesn't exist
-            PermissionError: If file can't be read
-            Exception: For other I/O errors
+            ValueError: If path missing or invalid
+            TypeError: If path is not a string
+        """
+        if "path" not in parameters:
+            raise ValueError("Missing required parameter: path")
+
+        path = parameters["path"]
+        if not isinstance(path, str):
+            raise TypeError(f"path must be a string, got {type(path).__name__}")
+
+        if not path.strip():
+            raise ValueError("path cannot be empty")
+
+    def execute(self, parameters: Dict[str, Any]) -> ToolResult:
+        """
+        Execute file read operation.
+
+        Args:
+            parameters: {"path": "/path/to/file.txt"}
+
+        Returns:
+            ToolResult with file content or error
 
         Example:
-            >>> tool = ReadFileTool()
-            >>> result = tool.execute(path="config/soul.yaml")
-            >>> print(result["content"][:50])
-            name: "Vibe Guardian"
-            version: "1.0"
+            >>> result = tool.execute({"path": "/tmp/test.txt"})
+            >>> if result.success:
+            ...     print(result.output)  # File content
         """
+        path_str = parameters["path"]
+
         try:
-            file_path = Path(path)
+            # Resolve path
+            path = Path(path_str).expanduser().resolve()
 
-            # Check existence
-            if not file_path.exists():
-                raise FileNotFoundError(f"File not found: {path}")
+            # Check if file exists
+            if not path.exists():
+                return ToolResult(success=False, error=f"File not found: {path}")
 
-            # Check if it's a file (not directory)
-            if not file_path.is_file():
-                raise ValueError(f"Path is not a file: {path}")
+            # Check if it's a file (not a directory)
+            if not path.is_file():
+                return ToolResult(success=False, error=f"Path is not a file: {path}")
 
-            # Read content
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
+            # Read file content
+            content = path.read_text(encoding="utf-8")
 
-            # Get file size
-            size = file_path.stat().st_size
+            logger.info(f"ReadFileTool: Read file {path} ({len(content)} bytes)")
 
-            logger.info(f"📖 Read file: {file_path} ({size} bytes)")
+            return ToolResult(
+                success=True,
+                output=content,
+                metadata={"path": str(path), "size_bytes": len(content)},
+            )
 
-            return {
-                "content": content,
-                "path": str(file_path.resolve()),
-                "size": size,
-            }
+        except PermissionError:
+            error_msg = f"Permission denied: {path}"
+            logger.error(f"ReadFileTool: {error_msg}")
+            return ToolResult(success=False, error=error_msg)
 
-        except FileNotFoundError as e:
-            logger.error(f"❌ File not found: {path}")
-            raise
-
-        except PermissionError as e:
-            logger.error(f"❌ Permission denied: {path}")
-            raise
+        except UnicodeDecodeError:
+            error_msg = f"File is not valid UTF-8: {path}"
+            logger.error(f"ReadFileTool: {error_msg}")
+            return ToolResult(success=False, error=error_msg)
 
         except Exception as e:
-            logger.error(f"❌ Error reading file {path}: {e}")
-            raise
+            error_msg = f"Failed to read file: {type(e).__name__}: {str(e)}"
+            logger.error(f"ReadFileTool: {error_msg} (path={path})", exc_info=True)
+            return ToolResult(success=False, error=error_msg)
 
 
-class WriteFileTool:
+class WriteFileTool(Tool):
     """
     Tool for writing content to files.
 
-    Security:
-    - Paths are validated by InvariantChecker before execution
-    - Soul rules prevent writing to sensitive files (.git, kernel.py, etc.)
-    - Creates parent directories if they don't exist
-    - Errors are logged and returned (no crashes)
+    Allows LLM agents to create or overwrite files on disk.
 
     Example:
         >>> tool = WriteFileTool()
-        >>> result = tool.execute(path="test.txt", content="Hello, World!")
-        >>> print(result)
-        {"path": "/path/to/test.txt", "bytes_written": 13}
+        >>> result = tool.execute({
+        ...     "path": "/tmp/hello.txt",
+        ...     "content": "Hello, world!"
+        ... })
+        >>> print(result.success)  # True
     """
 
-    @staticmethod
-    def get_description() -> dict[str, Any]:
-        """
-        Get tool description for LLM context.
+    @property
+    def name(self) -> str:
+        return "write_file"
 
-        Returns:
-            dict with tool name, description, and parameter schema
-        """
+    @property
+    def description(self) -> str:
+        return "Write content to a file on disk (creates or overwrites)"
+
+    @property
+    def parameters_schema(self) -> Dict[str, Any]:
         return {
-            "name": "write_file",
-            "description": "Write content to a file. Creates parent directories if needed.",
-            "parameters": {
-                "path": {
-                    "type": "string",
-                    "description": "Path to the file to write",
-                    "required": True,
-                },
-                "content": {
-                    "type": "string",
-                    "description": "Content to write to the file",
-                    "required": True,
-                },
+            "path": {
+                "type": "string",
+                "required": True,
+                "description": "Absolute or relative path to the file to write",
+            },
+            "content": {
+                "type": "string",
+                "required": True,
+                "description": "Content to write to the file",
+            },
+            "create_dirs": {
+                "type": "boolean",
+                "required": False,
+                "description": "Create parent directories if they don't exist (default: False)",
             },
         }
 
-    def execute(self, path: str, content: str, **kwargs) -> dict[str, Any]:
+    def validate(self, parameters: Dict[str, Any]) -> None:
         """
-        Write content to a file.
+        Validate parameters.
 
         Args:
-            path: File path to write to
-            content: Content to write (string)
-            **kwargs: Additional parameters:
-                - create_dirs (bool): Create parent dirs if missing (default: True)
-                - encoding (str): File encoding (default: "utf-8")
-
-        Returns:
-            dict with keys:
-                - path (str): Absolute path written
-                - bytes_written (int): Number of bytes written
+            parameters: Must contain 'path' and 'content' (strings)
 
         Raises:
-            PermissionError: If file can't be written
-            Exception: For other I/O errors
-
-        Example:
-            >>> tool = WriteFileTool()
-            >>> result = tool.execute(
-            ...     path="docs/new_doc.md",
-            ...     content="# New Document\\n\\nContent here."
-            ... )
-            >>> print(f"Wrote {result['bytes_written']} bytes")
-            Wrote 34 bytes
+            ValueError: If required parameter missing or invalid
+            TypeError: If parameter has wrong type
         """
-        try:
-            file_path = Path(path)
-            create_dirs = kwargs.get("create_dirs", True)
-            encoding = kwargs.get("encoding", "utf-8")
+        if "path" not in parameters:
+            raise ValueError("Missing required parameter: path")
 
-            # Create parent directories if needed
-            if create_dirs and not file_path.parent.exists():
-                logger.debug(f"Creating parent directories: {file_path.parent}")
-                file_path.parent.mkdir(parents=True, exist_ok=True)
+        if "content" not in parameters:
+            raise ValueError("Missing required parameter: content")
 
-            # Write content
-            with open(file_path, "w", encoding=encoding) as f:
-                f.write(content)
+        path = parameters["path"]
+        if not isinstance(path, str):
+            raise TypeError(f"path must be a string, got {type(path).__name__}")
 
-            # Get size
-            bytes_written = file_path.stat().st_size
+        if not path.strip():
+            raise ValueError("path cannot be empty")
 
-            logger.info(f"✍️ Wrote file: {file_path} ({bytes_written} bytes)")
+        content = parameters["content"]
+        if not isinstance(content, str):
+            raise TypeError(f"content must be a string, got {type(content).__name__}")
 
-            return {
-                "path": str(file_path.resolve()),
-                "bytes_written": bytes_written,
+        # create_dirs is optional
+        if "create_dirs" in parameters:
+            create_dirs = parameters["create_dirs"]
+            if not isinstance(create_dirs, bool):
+                raise TypeError(f"create_dirs must be a boolean, got {type(create_dirs).__name__}")
+
+    def execute(self, parameters: Dict[str, Any]) -> ToolResult:
+        """
+        Execute file write operation.
+
+        Args:
+            parameters: {
+                "path": "/path/to/file.txt",
+                "content": "File content",
+                "create_dirs": False  # optional
             }
 
-        except PermissionError as e:
-            logger.error(f"❌ Permission denied: {path}")
-            raise
+        Returns:
+            ToolResult with success status
+
+        Example:
+            >>> result = tool.execute({
+            ...     "path": "/tmp/test.txt",
+            ...     "content": "Hello!"
+            ... })
+            >>> print(result.success)  # True
+        """
+        path_str = parameters["path"]
+        content = parameters["content"]
+        create_dirs = parameters.get("create_dirs", False)
+
+        try:
+            # Resolve path
+            path = Path(path_str).expanduser().resolve()
+
+            # Check if parent directory exists
+            parent = path.parent
+            if not parent.exists():
+                if create_dirs:
+                    parent.mkdir(parents=True, exist_ok=True)
+                    logger.info(f"WriteFileTool: Created directory {parent}")
+                else:
+                    return ToolResult(
+                        success=False,
+                        error=f"Parent directory does not exist: {parent}. "
+                        f"Use create_dirs=true to create it.",
+                    )
+
+            # Write file
+            path.write_text(content, encoding="utf-8")
+
+            logger.info(f"WriteFileTool: Wrote file {path} ({len(content)} bytes)")
+
+            return ToolResult(
+                success=True,
+                output=f"File written successfully: {path}",
+                metadata={"path": str(path), "size_bytes": len(content)},
+            )
+
+        except PermissionError:
+            error_msg = f"Permission denied: {path}"
+            logger.error(f"WriteFileTool: {error_msg}")
+            return ToolResult(success=False, error=error_msg)
+
+        except IsADirectoryError:
+            error_msg = f"Path is a directory: {path}"
+            logger.error(f"WriteFileTool: {error_msg}")
+            return ToolResult(success=False, error=error_msg)
 
         except Exception as e:
-            logger.error(f"❌ Error writing file {path}: {e}")
-            raise
+            error_msg = f"Failed to write file: {type(e).__name__}: {str(e)}"
+            logger.error(f"WriteFileTool: {error_msg} (path={path})", exc_info=True)
+            return ToolResult(success=False, error=error_msg)
