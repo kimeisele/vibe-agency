@@ -64,3 +64,6 @@ workspaces/test_*/
 workspaces/yoga-studio-mvp-001/
 workspaces/manual-test-project/
 temp_test_linting.py
+
+# Demo output (temporary test files)
+.demo_output/
