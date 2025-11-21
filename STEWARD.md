@@ -249,6 +249,107 @@ steward delegate vibe-agency-orchestrator \
 
 ---
 
+## 👤 User & Team Context *(Optional)*
+
+### Default User
+
+```yaml
+default_user:
+  workflow_style: "test_first"
+  verbosity: "medium"
+  communication: "professional"
+  language: "en-US"
+```
+
+### Personal Preferences
+
+#### kim
+```yaml
+kim:
+  role: "Tech Lead / Core Maintainer"
+  workflow_style: "test_first"
+  verbosity: "low"
+  communication: "concise_technical"
+  timezone: "Europe/Berlin"
+  language: "de-DE"  # German accepted for user communication
+
+  preferences:
+    code_style:
+      python: "black"
+      typescript: "strict"
+    git:
+      commit_style: "conventional_commits"
+      workflow: "rebase_over_merge"
+      atomic_commits: true
+    testing:
+      framework: "pytest"
+      min_coverage: 0.80
+      pre_push_checks: true
+    documentation:
+      style: "inline_comments"
+      format: "markdown"
+
+  constraints:
+    - "Never use emojis unless explicitly requested"
+    - "No verbose confirmations - be concise"
+    - "Show full tracebacks on errors"
+    - "Never claim 'Complete ✅' without passing tests"
+    - "Always verify before claiming - no speculation"
+```
+
+### Team Context
+
+```yaml
+team:
+  name: "vibe-agency core team"
+  development_style: "test_driven"
+  git_workflow: "rebase_over_merge"
+  commit_style: "conventional_commits"
+
+  testing:
+    framework: "pytest"
+    min_coverage: 0.80
+    pre_push: true
+    test_first_discipline: true
+
+  documentation:
+    style: "inline_comments"
+    format: "markdown"
+    no_proactive_docs: true  # Never create docs unless explicitly requested
+
+  quality_gates:
+    - "All tests must pass before claiming completion"
+    - "Pre-push checks mandatory (./bin/pre-push-check.sh)"
+    - "Minimum 80% test coverage for new code"
+    - "Zero tolerance for broken tests"
+    - "Verification-first approach (run commands, don't speculate)"
+
+  philosophy:
+    - "Trust tests over claims"
+    - "Verify over assume"
+    - "Operational reliability through test-first discipline"
+    - "Atomic commits with descriptive messages"
+    - "Documentation-as-code (GAD architecture docs)"
+```
+
+**Boot Modes:**
+```bash
+# Agent-only (no user context)
+./bin/system-boot.sh
+
+# With user context (auto-detects from git config)
+./bin/system-boot.sh --user kim
+
+# With team defaults
+./bin/system-boot.sh --team
+```
+
+**Context Precedence:** kim's preferences → team context → agent defaults
+
+**Note:** User context is optional - agent works without it, but adapts behavior when present.
+
+---
+
 ## 🔄 Status & Updates
 
 **Current Status:**
@@ -362,6 +463,7 @@ uv run pytest tests/ -v --tb=short  # 631 tests
 - [x] Security & Trust (transparent trust score calculation)
 - [x] Maintained By (principal, audit trail)
 - [x] More Information (protocol links, documentation)
+- [x] User & Team Context (kim's preferences, team context) ← NEW!
 - [x] Status & Updates (current phase, recent updates)
 - [x] Design Principles (5 core principles)
 - [x] Metrics & Monitoring (live metrics, commands)

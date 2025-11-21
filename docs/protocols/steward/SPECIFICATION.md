@@ -201,6 +201,320 @@
 
 ---
 
+## 👤 LAYER 1.5: USER & TEAM CONTEXT (Optional Extension)
+
+### Purpose: Single Source of Truth for Agent + Operator Context
+
+**Problem:** Agents need to know not just WHAT they are, but WHO operates them and HOW they should behave.
+
+**Solution:** Extend `STEWARD.md` to include optional user preferences and team context alongside agent identity.
+
+### Why This Matters
+
+1. **Personalization**: Different users have different workflows (test-first vs iterative, verbose vs concise)
+2. **Team Consistency**: Team-wide defaults ensure consistent behavior across all sessions
+3. **Multi-User Support**: Same agent, different operators with different preferences
+4. **Session Continuity**: User context persists across sessions without re-configuration
+5. **Graceful Degradation**: Agent works without user context, but works BETTER with it
+
+### Structure: All-in-One STEWARD.md
+
+```markdown
+# STEWARD.md
+
+> **Protocol Version:** 1.0.0
+> **Compliance Level:** Level 2 (Standard)
+
+---
+
+## 🤖 AGENT IDENTITY (Required - Level 1)
+
+### Agent Manifest
+- **ID**: vibe-agency-orchestrator
+- **Version**: 4.0.0
+- **Class**: orchestration_operator
+- **Specialization**: sdlc_management
+- **Status**: active
+- **Trust Score**: 0.94
+
+### Capabilities
+- orchestrate_sdlc (v2.0.0)
+- delegate_to_specialist (v1.5.0)
+- execute_playbook (v1.8.0)
+
+### Prime Directive
+Trust tests over claims, verify over assume.
+
+### Machine-Readable Manifest
+[View steward.json](./steward.json)
+
+---
+
+## 👤 USER CONTEXT (Optional - Level 2+)
+
+### Default User
+```yaml
+default_user:
+  workflow_style: "balanced"
+  verbosity: "medium"
+  communication: "friendly"
+```
+
+### Personal Preferences (Multi-User)
+
+#### User: kim
+```yaml
+kim:
+  role: "Tech Lead"
+  workflow_style: "test_first"
+  verbosity: "low"
+  communication: "concise_technical"
+  timezone: "Europe/Berlin"
+  language: "de-DE"
+
+  preferences:
+    code_style:
+      python: "black"
+      typescript: "strict"
+    git:
+      commit_style: "conventional_commits"
+      workflow: "rebase_over_merge"
+    testing:
+      framework: "pytest"
+      min_coverage: 0.80
+
+  constraints:
+    - "No verbose confirmations"
+    - "Show full tracebacks on errors"
+    - "Minimal logging output"
+```
+
+#### User: alex
+```yaml
+alex:
+  role: "Backend Developer"
+  workflow_style: "iterative"
+  verbosity: "medium"
+  communication: "explanatory"
+  timezone: "Europe/Berlin"
+  language: "en-US"
+
+  preferences:
+    - "Explain reasoning before actions"
+    - "Step-by-step guidance"
+    - "Ask before major changes"
+```
+
+### Team Context
+```yaml
+team:
+  development_style: "test_driven"
+  git_workflow: "rebase_over_merge"
+  commit_style: "conventional_commits"
+
+  testing:
+    framework: "pytest"
+    min_coverage: 0.80
+    pre_push: true
+
+  documentation:
+    style: "inline_comments"
+    format: "markdown"
+
+  quality_gates:
+    - "All tests must pass"
+    - "Pre-push checks mandatory"
+    - "Min 80% test coverage"
+```
+```
+
+### Boot Modes & CLI Integration
+
+```bash
+# Mode 1: Agent-Only (Minimal - Level 1)
+steward boot
+# Uses only AGENT IDENTITY section
+# No user context loaded
+
+# Mode 2: Single User (Level 2)
+steward boot --user kim
+# Uses AGENT IDENTITY + kim's preferences
+
+# Mode 3: Team Default (Level 2)
+steward boot --team
+# Uses AGENT IDENTITY + team context
+
+# Mode 4: Auto-Detect (Level 2)
+steward boot --auto
+# CLI detects Git user: git config user.name
+# If "Kim" → use kim preferences
+# If "Alex" → use alex preferences
+# If unknown → use team default
+# If no team → use default_user
+```
+
+### Context Precedence (Conflict Resolution)
+
+When multiple contexts apply:
+
+```
+┌─────────────────────────────────────────────────┐
+│ 1. User Preferences (Highest Priority)         │
+│    ↓ (overrides)                                │
+│ 2. Team Context                                 │
+│    ↓ (overrides)                                │
+│ 3. Agent Defaults (Lowest Priority)             │
+└─────────────────────────────────────────────────┘
+```
+
+**Example:**
+```yaml
+# Agent default: verbosity = "high"
+# Team context: verbosity = "medium"
+# kim's preference: verbosity = "low"
+# → Final: verbosity = "low" (user wins)
+```
+
+### Graceful Degradation
+
+| Sections Present | Boot Works? | Features Available |
+|-----------------|-------------|-------------------|
+| Agent Identity only | ✅ YES | Basic agent functionality |
+| + Default User | ✅ YES | Basic personalization |
+| + Team Context | ✅ YES | Team-wide consistency |
+| + Multi-User | ✅ YES | Per-user customization |
+
+**Key Point:** Every level works independently - no breaking changes!
+
+### Privacy & Security
+
+**Committed to Git (Public):**
+```yaml
+kim:
+  role: "Tech Lead"
+  workflow_style: "test_first"
+  verbosity: "low"
+  # Public preferences are fine
+```
+
+**Gitignored (Private):**
+```yaml
+kim:
+  preferences_file: ".steward/kim.private.md"  # gitignored
+  # Points to external file for sensitive data
+```
+
+**.gitignore:**
+```gitignore
+.steward/*.private.md
+.steward/secrets.yaml
+```
+
+### CLI Validation
+
+```bash
+# Validate STEWARD.md structure
+steward validate
+# Output:
+# ✅ Agent Identity: VALID
+# ✅ User Context: VALID (2 users)
+# ✅ Team Context: VALID
+# 📊 Compliance Level: STANDARD (Level 2)
+
+# Inspect sections
+steward inspect
+# Output:
+# ✅ Agent Identity: PRESENT
+# ✅ User Context: PRESENT (kim, alex)
+# ✅ Team Context: PRESENT
+# ⚠️  Runtime Introspection: NOT IMPLEMENTED (required for Level 3)
+
+# Test user context
+steward test --user kim
+# Output:
+# ✅ User 'kim' found
+# Settings applied:
+#   - workflow_style: test_first
+#   - verbosity: low
+#   - communication: concise_technical
+#   - language: de-DE
+```
+
+### Examples
+
+#### Example 1: Solo Developer (Minimal - Level 1)
+```markdown
+# STEWARD.md
+
+## AGENT IDENTITY
+- **ID**: my-simple-agent
+- **Version**: 1.0.0
+- **Class**: task_executor
+
+# That's it! No user context needed.
+```
+
+#### Example 2: Solo Developer with Preferences (Level 2)
+```markdown
+# STEWARD.md
+
+## AGENT IDENTITY
+- **ID**: my-agent
+- **Version**: 1.0.0
+
+## USER CONTEXT
+default_user:
+  verbosity: "low"
+  workflow: "test_first"
+  language: "en-US"
+```
+
+#### Example 3: Team with Multiple Users (Level 2 Full)
+```markdown
+# STEWARD.md
+
+## AGENT IDENTITY
+[... full agent manifest ...]
+
+## USER CONTEXT
+
+### kim:
+  role: "Tech Lead"
+  verbosity: "low"
+  workflow: "test_first"
+
+### alex:
+  role: "Developer"
+  verbosity: "medium"
+  workflow: "iterative"
+
+### team:
+  development_style: "test_driven"
+  min_coverage: 0.80
+```
+
+### Benefits
+
+✅ **Single Source of Truth**: One file (`STEWARD.md`) for agent + operators
+✅ **Backwards Compatible**: Existing STEWARD.md (agent-only) still works
+✅ **Graceful Degradation**: Each level works independently
+✅ **Scalable**: 1 user → 100 users, same structure
+✅ **Privacy-Friendly**: Sensitive data can be gitignored
+✅ **Team-Friendly**: Consistent behavior across team members
+✅ **Session Persistence**: Context survives across sessions
+
+### Relationship to steward.json
+
+- **STEWARD.md** (human-readable): Agent identity + user context + team context
+- **steward.json** (machine-readable): Agent identity only (for protocol compliance)
+
+User context is intentionally NOT in `steward.json` because:
+1. User preferences are operational, not protocol-level
+2. Privacy concerns (don't expose personal preferences in public manifest)
+3. Keeps steward.json focused on agent identity/capabilities
+
+---
+
 ## 🔍 LAYER 2: STEWARD REGISTRY
 
 ### Like: Docker Hub, npm registry, PyPI

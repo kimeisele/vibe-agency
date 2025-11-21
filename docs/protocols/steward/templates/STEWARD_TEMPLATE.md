@@ -260,6 +260,112 @@ steward delegate [your-agent-id] \
 
 ---
 
+## 👤 User & Team Context `[STANDARD]` *(Optional)*
+
+> Define who operates this agent and how (Level 2+)
+
+**Purpose:** Configure personalized behavior for different users and teams.
+
+### Default User
+
+```yaml
+default_user:
+  workflow_style: "[balanced|test_first|iterative]"
+  verbosity: "[low|medium|high]"
+  communication: "[concise|friendly|explanatory]"
+  language: "[en-US|de-DE|...]"
+```
+
+### Personal Preferences (Multi-User)
+
+```yaml
+[username]:
+  role: "[Tech Lead|Developer|Designer|...]"
+  workflow_style: "[test_first|iterative|...]"
+  verbosity: "[low|medium|high]"
+  communication: "[concise_technical|explanatory|...]"
+  timezone: "[America/New_York|Europe/Berlin|...]"
+  language: "[en-US|de-DE|...]"
+
+  preferences:
+    code_style:
+      python: "[black|pylint|...]"
+      javascript: "[standard|prettier|...]"
+    git:
+      commit_style: "[conventional_commits|semantic|...]"
+      workflow: "[rebase_over_merge|merge_commits|...]"
+    testing:
+      framework: "[pytest|jest|...]"
+      min_coverage: [0.80]
+
+  constraints:
+    - "[Constraint 1]"
+    - "[Constraint 2]"
+```
+
+### Team Context
+
+```yaml
+team:
+  development_style: "[test_driven|agile|...]"
+  git_workflow: "[rebase_over_merge|merge_commits|...]"
+  commit_style: "[conventional_commits|semantic|...]"
+
+  testing:
+    framework: "[pytest|jest|...]"
+    min_coverage: [0.80]
+    pre_push: [true|false]
+
+  documentation:
+    style: "[inline_comments|docstrings|...]"
+    format: "[markdown|rst|...]"
+
+  quality_gates:
+    - "[Quality gate 1]"
+    - "[Quality gate 2]"
+```
+
+**Example for vibe-agency:**
+```yaml
+kim:
+  role: "Tech Lead"
+  workflow_style: "test_first"
+  verbosity: "low"
+  communication: "concise_technical"
+  language: "de-DE"
+  preferences:
+    - "No verbose confirmations"
+    - "Show full tracebacks"
+
+team:
+  development_style: "test_driven"
+  min_coverage: 0.80
+  quality_gates:
+    - "All tests must pass"
+    - "Pre-push checks mandatory"
+```
+
+**Boot Modes:**
+```bash
+# Agent-only (no user context)
+steward boot
+
+# With specific user
+steward boot --user [username]
+
+# With team defaults
+steward boot --team
+
+# Auto-detect from git config
+steward boot --auto
+```
+
+**Context Precedence:** User Preferences → Team Context → Agent Defaults
+
+**Privacy:** Sensitive preferences can be gitignored via `preferences_file: ".steward/[user].private.md"`
+
+---
+
 ## 🔄 Status & Updates `[STANDARD]`
 
 > Current status and recent changes (Level 2+)
@@ -365,6 +471,7 @@ steward monitor --live
 - [ ] For Other Agents (delegation examples)
 - [ ] Security & Trust
 - [ ] More Information (protocol links)
+- [ ] *(Optional)* User & Team Context
 - [ ] Create `steward.json` manifest
 
 ### Level 3 (Advanced)
