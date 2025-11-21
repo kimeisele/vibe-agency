@@ -546,6 +546,268 @@ jobs:
 
 ---
 
+## 💰 ECONOMIC MODEL (Optional)
+
+### Problem: Agent Monetization
+
+Agents may provide services that require compensation:
+- **Free tier**: Basic capabilities (discovery, verification)
+- **Paid tier**: Premium capabilities (high-priority delegation, SLA guarantees)
+- **Usage-based**: Pay per delegation, per compute time, per result quality
+
+### Pricing Declaration
+
+Agents can declare pricing in `steward.json`:
+
+```json
+{
+  "pricing": {
+    "model": "free",  // "free", "pay_per_use", "subscription", "hybrid"
+    "currency": "USD",
+    "free_tier": {
+      "included": [
+        "discovery",
+        "verification",
+        "basic_delegation"
+      ],
+      "limits": {
+        "delegations_per_day": 10,
+        "max_task_duration_minutes": 5
+      }
+    },
+    "paid_tiers": [
+      {
+        "name": "standard",
+        "model": "pay_per_use",
+        "rates": {
+          "orchestrate_sdlc": {
+            "cost_per_invocation": 0.10,
+            "billing_unit": "per_invocation",
+            "estimated_duration_minutes": 10
+          },
+          "generate_code": {
+            "cost_per_invocation": 0.05,
+            "billing_unit": "per_invocation"
+          }
+        }
+      },
+      {
+        "name": "premium",
+        "model": "subscription",
+        "cost_per_month": 99.00,
+        "includes": {
+          "unlimited_delegations": true,
+          "priority_queue": true,
+          "sla_guarantee": "99.9% uptime",
+          "max_latency_p99_ms": 2000
+        }
+      }
+    ]
+  }
+}
+```
+
+### Payment Flow
+
+```
+1. Client discovers agent
+   ├─ Check pricing model
+   └─ Choose tier (free/standard/premium)
+
+2. Client delegates task
+   ├─ Include payment authorization
+   └─ Agent validates payment
+
+3. Agent executes task
+   ├─ Track resource usage
+   └─ Calculate cost
+
+4. Agent returns results + invoice
+   ├─ Client validates invoice
+   └─ Payment processed
+
+5. Payment confirmation
+   ├─ Agent receives funds
+   └─ Transaction logged
+```
+
+### Payment Methods
+
+```json
+{
+  "pricing": {
+    "payment_methods": [
+      {
+        "type": "cryptocurrency",
+        "chains": ["ethereum", "polygon"],
+        "tokens": ["USDC", "DAI"],
+        "payment_address": "0x..."
+      },
+      {
+        "type": "fiat",
+        "providers": ["stripe", "paypal"],
+        "payment_endpoint": "https://payments.example.com/invoice"
+      },
+      {
+        "type": "credits",
+        "provider": "agent_marketplace",
+        "credit_system": "steward_credits"
+      }
+    ]
+  }
+}
+```
+
+### Cost Estimation
+
+Clients can estimate costs before delegating:
+
+```bash
+$ steward estimate vibe-agency-orchestrator \
+    --operation orchestrate_sdlc \
+    --context '{"complexity": "medium", "duration_estimate": "10min"}'
+
+Cost Estimation:
+  Operation: orchestrate_sdlc
+  Tier: standard (pay-per-use)
+  Base cost: $0.10 per invocation
+  Estimated duration: 10 minutes
+  Additional fees: None
+
+  Total estimated cost: $0.10
+
+Proceed with delegation? [y/N]:
+```
+
+### Billing & Invoicing
+
+```json
+{
+  "invoice": {
+    "invoice_id": "inv-abc123",
+    "task_id": "task-xyz789",
+    "agent_id": "vibe-agency-orchestrator",
+    "client_id": "requesting-agent-1.0",
+
+    "line_items": [
+      {
+        "description": "orchestrate_sdlc invocation",
+        "quantity": 1,
+        "unit_price": 0.10,
+        "total": 0.10
+      },
+      {
+        "description": "Compute time (10 minutes)",
+        "quantity": 10,
+        "unit_price": 0.01,
+        "total": 0.10
+      }
+    ],
+
+    "subtotal": 0.20,
+    "tax": 0.02,
+    "total": 0.22,
+
+    "payment_due": "2025-11-28T00:00:00Z",
+    "payment_status": "pending"
+  }
+}
+```
+
+### Revenue Sharing (Registry Fees)
+
+Registries may charge fees for listing agents:
+
+```yaml
+registry_fees:
+  listing_fee:
+    free_tier: 0  # Free for basic listing
+    verified_tier: 10  # $10/month for verified badge
+    featured_tier: 100  # $100/month for featured placement
+
+  transaction_fee:
+    percentage: 2.5  # 2.5% of transaction value
+    applies_to: "paid_delegations_only"
+
+  revenue_split:
+    agent: 0.95  # 95% to agent
+    registry: 0.025  # 2.5% to registry
+    protocol: 0.025  # 2.5% to protocol development
+```
+
+### Free vs Paid Decision Matrix
+
+| Factor | Free | Paid |
+|--------|------|------|
+| **Compute cost** | Low (< $0.01/request) | High (> $0.10/request) |
+| **Development cost** | Low | High (custom models, infrastructure) |
+| **Target users** | Hobbyists, students | Enterprises, professionals |
+| **SLA required** | No | Yes |
+| **Support** | Community | Dedicated |
+
+### Examples
+
+#### Example 1: Free Agent (Open Source)
+```json
+{
+  "pricing": {
+    "model": "free",
+    "rationale": "Open source project, funded by donations"
+  }
+}
+```
+
+#### Example 2: Freemium Agent
+```json
+{
+  "pricing": {
+    "model": "hybrid",
+    "free_tier": {
+      "delegations_per_day": 10,
+      "max_duration_minutes": 5
+    },
+    "paid_tier": {
+      "cost_per_delegation": 0.10,
+      "unlimited": true
+    }
+  }
+}
+```
+
+#### Example 3: Enterprise Agent
+```json
+{
+  "pricing": {
+    "model": "subscription",
+    "tiers": [
+      { "name": "team", "cost": 299, "seats": 10 },
+      { "name": "enterprise", "cost": 999, "seats": "unlimited" }
+    ],
+    "sla": "99.9% uptime",
+    "support": "24/7"
+  }
+}
+```
+
+### Important Notes
+
+**Economic model is OPTIONAL:**
+- Not required for protocol compliance
+- Agents can be 100% free
+- Useful for commercial agents
+
+**Trust score impact:**
+- Paid agents don't automatically get higher trust
+- Trust based on technical metrics, not pricing
+- Expensive ≠ Better
+
+**Transparency required:**
+- Pricing must be declared upfront in manifest
+- No hidden fees
+- No price changes mid-delegation
+
+---
+
 ## 🎯 IMPLEMENTATION ROADMAP
 
 ### Phase 1: MVP (4 weeks)

@@ -535,6 +535,339 @@ Verification: ✅ SIGNED
 
 ---
 
+## 📊 SLA ENFORCEMENT
+
+### Problem: Trust Without Consequences
+
+Agents declare quality metrics but what if they fail to meet them?
+
+```json
+{
+  "quality_metrics": {
+    "uptime": 0.99,  // "I promise 99% uptime"
+    "latency_p99_ms": 5000  // "I promise <5s latency"
+  }
+}
+```
+
+**What if actual performance:**
+- Uptime: 85% (below 99% promise)
+- Latency P99: 12000ms (above 5s promise)
+
+**Without enforcement:** Empty promises.
+
+### SLA (Service Level Agreement)
+
+Agents can make enforceable commitments:
+
+```json
+{
+  "sla": {
+    "version": "1.0.0",
+    "effective_date": "2025-11-21",
+    "guarantees": [
+      {
+        "metric": "uptime",
+        "target": 0.99,
+        "measurement_window": "30 days",
+        "breach_threshold": 0.95,  // Breach if <95%
+        "penalty": {
+          "type": "trust_score_reduction",
+          "amount": 0.1  // -10% trust score
+        }
+      },
+      {
+        "metric": "latency_p99",
+        "target": 5000,
+        "unit": "milliseconds",
+        "measurement_window": "7 days",
+        "breach_threshold": 7500,  // Breach if >7.5s
+        "penalty": {
+          "type": "trust_score_reduction",
+          "amount": 0.05  // -5% trust score
+        }
+      },
+      {
+        "metric": "success_rate",
+        "target": 0.98,
+        "measurement_window": "30 days",
+        "breach_threshold": 0.90,  // Breach if <90%
+        "penalty": {
+          "type": "temporary_suspension",
+          "duration": "7 days"
+        }
+      }
+    ],
+
+    "breach_notification": {
+      "notify_delegators": true,
+      "notify_registry": true,
+      "publish_breach_report": true
+    },
+
+    "dispute_resolution": {
+      "allowed": true,
+      "review_period_days": 7,
+      "arbitrator": "steward_protocol_committee"
+    }
+  }
+}
+```
+
+### Enforcement Workflow
+
+```
+1. Agent declares SLA commitments in manifest
+
+2. Registry monitors actual performance
+   ├─ Track uptime (health checks every 5min)
+   ├─ Track latency (measure delegation RTT)
+   └─ Track success rate (from VibeLedger)
+
+3. Detect SLA breach
+   ├─ Metric falls below threshold
+   ├─ Measured over specified window
+   └─ Breach confirmed (no dispute filed)
+
+4. Apply penalty
+   ├─ Reduce trust score by penalty amount
+   ├─ Notify all delegators
+   └─ Publish breach report
+
+5. Recovery
+   ├─ Agent fixes issues
+   ├─ Performance returns to target
+   └─ Trust score gradually recovers
+```
+
+### Penalty Types
+
+#### 1. Trust Score Reduction
+
+```json
+{
+  "penalty": {
+    "type": "trust_score_reduction",
+    "amount": 0.1,  // -10%
+    "recovery": {
+      "method": "gradual",
+      "recovery_period_days": 30,
+      "requires": "sustained_performance_above_target"
+    }
+  }
+}
+```
+
+**Example:**
+- Agent trust score: 0.94
+- Uptime SLA breach: -10%
+- New trust score: 0.846 (0.94 * 0.9)
+- Recovery: +0.003/day if performance good (30 days to full recovery)
+
+#### 2. Temporary Suspension
+
+```json
+{
+  "penalty": {
+    "type": "temporary_suspension",
+    "duration": "7 days",
+    "scope": "new_delegations_only",  // Existing delegations continue
+    "notification": "All delegators notified 24h in advance"
+  }
+}
+```
+
+#### 3. Financial Penalty (if paid agent)
+
+```json
+{
+  "penalty": {
+    "type": "financial",
+    "amount": 100,  // $100
+    "currency": "USD",
+    "distributed_to": "affected_delegators"  // Refund clients
+  }
+}
+```
+
+#### 4. Badge Revocation
+
+```json
+{
+  "penalty": {
+    "type": "badge_revocation",
+    "revoke": ["verified_badge", "sla_compliant_badge"],
+    "reinstatement": {
+      "requires": "30_days_compliance",
+      "manual_review": true
+    }
+  }
+}
+```
+
+### SLA Monitoring Dashboard
+
+Agents must provide monitoring endpoint:
+
+```json
+{
+  "sla": {
+    "monitoring_endpoint": "https://monitor.vibe-agency.com/sla",
+    "metrics_endpoint": "https://monitor.vibe-agency.com/metrics.json",
+    "refresh_interval_seconds": 300  // Update every 5min
+  }
+}
+```
+
+**Response format:**
+```json
+{
+  "sla_status": {
+    "overall_status": "compliant",  // "compliant", "at_risk", "breached"
+
+    "guarantees": [
+      {
+        "metric": "uptime",
+        "target": 0.99,
+        "current": 0.992,
+        "status": "compliant",
+        "buffer": 0.002,  // 0.2% above target
+        "measurement_window": "30 days",
+        "last_breach": null
+      },
+      {
+        "metric": "latency_p99",
+        "target": 5000,
+        "current": 4823,
+        "status": "compliant",
+        "buffer": 177,  // 177ms below target
+        "measurement_window": "7 days",
+        "last_breach": null
+      },
+      {
+        "metric": "success_rate",
+        "target": 0.98,
+        "current": 0.97,
+        "status": "at_risk",  // ⚠️ Below target but above breach threshold
+        "buffer": -0.01,  // 1% below target
+        "breach_threshold": 0.90,
+        "days_until_breach": 3  // If trend continues
+      }
+    ],
+
+    "recent_breaches": [],
+    "penalties_applied": [],
+    "trust_score_impact": 0.0  // No penalties currently
+  }
+}
+```
+
+### SLA Tiers
+
+Different trust tiers may have different SLA requirements:
+
+```yaml
+sla_requirements:
+  unverified:
+    required: false  # No SLA required
+
+  verified:
+    required: true
+    minimum_uptime: 0.90  // 90%
+    minimum_success_rate: 0.80  // 80%
+
+  trusted:
+    required: true
+    minimum_uptime: 0.95  // 95%
+    minimum_success_rate: 0.90  // 90%
+
+  highly_trusted:
+    required: true
+    minimum_uptime: 0.99  // 99%
+    minimum_success_rate: 0.95  // 95%
+    latency_p99_max: 5000  // <5s
+```
+
+### Dispute Resolution
+
+Agents can dispute SLA breaches:
+
+```json
+{
+  "dispute": {
+    "dispute_id": "dispute-abc123",
+    "sla_breach_id": "breach-xyz789",
+    "agent_id": "vibe-agency-orchestrator",
+    "filed_date": "2025-11-21T10:00:00Z",
+
+    "claim": "Downtime caused by registry provider outage (force majeure)",
+    "evidence": [
+      "https://status.registry.org/incident/2025-11-21",
+      "https://twitter.com/registry/status/12345"
+    ],
+
+    "requested_remedy": "remove_penalty",
+
+    "review_process": {
+      "arbitrator": "steward_protocol_committee",
+      "review_period_days": 7,
+      "decision_binding": true
+    }
+  }
+}
+```
+
+### Force Majeure Exceptions
+
+SLA breaches may be excused for:
+- Registry provider outages (>50% of registries down)
+- Natural disasters affecting infrastructure
+- DDoS attacks (if properly mitigated)
+- Government-mandated shutdowns
+
+### Best Practices
+
+**For Agents:**
+1. Set realistic SLA targets (don't overpromise)
+2. Monitor performance continuously
+3. Alert early if approaching breach threshold
+4. Maintain buffer above targets (target 99%, aim for 99.5%)
+5. Have incident response plan
+
+**For Delegators:**
+1. Check SLA status before delegating
+2. Monitor SLA compliance of agents you use
+3. Report breaches if registry doesn't detect
+4. Diversify across multiple agents (no single point of failure)
+
+### Example: SLA in Practice
+
+```bash
+$ steward sla-status vibe-agency-orchestrator
+
+SLA Status: vibe-agency-orchestrator v4.0.0
+Overall Status: ✅ COMPLIANT
+
+Guarantees:
+  ✅ Uptime: 99.2% (target: 99%, buffer: +0.2%)
+  ✅ Latency P99: 4823ms (target: 5000ms, buffer: -177ms)
+  ⚠️  Success Rate: 97% (target: 98%, buffer: -1%)
+     - Status: AT RISK
+     - Breach threshold: 90%
+     - Days until breach (if trend continues): 3
+
+Recent Performance (30 days):
+  - No breaches
+  - 0 penalties applied
+  - Trust score impact: 0.0
+
+Recommendation:
+  ⚠️  Success rate trending below target. Review recent failures:
+     $ steward failures vibe-agency-orchestrator --last-7-days
+```
+
+---
+
 ## ✅ PRODUCTION READINESS CHECKLIST
 
 ### Before v1.0.0

@@ -454,6 +454,225 @@ class AuditLog:
 
 ---
 
+## 🚦 RATE LIMITING
+
+### Problem: Abuse & DoS Prevention
+
+Without rate limiting:
+- **Discovery spam**: Attacker queries registry 1M times/hour
+- **Delegation flooding**: Agent receives 10K delegations/second
+- **Attestation abuse**: Force constant re-attestation (exhaust CI/CD)
+- **Registry poisoning**: Publish 1000 agents/hour
+
+### Rate Limit Policy
+
+#### Per Agent ID
+
+```yaml
+rate_limits:
+  discovery:
+    limit: 100
+    window: "1 hour"
+    action: "throttle"  # Return 429 Too Many Requests
+
+  delegation:
+    limit: 10
+    window: "1 hour"
+    action: "throttle"
+    burst: 3  # Allow burst of 3 requests
+
+  attestation_refresh:
+    limit: 5
+    window: "1 hour"
+    action: "throttle"
+
+  key_operations:
+    limit: 2  # Key rotation, revocation
+    window: "24 hours"
+    action: "block"  # Hard block after limit
+```
+
+#### Per IP Address
+
+```yaml
+rate_limits:
+  registry_search:
+    limit: 1000
+    window: "1 hour"
+    action: "captcha"  # Show CAPTCHA after limit
+
+  manifest_fetch:
+    limit: 500
+    window: "1 hour"
+    action: "throttle"
+
+  attestation_download:
+    limit: 200
+    window: "1 hour"
+    action: "throttle"
+```
+
+#### Per Registry
+
+```yaml
+rate_limits:
+  agent_publication:
+    limit: 5
+    window: "24 hours"
+    per: "identity"  # Per verified identity
+    action: "manual_review"  # Require human review after limit
+
+  registry_sync:
+    limit: 100  # Push updates to parent registry
+    window: "1 hour"
+    action: "queue"  # Queue excess, process later
+```
+
+### Implementation
+
+```python
+from datetime import datetime, timedelta
+from collections import defaultdict
+
+class RateLimiter:
+    def __init__(self):
+        self.requests = defaultdict(list)
+
+    def check_rate_limit(
+        self,
+        key: str,
+        limit: int,
+        window_seconds: int
+    ) -> tuple[bool, int]:
+        """
+        Check if request exceeds rate limit.
+
+        Returns: (allowed, remaining_requests)
+        """
+        now = datetime.now()
+        cutoff = now - timedelta(seconds=window_seconds)
+
+        # Remove old requests
+        self.requests[key] = [
+            req_time for req_time in self.requests[key]
+            if req_time > cutoff
+        ]
+
+        # Check limit
+        if len(self.requests[key]) >= limit:
+            return False, 0
+
+        # Allow request
+        self.requests[key].append(now)
+        remaining = limit - len(self.requests[key])
+        return True, remaining
+
+# Usage
+limiter = RateLimiter()
+
+# Check delegation rate limit
+allowed, remaining = limiter.check_rate_limit(
+    key=f"delegation:{agent_id}",
+    limit=10,
+    window_seconds=3600  # 1 hour
+)
+
+if not allowed:
+    raise RateLimitExceeded(
+        "Delegation rate limit exceeded (10/hour)",
+        retry_after=3600
+    )
+```
+
+### Response Headers
+
+```http
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1732233600
+Retry-After: 3600
+
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Delegation rate limit exceeded (10 requests/hour)",
+    "limit": 10,
+    "window": "1 hour",
+    "retry_after": 3600,
+    "reset_at": "2025-11-21T14:00:00Z"
+  }
+}
+```
+
+### Exemptions
+
+Certain agents may be exempt from rate limits:
+
+```yaml
+exemptions:
+  - type: "verified_organization"
+    criteria: "multi_sig_required AND trust_score > 0.9"
+    limits:
+      delegation: 100  # 10x normal limit
+      discovery: 1000
+
+  - type: "infrastructure_agent"
+    criteria: "agent_class = monitoring_agent"
+    limits:
+      discovery: unlimited
+      manifest_fetch: unlimited
+
+  - type: "development"
+    criteria: "environment = development"
+    limits:
+      delegation: 50
+      discovery: 500
+```
+
+### Graduated Response
+
+```yaml
+enforcement_policy:
+  first_violation:
+    action: "warning"
+    log: true
+    notify_owner: true
+
+  second_violation:
+    action: "throttle"
+    reduce_limits_by: 0.5  # 50% reduction
+
+  third_violation:
+    action: "temporary_ban"
+    duration: "24 hours"
+
+  persistent_violations:
+    action: "permanent_ban"
+    requires: "manual_review_for_unban"
+```
+
+### Monitoring
+
+```yaml
+metrics:
+  - rate_limit_hits_per_minute
+  - rate_limit_violations_by_agent
+  - rate_limit_violations_by_ip
+  - rate_limit_exemptions_granted
+
+alerts:
+  - name: "rate_limit_abuse"
+    condition: "violations > 100 per hour"
+    action: "notify_security_team"
+
+  - name: "ddos_suspected"
+    condition: "unique_ips_hitting_limit > 1000"
+    action: "enable_aggressive_throttling"
+```
+
+---
+
 ## ✅ SECURITY CHECKLIST
 
 ### Before v1.0.0 Production
@@ -465,6 +684,7 @@ class AuditLog:
 - [ ] Sybil attack resistance measures
 - [ ] Replay attack prevention (nonce + timestamp)
 - [ ] Tamper-evident audit logging
+- [ ] **Rate limiting implemented** (per agent, per IP, per registry)
 - [ ] Incident response playbook documented
 - [ ] Security monitoring alerts configured
 - [ ] Penetration testing completed
