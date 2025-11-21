@@ -23,21 +23,39 @@ Previous version inflated statistics by:
 
 ## Summary Statistics (Honest)
 
-**Total Architectural Decisions:** 15
+**Total Architectural Decisions:** 16
+- **GAD-000** (Foundational Law): 1
 - **ADRs** (Architectural Decision Records): 8
 - **VADs** (Verification Architecture Decisions): 4
 - **LADs** (Layered Architecture Decisions): 3
 
-**Production Readiness:** 9/15 fully implemented (60%)
+**Production Readiness:** 10/16 fully implemented (62.5%)
 
 ### Breakdown by Category
 
 | Category | Total | Production | Partial | Spec/Defined |
 |----------|-------|------------|---------|--------------|
+| **GAD-000** | 1 | 1 (100%) | 0 | 0 |
 | **ADRs** | 8 | 6 (75%) | 1 (12.5%) | 1 (12.5%) |
 | **VADs** | 4 | 2 (50%) | 2 (50%) | 0 |
 | **LADs** | 3 | 1 (33%) | 1 (33%) | 1 (33%) |
-| **TOTAL** | **15** | **9 (60%)** | **4 (27%)** | **2 (13%)** |
+| **TOTAL** | **16** | **10 (62.5%)** | **4 (25%)** | **2 (12.5%)** |
+
+---
+
+## GAD-000: Foundational Law - 1 Total
+
+**Operator Inversion Principle**
+
+### Production (1/1)
+
+1. **GAD-000:** Operator Inversion Principle ✅
+   - Document: `docs/architecture/GAD-000_OPERATOR_INVERSION.md`
+   - Status: Codified as foundational law
+   - Integration: Referenced in ARCHITECTURE_MAP.md
+   - Principle: "Human is Director, AI is Operator"
+
+**Impact:** All subsequent GADs (1-9) must be interpreted through this lens.
 
 ---
 

@@ -8,6 +8,75 @@
 
 ---
 
+## 🔴 GAD-000: THE LAW - OPERATOR INVERSION PRINCIPLE
+
+**STATUS:** FOUNDATIONAL LAW | **PRECEDENCE:** ABSOLUTE | **DATE:** 2025-11-21
+
+> **"The end user is NOT the operator. The LLM is the operator. The human is the director."**
+
+### The Core Principle
+
+**Traditional Software:**
+```
+Human → Operates System → Gets Result
+```
+
+**AI-Native Software (Vibe OS):**
+```
+Human → Describes Intent → AI Operates System → Human Validates Result
+```
+
+### What This Means
+
+**Every component in Vibe OS must be designed for AI operation, not human operation:**
+
+| Aspect | Traditional (Human-Operated) | AI-Native (LLM-Operated) |
+|--------|------------------------------|---------------------------|
+| **Interface** | Buttons, menus, forms | Tool signatures, APIs |
+| **Documentation** | Human-readable prose | Structured, machine-parseable |
+| **Errors** | "Something went wrong" | Error codes + context |
+| **State** | Hidden internal state | Always observable |
+| **Operations** | One-off commands | Composable, chainable |
+
+### The Five Requirements
+
+Every tool, interface, and component must provide:
+
+1. **🔍 Discoverability** - Can AI find and understand this tool?
+2. **👁️ Observability** - Can AI see current system state?
+3. **📋 Parseability** - Can AI understand errors and responses?
+4. **🔗 Composability** - Can AI chain this with other operations?
+5. **🔄 Idempotency** - Can AI safely retry operations?
+
+### Impact on Architecture
+
+**This principle affects ALL GADs (1-9):**
+- **GAD-5** (Runtime): State must be AI-observable
+- **GAD-6** (Knowledge): Queries must be AI-composable
+- **GAD-7** (STEWARD): Governance must be AI-queryable
+- **GAD-8** (Integration): Must include LLM operator interface
+- **GAD-9** (Orchestration): Workflows must be AI-executable
+
+### Validation Test
+
+```python
+# GOOD: AI-Native Design ✅
+{
+  "status": "success",
+  "cartridges": ["feature-implement", "coder-mode"],
+  "next_actions": [
+    {"command": "vibe run", "purpose": "Launch cartridge"}
+  ]
+}
+
+# BAD: Human-Native Design ❌
+"🟢 System OK! Run 'vibe --help' for more info"
+```
+
+**→ Full documentation: [GAD-000_OPERATOR_INVERSION.md](GAD-000_OPERATOR_INVERSION.md)**
+
+---
+
 ## THE CORE PHILOSOPHY: The 6D Hexagon
 
 **Vibe Agency = Vibe-Studio running on Vibe-OS**
