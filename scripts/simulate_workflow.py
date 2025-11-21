@@ -17,14 +17,27 @@ Evidence: Table showing action → agent mapping
 import sys
 from pathlib import Path
 
-from agency_os.playbook.executor import (
-    ExecutionStatus,
-    GraphExecutor,
-    WorkflowEdge,
-    WorkflowGraph,
-    WorkflowNode,
-)
-from agency_os.playbook.router import AgentRouter
+# Note: These modules have been migrated from agency_os to vibe_core
+# Import stubs - actual implementation path may vary
+try:
+    from vibe_core.playbook.executor import (
+        ExecutionStatus,
+        GraphExecutor,
+        WorkflowEdge,
+        WorkflowGraph,
+        WorkflowNode,
+    )
+    from vibe_core.playbook.router import AgentRouter
+except ImportError:
+    # Fallback: Try legacy location for backwards compatibility
+    from agency_os.playbook.executor import (
+        ExecutionStatus,
+        GraphExecutor,
+        WorkflowEdge,
+        WorkflowGraph,
+        WorkflowNode,
+    )
+    from agency_os.playbook.router import AgentRouter
 
 from apps.agency.personas import CoderAgent, ResearcherAgent, ReviewerAgent
 

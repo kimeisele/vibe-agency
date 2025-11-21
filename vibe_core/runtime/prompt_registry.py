@@ -6,7 +6,7 @@ This is the "heart" of the system - provides automatic governance injection,
 context enrichment, and tool/SOP composition.
 
 Usage:
-    from agency_os.runtime import PromptRegistry
+    from vibe_core.runtime import PromptRegistry
 
     # Compose prompt with full governance
     prompt = PromptRegistry.compose(
@@ -367,14 +367,26 @@ class PromptRegistry:
             Formatted markdown section with tool definitions
         """
         # Load tool definitions
-        tool_defs_path = (
+        # Note: Tool definitions location varies based on migration phase
+        # Try multiple locations for backwards compatibility
+        tool_defs_candidates = [
+            _REPO_ROOT / "apps" / "agency" / "orchestrator" / "tools" / "tool_definitions.yaml",
+            _REPO_ROOT / "vibe_core" / "orchestrator" / "tools" / "tool_definitions.yaml",
             _REPO_ROOT
             / "agency_os"
             / "core_system"
             / "orchestrator"
             / "tools"
-            / "tool_definitions.yaml"
-        )
+            / "tool_definitions.yaml",  # Legacy
+        ]
+        tool_defs_path = None
+        for candidate in tool_defs_candidates:
+            if candidate.exists():
+                tool_defs_path = candidate
+                break
+
+        if tool_defs_path is None:
+            tool_defs_path = tool_defs_candidates[0]  # Use first as default for error message
 
         if not tool_defs_path.exists():
             logger.warning(f"Tool definitions not found: {tool_defs_path}")

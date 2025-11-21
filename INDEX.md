@@ -7,8 +7,8 @@
 ## 🎯 START HERE
 
 - **CLAUDE.md** — Operational snapshot (quick status, 110 lines)
-- **ARCHITECTURE_V2.md** — Conceptual model (the "should be")
-- **SSOT.md** — Implementation truth (the "is")
+- **docs/architecture/ARCHITECTURE_CURRENT_STATE.md** — Current system design
+- **docs/architecture/** — Detailed architecture documentation
 
 ---
 
@@ -39,8 +39,8 @@ make test            # Run test suite
 - `docs/philosophy/ANTI_PATTERNS.md` — What NOT to do (10 documented mistakes)
 
 ### **Architecture & Design**
-- `ARCHITECTURE_V2.md` — System conceptual model (the big picture)
-- `SSOT.md` — Single source of truth (implementation decisions)
+- `docs/architecture/ARCHITECTURE_CURRENT_STATE.md` — System design (current implementation)
+- `docs/architecture/` — All architecture documentation
 - `docs/architecture/GAD_IMPLEMENTATION_STATUS.md` — **NEW:** All 15 GADs status tracking
 - `docs/architecture/EXECUTION_MODE_STRATEGY.md` — How vibe-cli delegates to Claude Code
 - `docs/architecture/HIDDEN_DEPENDENCIES_AUDIT.md` — Dependency analysis
@@ -50,7 +50,8 @@ make test            # Run test suite
   - `GAD-502.md` — Haiku Hardening plan (700 lines, Phases 2-5 deferred)
 
 ### **Systems & Components**
-- `agency_os/` — Core orchestrator implementation
+- `vibe_core/` — Core runtime and agent implementation
+- `apps/agency/` — Agency orchestrator and specialized agents
 - `tests/` — All verification tests (335/349 passing, 97.1%)
 
 ### **Scripts & Tools**
@@ -87,7 +88,7 @@ make test            # Run test suite
 → `docs/TROUBLESHOOTING.md`
 
 ### "I want to understand the system design"
-→ `ARCHITECTURE_V2.md` + `SSOT.md`
+→ `docs/architecture/ARCHITECTURE_CURRENT_STATE.md`
 
 ### "Something's weird about vibe-cli"
 → `docs/architecture/EXECUTION_MODE_STRATEGY.md`

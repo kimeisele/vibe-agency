@@ -273,8 +273,8 @@ export VIBE_QUOTA_TPM=5000
 ### Working with Agents
 
 ```python
-from agency_os.03_agents.base_agent import BaseAgent
-from agency_os.03_agents.personas import CoderAgent, ArchitectAgent
+from vibe_core.agents.base_agent import BaseAgent
+from vibe_core.agents.personas import CoderAgent, ArchitectAgent
 
 # Initialize an agent
 coder = CoderAgent(name="junior-dev", vibe_root="/path/to/vibe-agency")
@@ -490,8 +490,8 @@ git push
 ## 📚 Documentation
 
 - **CLAUDE.md** — Operational status and quick reference
-- **ARCHITECTURE_V2.md** — System design and principles
-- **SSOT.md** — Implementation decisions
+- **INDEX.md** — Complete documentation index
+- **docs/architecture/ARCHITECTURE_CURRENT_STATE.md** — Current system design
 - **.vibe/config/roadmap.yaml** — All tasks and validation checks
 
 ---

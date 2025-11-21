@@ -58,7 +58,7 @@ HYBRID AGENT PATTERN - Both types implement VibeAgent protocol, both dispatched 
 - Import system fixed (40+ sys.path hacks removed)
 - Provider tests: 0% → 70% coverage
 
-**See:** `CLEANUP_COMPLETION_REPORT.md` for metrics
+**See:** `docs/archive/CLEANUP_COMPLETION_REPORT.md` for metrics
 
 ---
 
@@ -91,9 +91,9 @@ Claude Code (operator) ← file-based delegation (.delegation/) ← vibe-cli →
 ```
 
 **See also:**
-- **ARCHITECTURE_V2.md** — Conceptual model (the "should be")
-- **SSOT.md** — Implementation decisions (the "is")
 - **INDEX.md** — Documentation hub (START HERE for navigation)
+- **ARCHITECTURE_CURRENT_STATE.md** — Current system design
+- **docs/architecture/** — Detailed architecture documentation
 
 ---
 
@@ -101,8 +101,8 @@ Claude Code (operator) ← file-based delegation (.delegation/) ← vibe-cli →
 
 | Component | Status | Verify |
 |-----------|--------|--------|
-| PLANNING | ✅ Works | `uv run pytest tests/test_planning_workflow.py -v` |
-| CODING | ✅ Works | `uv run pytest tests/test_coding_workflow.py -v` |
+| PLANNING | ✅ Works | `uv run pytest tests/test_orchestrator_state_machine.py -v` |
+| CODING | ✅ Works | `uv run pytest tests/test_core_orchestrator_tools.py -v` |
 | DEPLOYMENT | ✅ Works | `uv run pytest tests/test_deployment_workflow.py -v` |
 | TESTING | ⚠️ Stub | Minimal implementation |
 | MAINTENANCE | ⚠️ Stub | Minimal implementation |
@@ -159,7 +159,7 @@ Quick links:
 - **How to decide if code is ready?** → `docs/policies/DEVELOPMENT_STANDARDS.md`
 - **What NOT to do?** → `docs/philosophy/ANTI_PATTERNS.md`
 - **System broken?** → `docs/TROUBLESHOOTING.md`
-- **Want to understand design?** → `ARCHITECTURE_V2.md`
+- **Want to understand design?** → `docs/architecture/ARCHITECTURE_CURRENT_STATE.md`
 
 ---
 

@@ -14,7 +14,7 @@ Architecture:
     Resolvers (functions) → PromptContext → Context Dict → PromptRegistry
 
 Usage:
-    from agency_os.runtime.prompt_context import get_prompt_context
+    from vibe_core.runtime.prompt_context import get_prompt_context
 
     context_engine = get_prompt_context()
     context = context_engine.resolve(["git_status", "system_time"])
