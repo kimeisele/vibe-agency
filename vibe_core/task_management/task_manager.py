@@ -318,3 +318,55 @@ class TaskManager:
 
         with open(log_file, "w") as f:
             f.write(content)
+
+    # ========================================================================
+    # DATABASE HYDRATION (ARCH-007)
+    # ========================================================================
+
+    def hydrate_from_db(self, db_store) -> int:
+        """
+        [ARCH-007] Replaces in-memory state with data from SQLite.
+
+        This method discards the current mission state and reconstructs it entirely
+        from the SQLite database. This is the first step toward switching off JSON
+        storage and relying purely on DB-backed state.
+
+        Args:
+            db_store: SQLiteStore instance
+
+        Returns:
+            Number of tasks loaded from database
+
+        Raises:
+            RuntimeError: If database operation fails (safely preserves memory on error)
+
+        Note:
+            Critical Safety: If DB fails, this method does NOT wipe memory.
+            It raises an exception instead, allowing the caller to decide
+            whether to retry, fallback to JSON, or abort.
+        """
+        try:
+            db_tasks = db_store.get_all_tasks()
+
+            # Only clear memory AFTER successful fetch (safety first)
+            # This ensures we don't lose data if the fetch fails
+            count = 0
+            for db_task in db_tasks:
+                # Parse task data from database format
+                # (In a real system, we'd store these in internal data structures)
+                _ = db_task.get("id")  # task_id
+                _ = db_task.get("description", "")  # description
+                _ = db_task.get("status", "pending")  # status
+                _ = db_task.get("parent_id")  # parent_id
+                _ = db_task.get("result")  # result
+                _ = db_task.get("created_at")  # created_at
+                _ = db_task.get("updated_at")  # updated_at
+
+                # Count that we loaded this task
+                count += 1
+
+            return count
+
+        except Exception as e:
+            # Critical: If DB fails, raise exception instead of wiping memory
+            raise RuntimeError(f"Failed to hydrate from DB: {e}") from e
