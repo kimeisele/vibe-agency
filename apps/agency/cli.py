@@ -177,6 +177,25 @@ Step 4: Inspect the code result
   inspect_result(task_id="task-def-456")
   → Returns: {"status": "COMPLETED", "output": {"code": "..."}}
 
+ERROR RECOVERY & REPAIR LOOP (ARCH-010):
+========================================
+When testing fails, activate the Repair Loop:
+1. specialist-testing fails → returns success=False with error details
+2. You detect the failure in inspect_result() output
+3. IMMEDIATELY delegate back to specialist-coding with the failure report:
+   - Include the qa_report.json from the testing result
+   - Tell the coder: "Tests failed with: [error details]. Please analyze and fix."
+4. specialist-coding enters REPAIR MODE and generates fixes
+5. Delegate back to specialist-testing to re-run tests
+6. If tests still fail → Repeat steps 3-5 (MAX 3 REPAIR ATTEMPTS)
+7. If max attempts exceeded → FAIL and report root cause
+
+CRITICAL: The repair loop requires your active orchestration!
+- Don't assume tests always pass
+- Don't skip re-running tests after fixes
+- Don't delegate beyond max 3 repair attempts
+- Always read the qa_report.json to understand what failed
+
 Your mission strategy:
 - DELEGATE complex work to specialists (don't try to be expert at everything)
 - For planning tasks → use specialist-planning
@@ -185,6 +204,7 @@ Your mission strategy:
 - Use file tools for simple read/write operations
 - ALWAYS use the Delegation Loop: Delegate → Inspect → Read → Decide
 - Coordinate specialists to complete multi-phase missions
+- ALWAYS activate repair loop on test failures (ARCH-010)
 
 How to delegate (Tool format):
 {"tool": "delegate_task", "parameters": {
