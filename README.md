@@ -1,14 +1,14 @@
 # 🤖 VIBE AGENCY OS - Self-Constructing Software Factory
 
-> **Status:** 🟢 **OPERATIONAL** | **Version:** 2.5
+> **Status:** 🟢 **OPERATIONAL** | **Version:** 0.5.0-beta (Citizen Edition)
 >
 > A self-managing AI agency system that builds itself. The system is now live with agents, runtime, knowledge retrieval, mission control, and quality assurance fully integrated.
 
-## 🎉 v2.5 Architecture - NOW OPERATIONAL
+## 🎉 v0.5.0-beta Architecture - READY FOR EXPERIMENTATION
 
-**Date:** 2025-11-20 | **Status:** ✅ **VERIFIED IN PRODUCTION**
+**Date:** 2025-11-22 | **Status:** ✅ **CORE SYSTEMS OPERATIONAL**
 
-The v2.5 architecture upgrade is complete and operational:
+The v0.5.0-beta architecture is complete with solid core capabilities:
 
 - **✅ HAP (Hierarchical Agent Pattern)** - Specialist-based execution model
 - **✅ SQLite Shadow Mode** - Persistent decision logging and audit trails
@@ -18,7 +18,7 @@ The v2.5 architecture upgrade is complete and operational:
 
 **Verification:** Maiden voyage test successfully validated all components. See [`MAIDEN_VOYAGE_REPORT.md`](MAIDEN_VOYAGE_REPORT.md) for details.
 
-**What This Means:** The system now scales with dedicated specialists for each SDLC phase, persistent state management, and production-grade security controls.
+**What This Means:** The system provides dedicated specialists for each SDLC phase, persistent state management, and built-in security controls (still beta, community-tested).
 
 ---
 
@@ -503,7 +503,7 @@ git push
 - **Audited** — Every command logged to audit trail
 - **Testable** — 35 core tests prove system works
 - **Extensible** — Add new agents, tools, and domains easily
-- **Zero External Dependencies** — File-based, no databases or APIs
+- **Offline-First** — Works offline by default (SmartLocalProvider). Optional: Add API keys for enhanced capabilities
 
 ---
 
