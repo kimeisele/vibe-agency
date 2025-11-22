@@ -93,5 +93,5 @@ else
 fi
 
 # LAUNCH VIBE OS
-# The '--interactive' flag tells the CLI to enter the Steward Loop immediately.
-exec uv run python "$ENTRYPOINT" --interactive
+# Running without arguments enters interactive mode (ARCH-032)
+exec uv run python "$ENTRYPOINT"
