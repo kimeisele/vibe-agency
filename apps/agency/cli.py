@@ -56,6 +56,7 @@ from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
 from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
 from vibe_core.tools.inspect_result import InspectResultTool
+from vibe_core.introspection import SystemIntrospector
 
 # Import Specialists (ARCH-036: Crew Assembly)
 from apps.agency.specialists import (
@@ -508,6 +509,47 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print("")
 
 
+def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: bool = False):
+    """
+    Display system introspection snapshot (ARCH-038).
+
+    Generates a high-density system snapshot optimized for external intelligences.
+
+    Args:
+        kernel: Booted VibeKernel instance
+        json_format: If True, output as JSON; otherwise markdown
+        write_file: If True, write snapshot to file
+
+    Example:
+        >>> kernel = boot_kernel()
+        >>> display_snapshot(kernel, json_format=False, write_file=True)
+    """
+    introspector = SystemIntrospector(kernel)
+
+    if json_format:
+        # JSON output
+        snapshot_dict = introspector.to_dict()
+        output = introspector.to_json()
+    else:
+        # Markdown output (default)
+        output = introspector.generate_snapshot()
+
+    print(output)
+
+    # Optionally write to file
+    if write_file:
+        timestamp = introspector.snapshot_timestamp.replace(":", "-").split(".")[0]
+        filename = f"vibe-snapshot-{timestamp}.md" if not json_format else f"vibe-snapshot-{timestamp}.json"
+        try:
+            with open(filename, "w") as f:
+                f.write(output)
+            logger.info(f"📸 Snapshot written to {filename}")
+            print(f"\n✅ Snapshot saved to {filename}")
+        except Exception as e:
+            logger.error(f"Failed to write snapshot: {e}")
+            print(f"\n❌ Failed to write snapshot: {e}")
+
+
 async def run_mission(kernel: VibeKernel, mission: str):
     """
     Run in mission mode (autonomous operation).
@@ -581,7 +623,8 @@ def main():
         epilog="Examples:\n"
         "  Interactive mode:  python apps/agency/cli.py\n"
         "  Mission mode:      python apps/agency/cli.py --mission 'Write a report'\n"
-        "  Status check:      python apps/agency/cli.py --status [--json]\n",
+        "  Status check:      python apps/agency/cli.py --status [--json]\n"
+        "  System snapshot:   python apps/agency/cli.py --snapshot [--json] [--snapshot-file]\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -604,6 +647,18 @@ def main():
         help="Output in JSON format (use with --status)",
     )
 
+    parser.add_argument(
+        "--snapshot",
+        action="store_true",
+        help="Generate system introspection snapshot (ARCH-038) and exit",
+    )
+
+    parser.add_argument(
+        "--snapshot-file",
+        action="store_true",
+        help="Write snapshot to file (use with --snapshot)",
+    )
+
     args = parser.parse_args()
 
     # Boot the system
@@ -618,7 +673,11 @@ def main():
 
     # Run appropriate mode
     try:
-        if args.status:
+        if args.snapshot:
+            # Snapshot mode (introspection and exit)
+            display_snapshot(kernel, json_format=args.json, write_file=args.snapshot_file)
+            return 0
+        elif args.status:
             # Status mode (display system info and exit)
             display_status(kernel, json_format=args.json)
             return 0
