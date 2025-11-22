@@ -30,22 +30,22 @@ AI-driven software development lifecycle orchestrator with test-first discipline
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [CLAUDE.md](./CLAUDE.md) | Operational snapshot & current phase | ✅ Current |
-| [INDEX.md](./INDEX.md) | Documentation navigation hub | ✅ Complete |
-| [CHANGELOG.md](./CHANGELOG.md) | Release history (v0.5.0 latest) | ✅ Up-to-date |
-| [ARCH-040_ACTIVATION.md](./ARCH-040_ACTIVATION.md) | Sovereignty verification proof | ✅ Verified |
-| [steward.json](./steward.json) | Machine-readable agent identity | ✅ Active |
+| [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) | Operational snapshot & current phase | ✅ Current |
+| [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) | Documentation navigation hub | ✅ Complete |
+| [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) | Release history (v0.5.0 latest) | ✅ Up-to-date |
+| [ARCH-040_ACTIVATION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/ARCH-040_ACTIVATION.md) | Sovereignty verification proof | ✅ Verified |
+| [steward.json](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/steward.json) | Machine-readable agent identity | ✅ Active |
 
 **📁 Architecture Documentation:**
-- [ARCHITECTURE_CURRENT_STATE.md](./docs/architecture/ARCHITECTURE_CURRENT_STATE.md) - System design v4.0
-- [GAD-000_OPERATOR_INVERSION.md](./docs/architecture/GAD-0XX/GAD-000_OPERATOR_INVERSION.md) - Foundation principle
-- [docs/roadmap/](./docs/roadmap/) - Phase roadmaps (2.5, 2.6, 3.0)
-- [GAD_IMPLEMENTATION_STATUS.md](./docs/architecture/GAD_IMPLEMENTATION_STATUS.md) - All GAD tracking
+- [ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md) - System design v4.0
+- [GAD-000_OPERATOR_INVERSION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD-0XX/GAD-000_OPERATOR_INVERSION.md) - Foundation principle
+- [Phase Roadmaps](https://github.com/kimeisele/vibe-agency/tree/main/docs/roadmap) - Phase roadmaps (2.5, 2.6, 3.0)
+- [GAD_IMPLEMENTATION_STATUS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD_IMPLEMENTATION_STATUS.md) - All GAD tracking
 
 **🚀 Reference Documentation:**
-- [STRATEGIC_PLAN_2025-11-18.md](./docs/STRATEGIC_PLAN_2025-11-18.md) - 4-week strategic roadmap
-- [AGENT_DECISIONS.md](./docs/policies/AGENT_DECISIONS.md) - Decision framework
-- [GOVERNANCE_MODEL.md](./docs/GOVERNANCE_MODEL.md) - Governance & Soul rules
+- [STRATEGIC_PLAN_2025-11-18.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/STRATEGIC_PLAN_2025-11-18.md) - 4-week strategic roadmap
+- [AGENT_DECISIONS.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/policies/AGENT_DECISIONS.md) - Decision framework
+- [GOVERNANCE_MODEL.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/GOVERNANCE_MODEL.md) - Governance & Soul rules
 
 **📈 Current Metrics (Nov 22, 2025):**
 - **Version:** v0.5.0 - The Governance Update
@@ -75,14 +75,21 @@ AI-driven software development lifecycle orchestrator with test-first discipline
 # Bootstrap the system (shows full context & health)
 ./bin/system-boot.sh
 
+# System status & health check
+./bin/vibe status
+./bin/vibe status --json              # Machine-readable output
+
 # Execute a mission (main interface)
-./bin/mission "Plan a restaurant app with POS integration"
+uv run apps/agency/cli.py --mission "Plan a restaurant app with POS integration"
 
-# Check system status
+# Interactive mission mode
+./bin/vibe run                         # Interactive cartridge picker
+
+# Magic button (feature implementation)
+./bin/vibe make "Add dark mode to dashboard"
+
+# Check full system context
 ./bin/show-context.py
-
-# Execute specific workflow (legacy)
-uv run apps/agency/cli.py --mission "Your mission text"
 ```
 
 ### Protocol-Based Usage
@@ -157,10 +164,10 @@ uv run pytest tests/ -v --tb=short
 ```
 
 **System Snapshot Documents:**
-- [ARCH-040_ACTIVATION.md](./ARCH-040_ACTIVATION.md) - Sovereignty activation proof (Nov 22, 2025)
-- [CHANGELOG.md](./CHANGELOG.md) - Latest: v0.5.0 - The Governance Update
-- [CLAUDE.md](./CLAUDE.md) - Operational snapshot & current phase
-- [INDEX.md](./INDEX.md) - Documentation navigation hub
+- [ARCH-040_ACTIVATION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/ARCH-040_ACTIVATION.md) - Sovereignty activation proof (Nov 22, 2025)
+- [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) - Latest: v0.5.0 - The Governance Update
+- [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) - Operational snapshot & current phase
+- [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) - Documentation navigation hub
 
 ---
 
@@ -278,20 +285,20 @@ steward delegate vibe-agency-orchestrator \
 - **Full Specification:** [STEWARD Protocol](https://github.com/kimeisele/vibe-agency/tree/main/docs/protocols/steward)
 
 **Agent Resources:**
-- **Machine-readable manifest:** [steward.json](./steward.json) - Full agent identity
-- **Operational Snapshot:** [CLAUDE.md](./CLAUDE.md) - Quick status & current phase
-- **Documentation Hub:** [INDEX.md](./INDEX.md) - Complete navigation system
-- **Architecture Documentation:** [docs/architecture/](./docs/architecture/)
-- **Current State:** [ARCHITECTURE_CURRENT_STATE.md](./docs/architecture/ARCHITECTURE_CURRENT_STATE.md)
+- **Machine-readable manifest:** [steward.json](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/steward.json) - Full agent identity
+- **Operational Snapshot:** [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) - Quick status & current phase
+- **Documentation Hub:** [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) - Complete navigation system
+- **Architecture Docs:** [docs/architecture/](https://github.com/kimeisele/vibe-agency/tree/main/docs/architecture)
+- **Current State:** [ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md)
 - **Source Code:** https://github.com/kimeisele/vibe-agency
 
 **Critical System Documents:**
-- **System Boot Report:** [ARCH-040_ACTIVATION.md](./ARCH-040_ACTIVATION.md) - Sovereignty verification
-- **v0.5 Release Notes:** [CHANGELOG.md](./CHANGELOG.md#050---2025-11-22---the-governance-update)
-- **GAD-000 Foundation:** [GAD-000_OPERATOR_INVERSION.md](./docs/architecture/GAD-0XX/GAD-000_OPERATOR_INVERSION.md) - Core principle
-- **Phase Roadmaps:** [docs/roadmap/](./docs/roadmap/) - All phase plans
-- **Strategic Plan:** [STRATEGIC_PLAN_2025-11-18.md](./docs/STRATEGIC_PLAN_2025-11-18.md) - 4-week roadmap
-- **Governance Model:** [GOVERNANCE_MODEL.md](./docs/GOVERNANCE_MODEL.md) - Soul rules & constraints
+- **System Boot Report:** [ARCH-040_ACTIVATION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/ARCH-040_ACTIVATION.md) - Sovereignty verification
+- **v0.5 Release Notes:** [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) - The Governance Update
+- **GAD-000 Foundation:** [GAD-000_OPERATOR_INVERSION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/GAD-0XX/GAD-000_OPERATOR_INVERSION.md) - Core principle
+- **Phase Roadmaps:** [docs/roadmap/](https://github.com/kimeisele/vibe-agency/tree/main/docs/roadmap) - All phase plans
+- **Strategic Plan:** [STRATEGIC_PLAN_2025-11-18.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/STRATEGIC_PLAN_2025-11-18.md) - 4-week roadmap
+- **Governance Model:** [GOVERNANCE_MODEL.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/GOVERNANCE_MODEL.md) - Soul rules & constraints
 
 **Protocol Documentation:**
 - **Specification:** [SPECIFICATION.md](./docs/protocols/steward/SPECIFICATION.md)
@@ -463,16 +470,19 @@ team:
 **Monitoring Commands:**
 ```bash
 # System health check
-./bin/vibe status --json
+./bin/vibe status                              # Human-readable status
+./bin/vibe status --json                       # Machine-readable (GAD-000 compliant)
 
-# Verify operational state
-./bin/verify-claude-md.sh  # 39 tests
+# System introspection
+uv run apps/agency/cli.py --snapshot           # System snapshot (ARCH-038)
+./bin/show-context.py                          # Full session context
 
-# Full test suite
-uv run pytest tests/ -v --tb=short  # 631 tests
+# Verification
+./bin/pre-push-check.sh                        # Pre-commit quality gates
+uv run pytest tests/ -v --tb=short             # Full test suite (626 tests)
 
-# Check boot reliability
-./bin/system-boot.sh
+# Boot & health
+./bin/system-boot.sh                           # Bootstrap with health checks
 ```
 
 ---
@@ -492,11 +502,12 @@ uv run pytest tests/ -v --tb=short  # 631 tests
 
 **Core Commands:**
 ```bash
-./bin/system-boot.sh          # Bootstrap session (full context)
-./bin/mission "..."           # Execute a mission (main interface)
-./bin/show-context.py         # Full session context & status
-./bin/pre-push-check.sh       # Quality gates before commit
-./bin/next-task.py            # Show next task from roadmap
+./bin/system-boot.sh                              # Bootstrap session (full context)
+./bin/vibe status                                 # System health & loaded cartridges
+uv run apps/agency/cli.py --mission "..."        # Execute mission (autonomous mode)
+./bin/vibe run                                    # Interactive cartridge picker
+./bin/show-context.py                             # Full session context & status
+./bin/pre-push-check.sh                           # Quality gates before commit
 ```
 
 **System Status Documents:**
