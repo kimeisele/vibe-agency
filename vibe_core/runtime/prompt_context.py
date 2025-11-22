@@ -52,8 +52,9 @@ class PromptContext:
             vibe_root: Root directory of vibe-agency. If None, auto-detected.
         """
         if vibe_root is None:
-            # Auto-detect: assume we're in agency_os/core_system/runtime
-            vibe_root = Path(__file__).parent.parent.parent.parent
+            # Auto-detect: We're in vibe_core/runtime/prompt_context.py
+            # Go up 2 levels: runtime -> vibe_core -> project_root
+            vibe_root = Path(__file__).parent.parent.parent
 
         self.vibe_root = Path(vibe_root)
         self._resolvers: dict[str, Callable[[], str]] = {}
@@ -69,7 +70,13 @@ class PromptContext:
         self.register("current_branch", self._resolve_current_branch)
         self.register("recent_commits", self._resolve_recent_commits)
 
-        logger.debug("✅ Registered 5 core context resolvers")
+        # ARCH-060: Kernel state resolvers (data only, no interpretation)
+        self.register("inbox_count", self._resolve_inbox_count)
+        self.register("agenda_summary", self._resolve_agenda_summary)
+        self.register("agenda_tasks", self._resolve_agenda_tasks)
+        self.register("git_sync_status", self._resolve_git_sync_status)
+
+        logger.debug("✅ Registered 9 core context resolvers (5 legacy + 4 kernel state)")
 
     def register(self, key: str, resolver: Callable[[], str]) -> None:
         """
@@ -146,34 +153,47 @@ class PromptContext:
 
     def _resolve_project_structure(self) -> str:
         """
-        Resolve project structure.
+        Resolve project topography (ARCH-061: The Map).
+
+        Shows only top-level directories + important config files.
+        Prevents context window overflow while maintaining orientation.
 
         Returns:
-            Directory tree (limited to 2 levels)
+            Top-level structure with important files
         """
         try:
-            # Try using 'tree' command first (cleaner output)
-            result = subprocess.run(
-                ["tree", "-L", "2", "-d", "--noreport"],
-                cwd=self.vibe_root,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
+            lines = [f"📂 {self.vibe_root.name}/"]
 
-            if result.returncode == 0:
-                return result.stdout.strip()
+            # Important config files at root level
+            important_files = ["pyproject.toml", "steward.json", "STEWARD.md", ".env.template"]
+            for fname in important_files:
+                fpath = self.vibe_root / fname
+                if fpath.exists():
+                    lines.append(f"  📄 {fname}")
 
-            # Fallback: Python implementation
-            return self._python_tree(self.vibe_root, max_depth=2)
+            # Top-level directories only (depth 1)
+            lines.append("  📁 Directories:")
+            try:
+                entries = sorted(
+                    [e for e in self.vibe_root.iterdir() if e.is_dir()],
+                    key=lambda x: x.name
+                )
 
-        except FileNotFoundError:
-            # 'tree' not installed, use Python fallback
-            return self._python_tree(self.vibe_root, max_depth=2)
-        except subprocess.TimeoutExpired:
-            return "[Tree timeout]"
+                for entry in entries:
+                    # Skip hidden and common ignore dirs
+                    if entry.name.startswith(".") or entry.name in ["__pycache__", "node_modules"]:
+                        continue
+                    lines.append(f"    • {entry.name}/")
+
+            except PermissionError:
+                lines.append("    [Permission denied]")
+
+            lines.append("  💡 Use list_directory to explore deeper.")
+
+            return "\n".join(lines)
+
         except Exception as e:
-            return f"[Tree error: {e}]"
+            return f"[Structure error: {e}]"
 
     def _python_tree(self, root: Path, max_depth: int = 2) -> str:
         """
@@ -267,6 +287,197 @@ class PromptContext:
                 return "[No commits]"
         except Exception as e:
             return f"[Error: {e}]"
+
+    # ========================================================================
+    # ARCH-060: Kernel State Resolvers (Data Layer - No Interpretation)
+    # ========================================================================
+
+    def _resolve_inbox_count(self) -> str:
+        """
+        Resolve inbox message count (GAD-006: Asynchronous Intent).
+
+        Returns:
+            Raw count as string (e.g., "3" or "0")
+        """
+        try:
+            inbox_path = self.vibe_root / "workspace" / "inbox"
+
+            if not inbox_path.exists():
+                return "0"
+
+            # Count markdown files (inbox messages)
+            message_files = list(inbox_path.glob("*.md"))
+            return str(len(message_files))
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve inbox_count: {e}")
+            return "0"
+
+    def _resolve_agenda_summary(self) -> str:
+        """
+        Resolve agenda task summary (ARCH-045: Agenda System).
+
+        Returns:
+            JSON string with task counts by priority, e.g.:
+            '{"HIGH": 2, "MEDIUM": 1, "LOW": 0, "total": 3}'
+        """
+        try:
+            import json
+
+            backlog_path = self.vibe_root / "workspace" / "BACKLOG.md"
+
+            if not backlog_path.exists():
+                return '{"HIGH": 0, "MEDIUM": 0, "LOW": 0, "total": 0}'
+
+            content = backlog_path.read_text()
+
+            # Extract Outstanding Tasks section only
+            outstanding_idx = content.find("## Outstanding Tasks")
+            completed_idx = content.find("## Completed Tasks")
+
+            if outstanding_idx == -1 or completed_idx == -1:
+                return '{"HIGH": 0, "MEDIUM": 0, "LOW": 0, "total": 0}'
+
+            outstanding_section = content[
+                outstanding_idx + len("## Outstanding Tasks") : completed_idx
+            ]
+
+            # Count tasks by priority
+            counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+
+            for line in outstanding_section.split("\n"):
+                line = line.strip()
+                if line.startswith("- [ ]"):
+                    # Extract priority from [PRIORITY] tag
+                    if "[HIGH]" in line:
+                        counts["HIGH"] += 1
+                    elif "[MEDIUM]" in line:
+                        counts["MEDIUM"] += 1
+                    elif "[LOW]" in line:
+                        counts["LOW"] += 1
+
+            counts["total"] = counts["HIGH"] + counts["MEDIUM"] + counts["LOW"]
+
+            return json.dumps(counts)
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve agenda_summary: {e}")
+            return '{"HIGH": 0, "MEDIUM": 0, "LOW": 0, "total": 0}'
+
+    def _resolve_agenda_tasks(self) -> str:
+        """
+        Resolve agenda tasks with focus filter (ARCH-061: Cognitive Hygiene).
+
+        Returns top 5 HIGH priority tasks + summary of remaining.
+        This prevents context window overflow and forces the agent to prioritize.
+
+        Returns:
+            Formatted string with top 5 tasks and summary of remaining
+        """
+        try:
+            backlog_path = self.vibe_root / "workspace" / "BACKLOG.md"
+
+            if not backlog_path.exists():
+                return "[No agenda tasks. Backlog is clear.]"
+
+            content = backlog_path.read_text()
+
+            # Extract Outstanding Tasks section only
+            outstanding_idx = content.find("## Outstanding Tasks")
+            completed_idx = content.find("## Completed Tasks")
+
+            if outstanding_idx == -1 or completed_idx == -1:
+                return "[No agenda tasks. Backlog is clear.]"
+
+            outstanding_section = content[
+                outstanding_idx + len("## Outstanding Tasks") : completed_idx
+            ]
+
+            # Parse tasks by priority
+            high_tasks = []
+            medium_tasks = []
+            low_tasks = []
+
+            for line in outstanding_section.split("\n"):
+                line = line.strip()
+                if line.startswith("- [ ]"):
+                    # Extract priority and task description
+                    if "[HIGH]" in line:
+                        high_tasks.append(line)
+                    elif "[MEDIUM]" in line:
+                        medium_tasks.append(line)
+                    elif "[LOW]" in line:
+                        low_tasks.append(line)
+
+            # Build focus filter output: top 5 HIGH tasks, then summary
+            output_lines = []
+            total_count = len(high_tasks) + len(medium_tasks) + len(low_tasks)
+
+            # Show top 5 HIGH priority tasks
+            display_count = 0
+            max_display = 5
+
+            for task in high_tasks[:max_display]:
+                output_lines.append(task)
+                display_count += 1
+
+            # If we have room, add MEDIUM tasks
+            remaining_high = len(high_tasks) - min(max_display, len(high_tasks))
+            if display_count < max_display and medium_tasks:
+                for task in medium_tasks[:max_display - display_count]:
+                    output_lines.append(task)
+                    display_count += 1
+                remaining_medium = len(medium_tasks) - min(
+                    max_display - len(high_tasks), len(medium_tasks)
+                )
+            else:
+                remaining_medium = len(medium_tasks)
+
+            remaining_low = len(low_tasks)
+
+            # Build summary of remaining
+            summary_parts = []
+            if remaining_high > 0:
+                summary_parts.append(f"{remaining_high} more HIGH priority")
+            if remaining_medium > 0:
+                summary_parts.append(f"{remaining_medium} MEDIUM priority")
+            if remaining_low > 0:
+                summary_parts.append(f"{remaining_low} LOW priority")
+
+            # Add summary line
+            if summary_parts:
+                remaining_total = total_count - display_count
+                output_lines.append(
+                    f"... and {remaining_total} more task(s): {', '.join(summary_parts)}. "
+                    f"Use list_tasks tool to see all."
+                )
+
+            if not output_lines:
+                return "[No agenda tasks. Backlog is clear.]"
+
+            return "\n".join(output_lines)
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve agenda_tasks: {e}")
+            return f"[Error reading agenda tasks: {e}]"
+
+    def _resolve_git_sync_status(self) -> str:
+        """
+        Resolve git sync status (ARCH-044: Git-Ops Strategy).
+
+        Returns:
+            Raw status string from VIBE_GIT_STATUS env var, or "UNKNOWN"
+            Possible values: "SYNCED", "BEHIND_BY_N", "DIVERGED", "FETCH_FAILED", "NO_REPO"
+        """
+        try:
+            import os
+
+            status = os.getenv("VIBE_GIT_STATUS", "UNKNOWN")
+            return status
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve git_sync_status: {e}")
+            return "UNKNOWN"
 
 
 # ========================================================================

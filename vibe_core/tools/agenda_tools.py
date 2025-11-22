@@ -9,7 +9,6 @@ and persistence across sessions.
 """
 
 import logging
-import re
 from pathlib import Path
 from typing import Any
 
@@ -78,9 +77,7 @@ class AddTaskTool(Tool):
 
             valid_priorities = ["HIGH", "MEDIUM", "LOW"]
             if priority.upper() not in valid_priorities:
-                raise ValueError(
-                    f"priority must be one of {valid_priorities}, got {priority}"
-                )
+                raise ValueError(f"priority must be one of {valid_priorities}, got {priority}")
 
     def execute(self, parameters: dict[str, Any]) -> ToolResult:
         """
@@ -127,7 +124,9 @@ class AddTaskTool(Tool):
 
             # Extract the section between Outstanding Tasks and Completed Tasks
             before_outstanding = content[:outstanding_idx]
-            outstanding_section = content[outstanding_idx + len("## Outstanding Tasks") : completed_idx]
+            outstanding_section = content[
+                outstanding_idx + len("## Outstanding Tasks") : completed_idx
+            ]
             after_completed = content[completed_idx:]
 
             # Add new task to outstanding section
@@ -141,14 +140,14 @@ class AddTaskTool(Tool):
                 new_outstanding = outstanding_section.rstrip() + "\n" + new_task_line + "\n"
 
             # Reconstruct the file
-            new_content = before_outstanding + "## Outstanding Tasks" + new_outstanding + after_completed
+            new_content = (
+                before_outstanding + "## Outstanding Tasks" + new_outstanding + after_completed
+            )
 
             # Write back
             BACKLOG_PATH.write_text(new_content)
 
-            logger.info(
-                f"AddTaskTool: Added task '[{priority}] {description}' to backlog"
-            )
+            logger.info(f"AddTaskTool: Added task '[{priority}] {description}' to backlog")
             return ToolResult(
                 success=True,
                 output=f"Task added: [{priority}] {description}",
@@ -401,11 +400,7 @@ class CompleteTaskTool(Tool):
 
             # Reconstruct the file
             new_content = (
-                before_outstanding
-                + "## Outstanding Tasks"
-                + new_outstanding
-                + "\n"
-                + new_completed
+                before_outstanding + "## Outstanding Tasks" + new_outstanding + "\n" + new_completed
             )
 
             # Write back

@@ -5,13 +5,13 @@
   "agent": {
     "id": "vibe-agency-orchestrator",
     "name": "STEWARD",
-    "version": "4.0.0",
+    "version": "1.0.0",
     "class": "orchestration_operator",
     "specialization": "sdlc_management",
     "status": "active",
     "fingerprint": "sha256:766962652d6167656e63793a6761642d3030303a6f70657261746f722d696e76657273696f6e",
     "issued_by": "vibe-agency",
-    "issued_date": "2025-11-21T00:00:00Z"
+    "issued_date": "2025-11-22T00:00:00Z"
   },
 
   "credentials": {
@@ -284,6 +284,115 @@
         },
         "latency_ms": 100,
         "idempotent": false,
+        "versioned": true
+      },
+
+      {
+        "name": "filesystem_navigation",
+        "description": "Navigate filesystem structure with list and search capabilities",
+        "input_schema": {
+          "type": "object",
+          "required": ["operation"],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": ["list", "search"],
+              "description": "Filesystem operation type"
+            },
+            "path": {
+              "type": "string",
+              "description": "Directory path to list or search root"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Search pattern (required for search operation)"
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "required": ["results", "operation_type"],
+          "properties": {
+            "results": {
+              "type": "array",
+              "description": "List of found files/directories"
+            },
+            "operation_type": {"type": "string"}
+          }
+        },
+        "latency_ms": 500,
+        "idempotent": true,
+        "versioned": true
+      },
+
+      {
+        "name": "agenda_management",
+        "description": "Manage system agenda with add, list, and completion tracking",
+        "input_schema": {
+          "type": "object",
+          "required": ["operation"],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": ["add", "list", "complete"],
+              "description": "Agenda operation type"
+            },
+            "task": {
+              "type": "object",
+              "description": "Task object (required for add operation)"
+            },
+            "task_id": {
+              "type": "string",
+              "description": "Task ID (required for complete operation)"
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "required": ["status", "tasks"],
+          "properties": {
+            "status": {"type": "string"},
+            "tasks": {
+              "type": "array",
+              "description": "List of agenda items"
+            }
+          }
+        },
+        "latency_ms": 100,
+        "idempotent": false,
+        "versioned": true
+      },
+
+      {
+        "name": "system_resilience",
+        "description": "System resilience with Phoenix fallback (SQLite → Memory)",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "check_type": {
+              "type": "string",
+              "enum": ["phoenix_status", "fallback_test", "recovery"],
+              "description": "Resilience check type"
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "required": ["status", "fallback_active"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["primary", "fallback", "degraded"]
+            },
+            "fallback_active": {"type": "boolean"},
+            "metrics": {
+              "type": "object",
+              "description": "Resilience metrics"
+            }
+          }
+        },
+        "latency_ms": 50,
+        "idempotent": true,
         "versioned": true
       }
     ],

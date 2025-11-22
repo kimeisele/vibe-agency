@@ -36,19 +36,21 @@ build/
 *_TEST_RESULTS.md
 .claude_md_verification_report.json
 
-# Workspaces
+# === WORKSPACE ISOLATION (Mandantenfähigkeit) ===
+# User data and workspace state - NOT synced
+workspace/*
+.active_workspace
+.system_status.json
+.vibe/
+
+# EXCEPTIONS: System interfaces that travel with the OS
+!workspace/inbox/
+!workspace/boot/
+
+# Workspaces (legacy - for backwards compat)
 # Exclude generated artifacts but keep project manifests and directory structure
 workspaces/*/artifacts/*/*
 !workspaces/*/artifacts/*/.gitkeep
-
-# Local workspace state (persists active workspace selection)
-.active_workspace
-
-# Session handoff system status (auto-generated, do not commit)
-.system_status.json
-
-# System integrity manifest (generated at runtime, Layer 0)
-.vibe/
 
 # Workspace artifacts (test project outputs)
 workspaces/*/artifacts/**/*.json
