@@ -75,7 +75,7 @@ class StewardCartridge(CartridgeBase):
         try:
             # Load current preferences
             if self.steward_json_path.exists():
-                with open(self.steward_json_path, "r") as f:
+                with open(self.steward_json_path) as f:
                     steward_config = json.load(f)
             else:
                 steward_config = {
@@ -153,7 +153,7 @@ class StewardCartridge(CartridgeBase):
             # Read existing .env
             env_content = ""
             if self.env_path.exists():
-                with open(self.env_path, "r") as f:
+                with open(self.env_path) as f:
                     env_content = f.read()
 
             # Update or add the key
@@ -210,7 +210,7 @@ class StewardCartridge(CartridgeBase):
         try:
             # Load steward config
             if self.steward_json_path.exists():
-                with open(self.steward_json_path, "r") as f:
+                with open(self.steward_json_path) as f:
                     steward_config = json.load(f)
             else:
                 steward_config = {
@@ -256,7 +256,7 @@ class StewardCartridge(CartridgeBase):
         try:
             # Try steward.json first
             if self.steward_json_path.exists():
-                with open(self.steward_json_path, "r") as f:
+                with open(self.steward_json_path) as f:
                     config = json.load(f)
                     if "preferences" in config and "user_name" in config["preferences"]:
                         return config["preferences"]["user_name"]
@@ -291,7 +291,7 @@ class StewardCartridge(CartridgeBase):
         """Get the current operator tone from preferences."""
         try:
             if self.steward_json_path.exists():
-                with open(self.steward_json_path, "r") as f:
+                with open(self.steward_json_path) as f:
                     config = json.load(f)
                     if "preferences" in config and "operator_tone" in config["preferences"]:
                         return config["preferences"]["operator_tone"]
@@ -308,7 +308,9 @@ class StewardCartridge(CartridgeBase):
                 "user_name": self.get_user_name(),
                 "operator_tone": self.get_operator_tone(),
                 "config_files": {
-                    "steward_json": str(self.steward_json_path) if self.steward_json_path.exists() else "not_found",
+                    "steward_json": str(self.steward_json_path)
+                    if self.steward_json_path.exists()
+                    else "not_found",
                     "env_file": str(self.env_path) if self.env_path.exists() else "not_found",
                 },
             }

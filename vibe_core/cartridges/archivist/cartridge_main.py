@@ -55,7 +55,7 @@ class ArchivistCartridge(CartridgeBase):
         self.supported_formats = [".md", ".txt", ".pdf"]
         self.max_document_size = 10 * 1024 * 1024  # 10MB
 
-        logger.info(f"🗂️ The Archivist initialized - Ready to catalog knowledge")
+        logger.info("🗂️ The Archivist initialized - Ready to catalog knowledge")
 
     def scan_directory(self, folder_path: str) -> list[dict[str, Any]]:
         """
@@ -127,7 +127,7 @@ class ArchivistCartridge(CartridgeBase):
         try:
             # TXT and MD files
             if file.suffix.lower() in [".txt", ".md"]:
-                with open(file, "r", encoding="utf-8") as f:
+                with open(file, encoding="utf-8") as f:
                     return f.read()
 
             # PDF support (requires pypdf)

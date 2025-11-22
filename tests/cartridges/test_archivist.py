@@ -121,7 +121,7 @@ class TestArchivistCartridge:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "index.json"
 
-            index = archivist.build_index(str(temp_documents), str(output_path))
+            _ = archivist.build_index(str(temp_documents), str(output_path))
 
             # Check output file exists
             assert output_path.exists()

@@ -435,9 +435,28 @@ async def run_interactive(kernel: VibeKernel):
         👤 MISSION/COMMAND: exit
     """
     print("=" * 70)
-    print("🤖 VIBE OPERATOR ONLINE (Interactive Mode)")
+    print("🤖 STEWARD INTERACTIVE MODE - VIBE OS")
     print("=" * 70)
-    print("Type your mission or command. Type 'exit' to quit.")
+    print("")
+
+    # Load personalized greeting from StewardCartridge (ARCH-051)
+    try:
+        from vibe_core.cartridges.steward import StewardCartridge
+
+        steward = StewardCartridge()
+        user_name = steward.get_user_name()
+        print(f"Hi {user_name}. I am STEWARD, your personal operating system.")
+        print("I can help you: [Plan], [Build], [Fix], or [Manage] your work.")
+        print("")
+    except Exception as e:
+        logger.warning(f"Could not load personalized greeting: {e}")
+        print("Hi there. I am STEWARD, your personal operating system.")
+        print("I can help you: [Plan], [Build], [Fix], or [Manage] your work.")
+        print("")
+
+    print("What's your intent?")
+    print("  Examples: 'Plan a feature', 'Build the dashboard', 'Fix the authentication bug'")
+    print("  Or type 'exit' to quit.")
     print("")
 
     while True:

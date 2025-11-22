@@ -23,8 +23,9 @@ def test_steward_identity_in_system_prompt():
     3. Reference steward_cartridge tools
     4. Emphasize system integrity
     """
-    from apps.agency.cli import boot_kernel
     import logging
+
+    from apps.agency.cli import boot_kernel
 
     # Suppress logging for test
     logging.getLogger().setLevel(logging.CRITICAL)
@@ -44,26 +45,38 @@ def test_steward_identity_in_system_prompt():
     assert "vibe-agency-orchestrator" in system_prompt, "System prompt should reference agent ID"
 
     # Check for CORE DIRECTIVES
-    assert "CORE DIRECTIVES (MANDATORY)" in system_prompt, "System prompt should list core directives"
+    assert "CORE DIRECTIVES (MANDATORY)" in system_prompt, (
+        "System prompt should list core directives"
+    )
     assert "YOU ARE THE STEWARD" in system_prompt, "System prompt should emphasize Steward role"
     assert "KNOW YOUR USER" in system_prompt, "System prompt should mention user personalization"
-    assert "CONFIGURATION IS SACRED" in system_prompt, "System prompt should emphasize config safety"
+    assert "CONFIGURATION IS SACRED" in system_prompt, (
+        "System prompt should emphasize config safety"
+    )
 
     # Check for steward_cartridge references
-    assert "steward_cartridge" in system_prompt, "System prompt should reference steward_cartridge tools"
+    assert "steward_cartridge" in system_prompt, (
+        "System prompt should reference steward_cartridge tools"
+    )
     assert "manage_api_keys()" in system_prompt, "System prompt should mention manage_api_keys tool"
-    assert "update_user_preferences()" in system_prompt, "System prompt should mention update_user_preferences tool"
+    assert "update_user_preferences()" in system_prompt, (
+        "System prompt should mention update_user_preferences tool"
+    )
     assert "change_persona()" in system_prompt, "System prompt should mention change_persona tool"
 
     # Check for safety enforcement
-    assert "NEVER edit .env or STEWARD.md by hand" in system_prompt, "System prompt should forbid manual edits"
-    assert "Use the tools. They have safety guards. You don't." in system_prompt, "System prompt should explain why to use tools"
+    assert "NEVER edit .env or STEWARD.md by hand" in system_prompt, (
+        "System prompt should forbid manual edits"
+    )
+    assert "Use the tools. They have safety guards. You don't." in system_prompt, (
+        "System prompt should explain why to use tools"
+    )
 
     print("✅ ARCH-051.5 VERIFIED: Steward Voice & Identity properly injected")
-    print(f"   - Steward Identity: CONFIRMED")
-    print(f"   - Core Directives: CONFIRMED")
-    print(f"   - Tool References: CONFIRMED")
-    print(f"   - Safety Enforcement: CONFIRMED")
+    print("   - Steward Identity: CONFIRMED")
+    print("   - Core Directives: CONFIRMED")
+    print("   - Tool References: CONFIRMED")
+    print("   - Safety Enforcement: CONFIRMED")
 
     return True
 
@@ -77,7 +90,7 @@ def test_steward_config_available():
     steward_json_path = PROJECT_ROOT / "steward.json"
     assert steward_json_path.exists(), f"steward.json not found at {steward_json_path}"
 
-    with open(steward_json_path, "r") as f:
+    with open(steward_json_path) as f:
         config = json.load(f)
 
     # Check for agent identity
@@ -107,5 +120,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

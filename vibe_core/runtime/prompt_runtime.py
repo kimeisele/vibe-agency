@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 
 # CRITICAL FIX #1: Import workspace utilities without sys.path manipulation
 # Load workspace_utils dynamically from scripts directory
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# Path calculation: /vibe_core/runtime/prompt_runtime.py -> parent(runtime) -> parent(vibe_core) -> parent(PROJECT_ROOT)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _WORKSPACE_UTILS_PATH = _REPO_ROOT / "scripts" / "workspace_utils.py"
 
 try:
@@ -53,7 +54,7 @@ try:
     else:
         raise ImportError(f"workspace_utils.py not found at {_WORKSPACE_UTILS_PATH}")
 except ImportError as e:
-    logger.warning(f"workspace_utils not available: {e}")
+    logger.debug(f"workspace_utils not available: {e}")
     WORKSPACE_UTILS_AVAILABLE = False
     get_active_workspace = None  # type: ignore
     resolve_artifact_base_path = None  # type: ignore

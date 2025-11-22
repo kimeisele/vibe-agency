@@ -28,14 +28,11 @@ Example:
     summary = await archivist.summarize_documents("/path/to/docs")
 """
 
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-from vibe_core.llm.smart_local_provider import SmartLocalProvider
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +145,9 @@ class CartridgeBase:
 
             return LLMProviderFactory.create("smart_local")
         except Exception:
-            logger.warning(f"⚠️ Could not initialize LLM provider for {self.name}")
+            logger.debug(
+                f"Could not initialize LLM provider for {self.name} (fallback to local mode)"
+            )
             return None
 
     def _load_playbooks(self) -> dict[str, Any]:

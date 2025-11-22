@@ -25,7 +25,7 @@ from .registry import CartridgeRegistry, get_default_cartridge_registry
 __all__ = [
     "CartridgeBase",
     "CartridgeConfig",
-    "CartridgeSpec",
     "CartridgeRegistry",
+    "CartridgeSpec",
     "get_default_cartridge_registry",
 ]

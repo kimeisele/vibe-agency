@@ -26,10 +26,9 @@ This is Vibe's Killer App.
 
 import json
 import logging
-import os
 import subprocess
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from vibe_core.cartridges.base import CartridgeBase
 from vibe_core.kernel import VibeKernel
@@ -57,7 +56,7 @@ class StudioCartridge(CartridgeBase):
     description = "One-click dev environment with complete SDLC automation"
     author = "Vibe Agency"
 
-    def __init__(self, vibe_root: Path | None = None, kernel: Optional[VibeKernel] = None):
+    def __init__(self, vibe_root: Path | None = None, kernel: VibeKernel | None = None):
         """Initialize the Studio cartridge.
 
         Args:
@@ -145,7 +144,7 @@ class StudioCartridge(CartridgeBase):
             return {"status": "error", "message": str(e), "project_name": project_name}
 
     def execute_sdlc(
-        self, project_name: str, goal: str, context: Optional[dict[str, Any]] = None
+        self, project_name: str, goal: str, context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
         Execute the complete SDLC loop: Planning → Coding → Testing.
@@ -211,7 +210,7 @@ class StudioCartridge(CartridgeBase):
                 }
 
             plan = plan_result.get("output", {}).get("plan", "")
-            logger.info(f"✅ Planning complete")
+            logger.info("✅ Planning complete")
 
             # Phase 2: CODING
             logger.info("💻 PHASE 2: Coding...")
@@ -255,7 +254,7 @@ class StudioCartridge(CartridgeBase):
 
                 return repair_result
 
-            logger.info(f"✅ Testing complete - All tests passing")
+            logger.info("✅ Testing complete - All tests passing")
 
             # Compilation: Save artifacts
             artifacts = {
@@ -268,7 +267,7 @@ class StudioCartridge(CartridgeBase):
             with open(artifacts_path, "w") as f:
                 json.dump(artifacts, f, indent=2)
 
-            logger.info(f"📦 SDLC complete - Artifacts saved")
+            logger.info("📦 SDLC complete - Artifacts saved")
 
             return {
                 "status": "success",
@@ -319,7 +318,9 @@ class StudioCartridge(CartridgeBase):
             # Wait for completion (simplified - real impl would use async)
             max_ticks = 1000
             ticks = 0
-            while self.kernel.scheduler.get_queue_status()["pending_tasks"] > 0 and ticks < max_ticks:
+            while (
+                self.kernel.scheduler.get_queue_status()["pending_tasks"] > 0 and ticks < max_ticks
+            ):
                 self.kernel.tick()
                 ticks += 1
 
@@ -384,7 +385,7 @@ class StudioCartridge(CartridgeBase):
                     continue
 
                 # Re-test
-                logger.info(f"   Re-testing after repair...")
+                logger.info("   Re-testing after repair...")
                 test_result = self._delegate_to_specialist(
                     agent_id="specialist-testing",
                     phase="TESTING",
@@ -430,7 +431,7 @@ class StudioCartridge(CartridgeBase):
                     if project_path.is_dir():
                         metadata_path = project_path / ".studio.json"
                         if metadata_path.exists():
-                            with open(metadata_path, "r") as f:
+                            with open(metadata_path) as f:
                                 projects.append(json.load(f))
 
             status.update(

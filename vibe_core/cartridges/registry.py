@@ -19,7 +19,6 @@ Usage:
 import importlib.util
 import logging
 from pathlib import Path
-from typing import Any
 
 from .base import CartridgeBase, CartridgeSpec
 
@@ -116,9 +115,7 @@ class CartridgeRegistry:
             cartridge_name: Name of the cartridge
         """
         try:
-            spec = importlib.util.spec_from_file_location(
-                f"cartridge_{cartridge_name}", file_path
-            )
+            spec = importlib.util.spec_from_file_location(f"cartridge_{cartridge_name}", file_path)
 
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
@@ -235,9 +232,7 @@ class CartridgeRegistry:
 
     def __repr__(self) -> str:
         """String representation for debugging."""
-        cartridges = ", ".join(
-            f"{name}({cls.__name__})" for name, cls in self._registry.items()
-        )
+        cartridges = ", ".join(f"{name}({cls.__name__})" for name, cls in self._registry.items())
         return f"CartridgeRegistry({len(self._registry)} cartridges: {cartridges})"
 
 
