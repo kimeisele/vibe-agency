@@ -74,6 +74,7 @@ class VibeKernel:
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
         self.inbox_messages: list[dict[str, str]] = []  # GAD-006: Asynchronous Intent
+        self.agenda_tasks: list[str] = []  # ARCH-045: Agenda system (pending tasks)
         self.git_status: str | None = None  # ARCH-044: Git-Ops sync status
         logger.debug("KERNEL: Initialized (status=STOPPED)")
 
@@ -148,6 +149,66 @@ class VibeKernel:
         else:
             logger.debug("KERNEL: No git status available (VIBE_GIT_STATUS not set)")
 
+    def _scan_backlog(self) -> None:
+        """
+        Scan workspace/BACKLOG.md for pending agenda tasks (ARCH-045).
+
+        This implements the Agenda System for long-term task persistence.
+        Outstanding tasks are loaded as "Current Agenda" context for the operator.
+        Empty backlog = no pending agenda items.
+
+        The backlog is a file-based task queue that survives crashes
+        (Linux philosophy: files are the universal interface).
+
+        Example:
+            >>> kernel._scan_backlog()
+            >>> if kernel.agenda_tasks:
+            ...     print(f"Found {len(kernel.agenda_tasks)} pending tasks")
+        """
+        backlog_path = Path("workspace/BACKLOG.md")
+
+        if not backlog_path.exists():
+            logger.debug("KERNEL: BACKLOG.md not found (no agenda)")
+            return
+
+        try:
+            content = backlog_path.read_text(encoding="utf-8")
+
+            # Extract Outstanding Tasks section
+            outstanding_idx = content.find("## Outstanding Tasks")
+            completed_idx = content.find("## Completed Tasks")
+
+            if outstanding_idx == -1 or completed_idx == -1:
+                logger.warning("KERNEL: Invalid BACKLOG.md format")
+                return
+
+            section_content = content[
+                outstanding_idx + len("## Outstanding Tasks") : completed_idx
+            ]
+
+            # Parse task lines (markdown checkboxes)
+            tasks = []
+            for line in section_content.split("\n"):
+                line = line.strip()
+                if line.startswith("- [ ]"):
+                    # Extract the task description
+                    task_desc = line.replace("- [ ]", "").strip()
+                    tasks.append(task_desc)
+
+            if tasks:
+                self.agenda_tasks = tasks
+                logger.info(
+                    f"KERNEL: Loaded {len(self.agenda_tasks)} pending task(s) from agenda"
+                )
+                for i, task in enumerate(self.agenda_tasks[:3], 1):
+                    logger.info(f"KERNEL: >> AGENDA[{i}]: {task[:80]}...")
+
+            else:
+                logger.debug("KERNEL: No pending tasks in backlog (agenda empty)")
+
+        except Exception as e:
+            logger.error(f"KERNEL: Failed to scan backlog: {e}", exc_info=True)
+
     def boot(self) -> None:
         """
         Boot the kernel and transition to RUNNING state.
@@ -158,9 +219,10 @@ class VibeKernel:
         During boot:
         1. Transition to RUNNING state
         2. Scan inbox for pending messages (GAD-006)
-        3. Generate STEWARD manifests for all registered agents (ARCH-026)
-        4. Populate the manifest registry
-        5. Log agent identity information
+        3. Scan backlog for pending agenda tasks (ARCH-045)
+        4. Generate STEWARD manifests for all registered agents (ARCH-026)
+        5. Populate the manifest registry
+        6. Log agent identity information
 
         Example:
             >>> kernel = VibeKernel()
@@ -183,6 +245,13 @@ class VibeKernel:
             logger.info(f"KERNEL: Inbox has {len(self.inbox_messages)} message(s) [HIGH PRIORITY]")
             for msg in self.inbox_messages:
                 logger.info(f"KERNEL: >> INBOX: {msg['filename']}")
+
+        # Scan backlog for pending agenda tasks (ARCH-045: Agenda System)
+        self._scan_backlog()
+        if self.agenda_tasks:
+            logger.info(f"KERNEL: Agenda has {len(self.agenda_tasks)} pending task(s)")
+            for i, task in enumerate(self.agenda_tasks[:3], 1):
+                logger.info(f"KERNEL: >> AGENDA[{i}]: {task[:80]}...")
 
         # Generate and register STEWARD manifests for all agents (ARCH-026)
         logger.debug(f"KERNEL: Generating STEWARD manifests for {len(self.agent_registry)} agents")
