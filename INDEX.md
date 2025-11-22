@@ -1,6 +1,6 @@
 # vibe-agency Documentation Index
 
-**Last Updated:** 2025-11-18 | **Source of Truth:** This file + git log
+**Last Updated:** 2025-11-22 | **Source of Truth:** This file + git log
 
 ---
 
@@ -16,11 +16,17 @@
 ## 📋 QUICK ACTIONS
 
 ```bash
-make verify          # Run all 39 verification tests (39 pass, 100%)
-make status          # Show full system context + handoff
-make boot            # Bootstrap new session
-make check           # Pre-push quality checks
-make test            # Run test suite
+# System Health & Verification
+./bin/system-boot.sh                    # Bootstrap new session (Layer 0 + Layer 1)
+./bin/vibe status                       # System status & health check
+./bin/show-context.py                   # Full session context (git, tests, handoff)
+
+# System Snapshot (HERZSTÜCK) ⭐
+uv run apps/agency/cli.py --snapshot    # Generate system introspection (ARCH-038)
+
+# Quality Gates
+./bin/pre-push-check.sh                 # Pre-push quality checks
+uv run pytest                           # Run test suite (626 tests)
 ```
 
 ---
@@ -49,12 +55,12 @@ make test            # Run test suite
 - [tests/](https://github.com/kimeisele/vibe-agency/tree/main/tests) — All verification tests (626 collected)
 
 ### **Scripts & Tools**
-- `Makefile` — One-command operations (make verify, make status, etc)
-- `bin/verify-claude-md.sh` — Drift detection (tests all CLAUDE.md claims)
-- `bin/show-context.py` — Full session context (git, linting, tests, handoff)
+- `bin/vibe` — Main CLI entrypoint (status, run, etc)
 - `bin/system-boot.sh` — Session bootstrap (Layer 0 + Layer 1 boot sequence)
+- `bin/show-context.py` — Full session context (git, linting, tests, handoff)
 - `bin/pre-push-check.sh` — Quality gates (linting, formatting, status updates)
-- `bin/commit-and-push.sh` — Automated commit + push with checks
+- `apps/agency/cli.py` — Agency orchestrator CLI (--snapshot, --mission, etc)
+- `tests/` — All verification tests (626 collected)
 
 ---
 
@@ -87,24 +93,24 @@ make test            # Run test suite
 ### "I want to see the full status"
 → `./bin/show-context.py` or `make status`
 
-### "Is CLAUDE.md accurate?"
-→ `./bin/verify-claude-md.sh` (should always show: 38/39 passing)
+### "What's the current system snapshot?" ⭐ HERZSTÜCK
+→ Run: `uv run apps/agency/cli.py --snapshot` (ARCH-038)
+→ Docs: **[STEWARD.md § System Snapshot](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/STEWARD.md)** — System heartbeat & introspection
 
 ---
 
 ## 📊 CURRENT STATUS
 
 ### Test Health
-- **Total:** 349 tests
-- **Passing:** 335 (97.1%)
-- **Expected failures:** 1 (E2E test requires complete artifact fixtures)
-- **Skipped:** 13 (GAD-502 Phases 2-5 pending, tool use E2E deferred)
+- **Total:** 626 tests collected
+- **Status:** ✅ Core workflows verified (PLANNING, CODING, DEPLOYMENT passing)
+- **Latest:** ARCH-041 System Introspection (2025-11-22)
 
 ### Verification
-- **CLAUDE.md:** ✅ Verified (38/39 tests, 100% pass rate)
-- **Linting:** ✅ Passing (0 errors)
+- **System Snapshot:** ✅ Operational (ARCH-038)
+- **Linting:** ✅ Passing (Ruff + isort)
 - **Git:** ✅ Clean
-- **System integrity:** ✅ Verified (Layer 0 checks)
+- **System Sovereignty:** ✅ Verified (ARCH-040)
 
 ### Blocking Issues
 None (all critical workflows passing)
@@ -136,9 +142,11 @@ None (all critical workflows passing)
 
 ## 🔐 SESSION CONTEXT
 
-**Current Branch:** `claude/system-boot-setup-016VfMZMiKuK8PW4XKRk4gy1`
+**Current Branch:** `claude/update-steward-documentation-01SYsqe5T54BpfjnVNybuQtC`
 
 **Session Handoff:** `.session_handoff.json` (auto-updated by system-boot.sh)
+
+**System Snapshot:** `uv run apps/agency/cli.py --snapshot` (ARCH-038) ⭐
 
 **System Status:** `.system_status.json` (auto-updated by pre-push-check.sh)
 
@@ -171,9 +179,10 @@ This index is:
 ## 📚 PRINCIPLES OF THIS DOCUMENTATION
 
 1. **Single source of truth:** Tests define what works, not docs
-2. **Auto-verified:** CLAUDE.md status verified by `./bin/verify-claude-md.sh` (39 tests)
+2. **Git is absolute truth:** All metrics verified via git, not documentation claims
 3. **Linked, not monolithic:** Docs point to each other, not duplicated
 4. **Always runnable:** Every claim is verified or deferred
 5. **Lean is better:** Documentation grows naturally from code, not imposed
+6. **System Snapshot = Heartbeat:** ARCH-038 snapshot is the living system state
 
 ---

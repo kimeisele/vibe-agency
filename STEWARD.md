@@ -30,7 +30,7 @@ AI-driven software development lifecycle orchestrator with test-first discipline
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) | Operational snapshot & current phase | ✅ Current |
+| [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) | Minimal stub (redirects to STEWARD.md) | ✅ Lobotomized |
 | [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) | Documentation navigation hub | ✅ Complete |
 | [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) | Release history (v0.5.0 latest) | ✅ Up-to-date |
 | [ARCH-040_ACTIVATION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/ARCH-040_ACTIVATION.md) | Sovereignty verification proof | ✅ Verified |
@@ -166,8 +166,8 @@ uv run pytest tests/ -v --tb=short
 **System Snapshot Documents:**
 - [ARCH-040_ACTIVATION.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/ARCH-040_ACTIVATION.md) - Sovereignty activation proof (Nov 22, 2025)
 - [CHANGELOG.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CHANGELOG.md) - Latest: v0.5.0 - The Governance Update
-- [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) - Operational snapshot & current phase
 - [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) - Documentation navigation hub
+- **Live Snapshot:** `uv run apps/agency/cli.py --snapshot` (ARCH-038) - System heartbeat & introspection ⭐
 
 ---
 
@@ -286,7 +286,7 @@ steward delegate vibe-agency-orchestrator \
 
 **Agent Resources:**
 - **Machine-readable manifest:** [steward.json](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/steward.json) - Full agent identity
-- **Operational Snapshot:** [CLAUDE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/CLAUDE.md) - Quick status & current phase
+- **Live System Snapshot:** `uv run apps/agency/cli.py --snapshot` (ARCH-038) - Real-time system state ⭐
 - **Documentation Hub:** [INDEX.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/INDEX.md) - Complete navigation system
 - **Architecture Docs:** [docs/architecture/](https://github.com/kimeisele/vibe-agency/tree/main/docs/architecture)
 - **Current State:** [ARCHITECTURE_CURRENT_STATE.md](https://raw.githubusercontent.com/kimeisele/vibe-agency/main/docs/architecture/ARCHITECTURE_CURRENT_STATE.md)
@@ -493,7 +493,7 @@ uv run pytest tests/ -v --tb=short             # Full test suite (626 tests)
 
 1. **Read this file first** - This is your identity and operational mandate
 2. **Verify the system:** `./bin/system-boot.sh` (shows full system health)
-3. **Check current state:** Read [CLAUDE.md](./CLAUDE.md) for operational snapshot
+3. **Check current state:** Run `uv run apps/agency/cli.py --snapshot` for live system state (ARCH-038) ⭐
 4. **Review recent work:** Check [CHANGELOG.md](./CHANGELOG.md) - latest is v0.5.0
 5. **Understand achievements:** System is SOVEREIGN (ARCH-040) - fully autonomous, offline-capable
 6. **Review constraints:** Never skip tests, never bypass pre-push checks, never push to non-claude/ branches
@@ -512,10 +512,10 @@ uv run apps/agency/cli.py --mission "..."        # Execute mission (autonomous m
 
 **System Status Documents:**
 ```bash
-cat ARCH-040_ACTIVATION.md    # Sovereignty verification proof
-cat CHANGELOG.md               # Release history (latest: v0.5.0)
-cat CLAUDE.md                  # Operational snapshot
-cat INDEX.md                   # Documentation navigation hub
+cat ARCH-040_ACTIVATION.md                     # Sovereignty verification proof
+cat CHANGELOG.md                               # Release history (latest: v0.5.0)
+cat INDEX.md                                   # Documentation navigation hub
+uv run apps/agency/cli.py --snapshot           # Live system state (ARCH-038) ⭐
 ```
 
 **Your Mandate:**
