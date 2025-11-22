@@ -163,13 +163,68 @@ class VibeKernel:
         self.agent_registry[agent_id] = agent
         logger.info(f"KERNEL: Registered agent '{agent_id}'")
 
+    def _validate_delegation(self, agent_id: str) -> None:
+        """
+        Validate a delegation request using STEWARD manifest (ARCH-026 Phase 4).
+
+        This implements "Smart Delegation" - before accepting a task for an agent,
+        the kernel validates that:
+        1. Agent is registered in agent_registry
+        2. Agent has a manifest in manifest_registry
+        3. Agent's manifest status is "active"
+
+        This prevents delegating to non-existent, inactive, or removed agents.
+
+        Args:
+            agent_id: The agent to validate
+
+        Raises:
+            ValueError: If validation fails
+
+        Example:
+            >>> kernel.boot()  # Generates manifests
+            >>> kernel._validate_delegation("specialist-planning")
+            >>> # No exception = valid
+        """
+        # Check 1: Agent registered in agent_registry
+        if agent_id not in self.agent_registry:
+            raise ValueError(
+                f"Agent '{agent_id}' not registered. "
+                f"Available: {list(self.agent_registry.keys())}"
+            )
+
+        # Check 2: Agent has manifest (only check after boot)
+        if self.status == KernelStatus.RUNNING:
+            manifest = self.manifest_registry.lookup(agent_id)
+            if manifest is None:
+                raise ValueError(
+                    f"Agent '{agent_id}' has no STEWARD manifest. "
+                    f"Run kernel.boot() to generate manifests."
+                )
+
+            # Check 3: Agent status is "active"
+            if manifest.to_dict()["agent"]["status"] != "active":
+                status = manifest.to_dict()["agent"]["status"]
+                raise ValueError(
+                    f"Agent '{agent_id}' is not active (status: {status}). "
+                    f"Cannot delegate to inactive agents."
+                )
+
+        logger.debug(f"KERNEL: Delegation validation passed for {agent_id}")
+
+
+
     def submit(self, task: Task) -> str:
         """
-        Submit a task to the kernel's scheduler.
+        Submit a task to the kernel's scheduler (ARCH-026 Phase 4).
 
         This is a convenience proxy to scheduler.submit_task().
-        Tasks can be submitted regardless of kernel state, but
-        will only be processed when status is RUNNING.
+        Before queueing, it validates the agent using STEWARD manifest.
+
+        Validation checks (Phase 4):
+        1. Agent is registered
+        2. Agent has an active manifest
+        3. Agent status is "active"
 
         Args:
             task: The Task to be queued
@@ -177,13 +232,19 @@ class VibeKernel:
         Returns:
             str: The task ID for tracking
 
+        Raises:
+            ValueError: If agent is not registered or manifest invalid
+
         Example:
             >>> kernel = VibeKernel()
             >>> task = Task(agent_id="agent-1", payload={"action": "compile"})
             >>> task_id = kernel.submit(task)
         """
+        # ARCH-026 Phase 4: Validate delegation using manifest
+        self._validate_delegation(task.agent_id)
+
         task_id = self.scheduler.submit_task(task)
-        logger.debug(f"KERNEL: Task {task_id} submitted by {task.agent_id}")
+        logger.debug(f"KERNEL: Task {task_id} submitted to {task.agent_id}")
         return task_id
 
     def tick(self) -> bool:
@@ -377,3 +438,73 @@ class VibeKernel:
         """
         manifests = self.manifest_registry.find_by_capability(capability)
         return [manifest.to_dict() for manifest in manifests]
+
+    def get_task_result(self, task_id: str) -> dict | None:
+        """
+        Retrieve the result of a completed task from the ledger (ARCH-026 Phase 4).
+
+        This is the main entry point for operators to query task results.
+        It returns the complete task record from the ledger, including:
+        - input_payload: Original task input
+        - output_result: Agent's result (AgentResponse dict)
+        - status: COMPLETED, FAILED, or STARTED
+        - timestamp: When the task was recorded
+        - error_message: Error details if status is FAILED
+
+        Args:
+            task_id: The task ID to look up
+
+        Returns:
+            dict: Task record from ledger, or None if not found
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> result = kernel.get_task_result("task-123")
+            >>> if result:
+            ...     if result["status"] == "COMPLETED":
+            ...         print(result["output_result"])  # AgentResponse dict
+            ...     else:
+            ...         print(result["error_message"])
+
+        Notes:
+            - Works with in-memory or on-disk ledger
+            - Returns deserialized JSON (input_payload and output_result)
+            - Returns None if task_id not found
+        """
+        record = self.ledger.get_task(task_id)
+        if record is None:
+            logger.warning(f"KERNEL: Task {task_id} not found in ledger")
+            return None
+
+        logger.debug(f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})")
+        return record
+
+    def get_task_output(self, task_id: str) -> dict | None:
+        """
+        Convenience method: Get only the output_result from a task (ARCH-026 Phase 4).
+
+        This is a shorter version of get_task_result() that extracts just the
+        output_result field. Useful when you only care about the agent's response,
+        not the input or metadata.
+
+        Args:
+            task_id: The task ID to look up
+
+        Returns:
+            dict: The output_result field (AgentResponse dict), or None if not found
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> output = kernel.get_task_output("task-123")
+            >>> if output and output["success"]:
+            ...     print(f"Agent returned: {output['output']}")
+
+        Notes:
+            - Equivalent to: kernel.get_task_result(task_id)["output_result"]
+            - Returns None if task not found OR if no output_result
+            - Always safe to use (no KeyError)
+        """
+        record = self.get_task_result(task_id)
+        if record is None:
+            return None
+        return record.get("output_result")
