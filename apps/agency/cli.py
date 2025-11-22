@@ -57,7 +57,7 @@ from vibe_core.agents.system_maintenance import SystemMaintenanceAgent  # noqa: 
 from vibe_core.governance import InvariantChecker  # noqa: E402
 from vibe_core.introspection import SystemIntrospector  # noqa: E402
 from vibe_core.kernel import VibeKernel  # noqa: E402
-from vibe_core.llm import StewardProvider  # noqa: E402
+from vibe_core.llm import ChainProvider, StewardProvider  # noqa: E402
 from vibe_core.llm.google_adapter import GoogleProvider  # noqa: E402
 from vibe_core.llm.smart_local_provider import (  # noqa: E402
     SmartLocalProvider,  # Offline orchestration (ARCH-041)
@@ -159,10 +159,16 @@ def boot_kernel():
     logger.info("🧠 Composing dynamic system prompt (ARCH-060: The Cortex)")
     system_prompt = compose_steward_prompt(include_reasoning=True)
 
-    # Step 4.5: Choose Provider (Real AI or Mock for testing)
-    # ARCH-033C: Robust fallback chain: Google → Steward (if TTY) → Mock (if CI)
-    # ARCH-063: Use config-driven model selection
-    # The STEWARD is Claude Code (the AI environment managing this sandbox)
+    # Step 4.5: Choose Provider (ARCH-067: Runtime Immortality - Provider Cascade)
+    # The ChainProvider implements Phoenix resilience at RUNTIME.
+    # If one provider fails during execution, the system cascades to the next.
+    # This ensures the agent NEVER goes silent - it always finds a working brain.
+    #
+    # Cascade Order:
+    # 1. Google Gemini (Real cloud AI)
+    # 2. StewardProvider (Claude Code environment)
+    # 3. SmartLocalProvider (Offline SDLC templates)
+    #
     try:
         config = get_config()
         model_name = config.model.model_name  # From PhoenixConfig
@@ -172,28 +178,42 @@ def boot_kernel():
 
     api_key = os.getenv("GOOGLE_API_KEY")
 
+    # Build provider chain
+    providers = []
+
+    # Primary: Google Gemini (if API key available)
     if api_key:
-        # REAL BRAIN: Google Gemini (configurable model)
         try:
-            provider = GoogleProvider(
+            google_provider = GoogleProvider(
                 api_key=api_key,
                 model=model_name,
             )
-            logger.info(f"🧠 CONNECTED TO GOOGLE GEMINI ({model_name})")
+            providers.append(google_provider)
+            logger.info(f"🧠 Provider 1: Google Gemini ({model_name})")
         except Exception as e:
-            # Catch ALL exceptions (ProviderNotAvailableError, ConnectionError, 403, etc.)
-            logger.warning(f"⚠️  Google provider failed: {type(e).__name__}: {e}")
+            logger.warning(f"⚠️  Google provider initialization failed: {type(e).__name__}")
+            # Don't add to chain; fall through to other providers
 
-            # Fallback chain based on environment
-            # Always try STEWARD first (Claude Code integration)
-            logger.info("🤖 Delegating cognitive load to STEWARD (Claude Code environment)")
-            logger.info("   The AI operator (Claude Code) will provide completions")
-            provider = StewardProvider()
+    # Secondary: STEWARD (Claude Code integration)
+    steward = StewardProvider()
+    providers.append(steward)
+    logger.info("🧠 Provider 2: STEWARD (Claude Code environment)")
+
+    # Tertiary: SmartLocalProvider (Offline SDLC mode)
+    smart_local = SmartLocalProvider()
+    providers.append(smart_local)
+    logger.info("🧠 Provider 3: SmartLocalProvider (Offline orchestration)")
+
+    # Create chain
+    if len(providers) == 1:
+        # Single provider, use directly (backwards compat)
+        provider = providers[0]
+        logger.info("🔗 Single provider mode (no cascade needed)")
     else:
-        # OFFLINE ORCHESTRATION: For local Vibe Studio operation (ARCH-041)
-        # SmartLocalProvider enables full SDLC delegation without external APIs
-        logger.info("🏭 No GOOGLE_API_KEY found, using SmartLocalProvider (offline SDLC mode)")
-        provider = SmartLocalProvider()
+        # Multiple providers, create chain for runtime resilience
+        provider = ChainProvider(providers)
+        logger.info(f"🔗 Provider chain created with {len(providers)} provider(s)")
+        logger.info("   System will auto-cascade on runtime failures")
 
     operator_agent = SimpleLLMAgent(
         agent_id="vibe-operator",
