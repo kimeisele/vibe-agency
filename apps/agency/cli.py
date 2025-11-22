@@ -76,6 +76,9 @@ from vibe_core.tools import (  # noqa: E402
 from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
 from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
+from vibe_core.config import get_config  # noqa: E402
+from vibe_core.runtime.oracle import KernelOracle  # noqa: E402
+from vibe_core.runtime.prompt_context import get_prompt_context  # noqa: E402
 
 # Setup logging
 logging.basicConfig(
@@ -117,8 +120,14 @@ def boot_kernel():
     logger.info("✅ Environment configuration loaded")
 
     # Step 2: Initialize Soul Governance (ARCH-029)
-    soul_path = os.getenv("SOUL_PATH", "config/soul.yaml")
+    # ARCH-063: Use environment variable (SOUL_PATH) or config default
     try:
+        config = get_config()
+        soul_path = os.getenv("SOUL_PATH")
+        if not soul_path:
+            # Fallback to project root config path
+            soul_path = str(PROJECT_ROOT / "config" / "soul.yaml")
+
         soul = InvariantChecker(soul_path)
         logger.info(f"🛡️  Soul Governance initialized ({soul.rule_count} rules loaded)")
     except Exception as e:
@@ -151,17 +160,25 @@ def boot_kernel():
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
     # ARCH-033C: Robust fallback chain: Google → Steward (if TTY) → Mock (if CI)
+    # ARCH-063: Use config-driven model selection
     # The STEWARD is Claude Code (the AI environment managing this sandbox)
+    try:
+        config = get_config()
+        model_name = config.model.model_name  # From PhoenixConfig
+    except Exception:
+        # Fallback to environment or hardcoded default
+        model_name = os.getenv("VIBE_MODEL_NAME", "gemini-2.5-flash")
+
     api_key = os.getenv("GOOGLE_API_KEY")
 
     if api_key:
-        # REAL BRAIN: Google Gemini 2.5 Flash (free during preview)
+        # REAL BRAIN: Google Gemini (configurable model)
         try:
             provider = GoogleProvider(
                 api_key=api_key,
-                model="gemini-2.5-flash",
+                model=model_name,
             )
-            logger.info("🧠 CONNECTED TO GOOGLE GEMINI (gemini-2.5-flash)")
+            logger.info(f"🧠 CONNECTED TO GOOGLE GEMINI ({model_name})")
         except Exception as e:
             # Catch ALL exceptions (ProviderNotAvailableError, ConnectionError, 403, etc.)
             logger.warning(f"⚠️  Google provider failed: {type(e).__name__}: {e}")
@@ -187,7 +204,14 @@ def boot_kernel():
 
     # Step 5: Initialize Kernel (ARCH-023)
     # Note: Boot is deferred until after all agents are registered
-    ledger_path = os.getenv("LEDGER_DB_PATH", "data/vibe.db")
+    # ARCH-063: Use environment variable or config-based path
+    try:
+        config = get_config()
+        ledger_path = str(PROJECT_ROOT / config.paths.data_dir / "vibe.db")
+    except Exception:
+        # Fallback to environment or relative path
+        ledger_path = os.getenv("LEDGER_DB_PATH", str(PROJECT_ROOT / "data" / "vibe.db"))
+
     kernel = VibeKernel(ledger_path=ledger_path)
     logger.info(f"⚡ Kernel initialized (ledger: {ledger_path})")
 
@@ -249,6 +273,12 @@ def boot_kernel():
     kernel.boot()
     logger.info("   - STEWARD manifests generated for all agents")
 
+    # Step 7.5: ARCH-064 - Set kernel on prompt context for Oracle resolver
+    # This allows kernel_capabilities to be resolved in system prompt
+    prompt_context = get_prompt_context()
+    prompt_context.set_kernel(kernel)
+    logger.info("   - Kernel Oracle initialized (ARCH-064)")
+
     # Step 7: Register DelegateTool & InspectResultTool (ARCH-037: The Intercom)
     #
     # Late binding: These tools need kernel reference for task submission/querying.
@@ -280,6 +310,33 @@ def boot_kernel():
     return kernel
 
 
+def print_kernel_help(kernel: VibeKernel) -> None:
+    """
+    Print kernel-level help (ARCH-063/064: Kernel Oracle).
+
+    This is deterministic, offline help that doesn't require LLM.
+    It uses the KernelOracle to read from kernel registries and display:
+    1. Available cartridges
+    2. Available tools
+    3. Meta commands
+
+    This is the "kernel truth" - not subject to LLM hallucination.
+    Works offline and without API keys.
+
+    Design:
+    - Visually consistent with HUD (ARCH-062)
+    - Uses same emoji indicators and styling
+    - Deterministic output based on kernel state
+    - Uses KernelOracle as single source of truth (ARCH-064)
+
+    Args:
+        kernel: Booted VibeKernel instance
+    """
+    # ARCH-064: Use KernelOracle for single source of truth
+    oracle = KernelOracle(kernel, PROJECT_ROOT)
+    print(oracle.get_help_text())
+
+
 async def run_interactive(kernel: VibeKernel):
     """
     Run in interactive mode (REPL).
@@ -291,9 +348,10 @@ async def run_interactive(kernel: VibeKernel):
         1. Print welcome message with HUD (ARCH-062)
         2. Loop:
             a. Prompt user for command
-            b. Submit to kernel
-            c. Execute until no pending tasks
-            d. Show result
+            b. INTERCEPT HELP COMMANDS (ARCH-063: Kernel Oracle)
+            c. Submit to kernel
+            d. Execute until no pending tasks
+            e. Show result
         3. Exit on 'exit' or Ctrl+C
 
     Args:
@@ -304,6 +362,8 @@ async def run_interactive(kernel: VibeKernel):
         >>> await run_interactive(kernel)
         👤 MISSION/COMMAND: list files
         [agent processes and responds]
+        👤 MISSION/COMMAND: help
+        [kernel help printed directly, no LLM call]
         👤 MISSION/COMMAND: exit
     """
     # ARCH-062: Display HUD (Heads-Up Display)
@@ -340,6 +400,12 @@ async def run_interactive(kernel: VibeKernel):
         try:
             # Get user input
             cmd = input("\n👤 MISSION/COMMAND: ").strip()
+
+            # ARCH-063: Kernel Help Interceptor (Pre-flight check)
+            # If user asks for help, bypass LLM and show kernel truth directly
+            if cmd.lower() in ["help", "/help", "man", "?", "kernel help"]:
+                print_kernel_help(kernel)
+                continue
 
             # Handle exit
             if cmd.lower() in ["exit", "quit", "q"]:

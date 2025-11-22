@@ -71,7 +71,7 @@ class StatusBar:
             return "User"
 
     def get_operator_tone(self) -> str:
-        """Get operator tone from steward.json."""
+        """Get operator tone from steward.json or environment variable."""
         try:
             if self.steward_json.exists():
                 with open(self.steward_json) as f:
@@ -81,6 +81,13 @@ class StatusBar:
         except Exception:
             pass
 
+        # ARCH-063: Check environment variable (VIBE_OPERATOR_TONE)
+        import os
+        env_tone = os.environ.get("VIBE_OPERATOR_TONE")
+        if env_tone:
+            return env_tone
+
+        # Fallback to default
         return "Professional"
 
     def render(self) -> str:

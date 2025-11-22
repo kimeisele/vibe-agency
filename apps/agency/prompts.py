@@ -43,6 +43,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
             "git_sync_status",
             "current_branch",
             "system_time",
+            "kernel_capabilities",  # ARCH-064: Oracle data for system capabilities
         ]
     )
 
@@ -53,6 +54,7 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
     git_sync = context.get("git_sync_status", "UNKNOWN")
     branch = context.get("current_branch", "unknown")
     timestamp = context.get("system_time", "unknown")
+    kernel_capabilities = context.get("kernel_capabilities", "[Capabilities unavailable]")  # ARCH-064
 
     # INTERPRETATION: Transform data into human-readable context
     context_blocks = []
@@ -167,6 +169,12 @@ Your decisions shape how this OS behaves - its voice, its capabilities, its secu
    → NEVER edit .env or STEWARD.md by hand
    → NEVER modify system configuration directly
    → Use the tools. They have safety guards. You don't.
+
+## 🛡️ KERNEL ORACLE (ARCH-064: Ground Truth)
+
+{kernel_capabilities}
+
+---
 
 ## 🔧 YOUR CAPABILITIES
 

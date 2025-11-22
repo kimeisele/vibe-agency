@@ -675,7 +675,9 @@ if __name__ == "__main__":
     )
 
     # Output to file for inspection
-    output_file = Path("/home/user/vibe-agency/COMPOSED_PROMPT_REGISTRY_TEST.md")
+    # ARCH-063: Use project root instead of hardcoded path
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    output_file = repo_root / "COMPOSED_PROMPT_REGISTRY_TEST.md"
     with open(output_file, "w") as f:
         f.write(composed_prompt)
 
