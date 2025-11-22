@@ -51,6 +51,7 @@ from vibe_core.governance import InvariantChecker
 from vibe_core.kernel import VibeKernel
 from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
 from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
+from vibe_core.llm.smart_local_provider import SmartLocalProvider  # Offline orchestration (ARCH-041)
 from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
@@ -246,25 +247,15 @@ Execute user requests by coordinating your crew efficiently using the Delegation
             logger.warning(f"⚠️  Google provider failed: {type(e).__name__}: {e}")
 
             # Fallback chain based on environment
-            if sys.stdin.isatty():
-                # Interactive terminal → STEWARD becomes the provider (GAD-000 Level 100)
-                logger.info("🤖 Delegating cognitive load to STEWARD (Claude Code environment)")
-                logger.info("   The AI environment will provide completions via structured prompts")
-                provider = StewardProvider()
-            else:
-                # Non-interactive (CI/CD) → Mock provider
-                logger.warning("⚠️  Non-interactive environment, falling back to MockProvider")
-                provider = MockLLMProvider(
-                    mock_response="I am a mock operator (Google provider unavailable).",
-                    system_prompt_text=system_prompt,
-                )
+            # Always try STEWARD first (Claude Code integration)
+            logger.info("🤖 Delegating cognitive load to STEWARD (Claude Code environment)")
+            logger.info("   The AI operator (Claude Code) will provide completions")
+            provider = StewardProvider()
     else:
-        # MOCK BRAIN: For testing without API keys
-        logger.info("ℹ️  No GOOGLE_API_KEY found, using MockProvider")
-        provider = MockLLMProvider(
-            mock_response="I am the Vibe Operator. How can I help you?",
-            system_prompt_text=system_prompt,
-        )
+        # OFFLINE ORCHESTRATION: For local Vibe Studio operation (ARCH-041)
+        # SmartLocalProvider enables full SDLC delegation without external APIs
+        logger.info("🏭 No GOOGLE_API_KEY found, using SmartLocalProvider (offline SDLC mode)")
+        provider = SmartLocalProvider()
 
     operator_agent = SimpleLLMAgent(
         agent_id="vibe-operator",
