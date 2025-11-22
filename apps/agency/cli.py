@@ -270,9 +270,10 @@ Execute user requests by coordinating your crew efficiently.
     #   - Agent needs ToolRegistry (for capabilities)
     #   - DelegateTool needs Kernel (for submit)
     #
-    # Solution: Boot kernel → Register basic tools → Register DelegateTool late
+    # Solution: Create DelegateTool() → Inject kernel via set_kernel() → Register
     #
-    delegate_tool = DelegateTool(kernel)
+    delegate_tool = DelegateTool()
+    delegate_tool.set_kernel(kernel)
     registry.register(delegate_tool)
     logger.info("📞 Registered DelegateTool (Operator can now delegate to specialists)")
 

@@ -58,7 +58,8 @@ class DelegateTool(Tool):
 
     Example:
         >>> kernel = boot_kernel()
-        >>> tool = DelegateTool(kernel)
+        >>> tool = DelegateTool()
+        >>> tool.set_kernel(kernel)
         >>> result = tool.execute({
         ...     "agent_id": "specialist-planning",
         ...     "payload": {
@@ -73,24 +74,34 @@ class DelegateTool(Tool):
         >>> print(result.output["task_id"])  # Task ID in ledger
     """
 
-    def __init__(self, kernel: "VibeKernel"):
+    def __init__(self):
         """
-        Initialize DelegateTool with kernel reference.
+        Initialize DelegateTool without kernel reference (Late Binding).
+
+        The kernel is injected AFTER construction via set_kernel() to break
+        the circular dependency:
+        - Kernel needs Agent
+        - Agent needs ToolRegistry
+        - DelegateTool needs Kernel
+
+        Solution: Tool initializes without kernel, then kernel is injected
+        after kernel boot via set_kernel(kernel).
+        """
+        self.kernel: "VibeKernel | None" = None
+        logger.info("DelegateTool: Initialized (kernel will be injected via set_kernel)")
+
+    def set_kernel(self, kernel: "VibeKernel") -> None:
+        """
+        Inject kernel reference (Late Binding).
+
+        This method is called after kernel boot to provide the kernel
+        reference without creating circular dependencies.
 
         Args:
             kernel: VibeKernel instance (for task submission)
-
-        Note:
-            This creates a circular dependency:
-            - Kernel needs Agent
-            - Agent needs ToolRegistry
-            - DelegateTool needs Kernel
-
-            Solution: Late binding - DelegateTool is registered AFTER
-            kernel initialization, or tool registry is updated post-boot.
         """
         self.kernel = kernel
-        logger.info("DelegateTool: Initialized with kernel reference")
+        logger.info("DelegateTool: Kernel injected successfully")
 
     @property
     def name(self) -> str:
