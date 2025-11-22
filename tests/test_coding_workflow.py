@@ -386,8 +386,10 @@ class TestCodingWorkflow:
                 manifest = orchestrator.load_project_manifest("test_coding_001")
                 print("\nAttempting to run CODING with failing quality gates...")
 
-                # v2.5: Specialists raise RuntimeError on execution failure
-                with pytest.raises(RuntimeError, match="Quality gates failed"):
+                # v2.5: Specialists raise OrchestratorError on execution failure
+                from apps.agency.orchestrator.core_orchestrator import OrchestratorError
+
+                with pytest.raises(OrchestratorError, match="Quality gates failed"):
                     orchestrator.execute_phase(manifest)
 
                 print("✓ Correctly blocked on quality gate failure")

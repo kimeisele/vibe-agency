@@ -281,7 +281,7 @@ class TestAgentNotFound:
         kernel.boot()
 
         task = Task(agent_id="nonexistent-agent", payload={})
-        
+
         with pytest.raises(ValueError, match="not registered"):
             kernel.submit(task)
 
@@ -311,7 +311,7 @@ class TestAgentNotFound:
         kernel.boot()
 
         task = Task(agent_id="nonexistent", payload={})
-        
+
         with pytest.raises(ValueError, match="Available"):
             kernel.submit(task)
 

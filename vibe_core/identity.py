@@ -117,12 +117,11 @@ class ManifestGenerator:
 
         agent_class_name = agent.__class__.__name__
         agent_type = self.AGENT_CLASS_MAPPING.get(
-            agent_class_name, "orchestration_operator"  # Default to orchestration
+            agent_class_name,
+            "orchestration_operator",  # Default to orchestration
         )
 
-        specialization = self.SPECIALIZATION_MAPPING.get(
-            agent_class_name, "general"
-        )
+        specialization = self.SPECIALIZATION_MAPPING.get(agent_class_name, "general")
 
         # Build the manifest
         manifest = {
@@ -423,9 +422,7 @@ class AgentManifest:
             >>> print(fingerprint)  # "sha256:abc123def456..."
         """
         # Create a canonical JSON representation for hashing
-        canonical = json.dumps(
-            self.manifest, sort_keys=True, separators=(",", ":")
-        )
+        canonical = json.dumps(self.manifest, sort_keys=True, separators=(",", ":"))
         digest = sha256(canonical.encode()).hexdigest()
         return f"sha256:{digest}"
 
@@ -576,9 +573,7 @@ class AgentRegistry:
             >>> print(f"Found {len(agents)} agents with read_file capability")
         """
         return [
-            manifest
-            for manifest in self.manifests.values()
-            if capability in manifest.capabilities
+            manifest for manifest in self.manifests.values() if capability in manifest.capabilities
         ]
 
     def list_all(self) -> list[AgentManifest]:

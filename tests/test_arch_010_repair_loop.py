@@ -235,15 +235,7 @@ class TestRepairLoopIteration:
         # This is a high-level test that would need integration with the orchestrator
         # For now, we'll verify the components work together
 
-        # Step 1: TestingSpecialist detects failure
-        testing = TestingSpecialist(
-            mission_id=1,
-            sqlite_store=mock_sqlite_store,
-            tool_safety_guard=mock_tool_safety_guard,
-            orchestrator=mock_orchestrator,
-        )
-
-        # Step 2: Create QA report
+        # Step 1: Create QA report (simulating TestingSpecialist output)
         qa_report = {
             "status": "failure",
             "test_execution": {

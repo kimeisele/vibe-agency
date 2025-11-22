@@ -52,6 +52,7 @@ from apps.agency.specialists import (  # noqa: E402
 )
 from vibe_core.agents.llm_agent import SimpleLLMAgent  # noqa: E402
 from vibe_core.agents.specialist_factory import SpecialistFactoryAgent  # noqa: E402
+from vibe_core.agents.system_maintenance import SystemMaintenanceAgent  # noqa: E402
 from vibe_core.governance import InvariantChecker  # noqa: E402
 from vibe_core.introspection import SystemIntrospector  # noqa: E402
 from vibe_core.kernel import VibeKernel  # noqa: E402
@@ -68,9 +69,9 @@ from vibe_core.tools import (  # noqa: E402
     ToolRegistry,
     WriteFileTool,
 )
+from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
 from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
-from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 
 # Setup logging
 logging.basicConfig(
@@ -322,7 +323,17 @@ Execute user requests by coordinating your crew efficiently using the Delegation
     kernel.register_agent(testing_factory)
     logger.info("   - Registered specialist: Testing")
 
-    # Step 6.5: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
+    # Step 6.5: Register System Maintenance Agent (ARCH-044: Git-Ops Strategy)
+    #
+    # The System Maintenance Agent handles system-level operations like git sync,
+    # dependency updates, and system integrity checks. Unlike Specialists,
+    # it's a singleton agent (not factory-based) since it doesn't need mission_id.
+    #
+    maintenance_agent = SystemMaintenanceAgent(project_root=PROJECT_ROOT)
+    kernel.register_agent(maintenance_agent)
+    logger.info("   - Registered system maintenance agent")
+
+    # Step 7: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
     # Boot is now called after all agents are registered
     kernel.boot()
     logger.info("   - STEWARD manifests generated for all agents")
@@ -472,7 +483,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
             "system": "vibe-agency",
             "version": "1.0",
             "kernel": {
-                "ledger_path": str(kernel.ledger.db_path) if hasattr(kernel.ledger, "db_path") else "unknown",
+                "ledger_path": str(kernel.ledger.db_path)
+                if hasattr(kernel.ledger, "db_path")
+                else "unknown",
                 "agents_count": len(agents),
             },
             "agents": agents,
@@ -490,7 +503,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print("🤖 VIBE AGENCY OS - SYSTEM STATUS")
         print("=" * 70)
         print("\n📊 Kernel:")
-        print(f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}")
+        print(
+            f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}"
+        )
         print(f"   - Agents: {len(agents)}")
 
         print("\n🤖 Registered Agents:")
@@ -525,20 +540,19 @@ def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: 
     """
     introspector = SystemIntrospector(kernel)
 
-    if json_format:
-        # JSON output
-        snapshot_dict = introspector.to_dict()
-        output = introspector.to_json()
-    else:
-        # Markdown output (default)
-        output = introspector.generate_snapshot()
+    # Generate snapshot in requested format
+    output = introspector.to_json() if json_format else introspector.generate_snapshot()
 
     print(output)
 
     # Optionally write to file
     if write_file:
         timestamp = introspector.snapshot_timestamp.replace(":", "-").split(".")[0]
-        filename = f"vibe-snapshot-{timestamp}.md" if not json_format else f"vibe-snapshot-{timestamp}.json"
+        filename = (
+            f"vibe-snapshot-{timestamp}.md"
+            if not json_format
+            else f"vibe-snapshot-{timestamp}.json"
+        )
         try:
             with open(filename, "w") as f:
                 f.write(output)

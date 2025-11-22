@@ -89,6 +89,11 @@ class SQLiteStore:
         # Enable foreign key constraints (required for CASCADE DELETE)
         self.conn.execute("PRAGMA foreign_keys = ON")
 
+        # Enable WAL mode for better concurrency (prevents database locks in tests)
+        # WAL (Write-Ahead Logging) allows concurrent reads while writing
+        if db_path != ":memory:":  # WAL not supported for :memory: databases
+            self.conn.execute("PRAGMA journal_mode = WAL")
+
         # Check if database is empty (needs schema)
         cursor = self.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='missions'"

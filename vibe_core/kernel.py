@@ -74,6 +74,7 @@ class VibeKernel:
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
         self.inbox_messages: list[dict[str, str]] = []  # GAD-006: Asynchronous Intent
+        self.git_status: str | None = None  # ARCH-044: Git-Ops sync status
         logger.debug("KERNEL: Initialized (status=STOPPED)")
 
     def _scan_inbox(self) -> None:
@@ -106,16 +107,46 @@ class VibeKernel:
         for md_file in md_files:
             try:
                 content = md_file.read_text(encoding="utf-8")
-                self.inbox_messages.append({
-                    "filename": md_file.name,
-                    "content": content,
-                })
+                self.inbox_messages.append(
+                    {
+                        "filename": md_file.name,
+                        "content": content,
+                    }
+                )
                 logger.info(f"KERNEL: Loaded inbox message: {md_file.name}")
             except Exception as e:
                 logger.error(
                     f"KERNEL: Failed to load inbox message {md_file.name}: {e}",
                     exc_info=True,
                 )
+
+    def _check_git_status(self) -> None:
+        """
+        Check git synchronization status from environment variable (ARCH-044).
+
+        This reads VIBE_GIT_STATUS set by system-boot.sh and stores it
+        for operator context injection. The status indicates whether the
+        local repository is synced, behind, diverged, or offline.
+
+        Possible values:
+        - "SYNCED": Local is up-to-date with remote
+        - "BEHIND_BY_N": Local is N commits behind remote
+        - "DIVERGED": Local and remote have diverged
+        - "FETCH_FAILED": Could not fetch (offline or no remote)
+        - "NO_REPO": Not a git repository
+        - None: VIBE_GIT_STATUS not set (legacy boot)
+
+        Example:
+            >>> kernel._check_git_status()
+            >>> if kernel.git_status and kernel.git_status.startswith("BEHIND"):
+            ...     print("Repository is out of sync")
+        """
+        self.git_status = os.environ.get("VIBE_GIT_STATUS")
+
+        if self.git_status:
+            logger.debug(f"KERNEL: Git status detected: {self.git_status}")
+        else:
+            logger.debug("KERNEL: No git status available (VIBE_GIT_STATUS not set)")
 
     def boot(self) -> None:
         """
@@ -139,6 +170,12 @@ class VibeKernel:
         """
         self.status = KernelStatus.RUNNING
         logger.info("KERNEL: ONLINE")
+
+        # Check git sync status (ARCH-044: Git-Ops Strategy)
+        self._check_git_status()
+        if self.git_status and self.git_status != "SYNCED":
+            logger.warning(f"KERNEL: Git sync status: {self.git_status}")
+            logger.info("KERNEL: >> Check STEWARD.md for update policy")
 
         # Scan inbox for pending messages (GAD-006: Asynchronous Intent)
         self._scan_inbox()
@@ -208,8 +245,7 @@ class VibeKernel:
 
         if agent_id in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' is already registered. "
-                f"Cannot register duplicate agent IDs."
+                f"Agent '{agent_id}' is already registered. Cannot register duplicate agent IDs."
             )
 
         self.agent_registry[agent_id] = agent
@@ -241,8 +277,7 @@ class VibeKernel:
         # Check 1: Agent registered in agent_registry
         if agent_id not in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' not registered. "
-                f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not registered. Available: {list(self.agent_registry.keys())}"
             )
 
         # Check 2: Agent has manifest (only check after boot)
@@ -263,8 +298,6 @@ class VibeKernel:
                 )
 
         logger.debug(f"KERNEL: Delegation validation passed for {agent_id}")
-
-
 
     def submit(self, task: Task) -> str:
         """
@@ -366,7 +399,7 @@ class VibeKernel:
         # Look up the agent in the registry
         if agent_id not in self.agent_registry:
             error_msg = (
-                f"Agent '{agent_id}' not found. " f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not found. Available: {list(self.agent_registry.keys())}"
             )
             logger.error(f"KERNEL: {error_msg} (task={task.id})")
             # Record the failure before raising
@@ -391,9 +424,7 @@ class VibeKernel:
             # Convert AgentResponse to dict for ledger storage if needed
             from vibe_core.agent_protocol import AgentResponse
 
-            result_for_ledger = (
-                result.to_dict() if isinstance(result, AgentResponse) else result
-            )
+            result_for_ledger = result.to_dict() if isinstance(result, AgentResponse) else result
 
             # Record successful completion
             self.ledger.record_completion(task, result_for_ledger)
@@ -528,7 +559,9 @@ class VibeKernel:
             logger.warning(f"KERNEL: Task {task_id} not found in ledger")
             return None
 
-        logger.debug(f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})")
+        logger.debug(
+            f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})"
+        )
         return record
 
     def get_task_output(self, task_id: str) -> dict | None:
@@ -584,3 +617,35 @@ class VibeKernel:
             - Returns empty list if no messages found
         """
         return self.inbox_messages
+
+    def get_git_status(self) -> str | None:
+        """
+        Get the current git synchronization status (ARCH-044).
+
+        This returns the git sync status detected during kernel boot.
+        The operator can use this to determine if system updates are needed.
+
+        Returns:
+            str | None: Git sync status or None if not available
+
+        Possible values:
+            - "SYNCED": Repository is up-to-date
+            - "BEHIND_BY_N": N commits behind remote (e.g. "BEHIND_BY_5")
+            - "DIVERGED": Local and remote have diverged
+            - "FETCH_FAILED": Could not fetch (offline or no remote)
+            - "NO_REPO": Not a git repository
+            - None: Status not checked (pre-ARCH-044 boot)
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> kernel.boot()
+            >>> status = kernel.get_git_status()
+            >>> if status and status.startswith("BEHIND"):
+            ...     print("System update available")
+
+        Notes:
+            - Status is set during boot() via VIBE_GIT_STATUS env var
+            - Operator should check STEWARD.md for update policy
+            - Use maintenance specialist to perform updates
+        """
+        return self.git_status

@@ -246,9 +246,7 @@ class TestInspectResultTool:
         kernel.register_agent(agent)
         kernel.boot()
 
-        task = Task(
-            agent_id="test-agent", payload={"user_message": "Test", "extra": "data"}
-        )
+        task = Task(agent_id="test-agent", payload={"user_message": "Test", "extra": "data"})
         task_id = kernel.submit(task)
         kernel.tick()
 

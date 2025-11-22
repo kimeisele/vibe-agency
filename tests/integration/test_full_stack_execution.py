@@ -229,9 +229,9 @@ class TestTheShield:
         # 4. Tool result shows BLOCKED
         tool_result = result["tool_call"]
         assert tool_result["success"] is False, "Tool should NOT succeed"
-        assert (
-            tool_result.get("metadata", {}).get("blocked_by_soul") is True
-        ), "Tool should be BLOCKED by governance"
+        assert tool_result.get("metadata", {}).get("blocked_by_soul") is True, (
+            "Tool should be BLOCKED by governance"
+        )
 
         # 5. Error message mentions governance violation
         assert "error" in tool_result
@@ -389,13 +389,13 @@ class TestFullStackRobustness:
         # All should be COMPLETED (agent survived)
         for record in history:
             assert record["status"] == "COMPLETED", "Agent should survive all attempts"
-            assert (
-                record["output_result"]["tool_call"]["metadata"]["blocked_by_soul"] is True
-            ), "All should be blocked"
+            assert record["output_result"]["tool_call"]["metadata"]["blocked_by_soul"] is True, (
+                "All should be blocked"
+            )
             assert record["output_result"]["tool_call"]["success"] is False, "All should fail"
-            assert (
-                "Governance Violation" in record["output_result"]["tool_call"]["error"]
-            ), "Should mention governance"
+            assert "Governance Violation" in record["output_result"]["tool_call"]["error"], (
+                "Should mention governance"
+            )
 
         print("✅ ROBUSTNESS: Agent survives multiple blocked operations!")
 

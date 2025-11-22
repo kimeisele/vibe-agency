@@ -125,7 +125,7 @@ class SmartLocalProvider(LLMProvider):
                     "task": "Create architecture plan for Snake game",
                     "payload": {
                         "mission": "Design a Snake game with tkinter GUI, arrow key controls, score tracking, and test coverage"
-                    }
+                    },
                 },
                 {
                     "step": 2,
@@ -135,8 +135,8 @@ class SmartLocalProvider(LLMProvider):
                     "depends_on": "Step 1 (PLANNING)",
                     "payload": {
                         "plan_summary": "Snake game with tkinter, arrow keys, score tracking, modular design",
-                        "output_dir": "workspace/snake_game/"
-                    }
+                        "output_dir": "workspace/snake_game/",
+                    },
                 },
                 {
                     "step": 3,
@@ -144,10 +144,7 @@ class SmartLocalProvider(LLMProvider):
                     "agent": "specialist-testing",
                     "task": "Test Snake game implementation",
                     "depends_on": "Step 2 (CODING)",
-                    "payload": {
-                        "test_dir": "workspace/snake_game/",
-                        "coverage_target": 0.80
-                    }
+                    "payload": {"test_dir": "workspace/snake_game/", "coverage_target": 0.80},
                 },
             ],
             "status": "WORKFLOW_PLAN_GENERATED",
@@ -170,8 +167,8 @@ class SmartLocalProvider(LLMProvider):
                             "Board state management",
                             "Snake movement logic",
                             "Collision detection",
-                            "Score tracking"
-                        ]
+                            "Score tracking",
+                        ],
                     },
                     {
                         "name": "GUI",
@@ -180,8 +177,8 @@ class SmartLocalProvider(LLMProvider):
                         "responsibilities": [
                             "Render game board",
                             "Handle keyboard input (arrow keys)",
-                            "Display score and game status"
-                        ]
+                            "Display score and game status",
+                        ],
                     },
                     {
                         "name": "Tests",
@@ -190,15 +187,11 @@ class SmartLocalProvider(LLMProvider):
                         "responsibilities": [
                             "Test snake movement",
                             "Test collision logic",
-                            "Test score calculations"
-                        ]
-                    }
+                            "Test score calculations",
+                        ],
+                    },
                 ],
-                "tech_stack": [
-                    "Python 3.8+",
-                    "tkinter (built-in)",
-                    "unittest (built-in)"
-                ]
+                "tech_stack": ["Python 3.8+", "tkinter (built-in)", "unittest (built-in)"],
             },
             "implementation_plan": [
                 "Step 1: Create SnakeGame class with state management",
@@ -214,7 +207,7 @@ class SmartLocalProvider(LLMProvider):
                 "workspace/snake_game/snake.py (main game)",
                 "workspace/snake_game/test_snake.py (tests)",
                 "workspace/snake_game/README.md (documentation)",
-            ]
+            ],
         }
 
         return json.dumps(plan, indent=2)
@@ -396,10 +389,10 @@ if __name__ == "__main__":
                     "test": "test_direction_reversal",
                     "error": "Snake can reverse into itself",
                     "severity": "CRITICAL",
-                    "fix_needed": True
+                    "fix_needed": True,
                 }
             ],
-            "recommendation": "ACTIVATE_REPAIR_LOOP - Fix direction reversal, re-run tests"
+            "recommendation": "ACTIVATE_REPAIR_LOOP - Fix direction reversal, re-run tests",
         }
 
         return json.dumps(response, indent=2)

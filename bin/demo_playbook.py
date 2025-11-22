@@ -279,7 +279,9 @@ def main():
 
         # ARCH-014: Dogfooding - If feature-implement playbook with vibe-standup goal, generate the tool
         if playbook_id == "feature-implement" and goal and "vibe-standup" in goal.lower():
-            logger.info("\n🚀 ARCH-014: DOGFOODING - Generating bin/vibe-standup.py from mission...")
+            logger.info(
+                "\n🚀 ARCH-014: DOGFOODING - Generating bin/vibe-standup.py from mission..."
+            )
             standup_script = generate_vibe_standup(goal)
             standup_path = project_root / "bin" / "vibe-standup.py"
             standup_path.parent.mkdir(parents=True, exist_ok=True)

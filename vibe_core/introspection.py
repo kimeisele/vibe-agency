@@ -113,16 +113,6 @@ class SystemIntrospector:
         Returns:
             Compact tree-formatted string suitable for agent context
         """
-        # Define which directories are "interesting" for system understanding
-        key_dirs = [
-            "vibe_core/",
-            "apps/agency/",
-            "tests/",
-            "docs/architecture/",
-            "config/",
-            "playbooks/",
-        ]
-
         tree_lines = ["vibe-agency/"]
         tree_lines.append("├── vibe_core/                    [Core OS Kernel]")
         tree_lines.append("│   ├── kernel.py                (Task orchestrator)")
@@ -305,7 +295,9 @@ class SystemIntrospector:
                     ]
                 )
                 for entry in history:
-                    lines.append(f"- {entry.get('timestamp', '?')} | {entry.get('agent_id', '?')} | {entry.get('status', '?')}")
+                    lines.append(
+                        f"- {entry.get('timestamp', '?')} | {entry.get('agent_id', '?')} | {entry.get('status', '?')}"
+                    )
                 lines.append("")
 
         except Exception as e:
