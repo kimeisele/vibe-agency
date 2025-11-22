@@ -77,6 +77,8 @@ from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
 from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
 from vibe_core.config import get_config  # noqa: E402
+from vibe_core.runtime.oracle import KernelOracle  # noqa: E402
+from vibe_core.runtime.prompt_context import get_prompt_context  # noqa: E402
 
 # Setup logging
 logging.basicConfig(
@@ -271,6 +273,12 @@ def boot_kernel():
     kernel.boot()
     logger.info("   - STEWARD manifests generated for all agents")
 
+    # Step 7.5: ARCH-064 - Set kernel on prompt context for Oracle resolver
+    # This allows kernel_capabilities to be resolved in system prompt
+    prompt_context = get_prompt_context()
+    prompt_context.set_kernel(kernel)
+    logger.info("   - Kernel Oracle initialized (ARCH-064)")
+
     # Step 7: Register DelegateTool & InspectResultTool (ARCH-037: The Intercom)
     #
     # Late binding: These tools need kernel reference for task submission/querying.
@@ -304,10 +312,10 @@ def boot_kernel():
 
 def print_kernel_help(kernel: VibeKernel) -> None:
     """
-    Print kernel-level help (ARCH-063: Kernel Oracle).
+    Print kernel-level help (ARCH-063/064: Kernel Oracle).
 
     This is deterministic, offline help that doesn't require LLM.
-    It reads from the kernel's registries and displays:
+    It uses the KernelOracle to read from kernel registries and display:
     1. Available cartridges
     2. Available tools
     3. Meta commands
@@ -319,87 +327,14 @@ def print_kernel_help(kernel: VibeKernel) -> None:
     - Visually consistent with HUD (ARCH-062)
     - Uses same emoji indicators and styling
     - Deterministic output based on kernel state
-    - No external dependencies or API calls
+    - Uses KernelOracle as single source of truth (ARCH-064)
 
     Args:
         kernel: Booted VibeKernel instance
     """
-    from vibe_core.cartridges.registry import get_default_cartridge_registry
-
-    # Print header (matches HUD styling)
-    print("")
-    print("─" * 70)
-    print("🛡️  KERNEL HELP (ARCH-063: Kernel Oracle)")
-    print("─" * 70)
-    print("")
-
-    # SECTION 1: Registered Cartridges (from cartridge registry)
-    print("📦 INSTALLED CARTRIDGES:\n")
-    try:
-        cartridge_registry = get_default_cartridge_registry(PROJECT_ROOT)
-        cartridge_names = cartridge_registry.get_cartridge_names()
-
-        if cartridge_names:
-            for cartridge_name in cartridge_names:
-                try:
-                    cartridge = cartridge_registry.get_cartridge(cartridge_name)
-                    spec = cartridge.get_spec()
-                    print(f"   • {cartridge_name.upper()}: {spec.description}")
-                except Exception as e:
-                    logger.debug(f"Error loading cartridge {cartridge_name}: {e}")
-                    print(f"   • {cartridge_name.upper()}: (Unable to load)")
-        else:
-            print("   (No cartridges registered)")
-
-    except Exception as e:
-        logger.debug(f"Error loading cartridge registry: {e}")
-        print("   (CartridgeRegistry unavailable)")
-
-    print("")
-
-    # SECTION 2: Available Tools (from kernel's tool registry)
-    print("🔧 AVAILABLE TOOLS:\n")
-    try:
-        # Get operator agent to access its tool registry
-        operator = kernel.agent_registry.get("vibe-operator")
-        if operator and hasattr(operator, "tool_registry"):
-            tools = operator.tool_registry.list_tools()
-            if tools:
-                for tool_name in sorted(tools):
-                    print(f"   • {tool_name}")
-            else:
-                print("   (No tools registered)")
-        else:
-            print("   (Tool registry unavailable)")
-    except Exception as e:
-        logger.debug(f"Error accessing tool registry: {e}")
-        print("   (Tool registry unavailable)")
-
-    print("")
-
-    # SECTION 3: Meta Commands (built-in)
-    print("⚡ META COMMANDS:\n")
-    meta_commands = [
-        ("help, /help, ?", "Show this kernel help (offline, works always)"),
-        ("exit, quit, q", "Shut down the operator"),
-        ("status", "Show system status and agent registry"),
-        ("snapshot", "Generate system introspection snapshot"),
-        ("task add <desc>", "Add a task to your agenda"),
-        ("task list [status]", "List tasks (pending, completed, all)"),
-        ("task complete <desc>", "Mark task as complete"),
-    ]
-
-    for cmd, description in meta_commands:
-        print(f"   • {cmd:<20} → {description}")
-
-    print("")
-    print("─" * 70)
-    print("")
-    print("💡 NATURAL LANGUAGE: For conversational help, just ask!")
-    print("   Examples: 'What can I do?', 'How do I build something?', etc.")
-    print("")
-    print("─" * 70)
-    print("")
+    # ARCH-064: Use KernelOracle for single source of truth
+    oracle = KernelOracle(kernel, PROJECT_ROOT)
+    print(oracle.get_help_text())
 
 
 async def run_interactive(kernel: VibeKernel):

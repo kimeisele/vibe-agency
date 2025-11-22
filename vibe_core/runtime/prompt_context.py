@@ -58,9 +58,20 @@ class PromptContext:
 
         self.vibe_root = Path(vibe_root)
         self._resolvers: dict[str, Callable[[], str]] = {}
+        self._kernel = None  # ARCH-064: Kernel reference for oracle resolver
 
         # Register core resolvers
         self._register_core_resolvers()
+
+    def set_kernel(self, kernel) -> None:
+        """
+        Set kernel reference for oracle resolver (ARCH-064).
+
+        Args:
+            kernel: VibeKernel instance (late binding)
+        """
+        self._kernel = kernel
+        logger.debug("✅ Kernel reference set for oracle resolver (ARCH-064)")
 
     def _register_core_resolvers(self) -> None:
         """Register the built-in core resolvers."""
@@ -76,7 +87,10 @@ class PromptContext:
         self.register("agenda_tasks", self._resolve_agenda_tasks)
         self.register("git_sync_status", self._resolve_git_sync_status)
 
-        logger.debug("✅ Registered 9 core context resolvers (5 legacy + 4 kernel state)")
+        # ARCH-064: Oracle resolver (system capabilities for Steward)
+        self.register("kernel_capabilities", self._resolve_kernel_capabilities)
+
+        logger.debug("✅ Registered 10 core context resolvers (5 legacy + 4 kernel state + 1 oracle)")
 
     def register(self, key: str, resolver: Callable[[], str]) -> None:
         """
@@ -478,6 +492,32 @@ class PromptContext:
         except Exception as e:
             logger.warning(f"Failed to resolve git_sync_status: {e}")
             return "UNKNOWN"
+
+    def _resolve_kernel_capabilities(self) -> str:
+        """
+        Resolve kernel capabilities (ARCH-064: The Omniscient Steward).
+
+        Returns the Oracle data formatted for system prompt injection.
+        This tells the Steward exactly what it can do.
+
+        Returns:
+            Formatted capability text for prompt injection
+        """
+        if self._kernel is None:
+            return (
+                "[Kernel capabilities unavailable - kernel not initialized. "
+                "Use set_kernel() after boot.]"
+            )
+
+        try:
+            from vibe_core.runtime.oracle import KernelOracle
+
+            oracle = KernelOracle(self._kernel, self.vibe_root)
+            return oracle.get_cortex_text()
+
+        except Exception as e:
+            logger.warning(f"Failed to resolve kernel_capabilities: {e}")
+            return f"[Error loading kernel capabilities: {e}]"
 
 
 # ========================================================================
