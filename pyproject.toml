@@ -138,6 +138,10 @@ addopts = [
     "--strict-markers",
     "--disable-warnings",
 ]
+# Force Phoenix mode (memory) for tests to avoid DB lock issues
+env = [
+    "LEDGER_DB_PATH=:memory:",
+]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
