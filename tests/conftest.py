@@ -35,7 +35,7 @@ except ImportError:
 
 # Load legacy_config_loader dynamically (it's not in the main package)
 # NOTE: This is also OPTIONAL - only needed for tests that use legacy config
-repo_root = Path(__file__).parent.parent
+repo_root = Path(__file__).parent.parent  # Define repo_root for fixtures to use
 legacy_config_path = repo_root / "config" / "legacy_config_loader.py"
 if legacy_config_path.exists():
     try:
@@ -57,8 +57,14 @@ except ImportError:
     pass  # handlers module might not exist in all configs
 
 
+@pytest.fixture(scope="function")
+def vibe_root():
+    """Provide the vibe-agency root directory for tests."""
+    return Path(__file__).parent.parent
+
+
 @pytest.fixture(scope="function", autouse=True)
-def clean_test_data():
+def clean_test_data(vibe_root):
     """
     Clean up test data from SQLite before each test.
 

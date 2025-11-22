@@ -232,6 +232,28 @@ $PYTHON ./vibe-cli boot 2>&1 || echo "⚠️  VIBE-CLI boot check failed (system
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
+
+# ============================================================================
+# PERSONALIZED BOOT GREETING (ARCH-051: Steward Cartridge)
+# ============================================================================
+# Load user preferences and generate personalized greeting
+BOOT_GREETING=$($PYTHON -c "
+try:
+    from vibe_core.cartridges.steward import StewardCartridge
+    steward = StewardCartridge()
+    user_name = steward.get_user_name()
+    tone = steward.get_operator_tone()
+    print(f'Welcome back, {user_name}. Systems are green. Your Vibe OS is ready.')
+    if 'German' in tone or 'Deutsch' in tone:
+        print(f'(Tonfall: {tone})')
+except Exception:
+    print('Welcome back. Your Vibe OS is ready.')
+" 2>/dev/null || echo "Welcome back. Your Vibe OS is ready.")
+
+echo -e "${GREEN}$BOOT_GREETING${NC}"
+echo ""
+
+echo "════════════════════════════════════════════════════════════════"
 echo "📋 STEWARD OPERATIONAL PROTOCOL"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
