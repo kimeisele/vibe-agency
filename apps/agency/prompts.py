@@ -14,7 +14,6 @@ layer adds personality and interpretation.
 
 import json
 import logging
-from typing import Any
 
 from vibe_core.runtime.prompt_context import get_prompt_context
 
@@ -36,14 +35,16 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
     """
     # Fetch live kernel state (pure data)
     context_engine = get_prompt_context()
-    context = context_engine.resolve([
-        "inbox_count",
-        "agenda_summary",
-        "agenda_tasks",
-        "git_sync_status",
-        "current_branch",
-        "system_time",
-    ])
+    context = context_engine.resolve(
+        [
+            "inbox_count",
+            "agenda_summary",
+            "agenda_tasks",
+            "git_sync_status",
+            "current_branch",
+            "system_time",
+        ]
+    )
 
     # Parse data
     inbox_count = int(context.get("inbox_count", "0"))
@@ -93,8 +94,8 @@ def compose_steward_prompt(include_reasoning: bool = True) -> str:
         )
     elif git_sync == "DIVERGED":
         context_blocks.append(
-            f"⚠️ **GIT DIVERGENCE:** Local branch has diverged from origin. "
-            f"Manual resolution required before pushing."
+            "⚠️ **GIT DIVERGENCE:** Local branch has diverged from origin. "
+            "Manual resolution required before pushing."
         )
 
     # Compose high-priority context section
@@ -325,8 +326,12 @@ def compose_steward_prompt_debug() -> str:
     context_engine = get_prompt_context()
     context = context_engine.resolve()  # Resolve ALL registered keys
 
-    context_dump = "\n".join([f"  {key}: {value[:100]}..." if len(value) > 100 else f"  {key}: {value}"
-                              for key, value in context.items()])
+    context_dump = "\n".join(
+        [
+            f"  {key}: {value[:100]}..." if len(value) > 100 else f"  {key}: {value}"
+            for key, value in context.items()
+        ]
+    )
 
     return f"""You are STEWARD (DEBUG MODE).
 
