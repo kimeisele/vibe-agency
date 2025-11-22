@@ -659,6 +659,7 @@ class CoreOrchestrator:
             "deploy_receipt.json": "artifacts/deployment/deploy_receipt.json",
             "bug_report.json": "artifacts/deployment/bug_report.json",
             "rollback_info.json": "artifacts/deployment/rollback_info.json",
+            "project_manifest.json": "project_manifest.json",  # Root-level manifest
         }
 
         if artifact_name not in artifact_paths:
@@ -701,6 +702,7 @@ class CoreOrchestrator:
             "deploy_receipt.json": "artifacts/deployment/deploy_receipt.json",
             "bug_report.json": "artifacts/deployment/bug_report.json",
             "rollback_info.json": "artifacts/deployment/rollback_info.json",
+            "project_manifest.json": "project_manifest.json",  # Root-level manifest
         }
 
         if artifact_name not in artifact_paths:
