@@ -6,15 +6,10 @@ snapshots for remote debugging and external intelligences.
 """
 
 import json
-import logging
-import tempfile
 from pathlib import Path
-from typing import Any
 
-import pytest
-
-from vibe_core.agent_protocol import VibeAgent, AgentResponse
-from vibe_core.introspection import SystemIntrospector, AgentStatus, SystemMetrics
+from vibe_core.agent_protocol import AgentResponse, VibeAgent
+from vibe_core.introspection import AgentStatus, SystemIntrospector, SystemMetrics
 from vibe_core.kernel import KernelStatus, VibeKernel
 from vibe_core.scheduling import Task
 

@@ -6,9 +6,10 @@ Verifies that Specialists are correctly registered in the kernel at boot time
 via the SpecialistFactoryAgent pattern.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
 
 from apps.agency.specialists import CodingSpecialist, PlanningSpecialist, TestingSpecialist
 from vibe_core.agents.specialist_factory import SpecialistFactoryAgent

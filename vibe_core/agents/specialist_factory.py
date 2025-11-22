@@ -31,12 +31,12 @@ Example:
 
 import logging
 from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 from vibe_core.agent_protocol import VibeAgent
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
-from vibe_core.specialists.base_specialist import BaseSpecialist, MissionContext
+from vibe_core.specialists.base_specialist import BaseSpecialist
 from vibe_core.store.sqlite_store import SQLiteStore
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class SpecialistFactoryAgent(VibeAgent):
 
     def __init__(
         self,
-        specialist_class: Type[BaseSpecialist],
+        specialist_class: type[BaseSpecialist],
         role: str,
         sqlite_store: SQLiteStore,
         tool_safety_guard: ToolSafetyGuard,

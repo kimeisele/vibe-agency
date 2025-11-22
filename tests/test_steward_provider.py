@@ -5,10 +5,7 @@ Validates the Claude Code integration provider works correctly,
 delegating cognitive work to the STEWARD (Claude Code environment).
 """
 
-import sys
 from unittest.mock import patch
-
-import pytest
 
 from vibe_core.llm import StewardProvider
 

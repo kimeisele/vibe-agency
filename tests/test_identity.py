@@ -18,9 +18,8 @@ import pytest
 sys.modules["yaml"] = MagicMock()
 
 # Now import agents
-from vibe_core.agents.llm_agent import SimpleLLMAgent
-
 from tests.mocks.llm import MockLLMProvider
+from vibe_core.agents.llm_agent import SimpleLLMAgent
 from vibe_core.identity import (
     AgentManifest,
     AgentRegistry,

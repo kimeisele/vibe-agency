@@ -15,8 +15,6 @@ All output is LLM-optimized for minimal token usage with maximum context density
 
 import json
 import logging
-import os
-import subprocess
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path

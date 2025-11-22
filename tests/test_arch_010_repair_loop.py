@@ -14,7 +14,6 @@ This test proves vibe-agency is self-healing, not just scripted.
 
 import json
 import logging
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -22,7 +21,7 @@ import pytest
 from apps.agency.specialists.coding import CodingSpecialist
 from apps.agency.specialists.testing import TestingSpecialist
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
-from vibe_core.specialists import MissionContext, SpecialistResult
+from vibe_core.specialists import MissionContext
 from vibe_core.store.sqlite_store import SQLiteStore
 
 logger = logging.getLogger(__name__)
