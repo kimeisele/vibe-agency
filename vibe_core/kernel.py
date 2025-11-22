@@ -250,8 +250,15 @@ class VibeKernel:
             # Execute the task
             result = agent.process(task)
 
+            # Convert AgentResponse to dict for ledger storage if needed
+            from vibe_core.agent_protocol import AgentResponse
+
+            result_for_ledger = (
+                result.to_dict() if isinstance(result, AgentResponse) else result
+            )
+
             # Record successful completion
-            self.ledger.record_completion(task, result)
+            self.ledger.record_completion(task, result_for_ledger)
 
             logger.debug(f"KERNEL: Task {task.id} completed (result={result})")
 

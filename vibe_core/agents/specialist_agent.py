@@ -20,9 +20,8 @@ be orchestrated by the Kernel using the same dispatch mechanism as LLM agents.
 
 import logging
 from pathlib import Path
-from typing import Any
 
-from vibe_core.agent_protocol import VibeAgent
+from vibe_core.agent_protocol import AgentResponse, VibeAgent
 from vibe_core.scheduling import Task
 from vibe_core.specialists.base_specialist import BaseSpecialist, MissionContext, SpecialistResult
 
@@ -86,7 +85,7 @@ class SpecialistAgent(VibeAgent):
         """
         if not isinstance(specialist, BaseSpecialist):
             raise TypeError(
-                f"specialist must be a BaseSpecialist instance, " f"got {type(specialist).__name__}"
+                f"specialist must be a BaseSpecialist instance, got {type(specialist).__name__}"
             )
 
         self.specialist = specialist
@@ -112,7 +111,7 @@ class SpecialistAgent(VibeAgent):
         """
         return f"specialist-{self.specialist.role.lower()}"
 
-    def process(self, task: Task) -> dict[str, Any]:
+    def process(self, task: Task) -> AgentResponse:
         """
         Process a task by executing the wrapped specialist.
 
@@ -123,7 +122,7 @@ class SpecialistAgent(VibeAgent):
             4. Execute specialist.execute(context)
             5. Call specialist.on_complete(context, result) if successful
             6. Call specialist.on_error(context, error) if failed
-            7. Convert SpecialistResult → dict result for kernel
+            7. Convert SpecialistResult → AgentResponse result for kernel
 
         Expected task payload format:
         {
@@ -138,16 +137,12 @@ class SpecialistAgent(VibeAgent):
             task: Task submitted to kernel
 
         Returns:
-            dict: Result with structure:
-                {
-                    "success": bool,
-                    "next_phase": str | None,
-                    "artifacts": list[str],
-                    "decisions": list[dict],
-                    "error": str | None,
-                    "specialist": str,  # specialist class name
-                    "role": str         # specialist role
-                }
+            AgentResponse: Standardized response with:
+                agent_id: This specialist agent's ID
+                task_id: The task ID
+                success: Whether execution succeeded
+                output: Contains next_phase, artifacts, decisions, specialist, role
+                error: Error message if success is False
 
         Raises:
             ValueError: If task payload is invalid or preconditions not met
@@ -159,8 +154,8 @@ class SpecialistAgent(VibeAgent):
             ...     payload={"mission_id": 1, "phase": "PLANNING", ...}
             ... )
             >>> result = agent.process(task)
-            >>> print(result["success"])  # True
-            >>> print(result["next_phase"])  # "CODING"
+            >>> print(result.success)  # True
+            >>> print(result.output["next_phase"])  # "CODING"
         """
         # Step 1: Convert Task → MissionContext
         try:
@@ -184,15 +179,19 @@ class SpecialistAgent(VibeAgent):
             logger.error(f"SpecialistAgent: {error_msg}")
 
             # Return error result (don't raise - let kernel record it)
-            return {
-                "success": False,
-                "next_phase": None,
-                "artifacts": [],
-                "decisions": [],
-                "error": error_msg,
-                "specialist": self.specialist.__class__.__name__,
-                "role": self.specialist.role,
-            }
+            return AgentResponse(
+                agent_id=self.agent_id,
+                task_id=task.id,
+                success=False,
+                output={
+                    "next_phase": None,
+                    "artifacts": [],
+                    "decisions": [],
+                    "specialist": self.specialist.__class__.__name__,
+                    "role": self.specialist.role,
+                },
+                error=error_msg,
+            )
 
         # Step 3: Execute lifecycle
         self.specialist.on_start(context)
@@ -209,8 +208,8 @@ class SpecialistAgent(VibeAgent):
                 f"(next_phase={result.next_phase}, artifacts={len(result.artifacts)})"
             )
 
-            # Convert SpecialistResult → dict
-            return self._result_to_dict(result)
+            # Convert SpecialistResult → AgentResponse
+            return self._result_to_response(task, result)
 
         except Exception as e:
             # Step 6: Handle error
@@ -222,8 +221,22 @@ class SpecialistAgent(VibeAgent):
             # Let specialist handle error (for cleanup/logging)
             self.specialist.on_error(context, e)
 
-            # Re-raise to let kernel record the failure
-            raise
+            # Return AgentResponse with failure status instead of raising
+            error_msg = f"{type(e).__name__}: {e}"
+            return AgentResponse(
+                agent_id=self.agent_id,
+                task_id=task.id,
+                success=False,
+                output={
+                    "next_phase": None,
+                    "artifacts": [],
+                    "decisions": [],
+                    "specialist": self.specialist.__class__.__name__,
+                    "role": self.specialist.role,
+                },
+                error=error_msg,
+                metadata={"error_type": type(e).__name__},
+            )
 
     def _task_to_context(self, task: Task) -> MissionContext:
         """
@@ -262,25 +275,30 @@ class SpecialistAgent(VibeAgent):
             metadata=metadata,
         )
 
-    def _result_to_dict(self, result: SpecialistResult) -> dict[str, Any]:
+    def _result_to_response(self, task: Task, result: SpecialistResult) -> AgentResponse:
         """
-        Convert SpecialistResult to dict for kernel recording.
+        Convert SpecialistResult to AgentResponse for kernel recording.
 
         Args:
+            task: The task being processed
             result: SpecialistResult from specialist.execute()
 
         Returns:
-            dict: Result in kernel-compatible format
+            AgentResponse: Result in kernel-compatible standardized format
         """
-        return {
-            "success": result.success,
-            "next_phase": result.next_phase,
-            "artifacts": result.artifacts,
-            "decisions": result.decisions,
-            "error": result.error,
-            "specialist": self.specialist.__class__.__name__,
-            "role": self.specialist.role,
-        }
+        return AgentResponse(
+            agent_id=self.agent_id,
+            task_id=task.id,
+            success=result.success,
+            output={
+                "next_phase": result.next_phase,
+                "artifacts": result.artifacts,
+                "decisions": result.decisions,
+                "specialist": self.specialist.__class__.__name__,
+                "role": self.specialist.role,
+            },
+            error=result.error,
+        )
 
     def __repr__(self) -> str:
         """String representation for debugging"""

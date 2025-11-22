@@ -165,7 +165,7 @@ def test_process_converts_task_to_context(specialist_agent, valid_task, mock_spe
 
     # Verify execute was called (context was valid)
     assert mock_specialist.execute_called
-    assert result["success"] is True
+    assert result.success is True
 
 
 def test_process_validates_preconditions(specialist_agent, valid_task, mock_specialist):
@@ -186,16 +186,16 @@ def test_process_calls_lifecycle_hooks(specialist_agent, valid_task, mock_specia
 
 
 def test_process_returns_specialist_result(specialist_agent, valid_task):
-    """process() should return dict with SpecialistResult fields"""
+    """process() should return AgentResponse with SpecialistResult fields"""
     result = specialist_agent.process(valid_task)
 
-    assert result["success"] is True
-    assert result["next_phase"] == "NEXT_PHASE"
-    assert result["artifacts"] == ["artifact1.txt", "artifact2.txt"]
-    assert len(result["decisions"]) == 2
-    assert result["error"] is None
-    assert result["specialist"] == "MockSpecialist"
-    assert result["role"] == "PLANNING"
+    assert result.success is True
+    assert result.output["next_phase"] == "NEXT_PHASE"
+    assert result.output["artifacts"] == ["artifact1.txt", "artifact2.txt"]
+    assert len(result.output["decisions"]) == 2
+    assert result.error is None
+    assert result.output["specialist"] == "MockSpecialist"
+    assert result.output["role"] == "PLANNING"
 
 
 def test_process_with_minimal_payload(specialist_agent, mock_specialist):
@@ -212,7 +212,7 @@ def test_process_with_minimal_payload(specialist_agent, mock_specialist):
 
     result = specialist_agent.process(task)
 
-    assert result["success"] is True
+    assert result.success is True
     assert mock_specialist.execute_called
 
 
@@ -227,21 +227,23 @@ def test_process_fails_if_preconditions_not_met(specialist_agent, valid_task, mo
 
     result = specialist_agent.process(valid_task)
 
-    assert result["success"] is False
-    assert result["error"] is not None
-    assert "Preconditions not met" in result["error"]
+    assert result.success is False
+    assert result.error is not None
+    assert "Preconditions not met" in result.error
     assert not mock_specialist.execute_called  # Should not execute
     assert not mock_specialist.on_complete_called
     # Result verified, no unused variables
 
 
 def test_process_handles_execution_failure(specialist_agent, valid_task, mock_specialist):
-    """process() should call on_error and re-raise exception if execution fails"""
+    """process() should call on_error and return failure result if execution fails"""
     mock_specialist.should_fail_execution = True
 
-    with pytest.raises(RuntimeError, match="Mock execution failure"):
-        specialist_agent.process(valid_task)
+    result = specialist_agent.process(valid_task)
 
+    assert result.success is False
+    assert result.error is not None
+    assert "Mock execution failure" in result.error
     assert mock_specialist.on_error_called
     assert not mock_specialist.on_complete_called
 
@@ -343,7 +345,7 @@ def test_kernel_records_specialist_execution_in_ledger(specialist_agent, valid_t
 
 
 def test_kernel_records_specialist_failure_in_ledger(specialist_agent, valid_task, mock_specialist):
-    """Kernel should record specialist failure in ledger"""
+    """Kernel should record specialist failure in ledger as COMPLETED with success=False"""
     from vibe_core.kernel import VibeKernel
 
     kernel = VibeKernel(ledger_path=":memory:")
@@ -356,18 +358,20 @@ def test_kernel_records_specialist_failure_in_ledger(specialist_agent, valid_tas
     # Submit and execute
     _ = kernel.submit(valid_task)  # task_id not used in assertions
 
-    try:
-        kernel.tick()
-    except RuntimeError:
-        pass  # Expected
+    # Now execution completes with an AgentResponse (no exception raised)
+    kernel.tick()
 
     # Query ledger
     executions = kernel.ledger.get_history(limit=10)
 
     assert len(executions) == 1
     execution = executions[0]
-    assert execution["status"] == "FAILED"
-    assert "Mock execution failure" in execution["error_message"]
+    # Status is COMPLETED because AgentResponse is returned (not an exception)
+    assert execution["status"] == "COMPLETED"
+    # But the output shows failure (get_history() already deserializes JSON)
+    output = execution["output_result"]
+    assert output["success"] is False
+    assert "Mock execution failure" in output["error"]
 
 
 # ============================================================================

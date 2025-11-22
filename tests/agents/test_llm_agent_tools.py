@@ -222,11 +222,11 @@ def test_llm_agent_detects_tool_call():
         result = agent.process(task)
 
         # Verify tool call was detected and executed
-        assert result["success"] is True
-        assert result["tool_call"] is not None
-        assert result["tool_call"]["tool"] == "read_file"
-        assert result["tool_call"]["success"] is True
-        assert result["tool_call"]["output"] == "File content"
+        assert result.success is True
+        assert result.output["tool_call"] is not None
+        assert result.output["tool_call"]["tool"] == "read_file"
+        assert result.output["tool_call"]["success"] is True
+        assert result.output["tool_call"]["output"] == "File content"
     finally:
         Path(temp_path).unlink()
 
@@ -243,7 +243,7 @@ def test_llm_agent_no_tool_call_without_registry():
     result = agent.process(task)
 
     # Tool call should not be detected/executed
-    assert result["tool_call"] is None
+    assert result.output["tool_call"] is None
 
 
 def test_llm_agent_write_file_via_tool_call():
@@ -267,9 +267,9 @@ def test_llm_agent_write_file_via_tool_call():
         result = agent.process(task)
 
         # Verify tool call executed
-        assert result["tool_call"] is not None
-        assert result["tool_call"]["tool"] == "write_file"
-        assert result["tool_call"]["success"] is True
+        assert result.output["tool_call"] is not None
+        assert result.output["tool_call"]["tool"] == "write_file"
+        assert result.output["tool_call"]["success"] is True
 
         # Verify file was created
         assert temp_path.exists()
@@ -319,7 +319,10 @@ def test_llm_agent_with_tools_via_kernel():
         history = kernel.ledger.get_history(limit=1)
         assert len(history) == 1
         assert history[0]["status"] == "COMPLETED"
-        assert history[0]["output_result"]["tool_call"]["success"] is True
-        assert history[0]["output_result"]["tool_call"]["output"] == "Kernel test content"
+        # get_history() already deserializes JSON
+        output_data = history[0]["output_result"]
+        assert output_data["success"] is True
+        assert output_data["output"]["tool_call"]["success"] is True
+        assert output_data["output"]["tool_call"]["output"] == "Kernel test content"
     finally:
         Path(temp_path).unlink()

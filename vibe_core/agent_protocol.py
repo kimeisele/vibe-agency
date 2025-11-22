@@ -6,9 +6,62 @@ to be compatible with the VibeKernel dispatch mechanism (ARCH-023).
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from typing import Any
 
 from vibe_core.scheduling import Task
+
+
+@dataclass
+class AgentResponse:
+    """
+    Standardized response format from any agent (LLM or Script-based).
+
+    This dataclass defines the universal contract for all agent responses,
+    allowing the kernel to handle responses uniformly regardless of agent type.
+    Whether a response comes from SimpleLLMAgent (thinking) or a Specialist
+    (acting), both must conform to this structure.
+
+    Attributes:
+        agent_id: The unique identifier of the agent that produced this response.
+        task_id: The unique identifier of the task being processed.
+        success: Boolean indicating whether the task was completed successfully.
+        output: The actual result/content (agent-specific: plan, code, text, etc).
+        error: Optional error message if success is False.
+        metadata: Optional dictionary for agent-specific metadata (timing, stats, etc).
+
+    Example:
+        >>> response = AgentResponse(
+        ...     agent_id="llm-agent",
+        ...     task_id="task-123",
+        ...     success=True,
+        ...     output={"plan": "Step 1..."},
+        ...     metadata={"tokens_used": 150}
+        ... )
+    """
+
+    agent_id: str
+    task_id: str
+    success: bool
+    output: Any
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        """
+        Convert AgentResponse to a dictionary.
+
+        Returns:
+            dict: JSON-serializable representation of the response
+        """
+        return {
+            "agent_id": self.agent_id,
+            "task_id": self.task_id,
+            "success": self.success,
+            "output": self.output,
+            "error": self.error,
+            "metadata": self.metadata,
+        }
 
 
 class VibeAgent(ABC):

@@ -11,8 +11,8 @@ import json
 import logging
 from typing import Any, Optional
 
-from vibe_core.agent_protocol import VibeAgent
-from vibe_core.llm import LLMError, LLMProvider
+from vibe_core.agent_protocol import AgentResponse, VibeAgent
+from vibe_core.llm import LLMProvider
 from vibe_core.scheduling import Task
 
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class SimpleLLMAgent(VibeAgent):
         """Return the agent's unique identifier."""
         return self._agent_id
 
-    def process(self, task: Task) -> dict[str, Any]:
+    def process(self, task: Task) -> AgentResponse:
         """
         Process a task by sending it to the LLM provider.
 
@@ -117,12 +117,12 @@ class SimpleLLMAgent(VibeAgent):
             task: The Task to process
 
         Returns:
-            dict: Result with structure:
+            AgentResponse: Standardized response with structure:
                 {
-                    "response": str,           # LLM's response
-                    "model_used": str,         # Model identifier used
-                    "provider": str,           # Provider class name
+                    "agent_id": str,           # This agent's ID
+                    "task_id": str,            # The task ID
                     "success": bool,           # Whether call succeeded
+                    "output": dict,            # Contains response, model_used, provider, tool_call
                     "error": str | None        # Error message if failed
                 }
 
@@ -136,7 +136,7 @@ class SimpleLLMAgent(VibeAgent):
             ...     payload={"user_message": "What is 2+2?"}
             ... )
             >>> result = agent.process(task)
-            >>> print(result["response"])  # LLM's answer
+            >>> print(result.output["response"])  # LLM's answer
         """
         # Extract user message from payload
         payload = task.payload
@@ -167,9 +167,7 @@ class SimpleLLMAgent(VibeAgent):
             # Call LLM provider
             response = self.provider.chat(messages, model=model_to_use)
 
-            logger.info(
-                f"AGENT: {self.agent_id} received LLM response " f"(length={len(response)})"
-            )
+            logger.info(f"AGENT: {self.agent_id} received LLM response (length={len(response)})")
             logger.debug(f"AGENT: LLM response: {response}")
 
             # Check if response contains tool call
@@ -180,23 +178,33 @@ class SimpleLLMAgent(VibeAgent):
                     logger.info(f"AGENT: {self.agent_id} detected tool call in response")
                     tool_result = self._execute_tool_call(tool_call_data)
 
-            return {
-                "response": response,
-                "model_used": model_to_use or "default",
-                "provider": self.provider.__class__.__name__,
-                "success": True,
-                "error": None,
-                "tool_call": tool_result,  # None if no tool call
-            }
+            return AgentResponse(
+                agent_id=self.agent_id,
+                task_id=task.id,
+                success=True,
+                output={
+                    "response": response,
+                    "model_used": model_to_use or "default",
+                    "provider": self.provider.__class__.__name__,
+                    "tool_call": tool_result,  # None if no tool call
+                },
+            )
 
         except Exception as e:
             logger.error(f"AGENT: {self.agent_id} LLM call failed for task {task.id}: {e}")
 
-            # Re-raise as LLMError for proper error handling
-            raise LLMError(
-                message=f"LLM call failed: {e!s}",
-                provider=self.provider.__class__.__name__,
-                original_error=e,
+            # Return AgentResponse with failure status instead of raising
+            error_msg = f"LLM call failed: {e!s}"
+            return AgentResponse(
+                agent_id=self.agent_id,
+                task_id=task.id,
+                success=False,
+                output=None,
+                error=error_msg,
+                metadata={
+                    "provider": self.provider.__class__.__name__,
+                    "original_error_type": type(e).__name__,
+                },
             )
 
     def _build_messages(
