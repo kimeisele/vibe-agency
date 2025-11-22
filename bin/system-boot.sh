@@ -93,5 +93,5 @@ else
 fi
 
 # LAUNCH VIBE OS
-# Running without arguments enters interactive mode (ARCH-032)
-exec uv run python "$ENTRYPOINT"
+# Use --status flag to display system health and exit cleanly (prevents interactive hang)
+exec uv run python "$ENTRYPOINT" --status
