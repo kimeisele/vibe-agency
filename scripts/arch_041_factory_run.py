@@ -20,19 +20,20 @@ Output:
     - ARCH-041_FACTORY_RUN_REPORT.md (validation report)
 """
 
-import sys
 import asyncio
 import json
+import sys
 from pathlib import Path
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from vibe_core.kernel import VibeKernel
-from vibe_core.scheduling import Task
-from vibe_core.ledger import VibeLedger
 from dotenv import load_dotenv
+
+from vibe_core.kernel import VibeKernel
+from vibe_core.ledger import VibeLedger
+from vibe_core.scheduling import Task
 
 
 async def factory_run():
@@ -77,7 +78,7 @@ async def factory_run():
 
     print(f"   → Planning completed in {steps} steps")
     planning_result = query_ledger(kernel, planning_task_id)
-    print(f"   → Plan extracted and stored\n")
+    print("   → Plan extracted and stored\n")
 
     # Step 2: CODING
     print("Step 3: Delegating to specialist-coding...")
@@ -102,7 +103,7 @@ async def factory_run():
 
     print(f"   → Coding completed in {steps} steps")
     coding_result = query_ledger(kernel, coding_task_id)
-    print(f"   → Code generated and written to workspace/snake_game/\n")
+    print("   → Code generated and written to workspace/snake_game/\n")
 
     # Step 3: TESTING
     print("Step 4: Delegating to specialist-testing...")
@@ -138,7 +139,7 @@ async def factory_run():
 
         # REPAIR LOOP
         qa_report = testing_result.get("output", {}).get("qa_report", {})
-        print(f"Step 5.1: Delegating fixes to specialist-coding (Repair Mode)...")
+        print("Step 5.1: Delegating fixes to specialist-coding (Repair Mode)...")
 
         repair_task = Task(
             agent_id="specialist-coding",
@@ -162,7 +163,7 @@ async def factory_run():
         print(f"   → Repair completed in {steps} steps\n")
 
         # RE-TEST
-        print(f"Step 5.2: Re-testing after repair...\n")
+        print("Step 5.2: Re-testing after repair...\n")
         retest_task = Task(
             agent_id="specialist-testing",
             payload={

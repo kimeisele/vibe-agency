@@ -44,27 +44,26 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from dotenv import load_dotenv
 
-from tests.mocks.llm import MockLLMProvider  # For development (no API keys needed)
-from vibe_core.agents.llm_agent import SimpleLLMAgent
-from vibe_core.agents.specialist_factory import SpecialistFactoryAgent
-from vibe_core.governance import InvariantChecker
-from vibe_core.kernel import VibeKernel
-from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
-from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
-from vibe_core.llm.smart_local_provider import SmartLocalProvider  # Offline orchestration (ARCH-041)
-from vibe_core.runtime.providers.base import ProviderNotAvailableError
-from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
-from vibe_core.scheduling import Task
-from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
-from vibe_core.tools.inspect_result import InspectResultTool
-from vibe_core.introspection import SystemIntrospector
-
 # Import Specialists (ARCH-036: Crew Assembly)
 from apps.agency.specialists import (
     CodingSpecialist,
     PlanningSpecialist,
     TestingSpecialist,
 )
+from vibe_core.agents.llm_agent import SimpleLLMAgent
+from vibe_core.agents.specialist_factory import SpecialistFactoryAgent
+from vibe_core.governance import InvariantChecker
+from vibe_core.introspection import SystemIntrospector
+from vibe_core.kernel import VibeKernel
+from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
+from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
+from vibe_core.llm.smart_local_provider import (
+    SmartLocalProvider,  # Offline orchestration (ARCH-041)
+)
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
+from vibe_core.scheduling import Task
+from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
+from vibe_core.tools.inspect_result import InspectResultTool
 
 # Setup logging
 logging.basicConfig(
@@ -481,11 +480,11 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print("=" * 70)
         print("🤖 VIBE AGENCY OS - SYSTEM STATUS")
         print("=" * 70)
-        print(f"\n📊 Kernel:")
+        print("\n📊 Kernel:")
         print(f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}")
         print(f"   - Agents: {len(agents)}")
 
-        print(f"\n🤖 Registered Agents:")
+        print("\n🤖 Registered Agents:")
         for agent_info in agents:
             agent_type = agent_info["type"]
             agent_id = agent_info["agent_id"]
@@ -566,7 +565,7 @@ async def run_mission(kernel: VibeKernel, mission: str):
         ✅ MISSION COMPLETE (42 steps)
     """
     print("=" * 70)
-    print(f"🤖 VIBE OPERATOR STARTED MISSION")
+    print("🤖 VIBE OPERATOR STARTED MISSION")
     print("=" * 70)
     print(f"Mission: {mission}")
     print("")
@@ -657,9 +656,9 @@ def main():
         kernel = boot_kernel()
     except Exception as e:
         logger.error(f"🔥 BOOT FAILED: {e}", exc_info=True)
-        print(f"\n❌ FATAL ERROR: Failed to boot system")
+        print("\n❌ FATAL ERROR: Failed to boot system")
         print(f"   {type(e).__name__}: {e}")
-        print(f"\n   Check logs for details.")
+        print("\n   Check logs for details.")
         return 1
 
     # Run appropriate mode
@@ -683,7 +682,7 @@ def main():
 
     except Exception as e:
         logger.error(f"🔥 RUNTIME ERROR: {e}", exc_info=True)
-        print(f"\n❌ FATAL ERROR during execution")
+        print("\n❌ FATAL ERROR during execution")
         print(f"   {type(e).__name__}: {e}")
         return 1
 

@@ -13,10 +13,10 @@ LÖSUNG:
 """
 
 import json
-from pathlib import Path
-from typing import Optional
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+
 
 class ProjectPhase(Enum):
     PLANNING = "PLANNING"
@@ -30,10 +30,10 @@ class ProjectPhase(Enum):
 class SpecialistResult:
     """The CRITICAL contract that enables self-healing"""
     success: bool
-    next_phase: Optional[str] = None
-    error: Optional[str] = None
+    next_phase: str | None = None
+    error: str | None = None
     artifacts: list[str] = None
-    repair_context: Optional[dict] = None  # NEW: Contains failure info for repair
+    repair_context: dict | None = None  # NEW: Contains failure info for repair
 
 class CoreOrchestratorV2:
     """
@@ -45,7 +45,7 @@ class CoreOrchestratorV2:
         self.repair_attempts = {}  # Track repair attempts to prevent infinite loops
         self.max_repair_attempts = 3
     
-    def execute_phase(self, manifest: dict) -> tuple[bool, Optional[str]]:
+    def execute_phase(self, manifest: dict) -> tuple[bool, str | None]:
         """
         Execute current phase WITH REPAIR CAPABILITY
         
@@ -194,11 +194,11 @@ class CoreOrchestratorV2:
         """Get specialist for phase (mock for demo)"""
         # In real implementation, this uses AgentRegistry
         from apps.agency.specialists import (
-            PlanningSpecialist,
             CodingSpecialist,
-            TestingSpecialist,
             DeploymentSpecialist,
-            MaintenanceSpecialist
+            MaintenanceSpecialist,
+            PlanningSpecialist,
+            TestingSpecialist,
         )
         
         mapping = {

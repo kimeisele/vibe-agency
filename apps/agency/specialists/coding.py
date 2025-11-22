@@ -672,7 +672,7 @@ Return ONLY valid JSON:
                 # Parse LLM response as JSON
                 try:
                     repair_result = json.loads(llm_response)
-                    logger.info(f"   ✅ LLM response parsed successfully")
+                    logger.info("   ✅ LLM response parsed successfully")
                 except json.JSONDecodeError as je:
                     logger.warning(f"LLM response was not valid JSON: {je}")
                     logger.info(f"   Raw response (first 200 chars): {llm_response[:200]}...")
@@ -693,7 +693,7 @@ Return ONLY valid JSON:
                             prompt=repair_prompt,
                             context={"project_root": str(context.project_root)},
                         )
-                        logger.info(f"   ✅ Orchestrator fallback succeeded")
+                        logger.info("   ✅ Orchestrator fallback succeeded")
                     except Exception as orch_error:
                         logger.error(f"   ❌ Orchestrator fallback also failed: {orch_error}")
                         repair_result = None
@@ -718,7 +718,7 @@ Return ONLY valid JSON:
                             continue
 
                         # Read current content
-                        with open(file_path, "r") as f:
+                        with open(file_path) as f:
                             content = f.read()
 
                         # Apply patch

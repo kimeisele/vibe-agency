@@ -33,7 +33,7 @@ Why This Matters:
 """
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from vibe_core.scheduling import Task
 from vibe_core.tools.tool_protocol import Tool, ToolResult
@@ -87,7 +87,7 @@ class DelegateTool(Tool):
         Solution: Tool initializes without kernel, then kernel is injected
         after kernel boot via set_kernel(kernel).
         """
-        self.kernel: "VibeKernel | None" = None
+        self.kernel: VibeKernel | None = None
         logger.info("DelegateTool: Initialized (kernel will be injected via set_kernel)")
 
     def set_kernel(self, kernel: "VibeKernel") -> None:

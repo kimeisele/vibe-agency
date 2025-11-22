@@ -5,10 +5,7 @@ Validates the Human-in-the-Loop fallback provider works correctly
 in both interactive and non-interactive environments.
 """
 
-import sys
 from unittest.mock import patch
-
-import pytest
 
 from vibe_core.llm import HumanProvider
 
