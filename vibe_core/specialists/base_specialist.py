@@ -507,3 +507,62 @@ class BaseSpecialist(ABC):
     def __repr__(self) -> str:
         """String representation for debugging"""
         return f"{self.__class__.__name__}(role={self.role!r}, mission_id={self.mission_id})"
+
+    # ========================================================================
+    # LLM INVOCATION UTILITY (ARCH-010: For repair loop and code generation)
+    # ========================================================================
+
+    def _invoke_llm(
+        self,
+        prompt: str,
+        model: str = "claude-3-5-sonnet-20241022",
+        max_tokens: int = 4096,
+        temperature: float = 1.0,
+    ) -> str:
+        """
+        Invoke LLM for code generation, patch generation, or analysis.
+
+        This is a lightweight utility for specialists to call LLM without
+        instantiating SimpleLLMAgent. Used by repair loop, code generation, etc.
+
+        Args:
+            prompt: Input prompt for LLM
+            model: Model to use (default: Claude 3.5 Sonnet)
+            max_tokens: Maximum output tokens
+            temperature: Sampling temperature
+
+        Returns:
+            LLM response content as string
+
+        Raises:
+            Exception: If LLM invocation fails
+        """
+        try:
+            # Import locally to avoid circular imports
+            from vibe_core.runtime.llm_client import LLMClient
+            from vibe_core.runtime.providers import get_default_provider
+
+            # Get default provider (respects environment variables)
+            provider = get_default_provider()
+
+            # Create LLM client with provider
+            llm_client = LLMClient(provider=provider)
+
+            # Invoke LLM
+            response = llm_client.invoke(
+                prompt=prompt,
+                model=model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+            logger.info(f"LLM invocation successful: {model}")
+            return response.content
+
+        except ImportError as e:
+            logger.error(f"Failed to import LLM utilities: {e}")
+            raise
+
+        except Exception as e:
+            logger.error(f"LLM invocation failed: {e}")
+            raise

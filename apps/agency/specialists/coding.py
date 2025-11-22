@@ -657,73 +657,109 @@ Return ONLY valid JSON:
         patches_applied = 0
 
         try:
-            # Call orchestrator's LLM agent to generate patches
-            if self.orchestrator and hasattr(self.orchestrator, "execute_agent"):
-                logger.info("   🤖 Invoking LLM agent for patch generation...")
-                repair_result = self.orchestrator.execute_agent(
-                    agent_id="repair-specialist",
+            # Call LLM agent to generate patches (ARCH-010: Real repair loop)
+            logger.info("   🤖 Invoking LLM for patch generation...")
+            repair_result = None
+
+            try:
+                # Use BaseSpecialist's LLM utility to invoke Claude
+                llm_response = self._invoke_llm(
                     prompt=repair_prompt,
-                    context={"project_root": str(context.project_root)},
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=4096,
                 )
 
-                # Parse repair result
-                if repair_result and isinstance(repair_result, dict):
-                    patches = repair_result.get("patches", [])
+                # Parse LLM response as JSON
+                try:
+                    repair_result = json.loads(llm_response)
+                    logger.info(f"   ✅ LLM response parsed successfully")
+                except json.JSONDecodeError as je:
+                    logger.warning(f"LLM response was not valid JSON: {je}")
+                    logger.info(f"   Raw response (first 200 chars): {llm_response[:200]}...")
+                    repair_result = {
+                        "analysis": "LLM returned non-JSON response",
+                        "patches": [],
+                    }
 
-                    logger.info(f"   📝 LLM generated {len(patches)} patches")
+            except Exception as llm_error:
+                logger.error(f"   ❌ LLM invocation failed: {llm_error}")
+                logger.info("   ⚠️  Attempting fallback via orchestrator...")
 
-                    # Apply patches with safety checks
-                    for patch in patches:
-                        try:
-                            file_path = context.project_root / patch.get("file_path", "")
-                            operation = patch.get("operation", "replace")
+                # Fallback: Try orchestrator's execute_agent (if available)
+                if self.orchestrator and hasattr(self.orchestrator, "execute_agent"):
+                    try:
+                        repair_result = self.orchestrator.execute_agent(
+                            agent_id="repair-specialist",
+                            prompt=repair_prompt,
+                            context={"project_root": str(context.project_root)},
+                        )
+                        logger.info(f"   ✅ Orchestrator fallback succeeded")
+                    except Exception as orch_error:
+                        logger.error(f"   ❌ Orchestrator fallback also failed: {orch_error}")
+                        repair_result = None
+                else:
+                    logger.warning("   ⚠️  Orchestrator not available, no fallback")
+                    repair_result = None
 
-                            if not file_path.exists():
-                                logger.warning(f"   ⚠️  File not found: {file_path}, skipping patch")
-                                continue
+            # Process repair result if we got one
+            if repair_result and isinstance(repair_result, dict):
+                patches = repair_result.get("patches", [])
 
-                            # Read current content
-                            with open(file_path, "r") as f:
-                                content = f.read()
+                logger.info(f"   📝 LLM generated {len(patches)} patches")
 
-                            # Apply patch
-                            if operation == "replace":
-                                search = patch.get("search", "")
-                                replacement = patch.get("replacement", "")
-                                if search in content:
-                                    new_content = content.replace(search, replacement, 1)
-                                    with open(file_path, "w") as f:
-                                        f.write(new_content)
-                                    patches_applied += 1
-                                    patched_files.append(str(file_path))
-                                    logger.info(f"   ✅ Patched (replace): {file_path.name}")
-                                else:
-                                    logger.warning(f"   ⚠️  Search text not found in {file_path}, skipping")
-                            elif operation == "append":
-                                append_text = patch.get("replacement", "")
-                                with open(file_path, "a") as f:
-                                    f.write(append_text)
+                # Apply patches with safety checks
+                for patch in patches:
+                    try:
+                        file_path = context.project_root / patch.get("file_path", "")
+                        operation = patch.get("operation", "replace")
+
+                        if not file_path.exists():
+                            logger.warning(f"   ⚠️  File not found: {file_path}, skipping patch")
+                            continue
+
+                        # Read current content
+                        with open(file_path, "r") as f:
+                            content = f.read()
+
+                        # Apply patch
+                        if operation == "replace":
+                            search = patch.get("search", "")
+                            replacement = patch.get("replacement", "")
+                            if search in content:
+                                new_content = content.replace(search, replacement, 1)
+                                with open(file_path, "w") as f:
+                                    f.write(new_content)
                                 patches_applied += 1
                                 patched_files.append(str(file_path))
-                                logger.info(f"   ✅ Patched (append): {file_path.name}")
+                                logger.info(f"   ✅ Patched (replace): {file_path.name}")
+                            else:
+                                logger.warning(f"   ⚠️  Search text not found in {file_path}, skipping")
+                        elif operation == "append":
+                            append_text = patch.get("replacement", "")
+                            with open(file_path, "a") as f:
+                                f.write(append_text)
+                            patches_applied += 1
+                            patched_files.append(str(file_path))
+                            logger.info(f"   ✅ Patched (append): {file_path.name}")
 
-                        except Exception as e:
-                            logger.warning(f"   ⚠️  Failed to apply patch to {patch.get('file_path')}: {e}")
+                    except Exception as e:
+                        logger.warning(f"   ⚠️  Failed to apply patch to {patch.get('file_path')}: {e}")
 
-                    # Log patch decisions
-                    for patched_file in patched_files:
-                        self._log_decision(
-                            decision_type="CODE_PATCH_APPLIED",
-                            rationale="Applied LLM-generated repair patch to address test failures",
-                            data={
-                                "file_path": patched_file,
-                                "operation": "patch",
-                                "based_on_qa_report": True,
-                                "arch_version": "ARCH-010",
-                            },
-                        )
+                # Log patch decisions
+                for patched_file in patched_files:
+                    self._log_decision(
+                        decision_type="CODE_PATCH_APPLIED",
+                        rationale="Applied LLM-generated repair patch to address test failures (ARCH-010)",
+                        data={
+                            "file_path": patched_file,
+                            "operation": "patch",
+                            "based_on_qa_report": True,
+                            "arch_version": "ARCH-010",
+                            "llm_invocation_success": True,
+                        },
+                    )
             else:
-                logger.warning("   ⚠️  Orchestrator execute_agent() not available, using fallback repair")
+                logger.warning("   ⚠️  No valid repair result from LLM, using fallback repair")
                 # Fallback: Apply a generic repair comment
                 src_dir = context.project_root / "src"
                 if src_dir.exists():
@@ -735,6 +771,7 @@ Return ONLY valid JSON:
                             patches_applied += 1
                         except Exception as e:
                             logger.warning(f"   ⚠️  Failed to patch {py_file.name}: {e}")
+
 
         except Exception as e:
             logger.error(f"❌ Repair mode LLM agent call failed: {e}")
