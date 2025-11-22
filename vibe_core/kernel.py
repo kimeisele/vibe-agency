@@ -9,7 +9,9 @@ just a collection of scripts. Now, VibeKernel IS the application.
 """
 
 import logging
+import os
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
@@ -71,7 +73,49 @@ class VibeKernel:
         self.manifest_registry = AgentRegistry()  # STEWARD manifest registry (ARCH-026)
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
+        self.inbox_messages: list[dict[str, str]] = []  # GAD-006: Asynchronous Intent
         logger.debug("KERNEL: Initialized (status=STOPPED)")
+
+    def _scan_inbox(self) -> None:
+        """
+        Scan workspace/inbox/ for pending messages (GAD-006).
+
+        This implements the Asynchronous Intent system. Messages are loaded
+        as "High Priority Context" for the operator. Empty inbox = standard mode.
+
+        The inbox is a file-based message queue that survives crashes
+        (Linux philosophy: files are the universal interface).
+
+        Example:
+            >>> kernel._scan_inbox()
+            >>> if kernel.inbox_messages:
+            ...     print(f"Found {len(kernel.inbox_messages)} messages")
+        """
+        inbox_path = Path("workspace/inbox")
+
+        if not inbox_path.exists():
+            logger.debug("KERNEL: inbox directory not found (standard mode)")
+            return
+
+        md_files = sorted(inbox_path.glob("*.md"))
+
+        if not md_files:
+            logger.debug("KERNEL: inbox empty (standard mode)")
+            return
+
+        for md_file in md_files:
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                self.inbox_messages.append({
+                    "filename": md_file.name,
+                    "content": content,
+                })
+                logger.info(f"KERNEL: Loaded inbox message: {md_file.name}")
+            except Exception as e:
+                logger.error(
+                    f"KERNEL: Failed to load inbox message {md_file.name}: {e}",
+                    exc_info=True,
+                )
 
     def boot(self) -> None:
         """
@@ -82,9 +126,10 @@ class VibeKernel:
 
         During boot:
         1. Transition to RUNNING state
-        2. Generate STEWARD manifests for all registered agents (ARCH-026)
-        3. Populate the manifest registry
-        4. Log agent identity information
+        2. Scan inbox for pending messages (GAD-006)
+        3. Generate STEWARD manifests for all registered agents (ARCH-026)
+        4. Populate the manifest registry
+        5. Log agent identity information
 
         Example:
             >>> kernel = VibeKernel()
@@ -94,6 +139,13 @@ class VibeKernel:
         """
         self.status = KernelStatus.RUNNING
         logger.info("KERNEL: ONLINE")
+
+        # Scan inbox for pending messages (GAD-006: Asynchronous Intent)
+        self._scan_inbox()
+        if self.inbox_messages:
+            logger.info(f"KERNEL: Inbox has {len(self.inbox_messages)} message(s) [HIGH PRIORITY]")
+            for msg in self.inbox_messages:
+                logger.info(f"KERNEL: >> INBOX: {msg['filename']}")
 
         # Generate and register STEWARD manifests for all agents (ARCH-026)
         logger.debug(f"KERNEL: Generating STEWARD manifests for {len(self.agent_registry)} agents")
@@ -508,3 +560,27 @@ class VibeKernel:
         if record is None:
             return None
         return record.get("output_result")
+
+    def get_inbox_messages(self) -> list[dict[str, str]]:
+        """
+        Get all pending messages from the inbox (GAD-006).
+
+        Returns the list of high-priority context messages loaded during boot.
+        If the inbox is empty, returns an empty list.
+
+        Returns:
+            list[dict]: List of inbox messages with keys: filename, content
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> kernel.boot()
+            >>> messages = kernel.get_inbox_messages()
+            >>> for msg in messages:
+            ...     print(f"Message from {msg['filename']}: {msg['content']}")
+
+        Notes:
+            - Messages are scanned during boot()
+            - Files are loaded in alphabetical order
+            - Returns empty list if no messages found
+        """
+        return self.inbox_messages
