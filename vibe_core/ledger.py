@@ -366,6 +366,62 @@ class VibeLedger:
                 "agents": [],
             }
 
+    def record_decision(self, **kwargs) -> None:
+        """
+        Record a specialist decision (COMPATIBILITY STUB for legacy Specialists).
+
+        This is a no-op stub. Specialists call this to log decisions, but
+        in the new architecture, decision logging should be done differently
+        (or not at all for simple delegations).
+
+        Args:
+            **kwargs: Any decision data (ignored)
+
+        Note:
+            This is a STUB. Real decision logging should be implemented
+            separately if needed. For now, we just log and ignore.
+        """
+        logger.debug(
+            f"VibeLedger.record_decision() called (STUB). "
+            f"Ignoring decision data: {kwargs.keys()}"
+        )
+
+    def get_mission(self, mission_id: int | str) -> dict[str, Any]:
+        """
+        Get mission data by ID (COMPATIBILITY STUB for legacy Specialists).
+
+        This is a temporary compatibility layer for Specialists that expect
+        an SQLiteStore interface. In the new architecture, missions are
+        managed differently (or may not exist at all for simple delegations).
+
+        Args:
+            mission_id: Mission ID (int or str)
+
+        Returns:
+            dict: Dummy mission data that satisfies Specialist expectations
+
+        Note:
+            This is a STUB. Real mission management should be implemented
+            separately if needed. For now, we return minimal data to prevent
+            crashes in Specialists that call this method.
+        """
+        logger.warning(
+            f"VibeLedger.get_mission() called (STUB). "
+            f"Returning dummy mission data for mission_id={mission_id}. "
+            f"Specialists should be refactored to not depend on mission store."
+        )
+
+        # Return minimal mission data that prevents crashes
+        # Note: "phase" is hardcoded to "PLANNING" for now
+        return {
+            "id": mission_id,
+            "uuid": f"stub-mission-{mission_id}",
+            "status": "active",
+            "phase": "PLANNING",  # Specialists check this in validate_preconditions
+            "created_at": datetime.now().isoformat(),
+            "metadata": {},
+        }
+
     def close(self) -> None:
         """Close the database connection."""
         if self.conn:

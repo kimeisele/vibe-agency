@@ -67,3 +67,9 @@ temp_test_linting.py
 
 # Demo output (temporary test files)
 .demo_output/
+
+# Runtime database (SQLite ledger - modified every run)
+data/
+*.db
+*.db-journal
+temp_mission/

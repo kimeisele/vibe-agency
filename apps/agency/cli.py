@@ -32,6 +32,7 @@ Version: 1.0 (ARCH-032)
 
 import argparse
 import asyncio
+import json
 import logging
 import os
 import sys
@@ -45,13 +46,22 @@ from dotenv import load_dotenv
 
 from tests.mocks.llm import MockLLMProvider  # For development (no API keys needed)
 from vibe_core.agents.llm_agent import SimpleLLMAgent
+from vibe_core.agents.specialist_factory import SpecialistFactoryAgent
 from vibe_core.governance import InvariantChecker
 from vibe_core.kernel import VibeKernel
 from vibe_core.llm.google_adapter import GoogleProvider  # Real AI brain
 from vibe_core.llm import StewardProvider  # Claude Code integration fallback (ARCH-033C)
 from vibe_core.runtime.providers.base import ProviderNotAvailableError
+from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
-from vibe_core.tools import ReadFileTool, ToolRegistry, WriteFileTool
+from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
+
+# Import Specialists (ARCH-036: Crew Assembly)
+from apps.agency.specialists import (
+    CodingSpecialist,
+    PlanningSpecialist,
+    TestingSpecialist,
+)
 
 # Setup logging
 logging.basicConfig(
@@ -101,24 +111,33 @@ def boot_kernel():
         logger.warning(f"⚠️  Soul Governance unavailable ({e}), continuing without governance")
         soul = None
 
-    # Step 3: Register Tools (ARCH-027)
+    # Step 3: Register Basic Tools (ARCH-027)
+    # Note: DelegateTool requires kernel reference, so it's registered later (Step 6.5)
     registry = ToolRegistry(invariant_checker=soul)
     registry.register(WriteFileTool())
     registry.register(ReadFileTool())
-    logger.info(f"🔧 Tool Registry initialized ({len(registry)} tools)")
+    logger.info(f"🔧 Tool Registry initialized ({len(registry)} basic tools)")
 
     # Step 4: Create Operator Agent (GAD-000 Operator Pattern)
     #
     # The agent IS the operator. It has full access to the system via tools.
     # The system prompt defines its mission and constraints.
     #
-    system_prompt = """You are the VIBE OPERATOR.
+    # ARCH-037: Operator is the COMMANDER. It delegates to specialists.
+    #
+    system_prompt = """You are the VIBE OPERATOR - The Mission Commander.
 
-You have access to file system tools and are responsible for executing user missions autonomously.
+You have access to file system tools AND a crew of domain specialists.
 
 Your capabilities:
 - read_file: Read content from files
 - write_file: Create or modify files
+- delegate_task: Assign work to specialist agents
+
+Your crew (specialists):
+- specialist-planning: Expert in project planning, architecture design, requirements analysis
+- specialist-coding: Expert in code generation, implementation, testing
+- specialist-testing: Expert in QA, test automation, quality gates
 
 Your constraints:
 - NEVER modify core system files (vibe_core/kernel.py, etc.)
@@ -126,16 +145,27 @@ Your constraints:
 - ALWAYS respect Soul Governance rules
 - ALWAYS be transparent about what you're doing
 
-Your mission:
-- Execute user requests safely and efficiently
-- Use tools when appropriate
-- Explain your actions clearly
-- Complete tasks autonomously when possible
+Your mission strategy:
+- DELEGATE complex work to specialists (don't try to be expert at everything)
+- For planning tasks → use specialist-planning
+- For coding tasks → use specialist-coding
+- For testing tasks → use specialist-testing
+- Use file tools for simple read/write operations
+- Coordinate specialists to complete multi-phase missions
 
-When you use a tool, respond with valid JSON:
-{"tool": "tool_name", "parameters": {...}}
+How to delegate:
+{"tool": "delegate_task", "parameters": {
+    "agent_id": "specialist-planning",
+    "payload": {
+        "mission_id": 1,
+        "mission_uuid": "abc-123",
+        "phase": "PLANNING",
+        "project_root": "/path/to/project",
+        "metadata": {}
+    }
+}}
 
-Otherwise, respond with natural language to the user.
+Execute user requests by coordinating your crew efficiently.
 """
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
@@ -190,6 +220,61 @@ Otherwise, respond with natural language to the user.
     kernel.boot()
     kernel.register_agent(operator_agent)
     logger.info(f"⚡ Kernel booted (ledger: {ledger_path})")
+
+    # Step 6: Register Specialist Crew (ARCH-036: Crew Assembly)
+    #
+    # The Specialists are the domain experts for each SDLC phase.
+    # They are registered as factory agents (create specialist per task).
+    #
+    # Why Factory Pattern:
+    #   - Specialists need mission_id (not available at boot time)
+    #   - Factory creates fresh specialist instance per task
+    #   - Specialist is task-scoped (discarded after execution)
+    #
+    guard = ToolSafetyGuard()
+
+    planning_factory = SpecialistFactoryAgent(
+        specialist_class=PlanningSpecialist,
+        role="planning",
+        sqlite_store=kernel.ledger,
+        tool_safety_guard=guard,
+    )
+    kernel.register_agent(planning_factory)
+    logger.info("🧑‍💼 Registered specialist: Planning")
+
+    coding_factory = SpecialistFactoryAgent(
+        specialist_class=CodingSpecialist,
+        role="coding",
+        sqlite_store=kernel.ledger,
+        tool_safety_guard=guard,
+    )
+    kernel.register_agent(coding_factory)
+    logger.info("👨‍💻 Registered specialist: Coding")
+
+    testing_factory = SpecialistFactoryAgent(
+        specialist_class=TestingSpecialist,
+        role="testing",
+        sqlite_store=kernel.ledger,
+        tool_safety_guard=guard,
+    )
+    kernel.register_agent(testing_factory)
+    logger.info("🧪 Registered specialist: Testing")
+
+    # Step 6.5: Register DelegateTool (ARCH-037: The Intercom)
+    #
+    # Late binding: DelegateTool needs kernel reference for task submission.
+    # We register it AFTER kernel boot to break circular dependency.
+    #
+    # Circular dependency:
+    #   - Kernel needs Agent (for dispatch)
+    #   - Agent needs ToolRegistry (for capabilities)
+    #   - DelegateTool needs Kernel (for submit)
+    #
+    # Solution: Boot kernel → Register basic tools → Register DelegateTool late
+    #
+    delegate_tool = DelegateTool(kernel)
+    registry.register(delegate_tool)
+    logger.info("📞 Registered DelegateTool (Operator can now delegate to specialists)")
 
     logger.info("✅ BOOT COMPLETE - VIBE AGENCY OS ONLINE")
     logger.info(f"   - Agents: {len(kernel.agent_registry)}")
@@ -271,6 +356,85 @@ async def run_interactive(kernel: VibeKernel):
             print(f"   ↳ Error: {e}")
 
 
+def display_status(kernel: VibeKernel, json_format: bool = False):
+    """
+    Display system status (agents, tools, soul).
+
+    Args:
+        kernel: Booted VibeKernel instance
+        json_format: If True, output as JSON; otherwise human-readable
+
+    Example:
+        >>> kernel = boot_kernel()
+        >>> display_status(kernel, json_format=True)
+        {"agents": [...], "tools": [...], "soul": {"enabled": true}}
+    """
+    # Collect agent information
+    agents = []
+    for agent_id, agent in kernel.agent_registry.items():
+        agent_info = {
+            "agent_id": agent_id,
+            "type": agent.__class__.__name__,
+        }
+
+        # Add specialist-specific info if available
+        if hasattr(agent, "specialist_class"):
+            agent_info["specialist_class"] = agent.specialist_class.__name__
+            agent_info["role"] = agent.role
+
+        agents.append(agent_info)
+
+    # Collect tool information (if tool registry is accessible)
+    # Note: ToolRegistry is not directly accessible from kernel
+    # We'll need to pass it separately or access it via agents
+    tools_count = "N/A"  # Placeholder (tools are agent-specific)
+
+    # Soul status (requires access to InvariantChecker)
+    # Note: Soul is not stored in kernel, only in agents
+    soul_enabled = False  # Placeholder
+
+    if json_format:
+        # JSON output (ARCH-035 compliant)
+        status = {
+            "system": "vibe-agency",
+            "version": "1.0",
+            "kernel": {
+                "ledger_path": str(kernel.ledger.db_path) if hasattr(kernel.ledger, "db_path") else "unknown",
+                "agents_count": len(agents),
+            },
+            "agents": agents,
+            "tools": {
+                "count": tools_count,
+            },
+            "soul": {
+                "enabled": soul_enabled,
+            },
+        }
+        print(json.dumps(status, indent=2))
+    else:
+        # Human-readable output
+        print("=" * 70)
+        print("🤖 VIBE AGENCY OS - SYSTEM STATUS")
+        print("=" * 70)
+        print(f"\n📊 Kernel:")
+        print(f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}")
+        print(f"   - Agents: {len(agents)}")
+
+        print(f"\n🤖 Registered Agents:")
+        for agent_info in agents:
+            agent_type = agent_info["type"]
+            agent_id = agent_info["agent_id"]
+
+            if "specialist_class" in agent_info:
+                print(f"   - {agent_id} ({agent_type} → {agent_info['specialist_class']})")
+            else:
+                print(f"   - {agent_id} ({agent_type})")
+
+        print(f"\n🔧 Tools: {tools_count}")
+        print(f"🛡️  Soul Governance: {'enabled' if soul_enabled else 'disabled'}")
+        print("")
+
+
 async def run_mission(kernel: VibeKernel, mission: str):
     """
     Run in mission mode (autonomous operation).
@@ -333,6 +497,7 @@ def main():
     Parses command-line arguments and starts the appropriate mode:
     - No args: Interactive mode
     - --mission "...": Mission mode
+    - --status: Display system status and exit
 
     Returns:
         int: Exit code (0 = success, 1 = error)
@@ -342,7 +507,8 @@ def main():
         description="Vibe Agency OS - Unified Entry Point (ARCH-032)",
         epilog="Examples:\n"
         "  Interactive mode:  python apps/agency/cli.py\n"
-        "  Mission mode:      python apps/agency/cli.py --mission 'Write a report'\n",
+        "  Mission mode:      python apps/agency/cli.py --mission 'Write a report'\n"
+        "  Status check:      python apps/agency/cli.py --status [--json]\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -351,6 +517,18 @@ def main():
         "-m",
         type=str,
         help="Mission description for autonomous execution (GAD-000 mode)",
+    )
+
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Display system status (agents, tools, soul) and exit",
+    )
+
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output in JSON format (use with --status)",
     )
 
     args = parser.parse_args()
@@ -367,7 +545,11 @@ def main():
 
     # Run appropriate mode
     try:
-        if args.mission:
+        if args.status:
+            # Status mode (display system info and exit)
+            display_status(kernel, json_format=args.json)
+            return 0
+        elif args.mission:
             # Mission mode (autonomous)
             asyncio.run(run_mission(kernel, args.mission))
         else:
