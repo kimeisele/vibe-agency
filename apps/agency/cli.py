@@ -563,10 +563,7 @@ def handle_task_command(command: str, args_list: list[str] | None = None):
             priority = args_list[1].upper() if len(args_list) > 1 else "MEDIUM"
 
             tool = AddTaskTool()
-            result = tool.execute({
-                "description": description,
-                "priority": priority
-            })
+            result = tool.execute({"description": description, "priority": priority})
 
             if result.success:
                 print(f"✅ {result.output}")

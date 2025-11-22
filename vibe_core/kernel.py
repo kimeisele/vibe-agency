@@ -182,9 +182,7 @@ class VibeKernel:
                 logger.warning("KERNEL: Invalid BACKLOG.md format")
                 return
 
-            section_content = content[
-                outstanding_idx + len("## Outstanding Tasks") : completed_idx
-            ]
+            section_content = content[outstanding_idx + len("## Outstanding Tasks") : completed_idx]
 
             # Parse task lines (markdown checkboxes)
             tasks = []
@@ -197,9 +195,7 @@ class VibeKernel:
 
             if tasks:
                 self.agenda_tasks = tasks
-                logger.info(
-                    f"KERNEL: Loaded {len(self.agenda_tasks)} pending task(s) from agenda"
-                )
+                logger.info(f"KERNEL: Loaded {len(self.agenda_tasks)} pending task(s) from agenda")
                 for i, task in enumerate(self.agenda_tasks[:3], 1):
                     logger.info(f"KERNEL: >> AGENDA[{i}]: {task[:80]}...")
 
