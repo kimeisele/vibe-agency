@@ -288,7 +288,7 @@ async def run_interactive(kernel: VibeKernel):
     User types commands, agent responds, repeat.
 
     Flow:
-        1. Print welcome message
+        1. Print welcome message with HUD (ARCH-062)
         2. Loop:
             a. Prompt user for command
             b. Submit to kernel
@@ -306,9 +306,20 @@ async def run_interactive(kernel: VibeKernel):
         [agent processes and responds]
         👤 MISSION/COMMAND: exit
     """
-    print("=" * 70)
-    print("🤖 STEWARD INTERACTIVE MODE - VIBE OS")
-    print("=" * 70)
+    # ARCH-062: Display HUD (Heads-Up Display)
+    from vibe_core.runtime.hud import StatusBar, CapabilitiesMenu, HintSystem
+
+    print("")
+    # Render status bar with user info and system state
+    status_bar = StatusBar(PROJECT_ROOT)
+    print(status_bar.render())
+    print("")
+
+    # Render capabilities menu (what can you do?)
+    capabilities = CapabilitiesMenu()
+    print(capabilities.render())
+    print("")
+    print("─" * 70)
     print("")
 
     # Load personalized greeting from StewardCartridge (ARCH-051)
@@ -317,18 +328,12 @@ async def run_interactive(kernel: VibeKernel):
 
         steward = StewardCartridge()
         user_name = steward.get_user_name()
-        print(f"Hi {user_name}. I am STEWARD, your personal operating system.")
-        print("I can help you: [Plan], [Build], [Fix], or [Manage] your work.")
-        print("")
+        print(f"Hi {user_name}. Systems are green.")
     except Exception as e:
         logger.warning(f"Could not load personalized greeting: {e}")
-        print("Hi there. I am STEWARD, your personal operating system.")
-        print("I can help you: [Plan], [Build], [Fix], or [Manage] your work.")
-        print("")
+        print("Hi there. Systems are green.")
 
-    print("What's your intent?")
-    print("  Examples: 'Plan a feature', 'Build the dashboard', 'Fix the authentication bug'")
-    print("  Or type 'exit' to quit.")
+    print("What would you like to do?")
     print("")
 
     while True:
@@ -343,6 +348,16 @@ async def run_interactive(kernel: VibeKernel):
 
             # Ignore empty input
             if not cmd:
+                # ARCH-062: Proactive hints for idle user
+                hint = HintSystem.get_contextual_hint()
+                if hint:
+                    print(f"\n{hint}")
+                continue
+
+            # ARCH-062: Hints for unclear input
+            hint = HintSystem.get_hint_for_input(cmd)
+            if hint:
+                print(f"\n{hint}")
                 continue
 
             # ARCH-060: Hot Reload - Recompile prompt with fresh kernel state
