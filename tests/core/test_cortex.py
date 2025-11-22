@@ -105,10 +105,10 @@ class TestSimpleLLMAgent:
 
         result = agent.process(task)
 
-        assert result["success"] is True
-        assert result["response"] == "Hello, user!"
-        assert result["provider"] == "MockLLMProvider"
-        assert result["error"] is None
+        assert result.success is True
+        assert result.output["response"] == "Hello, user!"
+        assert result.output["provider"] == "MockLLMProvider"
+        assert result.error is None
 
     def test_agent_process_with_model(self):
         """Test that agent passes model to provider."""
@@ -119,7 +119,7 @@ class TestSimpleLLMAgent:
 
         result = agent.process(task)
 
-        assert result["model_used"] == "gpt-4"
+        assert result.output["model_used"] == "gpt-4"
         assert provider.call_history[0]["model"] == "gpt-4"
 
     def test_agent_process_task_override_model(self):
@@ -133,7 +133,7 @@ class TestSimpleLLMAgent:
 
         result = agent.process(task)
 
-        assert result["model_used"] == "claude-3-opus"
+        assert result.output["model_used"] == "claude-3-opus"
         assert provider.call_history[0]["model"] == "claude-3-opus"
 
     def test_agent_builds_messages_correctly(self):
@@ -211,8 +211,10 @@ class TestSimpleLLMAgent:
 
         task = Task(agent_id="test-agent", payload={"user_message": "Hello"})
 
-        with pytest.raises(LLMError, match="LLM call failed"):
-            agent.process(task)
+        # Agent should return failure response, not raise
+        result = agent.process(task)
+        assert result.success is False
+        assert "LLM call failed" in result.error
 
     def test_agent_update_system_prompt(self):
         """Test that agent can update system prompt."""
@@ -260,7 +262,7 @@ class TestKernelLLMIntegration:
         assert record["status"] == "COMPLETED"
         assert record["agent_id"] == "llm-agent"
         assert record["input_payload"]["user_message"] == "Hello, AI!"
-        assert record["output_result"]["response"] == "I am a mock response"
+        assert record["output_result"]["output"]["response"] == "I am a mock response"
         assert record["output_result"]["success"] is True
 
     def test_kernel_records_llm_failure(self):
@@ -284,17 +286,16 @@ class TestKernelLLMIntegration:
         task = Task(agent_id="llm-agent", payload={"user_message": "Test"})
         kernel.submit(task)
 
-        # Task should fail
-        with pytest.raises(LLMError):
-            kernel.tick()
+        # Task should not raise, but record failure in result
+        kernel.tick()
 
-        # Verify ledger recorded the failure
+        # Verify ledger recorded the completion (with failure status in result)
         record = kernel.ledger.get_task(task.id)
 
         assert record is not None
-        assert record["status"] == "FAILED"
-        assert "LLMError" in record["error_message"]
-        assert "API timeout" in record["error_message"]
+        assert record["status"] == "COMPLETED"  # Kernel sees it as completed execution
+        assert record["output_result"]["success"] is False
+        assert "API timeout" in record["output_result"]["error"]
 
     def test_kernel_processes_multiple_llm_tasks(self):
         """Test that kernel can process multiple LLM tasks in sequence."""

@@ -25,6 +25,10 @@ class TestAgent(VibeAgent):
     def agent_id(self) -> str:
         return self._agent_id
 
+    @property
+    def capabilities(self) -> list[str]:
+        return ["test"]
+
     def process(self, task: Task) -> Any:
         return {"status": "success", "data": task.payload}
 
@@ -38,6 +42,10 @@ class FailingTestAgent(VibeAgent):
     @property
     def agent_id(self) -> str:
         return self._agent_id
+
+    @property
+    def capabilities(self) -> list[str]:
+        return ["fail"]
 
     def process(self, task: Task) -> Any:
         raise RuntimeError("Test failure")
@@ -398,7 +406,8 @@ class TestLedgerKernelIntegration:
 
         # Submit task for nonexistent agent
         task = Task(agent_id="nonexistent-agent", payload={"action": "test"})
-        kernel.submit(task)
+        # Bypass validation to test ledger recording
+        kernel.scheduler.submit_task(task)
 
         # Should raise AgentNotFoundError
         with pytest.raises(Exception):  # AgentNotFoundError

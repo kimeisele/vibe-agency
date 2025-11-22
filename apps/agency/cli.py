@@ -68,6 +68,8 @@ from vibe_core.tools import (  # noqa: E402
     ToolRegistry,
     WriteFileTool,
 )
+from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
+from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
 from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 
 # Setup logging
@@ -123,6 +125,8 @@ def boot_kernel():
     registry = ToolRegistry(invariant_checker=soul)
     registry.register(WriteFileTool())
     registry.register(ReadFileTool())
+    registry.register(ListDirectoryTool())
+    registry.register(SearchFileTool())
     logger.info(f"🔧 Tool Registry initialized ({len(registry)} basic tools)")
 
     # Step 4: Create Operator Agent (GAD-000 Operator Pattern)

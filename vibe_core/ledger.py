@@ -61,10 +61,22 @@ class VibeLedger:
             >>> test_ledger = VibeLedger(":memory:")
         """
         self.db_path = db_path
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        try:
+            self.conn = sqlite3.connect(db_path, check_same_thread=False)
+            # Test connection integrity
+            self.conn.execute("SELECT 1")
+            logger.info(f"LEDGER: Initialized (db_path={db_path})")
+        except sqlite3.Error as e:
+            logger.warning(
+                f"🔥 PHOENIX RECOVERY: Failed to connect to ledger at '{db_path}': {e}. "
+                f"Falling back to IN-MEMORY (transient) ledger to ensure system survival."
+            )
+            self.db_path = ":memory:"
+            self.conn = sqlite3.connect(":memory:", check_same_thread=False)
+            logger.info("LEDGER: Initialized (db_path=:memory: [FALLBACK])")
+
         self.conn.row_factory = sqlite3.Row  # Enable dict-like access
         self._initialize_schema()
-        logger.info(f"LEDGER: Initialized (db_path={db_path})")
 
     def _initialize_schema(self) -> None:
         """Create task_history table if it doesn't exist."""
