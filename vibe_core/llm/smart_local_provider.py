@@ -19,10 +19,9 @@ Version: 1.0 (ARCH-041)
 
 import json
 import logging
-import uuid
 from typing import Any
 
-from vibe_core.llm import LLMProvider
+from vibe_core.llm.provider import LLMProvider
 
 logger = logging.getLogger(__name__)
 

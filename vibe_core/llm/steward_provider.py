@@ -31,7 +31,7 @@ import logging
 import sys
 from typing import Any
 
-from vibe_core.llm import LLMProvider
+from vibe_core.llm.provider import LLMProvider
 
 logger = logging.getLogger(__name__)
 
