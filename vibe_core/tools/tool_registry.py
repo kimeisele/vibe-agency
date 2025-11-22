@@ -92,8 +92,7 @@ class ToolRegistry:
 
         if tool_name in self.tools:
             raise ValueError(
-                f"Tool '{tool_name}' is already registered. "
-                f"Cannot register duplicate tool names."
+                f"Tool '{tool_name}' is already registered. Cannot register duplicate tool names."
             )
 
         self.tools[tool_name] = tool
@@ -175,8 +174,7 @@ class ToolRegistry:
         tool = self.get(tool_name)
         if tool is None:
             error_msg = (
-                f"Tool '{tool_name}' not found in registry. "
-                f"Available tools: {self.list_tools()}"
+                f"Tool '{tool_name}' not found in registry. Available tools: {self.list_tools()}"
             )
             logger.error(f"ToolRegistry: {error_msg}")
             return ToolResult(success=False, error=error_msg)

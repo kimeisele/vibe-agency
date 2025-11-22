@@ -102,7 +102,7 @@ class TestKernelExecutionCycle:
         kernel = VibeKernel(ledger_path=":memory:")
         agent = DummyAgent(agent_id="agent-1")
         kernel.register_agent(agent)
-        
+
         task = Task(agent_id="agent-1", payload={"action": "compile"})
         task_id = kernel.submit(task)
 

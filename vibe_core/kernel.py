@@ -9,7 +9,9 @@ just a collection of scripts. Now, VibeKernel IS the application.
 """
 
 import logging
+import os
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
@@ -71,7 +73,141 @@ class VibeKernel:
         self.manifest_registry = AgentRegistry()  # STEWARD manifest registry (ARCH-026)
         self.ledger = VibeLedger(ledger_path)
         self.status = KernelStatus.STOPPED
+        self.inbox_messages: list[dict[str, str]] = []  # GAD-006: Asynchronous Intent
+        self.agenda_tasks: list[str] = []  # ARCH-045: Agenda system (pending tasks)
+        self.git_status: str | None = None  # ARCH-044: Git-Ops sync status
         logger.debug("KERNEL: Initialized (status=STOPPED)")
+
+    def _scan_inbox(self) -> None:
+        """
+        Scan workspace/inbox/ for pending messages (GAD-006).
+
+        This implements the Asynchronous Intent system. Messages are loaded
+        as "High Priority Context" for the operator. Empty inbox = standard mode.
+
+        The inbox is a file-based message queue that survives crashes
+        (Linux philosophy: files are the universal interface).
+
+        Example:
+            >>> kernel._scan_inbox()
+            >>> if kernel.inbox_messages:
+            ...     print(f"Found {len(kernel.inbox_messages)} messages")
+        """
+        inbox_path = Path("workspace/inbox")
+
+        if not inbox_path.exists():
+            logger.debug("KERNEL: inbox directory not found (standard mode)")
+            return
+
+        md_files = sorted(inbox_path.glob("*.md"))
+
+        if not md_files:
+            logger.debug("KERNEL: inbox empty (standard mode)")
+            return
+
+        for md_file in md_files:
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                self.inbox_messages.append(
+                    {
+                        "filename": md_file.name,
+                        "content": content,
+                    }
+                )
+                logger.info(f"KERNEL: Loaded inbox message: {md_file.name}")
+            except Exception as e:
+                logger.error(
+                    f"KERNEL: Failed to load inbox message {md_file.name}: {e}",
+                    exc_info=True,
+                )
+
+    def _check_git_status(self) -> None:
+        """
+        Check git synchronization status from environment variable (ARCH-044).
+
+        This reads VIBE_GIT_STATUS set by system-boot.sh and stores it
+        for operator context injection. The status indicates whether the
+        local repository is synced, behind, diverged, or offline.
+
+        Possible values:
+        - "SYNCED": Local is up-to-date with remote
+        - "BEHIND_BY_N": Local is N commits behind remote
+        - "DIVERGED": Local and remote have diverged
+        - "FETCH_FAILED": Could not fetch (offline or no remote)
+        - "NO_REPO": Not a git repository
+        - None: VIBE_GIT_STATUS not set (legacy boot)
+
+        Example:
+            >>> kernel._check_git_status()
+            >>> if kernel.git_status and kernel.git_status.startswith("BEHIND"):
+            ...     print("Repository is out of sync")
+        """
+        self.git_status = os.environ.get("VIBE_GIT_STATUS")
+
+        if self.git_status:
+            logger.debug(f"KERNEL: Git status detected: {self.git_status}")
+        else:
+            logger.debug("KERNEL: No git status available (VIBE_GIT_STATUS not set)")
+
+    def _scan_backlog(self) -> None:
+        """
+        Scan workspace/BACKLOG.md for pending agenda tasks (ARCH-045).
+
+        This implements the Agenda System for long-term task persistence.
+        Outstanding tasks are loaded as "Current Agenda" context for the operator.
+        Empty backlog = no pending agenda items.
+
+        The backlog is a file-based task queue that survives crashes
+        (Linux philosophy: files are the universal interface).
+
+        Example:
+            >>> kernel._scan_backlog()
+            >>> if kernel.agenda_tasks:
+            ...     print(f"Found {len(kernel.agenda_tasks)} pending tasks")
+        """
+        backlog_path = Path("workspace/BACKLOG.md")
+
+        if not backlog_path.exists():
+            logger.debug("KERNEL: BACKLOG.md not found (no agenda)")
+            return
+
+        try:
+            content = backlog_path.read_text(encoding="utf-8")
+
+            # Extract Outstanding Tasks section
+            outstanding_idx = content.find("## Outstanding Tasks")
+            completed_idx = content.find("## Completed Tasks")
+
+            if outstanding_idx == -1 or completed_idx == -1:
+                logger.warning("KERNEL: Invalid BACKLOG.md format")
+                return
+
+            section_content = content[
+                outstanding_idx + len("## Outstanding Tasks") : completed_idx
+            ]
+
+            # Parse task lines (markdown checkboxes)
+            tasks = []
+            for line in section_content.split("\n"):
+                line = line.strip()
+                if line.startswith("- [ ]"):
+                    # Extract the task description
+                    task_desc = line.replace("- [ ]", "").strip()
+                    tasks.append(task_desc)
+
+            if tasks:
+                self.agenda_tasks = tasks
+                logger.info(
+                    f"KERNEL: Loaded {len(self.agenda_tasks)} pending task(s) from agenda"
+                )
+                for i, task in enumerate(self.agenda_tasks[:3], 1):
+                    logger.info(f"KERNEL: >> AGENDA[{i}]: {task[:80]}...")
+
+            else:
+                logger.debug("KERNEL: No pending tasks in backlog (agenda empty)")
+
+        except Exception as e:
+            logger.error(f"KERNEL: Failed to scan backlog: {e}", exc_info=True)
 
     def boot(self) -> None:
         """
@@ -82,9 +218,11 @@ class VibeKernel:
 
         During boot:
         1. Transition to RUNNING state
-        2. Generate STEWARD manifests for all registered agents (ARCH-026)
-        3. Populate the manifest registry
-        4. Log agent identity information
+        2. Scan inbox for pending messages (GAD-006)
+        3. Scan backlog for pending agenda tasks (ARCH-045)
+        4. Generate STEWARD manifests for all registered agents (ARCH-026)
+        5. Populate the manifest registry
+        6. Log agent identity information
 
         Example:
             >>> kernel = VibeKernel()
@@ -94,6 +232,26 @@ class VibeKernel:
         """
         self.status = KernelStatus.RUNNING
         logger.info("KERNEL: ONLINE")
+
+        # Check git sync status (ARCH-044: Git-Ops Strategy)
+        self._check_git_status()
+        if self.git_status and self.git_status != "SYNCED":
+            logger.warning(f"KERNEL: Git sync status: {self.git_status}")
+            logger.info("KERNEL: >> Check STEWARD.md for update policy")
+
+        # Scan inbox for pending messages (GAD-006: Asynchronous Intent)
+        self._scan_inbox()
+        if self.inbox_messages:
+            logger.info(f"KERNEL: Inbox has {len(self.inbox_messages)} message(s) [HIGH PRIORITY]")
+            for msg in self.inbox_messages:
+                logger.info(f"KERNEL: >> INBOX: {msg['filename']}")
+
+        # Scan backlog for pending agenda tasks (ARCH-045: Agenda System)
+        self._scan_backlog()
+        if self.agenda_tasks:
+            logger.info(f"KERNEL: Agenda has {len(self.agenda_tasks)} pending task(s)")
+            for i, task in enumerate(self.agenda_tasks[:3], 1):
+                logger.info(f"KERNEL: >> AGENDA[{i}]: {task[:80]}...")
 
         # Generate and register STEWARD manifests for all agents (ARCH-026)
         logger.debug(f"KERNEL: Generating STEWARD manifests for {len(self.agent_registry)} agents")
@@ -156,8 +314,7 @@ class VibeKernel:
 
         if agent_id in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' is already registered. "
-                f"Cannot register duplicate agent IDs."
+                f"Agent '{agent_id}' is already registered. Cannot register duplicate agent IDs."
             )
 
         self.agent_registry[agent_id] = agent
@@ -189,8 +346,7 @@ class VibeKernel:
         # Check 1: Agent registered in agent_registry
         if agent_id not in self.agent_registry:
             raise ValueError(
-                f"Agent '{agent_id}' not registered. "
-                f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not registered. Available: {list(self.agent_registry.keys())}"
             )
 
         # Check 2: Agent has manifest (only check after boot)
@@ -211,8 +367,6 @@ class VibeKernel:
                 )
 
         logger.debug(f"KERNEL: Delegation validation passed for {agent_id}")
-
-
 
     def submit(self, task: Task) -> str:
         """
@@ -314,7 +468,7 @@ class VibeKernel:
         # Look up the agent in the registry
         if agent_id not in self.agent_registry:
             error_msg = (
-                f"Agent '{agent_id}' not found. " f"Available: {list(self.agent_registry.keys())}"
+                f"Agent '{agent_id}' not found. Available: {list(self.agent_registry.keys())}"
             )
             logger.error(f"KERNEL: {error_msg} (task={task.id})")
             # Record the failure before raising
@@ -339,9 +493,7 @@ class VibeKernel:
             # Convert AgentResponse to dict for ledger storage if needed
             from vibe_core.agent_protocol import AgentResponse
 
-            result_for_ledger = (
-                result.to_dict() if isinstance(result, AgentResponse) else result
-            )
+            result_for_ledger = result.to_dict() if isinstance(result, AgentResponse) else result
 
             # Record successful completion
             self.ledger.record_completion(task, result_for_ledger)
@@ -476,7 +628,9 @@ class VibeKernel:
             logger.warning(f"KERNEL: Task {task_id} not found in ledger")
             return None
 
-        logger.debug(f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})")
+        logger.debug(
+            f"KERNEL: Retrieved task {task_id} from ledger (status={record.get('status')})"
+        )
         return record
 
     def get_task_output(self, task_id: str) -> dict | None:
@@ -508,3 +662,59 @@ class VibeKernel:
         if record is None:
             return None
         return record.get("output_result")
+
+    def get_inbox_messages(self) -> list[dict[str, str]]:
+        """
+        Get all pending messages from the inbox (GAD-006).
+
+        Returns the list of high-priority context messages loaded during boot.
+        If the inbox is empty, returns an empty list.
+
+        Returns:
+            list[dict]: List of inbox messages with keys: filename, content
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> kernel.boot()
+            >>> messages = kernel.get_inbox_messages()
+            >>> for msg in messages:
+            ...     print(f"Message from {msg['filename']}: {msg['content']}")
+
+        Notes:
+            - Messages are scanned during boot()
+            - Files are loaded in alphabetical order
+            - Returns empty list if no messages found
+        """
+        return self.inbox_messages
+
+    def get_git_status(self) -> str | None:
+        """
+        Get the current git synchronization status (ARCH-044).
+
+        This returns the git sync status detected during kernel boot.
+        The operator can use this to determine if system updates are needed.
+
+        Returns:
+            str | None: Git sync status or None if not available
+
+        Possible values:
+            - "SYNCED": Repository is up-to-date
+            - "BEHIND_BY_N": N commits behind remote (e.g. "BEHIND_BY_5")
+            - "DIVERGED": Local and remote have diverged
+            - "FETCH_FAILED": Could not fetch (offline or no remote)
+            - "NO_REPO": Not a git repository
+            - None: Status not checked (pre-ARCH-044 boot)
+
+        Example:
+            >>> kernel = VibeKernel()
+            >>> kernel.boot()
+            >>> status = kernel.get_git_status()
+            >>> if status and status.startswith("BEHIND"):
+            ...     print("System update available")
+
+        Notes:
+            - Status is set during boot() via VIBE_GIT_STATUS env var
+            - Operator should check STEWARD.md for update policy
+            - Use maintenance specialist to perform updates
+        """
+        return self.git_status

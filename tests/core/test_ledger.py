@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from vibe_core.agent_protocol import VibeAgent
+from vibe_core.agent_protocol import AgentNotFoundError, VibeAgent
 from vibe_core.kernel import VibeKernel
 from vibe_core.ledger import VibeLedger
 from vibe_core.scheduling import Task
@@ -410,7 +410,7 @@ class TestLedgerKernelIntegration:
         kernel.scheduler.submit_task(task)
 
         # Should raise AgentNotFoundError
-        with pytest.raises(Exception):  # AgentNotFoundError
+        with pytest.raises(AgentNotFoundError):
             kernel.tick()
 
         # Check ledger recorded the failure

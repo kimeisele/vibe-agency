@@ -64,7 +64,7 @@ async def factory_run():
             "mission": "Design a Snake game architecture with tkinter GUI, arrow key controls, score tracking, and test coverage >= 80%",
             "output_dir": "workspace/snake_game/",
             "project_root": str(PROJECT_ROOT),
-        }
+        },
     )
     planning_task_id = kernel.submit(planning_task)
     print(f"   → Planning task submitted: {planning_task_id}")
@@ -89,7 +89,7 @@ async def factory_run():
             "plan": planning_result.get("output", {}).get("plan", "Snake game with tkinter"),
             "output_dir": "workspace/snake_game/",
             "project_root": str(PROJECT_ROOT),
-        }
+        },
     )
     coding_task_id = kernel.submit(coding_task)
     print(f"   → Coding task submitted: {coding_task_id}")
@@ -102,7 +102,7 @@ async def factory_run():
         await asyncio.sleep(0.01)
 
     print(f"   → Coding completed in {steps} steps")
-    coding_result = query_ledger(kernel, coding_task_id)
+    query_ledger(kernel, coding_task_id)  # Query for side effects
     print("   → Code generated and written to workspace/snake_game/\n")
 
     # Step 3: TESTING
@@ -114,7 +114,7 @@ async def factory_run():
             "test_dir": "workspace/snake_game/",
             "coverage_target": 0.80,
             "project_root": str(PROJECT_ROOT),
-        }
+        },
     )
     testing_task_id = kernel.submit(testing_task)
     print(f"   → Testing task submitted: {testing_task_id}")
@@ -148,7 +148,7 @@ async def factory_run():
                 "qa_report": qa_report,
                 "output_dir": "workspace/snake_game/",
                 "project_root": str(PROJECT_ROOT),
-            }
+            },
         )
         repair_task_id = kernel.submit(repair_task)
         print(f"   → Repair task submitted: {repair_task_id}")
@@ -171,7 +171,7 @@ async def factory_run():
                 "test_dir": "workspace/snake_game/",
                 "coverage_target": 0.80,
                 "project_root": str(PROJECT_ROOT),
-            }
+            },
         )
         retest_task_id = kernel.submit(retest_task)
 
@@ -207,10 +207,7 @@ def query_ledger(kernel: VibeKernel, task_id: str) -> dict:
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            "SELECT output_result FROM task_history WHERE task_id = ?",
-            (task_id,)
-        )
+        cursor.execute("SELECT output_result FROM task_history WHERE task_id = ?", (task_id,))
         row = cursor.fetchone()
         if row:
             return json.loads(row[0])
@@ -317,4 +314,5 @@ This is the foundation for:
 
 if __name__ == "__main__":
     import os
+
     asyncio.run(factory_run())

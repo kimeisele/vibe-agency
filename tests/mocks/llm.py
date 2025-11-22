@@ -47,7 +47,7 @@ class MockLLMProvider(LLMProvider):
         self._mock_response = mock_response
         self._system_prompt_text = system_prompt_text
         self._track_calls = track_calls
-        self.call_history: list[dict] = [] if track_calls else []
+        self.call_history: list[dict] = []
 
     def chat(self, messages: list[dict[str, str]], model: str | None = None, **kwargs) -> str:
         """

@@ -66,7 +66,6 @@ class TestManifestGenerator:
         assert manifest["governance"]["principal"] == "vibe-agency-core-team"
         assert manifest["governance"]["transparency"] == "public"
 
-
     def test_generate_invalid_agent(self):
         """Test that non-VibeAgent raises TypeError."""
         gen = ManifestGenerator()

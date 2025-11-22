@@ -5,7 +5,6 @@ Empowers the agent to explore the filesystem "Senses".
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -62,7 +61,7 @@ class ListDirectoryTool(Tool):
             ToolResult with list of file/directory names
         """
         path_str = parameters.get("path", ".")
-        
+
         try:
             # Resolve path
             path = Path(path_str).expanduser().resolve()
@@ -72,11 +71,11 @@ class ListDirectoryTool(Tool):
             # We allow listing the workspace root and subdirectories
             if not str(path).startswith(str(workspace_root)):
                 # Exception: Allow /tmp for some operations if needed, but strictly enforce workspace for now
-                # unless it's a specific allowed external path. 
+                # unless it's a specific allowed external path.
                 # For strict safety, we block everything outside CWD.
                 return ToolResult(
-                    success=False, 
-                    error=f"Access denied: Path {path} is outside workspace {workspace_root}"
+                    success=False,
+                    error=f"Access denied: Path {path} is outside workspace {workspace_root}",
                 )
 
             if not path.exists():
@@ -89,10 +88,10 @@ class ListDirectoryTool(Tool):
             items = []
             for item in path.iterdir():
                 # Skip hidden files/dirs (simple security/noise filter)
-                if item.name.startswith(".") and item.name != ".vibe": 
+                if item.name.startswith(".") and item.name != ".vibe":
                     # We might want to see .vibe, but generally skip .git, .env etc.
                     continue
-                
+
                 type_str = "DIR" if item.is_dir() else "FILE"
                 items.append(f"[{type_str}] {item.name}")
 
@@ -106,9 +105,7 @@ class ListDirectoryTool(Tool):
             logger.info(f"ListDirectoryTool: Listed {path} ({len(items)} items)")
 
             return ToolResult(
-                success=True,
-                output=output,
-                metadata={"path": str(path), "count": len(items)}
+                success=True, output=output, metadata={"path": str(path), "count": len(items)}
             )
 
         except PermissionError:

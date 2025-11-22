@@ -2,9 +2,8 @@
 Tests for ARCH-042 "Senses" tools (ListDirectoryTool, SearchFileTool).
 """
 
-import os
-from pathlib import Path
 import pytest
+
 from vibe_core.tools.list_directory import ListDirectoryTool
 from vibe_core.tools.search_file import SearchFileTool
 

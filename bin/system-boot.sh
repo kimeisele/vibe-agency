@@ -112,6 +112,40 @@ else
     echo -e "⚠️  Git Repository: ${YELLOW}Not initialized.${NC}"
 fi
 
+# ============================================================================
+# ARCH-044: GIT-OPS SYNC CHECK (The Senses)
+# ============================================================================
+# Detect if local branch is behind remote (prevents working on stale code)
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+    # Attempt background fetch (non-blocking, fail-safe)
+    if git fetch origin "$BRANCH" > /dev/null 2>&1; then
+        LOCAL_HASH=$(git rev-parse HEAD)
+        REMOTE_HASH=$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo "$LOCAL_HASH")
+
+        if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+            BEHIND_COUNT=$(git rev-list --count HEAD..origin/"$BRANCH" 2>/dev/null || echo "0")
+            if [ "$BEHIND_COUNT" -gt 0 ]; then
+                export VIBE_GIT_STATUS="BEHIND_BY_$BEHIND_COUNT"
+                echo -e "⚠️  Git Sync: ${YELLOW}Behind by $BEHIND_COUNT commit(s)${NC}"
+            else
+                export VIBE_GIT_STATUS="DIVERGED"
+                echo -e "⚠️  Git Sync: ${YELLOW}Diverged from remote${NC}"
+            fi
+        else
+            export VIBE_GIT_STATUS="SYNCED"
+            echo -e "✅ Git Sync: ${GREEN}Up-to-date${NC}"
+        fi
+    else
+        # Fetch failed (offline or no remote)
+        export VIBE_GIT_STATUS="FETCH_FAILED"
+        echo -e "⚠️  Git Sync: ${YELLOW}Unable to fetch (offline or no remote)${NC}"
+    fi
+else
+    export VIBE_GIT_STATUS="NO_REPO"
+fi
+
 echo ""
 
 # Set PYTHON variable to use venv if available

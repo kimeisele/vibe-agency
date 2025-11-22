@@ -733,7 +733,9 @@ Return ONLY valid JSON:
                                 patched_files.append(str(file_path))
                                 logger.info(f"   ✅ Patched (replace): {file_path.name}")
                             else:
-                                logger.warning(f"   ⚠️  Search text not found in {file_path}, skipping")
+                                logger.warning(
+                                    f"   ⚠️  Search text not found in {file_path}, skipping"
+                                )
                         elif operation == "append":
                             append_text = patch.get("replacement", "")
                             with open(file_path, "a") as f:
@@ -743,7 +745,9 @@ Return ONLY valid JSON:
                             logger.info(f"   ✅ Patched (append): {file_path.name}")
 
                     except Exception as e:
-                        logger.warning(f"   ⚠️  Failed to apply patch to {patch.get('file_path')}: {e}")
+                        logger.warning(
+                            f"   ⚠️  Failed to apply patch to {patch.get('file_path')}: {e}"
+                        )
 
                 # Log patch decisions
                 for patched_file in patched_files:
@@ -766,12 +770,13 @@ Return ONLY valid JSON:
                     for py_file in src_dir.glob("*.py"):
                         try:
                             with open(py_file, "a") as f:
-                                f.write(f"\n# ARCH-010 Repair patch applied at {self._get_timestamp()}\n")
+                                f.write(
+                                    f"\n# ARCH-010 Repair patch applied at {self._get_timestamp()}\n"
+                                )
                             patched_files.append(str(py_file))
                             patches_applied += 1
                         except Exception as e:
                             logger.warning(f"   ⚠️  Failed to patch {py_file.name}: {e}")
-
 
         except Exception as e:
             logger.error(f"❌ Repair mode LLM agent call failed: {e}")
@@ -784,7 +789,9 @@ Return ONLY valid JSON:
 
         repair_dir = context.project_root / ".repair"
         repair_dir.mkdir(exist_ok=True)
-        repair_context_file = repair_dir / f"repair_attempt_{self._get_timestamp().replace(':', '-')}.json"
+        repair_context_file = (
+            repair_dir / f"repair_attempt_{self._get_timestamp().replace(':', '-')}.json"
+        )
 
         try:
             repair_context = {
@@ -802,7 +809,9 @@ Return ONLY valid JSON:
         except Exception as e:
             logger.warning(f"   ⚠️  Failed to save repair context: {e}")
 
-        logger.info(f"✅ REPAIR MODE COMPLETE: Applied {patches_applied} patches to {len(patched_files)} files")
+        logger.info(
+            f"✅ REPAIR MODE COMPLETE: Applied {patches_applied} patches to {len(patched_files)} files"
+        )
 
         # Return success with repair mode indication
         return SpecialistResult(

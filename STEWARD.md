@@ -416,6 +416,74 @@ team:
 
 ---
 
+## 🔧 System Maintenance *(ARCH-044)*
+
+### Update Policy
+
+**Current Policy:** `ask_first` (conservative default)
+
+```yaml
+system_maintenance:
+  update_policy: "ask_first"  # Options: ask_first | auto_update | manual_only
+  boot_check: true             # Check git sync on every boot
+  auto_fetch: true             # Fetch remote changes in background
+  sync_warning_threshold: 5    # Warn if behind by N commits
+```
+
+**Policy Descriptions:**
+
+- **ask_first** (default): Kernel detects out-of-sync status and notifies operator. Operator generates proposal for user approval before updating.
+- **auto_update**: Kernel automatically pulls and syncs when behind (requires passing tests). Logs all automatic updates.
+- **manual_only**: Kernel only reports status, never suggests updates. User manually runs `git pull` when ready.
+
+### Boot-Time Git Sync Check
+
+On every `./bin/system-boot.sh`:
+1. Background `git fetch` to check remote status
+2. Set `VIBE_GIT_STATUS` environment variable
+3. Kernel reads status during `boot()`
+4. Operator receives status in system context
+
+**Status Values:**
+- `SYNCED`: Local is up-to-date (no action needed)
+- `BEHIND_BY_N`: Local is N commits behind remote (update available)
+- `DIVERGED`: Local and remote have diverged (manual resolution needed)
+- `FETCH_FAILED`: Could not fetch (offline or no remote)
+- `NO_REPO`: Not a git repository
+
+### Maintenance Specialist
+
+The `maintenance` specialist handles system-level operations:
+- `perform_system_update`: Execute `git pull` + `uv sync`
+- `verify_integrity`: Pre-flight checks before update
+- `rollback_update`: Revert failed update (future)
+
+**Usage:**
+```python
+# Via operator delegation
+kernel.submit(Task(
+    agent_id="specialist-maintenance",
+    payload={"operation": "perform_system_update"}
+))
+```
+
+### Refinement Cycle Integration
+
+Git sync issues trigger the **Refinement Cycle** (see `docs/processes/REFINEMENT_CYCLE.md`):
+
+1. **Inbox Message:** "System is 5 commits behind"
+2. **Steward Context:** Kernel injects git status during boot
+3. **Refinement:** Operator checks `update_policy` in STEWARD.md
+   - If `ask_first`: Generate `PROPOSAL_UPDATE_XY.md`
+   - If `auto_update`: Execute update immediately
+   - If `manual_only`: Log status, no action
+4. **Validation:** User approves/rejects proposal
+5. **Codification:** Execute update + document in GAD-044
+
+**Note:** This prevents the "I didn't know we were out of sync" problem. The system proactively detects and manages synchronization.
+
+---
+
 ## 🔄 Status & Updates
 
 **Current Status:**

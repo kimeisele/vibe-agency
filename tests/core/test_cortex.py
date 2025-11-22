@@ -10,7 +10,7 @@ import pytest
 from tests.mocks.llm import MockLLMProvider
 from vibe_core.agents import SimpleLLMAgent
 from vibe_core.kernel import VibeKernel
-from vibe_core.llm import LLMError, LLMProvider
+from vibe_core.llm import LLMProvider
 from vibe_core.scheduling import Task
 
 

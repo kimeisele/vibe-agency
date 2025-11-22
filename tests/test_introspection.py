@@ -66,9 +66,7 @@ class TestSystemIntrospectorBasics:
         custom_github = "https://github.com/custom/repo/blob/main"
         custom_raw = "https://raw.githubusercontent.com/custom/repo/main"
 
-        introspector = SystemIntrospector(
-            kernel, github_url=custom_github, raw_url=custom_raw
-        )
+        introspector = SystemIntrospector(kernel, github_url=custom_github, raw_url=custom_raw)
 
         assert introspector.github_url == custom_github
         assert introspector.raw_url == custom_raw
@@ -341,9 +339,7 @@ class TestJsonExport:
         custom_github = "https://custom.url/repo"
         custom_raw = "https://custom.url/raw"
 
-        introspector = SystemIntrospector(
-            kernel, github_url=custom_github, raw_url=custom_raw
-        )
+        introspector = SystemIntrospector(kernel, github_url=custom_github, raw_url=custom_raw)
         snapshot_dict = introspector.to_dict()
 
         assert snapshot_dict["repository"]["github_url"] == custom_github
@@ -450,9 +446,7 @@ class TestEdgeCases:
         kernel = VibeKernel(ledger_path=":memory:")
         introspector = SystemIntrospector(kernel)
 
-        metrics = SystemMetrics(
-            kernel_status="RUNNING", total_tasks=0, completed_tasks=0
-        )
+        metrics = SystemMetrics(kernel_status="RUNNING", total_tasks=0, completed_tasks=0)
         rate = introspector._calc_success_rate(metrics)
 
         assert rate == "N/A"
@@ -462,9 +456,7 @@ class TestEdgeCases:
         kernel = VibeKernel(ledger_path=":memory:")
         introspector = SystemIntrospector(kernel)
 
-        metrics = SystemMetrics(
-            kernel_status="RUNNING", total_tasks=10, completed_tasks=8
-        )
+        metrics = SystemMetrics(kernel_status="RUNNING", total_tasks=10, completed_tasks=8)
         rate = introspector._calc_success_rate(metrics)
 
         assert rate == "80"

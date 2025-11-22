@@ -52,6 +52,7 @@ from apps.agency.specialists import (  # noqa: E402
 )
 from vibe_core.agents.llm_agent import SimpleLLMAgent  # noqa: E402
 from vibe_core.agents.specialist_factory import SpecialistFactoryAgent  # noqa: E402
+from vibe_core.agents.system_maintenance import SystemMaintenanceAgent  # noqa: E402
 from vibe_core.governance import InvariantChecker  # noqa: E402
 from vibe_core.introspection import SystemIntrospector  # noqa: E402
 from vibe_core.kernel import VibeKernel  # noqa: E402
@@ -63,14 +64,17 @@ from vibe_core.llm.smart_local_provider import (  # noqa: E402
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard  # noqa: E402
 from vibe_core.scheduling import Task  # noqa: E402
 from vibe_core.tools import (  # noqa: E402
+    AddTaskTool,
+    CompleteTaskTool,
     DelegateTool,
+    ListTasksTool,
     ReadFileTool,
     ToolRegistry,
     WriteFileTool,
 )
+from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 from vibe_core.tools.list_directory import ListDirectoryTool  # noqa: E402
 from vibe_core.tools.search_file import SearchFileTool  # noqa: E402
-from vibe_core.tools.inspect_result import InspectResultTool  # noqa: E402
 
 # Setup logging
 logging.basicConfig(
@@ -127,7 +131,11 @@ def boot_kernel():
     registry.register(ReadFileTool())
     registry.register(ListDirectoryTool())
     registry.register(SearchFileTool())
-    logger.info(f"🔧 Tool Registry initialized ({len(registry)} basic tools)")
+    # Step 3.5: Register Agenda Tools (ARCH-045)
+    registry.register(AddTaskTool())
+    registry.register(ListTasksTool())
+    registry.register(CompleteTaskTool())
+    logger.info(f"🔧 Tool Registry initialized ({len(registry)} tools including agenda)")
 
     # Step 4: Create Operator Agent (GAD-000 Operator Pattern)
     #
@@ -145,6 +153,9 @@ Your capabilities:
 - write_file: Create or modify files
 - delegate_task: Assign work to specialist agents (returns task_id immediately)
 - inspect_result: Query the result of a delegated task by its task_id
+- add_task: Add a task to the agenda/backlog with priority level (ARCH-045)
+- list_tasks: List pending or completed tasks from the agenda (ARCH-045)
+- complete_task: Mark a task as completed (ARCH-045)
 
 Your crew (specialists):
 - specialist-planning: Expert in project planning, architecture design, requirements analysis
@@ -215,6 +226,7 @@ Your mission strategy:
 - ALWAYS use the Delegation Loop: Delegate → Inspect → Read → Decide
 - Coordinate specialists to complete multi-phase missions
 - ALWAYS activate repair loop on test failures (ARCH-010)
+- AGENDA MANAGEMENT (ARCH-045): Use add_task when you need to defer work, and list_tasks to review pending work
 
 How to delegate (Tool format):
 {"tool": "delegate_task", "parameters": {
@@ -322,7 +334,17 @@ Execute user requests by coordinating your crew efficiently using the Delegation
     kernel.register_agent(testing_factory)
     logger.info("   - Registered specialist: Testing")
 
-    # Step 6.5: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
+    # Step 6.5: Register System Maintenance Agent (ARCH-044: Git-Ops Strategy)
+    #
+    # The System Maintenance Agent handles system-level operations like git sync,
+    # dependency updates, and system integrity checks. Unlike Specialists,
+    # it's a singleton agent (not factory-based) since it doesn't need mission_id.
+    #
+    maintenance_agent = SystemMaintenanceAgent(project_root=PROJECT_ROOT)
+    kernel.register_agent(maintenance_agent)
+    logger.info("   - Registered system maintenance agent")
+
+    # Step 7: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
     # Boot is now called after all agents are registered
     kernel.boot()
     logger.info("   - STEWARD manifests generated for all agents")
@@ -472,7 +494,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
             "system": "vibe-agency",
             "version": "1.0",
             "kernel": {
-                "ledger_path": str(kernel.ledger.db_path) if hasattr(kernel.ledger, "db_path") else "unknown",
+                "ledger_path": str(kernel.ledger.db_path)
+                if hasattr(kernel.ledger, "db_path")
+                else "unknown",
                 "agents_count": len(agents),
             },
             "agents": agents,
@@ -490,7 +514,9 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print("🤖 VIBE AGENCY OS - SYSTEM STATUS")
         print("=" * 70)
         print("\n📊 Kernel:")
-        print(f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}")
+        print(
+            f"   - Ledger: {kernel.ledger.db_path if hasattr(kernel.ledger, 'db_path') else 'unknown'}"
+        )
         print(f"   - Agents: {len(agents)}")
 
         print("\n🤖 Registered Agents:")
@@ -506,6 +532,80 @@ def display_status(kernel: VibeKernel, json_format: bool = False):
         print(f"\n🔧 Tools: {tools_count}")
         print(f"🛡️  Soul Governance: {'enabled' if soul_enabled else 'disabled'}")
         print("")
+
+
+def handle_task_command(command: str, args_list: list[str] | None = None):
+    """
+    Handle task management commands (add, list, complete).
+
+    This provides a CLI interface to the agenda/backlog system (ARCH-045).
+
+    Args:
+        command: Subcommand ('add', 'list', 'complete')
+        args_list: Additional arguments for the subcommand
+
+    Example:
+        >>> handle_task_command('add', ['Fix Phoenix Config', 'HIGH'])
+        >>> handle_task_command('list', ['pending'])
+        >>> handle_task_command('complete', ['Fix Phoenix Config'])
+    """
+    if args_list is None:
+        args_list = []
+
+    try:
+        if command == "add":
+            if len(args_list) < 1:
+                print("❌ Usage: task add <description> [priority]")
+                print("   Priority: HIGH, MEDIUM, LOW (default: MEDIUM)")
+                return
+
+            description = args_list[0]
+            priority = args_list[1].upper() if len(args_list) > 1 else "MEDIUM"
+
+            tool = AddTaskTool()
+            result = tool.execute({
+                "description": description,
+                "priority": priority
+            })
+
+            if result.success:
+                print(f"✅ {result.output}")
+            else:
+                print(f"❌ Error: {result.error}")
+
+        elif command == "list":
+            status = args_list[0].lower() if args_list else "pending"
+
+            tool = ListTasksTool()
+            result = tool.execute({"status": status})
+
+            if result.success:
+                print(result.output)
+            else:
+                print(f"❌ Error: {result.error}")
+
+        elif command == "complete":
+            if len(args_list) < 1:
+                print("❌ Usage: task complete <task_description>")
+                return
+
+            description = args_list[0]
+
+            tool = CompleteTaskTool()
+            result = tool.execute({"task_description": description})
+
+            if result.success:
+                print(f"✅ {result.output}")
+            else:
+                print(f"❌ Error: {result.error}")
+
+        else:
+            print(f"❌ Unknown task command: {command}")
+            print("   Valid commands: add, list, complete")
+
+    except Exception as e:
+        logger.error(f"Task command error: {e}", exc_info=True)
+        print(f"❌ Error: {e}")
 
 
 def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: bool = False):
@@ -525,20 +625,19 @@ def display_snapshot(kernel: VibeKernel, json_format: bool = False, write_file: 
     """
     introspector = SystemIntrospector(kernel)
 
-    if json_format:
-        # JSON output
-        snapshot_dict = introspector.to_dict()
-        output = introspector.to_json()
-    else:
-        # Markdown output (default)
-        output = introspector.generate_snapshot()
+    # Generate snapshot in requested format
+    output = introspector.to_json() if json_format else introspector.generate_snapshot()
 
     print(output)
 
     # Optionally write to file
     if write_file:
         timestamp = introspector.snapshot_timestamp.replace(":", "-").split(".")[0]
-        filename = f"vibe-snapshot-{timestamp}.md" if not json_format else f"vibe-snapshot-{timestamp}.json"
+        filename = (
+            f"vibe-snapshot-{timestamp}.md"
+            if not json_format
+            else f"vibe-snapshot-{timestamp}.json"
+        )
         try:
             with open(filename, "w") as f:
                 f.write(output)
@@ -658,7 +757,33 @@ def main():
         help="Write snapshot to file (use with --snapshot)",
     )
 
+    # Task management subcommand (ARCH-045)
+    parser.add_argument(
+        "task_command",
+        nargs="?",
+        help="Task management command (task add|list|complete)",
+    )
+
+    parser.add_argument(
+        "task_args",
+        nargs="*",
+        help="Arguments for task command",
+    )
+
     args = parser.parse_args()
+
+    # Handle task management commands (ARCH-045) - doesn't require kernel boot
+    if args.task_command == "task" and args.task_args:
+        # Format: task add|list|complete [args...]
+        subcommand = args.task_args[0] if args.task_args else None
+        subcommand_args = args.task_args[1:] if len(args.task_args) > 1 else []
+
+        if subcommand:
+            handle_task_command(subcommand, subcommand_args)
+            return 0
+        else:
+            print("❌ Usage: task add|list|complete [args...]")
+            return 1
 
     # Boot the system
     try:

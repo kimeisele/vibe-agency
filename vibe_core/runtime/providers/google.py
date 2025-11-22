@@ -82,7 +82,7 @@ class GoogleProvider(LLMProvider):
             import google.generativeai as genai
 
             # Force REST transport to avoid gRPC SSL issues in restricted environments
-            genai.configure(api_key=self.api_key, transport='rest')
+            genai.configure(api_key=self.api_key, transport="rest")
             self.genai = genai
             logger.info("Google Gemini provider initialized successfully (transport=REST)")
         except ImportError as e:

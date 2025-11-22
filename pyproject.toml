@@ -103,6 +103,7 @@ max-complexity = 15
 "tests/**/*.py" = [
     "E402",     # Allow late imports in tests
     "S101",     # Allow asserts in tests
+    "S103",     # Allow permissive file permissions in tests (for cleanup)
     "S104",     # Allow binding to all interfaces in test configs
     "S108",     # Allow /tmp usage in tests
     "S603",     # Allow subprocess in tests
@@ -115,8 +116,9 @@ max-complexity = 15
 "*-cli.py" = ["E402"]  # CLI scripts may need path manipulation
 "tools/**/*.py" = ["B007"]  # Allow unused loop variables in tools
 "scripts/**/*.py" = ["B007", "S603", "S108"]  # Allow utility patterns in scripts
-"bin/**/*.py" = ["B007"]  # Allow unused loop variables in bin scripts
+"bin/**/*.py" = ["B007", "S603", "S311"]  # Allow subprocess and standard random in bin scripts
 "docs/**/*.py" = ["S108"]  # Allow temp file usage in documentation examples
+"apps/vibe-monitor/**/*.py" = ["S603", "S104"]  # Allow subprocess and bind to 0.0.0.0 in monitor
 
 [tool.ruff.format]
 quote-style = "double"

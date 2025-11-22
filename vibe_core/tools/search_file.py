@@ -40,7 +40,7 @@ class SearchFileTool(Tool):
                 "type": "string",
                 "required": False,
                 "description": "Root directory to search in (defaults to current working directory)",
-            }
+            },
         }
 
     def validate(self, parameters: dict[str, Any]) -> None:
@@ -52,7 +52,7 @@ class SearchFileTool(Tool):
         """
         if "pattern" not in parameters:
             raise ValueError("Missing required parameter: pattern")
-        
+
         if not isinstance(parameters["pattern"], str):
             raise TypeError("pattern must be a string")
 
@@ -81,7 +81,7 @@ class SearchFileTool(Tool):
             if not str(search_root).startswith(str(workspace_root)):
                 return ToolResult(
                     success=False,
-                    error=f"Access denied: Search path {search_root} is outside workspace {workspace_root}"
+                    error=f"Access denied: Search path {search_root} is outside workspace {workspace_root}",
                 )
 
             if not search_root.exists():
@@ -90,15 +90,15 @@ class SearchFileTool(Tool):
             # Perform search (recursive)
             # We use rglob for recursive search
             matches = []
-            
+
             # Limit results to prevent overwhelming output
             MAX_RESULTS = 50
-            
+
             for item in search_root.rglob(pattern):
                 # Security: Skip hidden directories like .git
                 if any(part.startswith(".") and part != ".vibe" for part in item.parts):
                     continue
-                
+
                 if item.is_file():
                     # Return relative path for readability
                     try:
@@ -107,12 +107,12 @@ class SearchFileTool(Tool):
                     except ValueError:
                         # Should not happen given the security check, but safe fallback
                         matches.append(str(item))
-                
+
                 if len(matches) >= MAX_RESULTS:
                     break
 
             matches.sort()
-            
+
             if not matches:
                 return ToolResult(success=True, output="No matches found.")
 
@@ -120,12 +120,14 @@ class SearchFileTool(Tool):
             if len(matches) >= MAX_RESULTS:
                 output += f"\n\n(Truncated at {MAX_RESULTS} results)"
 
-            logger.info(f"SearchFileTool: Found {len(matches)} matches for '{pattern}' in {search_root}")
+            logger.info(
+                f"SearchFileTool: Found {len(matches)} matches for '{pattern}' in {search_root}"
+            )
 
             return ToolResult(
                 success=True,
                 output=output,
-                metadata={"count": len(matches), "truncated": len(matches) >= MAX_RESULTS}
+                metadata={"count": len(matches), "truncated": len(matches) >= MAX_RESULTS},
             )
 
         except Exception as e:

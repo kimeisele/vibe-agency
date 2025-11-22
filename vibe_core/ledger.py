@@ -394,8 +394,7 @@ class VibeLedger:
             separately if needed. For now, we just log and ignore.
         """
         logger.debug(
-            f"VibeLedger.record_decision() called (STUB). "
-            f"Ignoring decision data: {kwargs.keys()}"
+            f"VibeLedger.record_decision() called (STUB). Ignoring decision data: {kwargs.keys()}"
         )
 
     def get_mission(self, mission_id: int | str) -> dict[str, Any]:
