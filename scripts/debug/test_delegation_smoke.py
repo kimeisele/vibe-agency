@@ -20,8 +20,9 @@ That's EXACTLY what we want to see.
 import sys
 from pathlib import Path
 
-# Add project root
-PROJECT_ROOT = Path(__file__).parent
+# Add project root (this script is in scripts/debug, go up 2 levels)
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from apps.agency.cli import boot_kernel
@@ -63,12 +64,13 @@ def main():
             "mission_id": 1,
             "mission_uuid": "smoke-test-uuid",
             "phase": "PLANNING",
-            "project_root": str(PROJECT_ROOT / "test_project"),
+            "project_root": str(PROJECT_ROOT / "temp_mission"),  # Use temp_mission with manifest
             "metadata": {"test": "smoke_test"},
         },
     }
     print(f"   Agent: {delegation_params['agent_id']}")
     print(f"   Mission ID: {delegation_params['payload']['mission_id']}")
+    print(f"   Project Root: {delegation_params['payload']['project_root']}")
     print()
 
     # Fire DelegateTool directly

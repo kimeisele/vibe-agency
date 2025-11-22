@@ -72,3 +72,4 @@ temp_test_linting.py
 data/
 *.db
 *.db-journal
+temp_mission/

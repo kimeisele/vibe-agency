@@ -114,12 +114,13 @@ class PlanningSpecialist(BaseSpecialist):
             )
             return False
 
-        # Check: orchestrator available (temporary requirement)
+        # Check: orchestrator available (optional - degrades gracefully if missing)
         if not self.orchestrator:
-            logger.error(
-                "Precondition failed: orchestrator not available (required for execute_agent)"
+            logger.warning(
+                "Orchestrator not available - execute_agent functionality disabled. "
+                "Planning will proceed with limitations."
             )
-            return False
+            # Don't fail - allow specialist to proceed without orchestrator
 
         logger.info("✅ PLANNING preconditions met")
         return True
