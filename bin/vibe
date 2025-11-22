@@ -24,14 +24,13 @@ Example:
   DONE. Open index.html to see your page.
 """
 
-import sys
-import subprocess
-import json
-from pathlib import Path
-from typing import Optional, List
 import argparse
-from datetime import datetime
+import json
 import os
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
 
 # Add repo root to path so vibe_core can be imported
 _repo_root = Path(__file__).parent.parent
@@ -47,7 +46,7 @@ class VibeWrapper:
         self.vibe_cli = self.repo_root / "vibe-cli"
         self.playbooks_dir = self.repo_root / "playbooks" / "presets"
 
-    def run(self, args: List[str]) -> int:
+    def run(self, args: list[str]) -> int:
         """Main entry point for vibe command."""
         parser = self._create_parser()
         parsed = parser.parse_args(args if args else ["--help"])
@@ -80,9 +79,7 @@ Examples:
             """,
         )
 
-        subparsers = parser.add_subparsers(
-            dest="command", help="vibe command to execute"
-        )
+        subparsers = parser.add_subparsers(dest="command", help="vibe command to execute")
 
         # status command
         status_parser = subparsers.add_parser(
@@ -159,64 +156,18 @@ Examples:
         Output (JSON):
           Structured data for AI consumption
         """
-        # Gather data
-        health_status = self._check_system_health()
-        cartridges = self._list_cartridges()
+        # Gather data (pure logic - no presentation)
+        status_data = self._get_system_status()
 
-        # JSON output mode (GAD-000 compliant)
+        # Route to appropriate presentation layer
         if json_output:
-            output = {
-                "status": "healthy" if all(s for s, _ in health_status.values()) else "degraded",
-                "timestamp": datetime.now().isoformat(),
-                "health": {
-                    name: {"status": status, "message": message}
-                    for name, (status, message) in health_status.items()
-                },
-                "cartridges": [
-                    {"name": name, "description": desc}
-                    for name, desc in cartridges
-                ],
-                "next_actions": [
-                    {"command": "vibe run [Thema]", "purpose": "Start dialog with STEWARD to pick cartridge"},
-                    {"command": "vibe make \"[Your Wish]\"", "purpose": "Execute feature-implement cartridge"}
-                ]
-            }
-            print(json.dumps(output, indent=2))
-            return 0
-
-        # Human-friendly output mode
-        print("\n" + "=" * 70)
-        print("🟢 VIBE AGENCY - SYSTEM STATUS")
-        print("=" * 70)
-
-        # Check system health
-        print("\n✅ SYSTEM HEALTH")
-        print("-" * 70)
-
-        for check_name, (status, message) in health_status.items():
-            icon = "✅" if status else "❌"
-            print(f"  {icon} {check_name}: {message}")
-
-        # List available cartridges
-        print("\n📦 LOADED CARTRIDGES")
-        print("-" * 70)
-        if cartridges:
-            for name, desc in cartridges:
-                print(f"  🎯 {name:<20} - {desc}")
+            self._print_status_json(status_data)
         else:
-            print("  ⚠️  No cartridges found")
+            self._print_status_human(status_data)
 
-        # Next steps
-        print("\n⚙️  NEXT STEPS")
-        print("-" * 70)
-        print("  1. Run a cartridge:    vibe run [Thema]")
-        print('  2. Magic button:       vibe make "[Your Wish]"')
-        print("  3. Get help:           vibe --help")
+        return 0 if status_data["status"] == "healthy" else 1
 
-        print("\n" + "=" * 70 + "\n")
-        return 0
-
-    def cmd_run(self, thema: Optional[str], json_output: bool = False) -> int:
+    def cmd_run(self, thema: str | None, json_output: bool = False) -> int:
         """
         Run command: Start interactive dialog with STEWARD.
 
@@ -229,10 +180,14 @@ Examples:
         # Note: Interactive mode is inherently human-facing
         # JSON mode not applicable for interactive selection
         if json_output:
-            print(json.dumps({
-                "error": "Interactive mode does not support JSON output",
-                "suggestion": "Use 'vibe make' with --json for programmatic execution"
-            }))
+            print(
+                json.dumps(
+                    {
+                        "error": "Interactive mode does not support JSON output",
+                        "suggestion": "Use 'vibe make' with --json for programmatic execution",
+                    }
+                )
+            )
             return 1
         print("\n" + "=" * 70)
         print("🚀 VIBE AGENCY - CARTRIDGE LAUNCHER")
@@ -296,12 +251,16 @@ Examples:
             return 1
 
         if json_output:
-            print(json.dumps({
-                "command": "execute",
-                "cartridge_path": str(cartridge_file),
-                "status": "executing",
-                "timestamp": datetime.now().isoformat()
-            }))
+            print(
+                json.dumps(
+                    {
+                        "command": "execute",
+                        "cartridge_path": str(cartridge_file),
+                        "status": "executing",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+            )
         else:
             print("\n" + "=" * 70)
             print("⚙️  VIBE AGENCY - DIRECT CARTRIDGE EXECUTION")
@@ -325,14 +284,19 @@ Examples:
                 result["calibration_file_created"] = str(calibration_log)
 
             if json_output:
-                print(json.dumps({
-                    "command": "execute",
-                    "cartridge_path": str(cartridge_file),
-                    "result": result,
-                    "status": result.get("status", "unknown")
-                }, indent=2))
+                print(
+                    json.dumps(
+                        {
+                            "command": "execute",
+                            "cartridge_path": str(cartridge_file),
+                            "result": result,
+                            "status": result.get("status", "unknown"),
+                        },
+                        indent=2,
+                    )
+                )
             else:
-                print(f"\n✅ Cartridge execution completed!")
+                print("\n✅ Cartridge execution completed!")
                 print(f"   Status: {result.get('status', 'unknown')}")
                 print(f"   Phases executed: {len(result.get('phases_executed', []))}")
                 if result.get("calibration_file_created"):
@@ -358,7 +322,7 @@ Examples:
                 print(f"❌ Error: {error_msg}")
             return 1
 
-    def cmd_make(self, wish: List[str], json_output: bool = False) -> int:
+    def cmd_make(self, wish: list[str], json_output: bool = False) -> int:
         """
         Make command: Magic button for feature-implement cartridge.
 
@@ -377,7 +341,7 @@ Examples:
                 "wish": wish_text,
                 "cartridge": "feature-implement",
                 "status": "executing",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             print(json.dumps(output, indent=2))
         else:
@@ -393,8 +357,68 @@ Examples:
         # Execute feature-implement cartridge with the wish as context
         return self._execute_cartridge_with_context("feature-implement", wish_text)
 
+    def _get_system_status(self) -> dict:
+        """
+        Gather comprehensive system status data (ARCH-035 - GAD-000 compliant).
+
+        This method collects all system information without any presentation logic.
+        It returns a structured dictionary suitable for both JSON output and
+        human-readable formatting.
+
+        Returns:
+            dict: Comprehensive system status with keys:
+                - status: Overall health ("healthy" or "degraded")
+                - timestamp: ISO 8601 timestamp
+                - version: Vibe version info
+                - provider: Active LLM provider info
+                - health: Dict of health checks
+                - cartridges: List of available cartridges
+                - errors: List of error messages
+                - next_actions: Suggested next commands
+        """
+        # Gather all data
+        health_checks = self._check_system_health()
+        cartridges = self._list_cartridges()
+        provider_info = self._detect_active_provider()
+        version_info = self._get_version_info()
+
+        # Determine overall status
+        all_healthy = all(status for status, _ in health_checks.values())
+        overall_status = "healthy" if all_healthy else "degraded"
+
+        # Collect any errors
+        errors = [f"{name}: {msg}" for name, (status, msg) in health_checks.items() if not status]
+
+        return {
+            "status": overall_status,
+            "timestamp": datetime.now().isoformat(),
+            "version": version_info,
+            "provider": provider_info,
+            "health": {
+                name: {"status": "ok" if status else "error", "message": message}
+                for name, (status, message) in health_checks.items()
+            },
+            "cartridges": [{"name": name, "description": desc} for name, desc in cartridges],
+            "errors": errors,
+            "next_actions": [
+                {
+                    "command": "vibe run [Thema]",
+                    "purpose": "Start dialog with STEWARD to pick cartridge",
+                },
+                {
+                    "command": 'vibe make "[Your Wish]"',
+                    "purpose": "Execute feature-implement cartridge",
+                },
+            ],
+        }
+
     def _check_system_health(self) -> dict:
-        """Check various system health indicators."""
+        """
+        Check various system health indicators.
+
+        Returns:
+            dict: Health check results as {name: (status_bool, message)}
+        """
         health = {}
 
         # Check git status
@@ -435,7 +459,175 @@ Examples:
 
         return health
 
-    def _list_cartridges(self) -> List[tuple]:
+    def _detect_active_provider(self) -> dict:
+        """
+        Detect the active LLM provider (ARCH-035).
+
+        Returns:
+            dict: Provider information with keys:
+                - name: Provider name (google, anthropic, openai, noop)
+                - available: Whether provider is available
+                - api_key_set: Whether API key is configured
+        """
+        # Check environment variables to detect provider
+        google_key = os.environ.get("GOOGLE_API_KEY", "")
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        openai_key = os.environ.get("OPENAI_API_KEY", "")
+
+        def is_valid_key(key: str) -> bool:
+            """Check if key is valid (not None, not empty, not a placeholder)"""
+            if not key:
+                return False
+            placeholders = ["your-", "xxx", "placeholder", "example", "test-key"]
+            return not any(placeholder in key.lower() for placeholder in placeholders)
+
+        # Determine active provider (matches factory.py logic)
+        if is_valid_key(google_key):
+            return {
+                "name": "google",
+                "available": True,
+                "api_key_set": True,
+                "model": "gemini-2.5-flash-exp",
+            }
+        elif is_valid_key(anthropic_key):
+            return {
+                "name": "anthropic",
+                "available": True,
+                "api_key_set": True,
+                "model": "claude-3-sonnet",
+            }
+        elif is_valid_key(openai_key):
+            return {
+                "name": "openai",
+                "available": False,  # Not yet implemented
+                "api_key_set": True,
+                "model": "gpt-4",
+            }
+        else:
+            return {"name": "noop", "available": True, "api_key_set": False, "model": "mock"}
+
+    def _get_version_info(self) -> dict:
+        """
+        Get version information for vibe-agency (ARCH-035).
+
+        Returns:
+            dict: Version information with keys:
+                - vibe: vibe-agency version
+                - python: Python version
+                - git_branch: Current git branch
+                - git_commit: Current git commit hash
+        """
+        version_info = {
+            "vibe": "2.1",  # From CLAUDE.md
+            "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        }
+
+        # Get git information
+        try:
+            # Get current branch
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                version_info["git_branch"] = result.stdout.strip()
+
+            # Get current commit hash
+            result = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                version_info["git_commit"] = result.stdout.strip()
+
+        except Exception:
+            # Git info is optional
+            pass
+
+        return version_info
+
+    def _print_status_json(self, status_data: dict) -> None:
+        """
+        Print status in JSON format (ARCH-035 - GAD-000 compliant).
+
+        Args:
+            status_data: System status data from _get_system_status()
+
+        Output:
+            Pure JSON to stdout, no decorations, AI-parseable.
+        """
+        print(json.dumps(status_data, indent=2))
+
+    def _print_status_human(self, status_data: dict) -> None:
+        """
+        Print status in human-friendly format (ARCH-035).
+
+        Args:
+            status_data: System status data from _get_system_status()
+
+        Output:
+            Formatted text with emojis and ASCII art for human readability.
+        """
+        print("\n" + "=" * 70)
+        print("🟢 VIBE AGENCY - SYSTEM STATUS")
+        print("=" * 70)
+
+        # Version info
+        version = status_data["version"]
+        print(f"\n📌 Version: {version['vibe']}")
+        if "git_branch" in version:
+            print(f"   Branch: {version['git_branch']}")
+            print(f"   Commit: {version.get('git_commit', 'unknown')}")
+        print(f"   Python: {version['python']}")
+
+        # Provider info
+        provider = status_data["provider"]
+        print(f"\n🧠 LLM Provider: {provider['name']}")
+        print(f"   Available: {'✅' if provider['available'] else '❌'}")
+        print(f"   API Key: {'✅ Set' if provider['api_key_set'] else '❌ Not configured'}")
+        if provider.get("model"):
+            print(f"   Model: {provider['model']}")
+
+        # Check system health
+        print("\n✅ SYSTEM HEALTH")
+        print("-" * 70)
+
+        for check_name, check_data in status_data["health"].items():
+            icon = "✅" if check_data["status"] == "ok" else "❌"
+            print(f"  {icon} {check_name}: {check_data['message']}")
+
+        # List available cartridges
+        print("\n📦 LOADED CARTRIDGES")
+        print("-" * 70)
+        if status_data["cartridges"]:
+            for cartridge in status_data["cartridges"]:
+                print(f"  🎯 {cartridge['name']:<20} - {cartridge['description']}")
+        else:
+            print("  ⚠️  No cartridges found")
+
+        # Show errors if any
+        if status_data["errors"]:
+            print("\n⚠️  WARNINGS")
+            print("-" * 70)
+            for error in status_data["errors"]:
+                print(f"  ⚠️  {error}")
+
+        # Next steps
+        print("\n⚙️  NEXT STEPS")
+        print("-" * 70)
+        print("  1. Run a cartridge:    vibe run [Thema]")
+        print('  2. Magic button:       vibe make "[Your Wish]"')
+        print("  3. Get help:           vibe --help")
+
+        print("\n" + "=" * 70 + "\n")
+
+    def _list_cartridges(self) -> list[tuple]:
         """List available cartridges with descriptions."""
         cartridges = []
 
@@ -461,7 +653,7 @@ Examples:
         return self._execute_cartridge_with_context(cartridge_name, None)
 
     def _execute_cartridge_with_context(
-        self, cartridge_name: str, context: Optional[str] = None
+        self, cartridge_name: str, context: str | None = None
     ) -> int:
         """
         Execute a cartridge with optional context.
@@ -492,9 +684,9 @@ Examples:
             print("=" * 70)
 
             # Execute vibe-cli in subprocess
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 cmd,
-                stdin=subprocess.PIPE,
+                input=stdin_data,
                 cwd=self.repo_root,
                 env=env,
             )
