@@ -127,6 +127,24 @@ class SpecialistFactoryAgent(VibeAgent):
         """
         return f"specialist-{self.role}"
 
+    @property
+    def capabilities(self) -> list[str]:
+        """
+        Return the capabilities of this specialist factory.
+
+        The factory provides capabilities based on the specialist class it creates.
+        For example:
+        - PlanningSpecialist → ["planning", "analysis"]
+        - CodingSpecialist → ["coding", "implementation"]
+        - TestingSpecialist → ["testing", "validation"]
+
+        Returns:
+            list[str]: List of capability names this specialist provides
+        """
+        # Return the role as the primary capability
+        # Additional capabilities could be inferred from specialist_class
+        return [self.role]
+
     def process(self, task: Task) -> dict[str, Any]:
         """
         Process task by creating and executing a Specialist.

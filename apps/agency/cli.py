@@ -55,6 +55,7 @@ from vibe_core.runtime.providers.base import ProviderNotAvailableError
 from vibe_core.runtime.tool_safety_guard import ToolSafetyGuard
 from vibe_core.scheduling import Task
 from vibe_core.tools import DelegateTool, ReadFileTool, ToolRegistry, WriteFileTool
+from vibe_core.tools.inspect_result import InspectResultTool
 
 # Import Specialists (ARCH-036: Crew Assembly)
 from apps.agency.specialists import (
@@ -132,7 +133,8 @@ You have access to file system tools AND a crew of domain specialists.
 Your capabilities:
 - read_file: Read content from files
 - write_file: Create or modify files
-- delegate_task: Assign work to specialist agents
+- delegate_task: Assign work to specialist agents (returns task_id immediately)
+- inspect_result: Query the result of a delegated task by its task_id
 
 Your crew (specialists):
 - specialist-planning: Expert in project planning, architecture design, requirements analysis
@@ -145,15 +147,46 @@ Your constraints:
 - ALWAYS respect Soul Governance rules
 - ALWAYS be transparent about what you're doing
 
+THE DELEGATION LOOP (ARCH-026 Phase 4):
+========================================
+Delegation is ASYNCHRONOUS. When you delegate, you get a task_id immediately, NOT the result.
+To get the result, you must use inspect_result(task_id).
+
+Pattern:
+1. DELEGATE: Call delegate_task(...) → Get task_id back
+2. INSPECT: Call inspect_result(task_id) → Get status and result
+3. READ: Extract the result from inspect_result output
+4. DECIDE: Use the result to determine next steps (e.g., read plan → delegate to coder)
+
+Example workflow: Plan → Code
+===============================
+Step 1: Delegate to planner
+  delegate_task(agent_id="specialist-planning", payload={...})
+  → Returns: task_id="task-abc-123"
+
+Step 2: Inspect the plan result
+  inspect_result(task_id="task-abc-123")
+  → Returns: {"status": "COMPLETED", "output": {"plan": "Step 1: ...\nStep 2: ..."}}
+
+Step 3: Read the plan and use it in next delegation
+  Extract plan from output, then:
+  delegate_task(agent_id="specialist-coding", payload={"plan": plan, ...})
+  → Returns: task_id="task-def-456"
+
+Step 4: Inspect the code result
+  inspect_result(task_id="task-def-456")
+  → Returns: {"status": "COMPLETED", "output": {"code": "..."}}
+
 Your mission strategy:
 - DELEGATE complex work to specialists (don't try to be expert at everything)
 - For planning tasks → use specialist-planning
-- For coding tasks → use specialist-coding
+- For coding tasks → use specialist-coding (after reading the plan!)
 - For testing tasks → use specialist-testing
 - Use file tools for simple read/write operations
+- ALWAYS use the Delegation Loop: Delegate → Inspect → Read → Decide
 - Coordinate specialists to complete multi-phase missions
 
-How to delegate:
+How to delegate (Tool format):
 {"tool": "delegate_task", "parameters": {
     "agent_id": "specialist-planning",
     "payload": {
@@ -165,7 +198,13 @@ How to delegate:
     }
 }}
 
-Execute user requests by coordinating your crew efficiently.
+How to inspect a result (Tool format):
+{"tool": "inspect_result", "parameters": {
+    "task_id": "task-abc-123",
+    "include_input": false
+}}
+
+Execute user requests by coordinating your crew efficiently using the Delegation Loop.
 """
 
     # Step 4.5: Choose Provider (Real AI or Mock for testing)
@@ -214,12 +253,15 @@ Execute user requests by coordinating your crew efficiently.
     )
     logger.info("🤖 Operator Agent initialized (vibe-operator)")
 
-    # Step 5: Boot Kernel (ARCH-023)
+    # Step 5: Initialize Kernel (ARCH-023)
+    # Note: Boot is deferred until after all agents are registered
     ledger_path = os.getenv("LEDGER_DB_PATH", "data/vibe.db")
     kernel = VibeKernel(ledger_path=ledger_path)
-    kernel.boot()
+    logger.info(f"⚡ Kernel initialized (ledger: {ledger_path})")
+
+    # Step 5.5: Register Operator Agent
     kernel.register_agent(operator_agent)
-    logger.info(f"⚡ Kernel booted (ledger: {ledger_path})")
+    logger.info("   - Registered operator agent")
 
     # Step 6: Register Specialist Crew (ARCH-036: Crew Assembly)
     #
@@ -240,7 +282,7 @@ Execute user requests by coordinating your crew efficiently.
         tool_safety_guard=guard,
     )
     kernel.register_agent(planning_factory)
-    logger.info("🧑‍💼 Registered specialist: Planning")
+    logger.info("   - Registered specialist: Planning")
 
     coding_factory = SpecialistFactoryAgent(
         specialist_class=CodingSpecialist,
@@ -249,7 +291,7 @@ Execute user requests by coordinating your crew efficiently.
         tool_safety_guard=guard,
     )
     kernel.register_agent(coding_factory)
-    logger.info("👨‍💻 Registered specialist: Coding")
+    logger.info("   - Registered specialist: Coding")
 
     testing_factory = SpecialistFactoryAgent(
         specialist_class=TestingSpecialist,
@@ -258,24 +300,34 @@ Execute user requests by coordinating your crew efficiently.
         tool_safety_guard=guard,
     )
     kernel.register_agent(testing_factory)
-    logger.info("🧪 Registered specialist: Testing")
+    logger.info("   - Registered specialist: Testing")
 
-    # Step 6.5: Register DelegateTool (ARCH-037: The Intercom)
+    # Step 6.5: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
+    # Boot is now called after all agents are registered
+    kernel.boot()
+    logger.info("   - STEWARD manifests generated for all agents")
+
+    # Step 7: Register DelegateTool & InspectResultTool (ARCH-037: The Intercom)
     #
-    # Late binding: DelegateTool needs kernel reference for task submission.
-    # We register it AFTER kernel boot to break circular dependency.
+    # Late binding: These tools need kernel reference for task submission/querying.
+    # We register them AFTER kernel boot to break circular dependency.
     #
     # Circular dependency:
     #   - Kernel needs Agent (for dispatch)
     #   - Agent needs ToolRegistry (for capabilities)
-    #   - DelegateTool needs Kernel (for submit)
+    #   - DelegateTool/InspectResultTool needs Kernel (for submit/query)
     #
-    # Solution: Create DelegateTool() → Inject kernel via set_kernel() → Register
+    # Solution: Create tools → Inject kernel via set_kernel() → Register
     #
     delegate_tool = DelegateTool()
     delegate_tool.set_kernel(kernel)
     registry.register(delegate_tool)
     logger.info("📞 Registered DelegateTool (Operator can now delegate to specialists)")
+
+    # Register InspectResultTool (ARCH-026 Phase 4: Result Retrieval)
+    inspect_tool = InspectResultTool(kernel)
+    registry.register(inspect_tool)
+    logger.info("🔍 Registered InspectResultTool (Operator can now query task results)")
 
     logger.info("✅ BOOT COMPLETE - VIBE AGENCY OS ONLINE")
     logger.info(f"   - Agents: {len(kernel.agent_registry)}")
