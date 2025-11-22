@@ -52,6 +52,7 @@ from apps.agency.specialists import (  # noqa: E402
 )
 from vibe_core.agents.llm_agent import SimpleLLMAgent  # noqa: E402
 from vibe_core.agents.specialist_factory import SpecialistFactoryAgent  # noqa: E402
+from vibe_core.agents.system_maintenance import SystemMaintenanceAgent  # noqa: E402
 from vibe_core.governance import InvariantChecker  # noqa: E402
 from vibe_core.introspection import SystemIntrospector  # noqa: E402
 from vibe_core.kernel import VibeKernel  # noqa: E402
@@ -322,7 +323,17 @@ Execute user requests by coordinating your crew efficiently using the Delegation
     kernel.register_agent(testing_factory)
     logger.info("   - Registered specialist: Testing")
 
-    # Step 6.5: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
+    # Step 6.5: Register System Maintenance Agent (ARCH-044: Git-Ops Strategy)
+    #
+    # The System Maintenance Agent handles system-level operations like git sync,
+    # dependency updates, and system integrity checks. Unlike Specialists,
+    # it's a singleton agent (not factory-based) since it doesn't need mission_id.
+    #
+    maintenance_agent = SystemMaintenanceAgent(project_root=PROJECT_ROOT)
+    kernel.register_agent(maintenance_agent)
+    logger.info("   - Registered system maintenance agent")
+
+    # Step 7: Boot Kernel (ARCH-026 Phase 3: Generate manifests for all agents)
     # Boot is now called after all agents are registered
     kernel.boot()
     logger.info("   - STEWARD manifests generated for all agents")
