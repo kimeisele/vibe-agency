@@ -27,6 +27,10 @@ class DummyAgent(VibeAgent):
     def agent_id(self) -> str:
         return self._agent_id
 
+    @property
+    def capabilities(self) -> list[str]:
+        return ["dummy"]
+
     def process(self, task: Task) -> Any:
         self.processed_tasks.append(task)
         return {"status": "processed", "task_id": task.id}
@@ -96,6 +100,9 @@ class TestKernelExecutionCycle:
     def test_submit_task_returns_task_id(self):
         """Test that submit() returns a task ID."""
         kernel = VibeKernel(ledger_path=":memory:")
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
+        
         task = Task(agent_id="agent-1", payload={"action": "compile"})
         task_id = kernel.submit(task)
 
@@ -165,6 +172,9 @@ class TestKernelExecutionCycle:
     def test_execute_task_is_called_internally(self):
         """Test that tick() calls _execute_task() internally."""
         kernel = VibeKernel(ledger_path=":memory:")
+        kernel = VibeKernel(ledger_path=":memory:")
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
         kernel.boot()
 
         task = Task(agent_id="agent-1", payload={})
@@ -182,6 +192,8 @@ class TestKernelExecutionCycle:
     def test_kernel_can_submit_while_stopped(self):
         """Test that tasks can be submitted even when kernel is stopped."""
         kernel = VibeKernel(ledger_path=":memory:")
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
         # Don't boot - kernel is STOPPED
 
         task = Task(agent_id="agent-1", payload={})
@@ -235,6 +247,8 @@ class TestKernelIdleCycle:
     def test_tick_does_not_process_when_stopped(self):
         """Test that tick() returns False when kernel is not RUNNING."""
         kernel = VibeKernel(ledger_path=":memory:")
+        agent = DummyAgent(agent_id="agent-1")
+        kernel.register_agent(agent)
         # Don't boot - kernel is STOPPED
 
         task = Task(agent_id="agent-1", payload={})

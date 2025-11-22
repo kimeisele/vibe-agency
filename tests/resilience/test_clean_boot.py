@@ -83,7 +83,7 @@ def test_clean_boot():
     # Verify schema version
     cursor = store.conn.execute("PRAGMA user_version")
     version = cursor.fetchone()[0]
-    assert version == 1, "Schema version should be 1"
+    assert version == 2, "Schema version should be 2"
 
     print(f"   ✅ Schema version: {version}")
 

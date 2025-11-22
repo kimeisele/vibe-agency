@@ -33,6 +33,11 @@ class EchoAgent(VibeAgent):
         """Return the agent's ID."""
         return self._agent_id
 
+    @property
+    def capabilities(self) -> list[str]:
+        """Return agent capabilities."""
+        return ["echo"]
+
     def process(self, task: Task) -> Any:
         """Echo the task payload back as a result."""
         self.processed_tasks.append(task)
@@ -54,6 +59,11 @@ class CounterAgent(VibeAgent):
         """Return the agent's ID."""
         return self._agent_id
 
+    @property
+    def capabilities(self) -> list[str]:
+        """Return agent capabilities."""
+        return ["count"]
+
     def process(self, task: Task) -> Any:
         """Increment counter and return count."""
         self.task_count += 1
@@ -73,6 +83,11 @@ class FailingAgent(VibeAgent):
     def agent_id(self) -> str:
         """Return the agent's ID."""
         return self._agent_id
+
+    @property
+    def capabilities(self) -> list[str]:
+        """Return agent capabilities."""
+        return ["fail"]
 
     def process(self, task: Task) -> Any:
         """Always raise an exception."""
@@ -266,15 +281,9 @@ class TestAgentNotFound:
         kernel.boot()
 
         task = Task(agent_id="nonexistent-agent", payload={})
-        kernel.submit(task)
-
-        with pytest.raises(AgentNotFoundError) as exc_info:
-            kernel.tick()
-
-        # Verify error details
-        assert exc_info.value.agent_id == "nonexistent-agent"
-        assert exc_info.value.task_id == task.id
-        assert "not found in registry" in str(exc_info.value)
+        
+        with pytest.raises(ValueError, match="not registered"):
+            kernel.submit(task)
 
     def test_agent_not_found_logs_error(self, caplog):
         """Test that missing agent logs an error message."""
@@ -282,7 +291,8 @@ class TestAgentNotFound:
         kernel.boot()
 
         task = Task(agent_id="missing-agent", payload={})
-        kernel.submit(task)
+        # Bypass submit() validation to test tick() error handling
+        kernel.scheduler.submit_task(task)
 
         with caplog.at_level(logging.ERROR), pytest.raises(AgentNotFoundError):
             kernel.tick()
@@ -301,10 +311,9 @@ class TestAgentNotFound:
         kernel.boot()
 
         task = Task(agent_id="nonexistent", payload={})
-        kernel.submit(task)
-
-        with caplog.at_level(logging.ERROR), pytest.raises(AgentNotFoundError):
-            kernel.tick()
+        
+        with pytest.raises(ValueError, match="Available"):
+            kernel.submit(task)
 
         # Error should mention available agents
         assert "echo-1" in caplog.text or "counter-1" in caplog.text
