@@ -247,7 +247,7 @@ I am a director
 ### Current GAD Documents Assume:
 
 ```
-"The agent (VIBE_ALIGNER) will interact with the user"
+"The agent (VibeAgent) will interact with the user"
 "The user provides input"
 "The system returns output to the user"
 ```
@@ -255,7 +255,7 @@ I am a director
 ### Should Actually Be:
 
 ```
-"The agent (VIBE_ALIGNER) is operated BY an LLM (Claude)"
+"The agent (VibeAgent) is operated BY an LLM (Claude)"
 "The human provides intent to the LLM"
 "The LLM operates the agent on behalf of the human"
 "The human validates the LLM's execution"
