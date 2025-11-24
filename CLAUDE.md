@@ -3,7 +3,7 @@
 > ⚠️ **REDIRECTED TO STEWARD.md**
 > This file is now a minimal stub. For complete documentation, see [STEWARD.md](./STEWARD.md).
 
-**Version:** 2.3 | **Last Updated:** 2025-11-22 | **Status:** 🔄 STUB
+**Status:** Minimal stub - full details in STEWARD.md
 
 ---
 
@@ -30,16 +30,6 @@ uv run apps/agency/cli.py --mission "Your task"  # Autonomous mode
 ./bin/pre-push-check.sh                           # Quality gates
 ./bin/show-context.py                             # Full system context
 ```
-
----
-
-## 📊 Current State
-
-**Latest Release:** v0.5.0 (2025-11-22) - The Governance Update
-**Latest ARCH:** ARCH-041 (Vibe Studio Consolidation)
-**System State:** SOVEREIGN & OPERATIONAL
-**Tests:** 626 collected
-**Offline Operation:** ✅ Verified (ARCH-040)
 
 ---
 
