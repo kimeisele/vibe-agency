@@ -121,14 +121,6 @@ uv run apps/agency/cli.py --snapshot
 
 ## 📊 Quality Guarantees
 
-**Current Metrics:**
-- **System State:** SOVEREIGN & OPERATIONAL (v0.5.0, 2025-11-22)
-- **Tests:** 626 collected, core workflows verified (PLANNING, CODING, DEPLOYMENT passing)
-- **Boot Reliability:** 100% (offline operation verified ARCH-040)
-- **Offline Capability:** ✅ Verified (SmartLocalProvider ARCH-041)
-- **Architecture:** ARCH-041 (Vibe Studio Consolidation)
-- **Commits (Nov 2025):** 124 commits
-
 **Quality Enforcement:**
 - Pre-push checks mandatory (`./bin/pre-push-check.sh`)
 - Test-first development enforced
