@@ -6,90 +6,34 @@
 # This wrapper ensures the script runs with the correct Python interpreter
 # that has psutil and rich installed.
 
-python3 -c "
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export VIBE_ROOT="$(dirname "$SCRIPT_DIR")"
+
+uv run python3 -c "
 import sys
 import json
-import platform
-import subprocess
+import os
 from pathlib import Path
 
 try:
-    import psutil
     from rich.console import Console
     from rich.table import Table
     from rich.panel import Panel
 except ImportError as e:
     print(f'Error: Required library not found: {e}')
-    print('Install with: pip install psutil rich')
+    print('Install with: pip install rich')
     sys.exit(1)
 
+# Add the project root to sys.path to import vibe_studio module
+vibe_root = os.environ.get('VIBE_ROOT', os.getcwd())
+sys.path.insert(0, str(Path(vibe_root) / 'apps'))
 
-def get_system_info() -> dict:
-    '''Gather comprehensive system information.'''
-    try:
-        # OS Information
-        os_info = platform.platform()
-        hostname = platform.node()
-
-        # CPU Information
-        cpu_count = psutil.cpu_count(logical=False)
-        cpu_threads = psutil.cpu_count(logical=True)
-        cpu_freq = psutil.cpu_freq()
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-
-        # Memory Information
-        memory = psutil.virtual_memory()
-        swap = psutil.swap_memory()
-
-        # Disk Information
-        disk = psutil.disk_usage('/')
-
-        # Uptime
-        boot_time = psutil.boot_time()
-        import time
-
-        uptime_seconds = time.time() - boot_time
-        uptime_days = int(uptime_seconds // 86400)
-        uptime_hours = int((uptime_seconds % 86400) // 3600)
-        uptime_minutes = int((uptime_seconds % 3600) // 60)
-
-        return {
-            'hostname': hostname,
-            'os': os_info,
-            'cpu': {
-                'cores': cpu_count,
-                'threads': cpu_threads,
-                'frequency_mhz': cpu_freq.current if cpu_freq else 'N/A',
-                'usage_percent': cpu_percent,
-            },
-            'memory': {
-                'total_gb': round(memory.total / (1024**3), 2),
-                'used_gb': round(memory.used / (1024**3), 2),
-                'available_gb': round(memory.available / (1024**3), 2),
-                'percent': memory.percent,
-            },
-            'swap': {
-                'total_gb': round(swap.total / (1024**3), 2),
-                'used_gb': round(swap.used / (1024**3), 2),
-                'free_gb': round(swap.free / (1024**3), 2),
-                'percent': swap.percent,
-            },
-            'disk': {
-                'total_gb': round(disk.total / (1024**3), 2),
-                'used_gb': round(disk.used / (1024**3), 2),
-                'free_gb': round(disk.free / (1024**3), 2),
-                'percent': disk.percent,
-            },
-            'uptime': {
-                'days': uptime_days,
-                'hours': uptime_hours,
-                'minutes': uptime_minutes,
-                'total_seconds': int(uptime_seconds),
-            },
-        }
-    except Exception as e:
-        print(f'Error gathering system info: {e}', file=sys.stderr)
-        sys.exit(1)
+try:
+    from vibe_studio.sysinfo import get_system_info
+except ImportError as e:
+    print(f'Error: Could not import vibe_studio.sysinfo: {e}', file=sys.stderr)
+    print('Make sure you are running this from the project root.', file=sys.stderr)
+    sys.exit(1)
 
 
 def display_table(info: dict) -> None:
